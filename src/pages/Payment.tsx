@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@/contexts/UserContext";
@@ -99,7 +98,7 @@ const PaymentPage = () => {
     // Check if user is selected
     if (!currentUser) {
       toast.error("Please select a user first", {
-        description: "Go to the betting queue page to select a user before making a purchase."
+        description: "Go to the betting page to select a user before making a purchase."
       });
       return;
     }
@@ -123,9 +122,9 @@ const PaymentPage = () => {
           });
         }
         
-        // Navigate to betting queue after successful payment
+        // Navigate to betting after successful payment
         setTimeout(() => {
-          navigate("/betting-queue");
+          navigate("/betting");
         }, 2000);
       }
       
@@ -155,13 +154,13 @@ const PaymentPage = () => {
             </p>
             {!currentUser && (
               <div className="mt-4 p-3 bg-red-900/50 border border-red-500 rounded-lg inline-block">
-                <p className="text-red-300">Please select a user from the betting queue page first</p>
+                <p className="text-red-300">Please select a user from the betting page first</p>
                 <Button 
                   variant="outline" 
-                  onClick={() => navigate("/betting-queue")}
+                  onClick={() => navigate("/betting")}
                   className="mt-2 border-red-500 text-red-300 hover:bg-red-950"
                 >
-                  Go to Betting Queue
+                  Go to Betting
                 </Button>
               </div>
             )}
@@ -420,7 +419,7 @@ const PaymentPage = () => {
                   type="button" 
                   variant="outline" 
                   className="mr-2"
-                  onClick={() => navigate("/betting-queue")}
+                  onClick={() => navigate("/betting")}
                 >
                   Cancel
                 </Button>

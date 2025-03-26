@@ -1,4 +1,3 @@
-
 import React from "react";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
@@ -33,7 +32,7 @@ const ScoreboardConfirmDialogs: React.FC<ScoreboardConfirmDialogsProps> = ({
           setTeamAWinConfirmOpen(false);
         }}
         title={`Declare ${teamAName} as Winner?`}
-        description={`This will award a game win to ${teamAName}, reset ball counts, silently delete ALL unmatched bets (returning funds without recording any transactions), process all matched bets, completely clear the current betting queue, and move only matched next game bets to the current game. Are you sure?`}
+        description={`This will delete all unmatched bets, completely clear the current betting list, and move only matched next game bets to the current game. Are you sure?`}
         confirmText="Confirm Win"
         cancelText="Cancel"
       />
@@ -46,7 +45,7 @@ const ScoreboardConfirmDialogs: React.FC<ScoreboardConfirmDialogsProps> = ({
           setTeamBWinConfirmOpen(false);
         }}
         title={`Declare ${teamBName} as Winner?`}
-        description={`This will award a game win to ${teamBName}, reset ball counts, silently delete ALL unmatched bets (returning funds without recording any transactions), process all matched bets, completely clear the current betting queue, and move only matched next game bets to the current game. Are you sure?`}
+        description={`This will delete all unmatched bets, completely clear the current betting list, and move only matched next game bets to the current game. Are you sure?`}
         confirmText="Confirm Win"
         cancelText="Cancel"
       />

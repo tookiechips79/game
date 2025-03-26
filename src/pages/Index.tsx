@@ -797,7 +797,7 @@ const Index = () => {
           />
         </div>
 
-        <h1 className="text-4xl md:text-5xl font-bold text-center mb-6 bg-gradient-to-r from-[#F97316] via-[#FBBF24] to-[#F59E0B] bg-clip-text text-transparent drop-shadow-lg">Betting Queue</h1>
+        <h1 className="text-4xl md:text-5xl font-bold text-center mb-6 bg-gradient-to-r from-[#F97316] via-[#FBBF24] to-[#F59E0B] bg-clip-text text-transparent drop-shadow-lg">Betting</h1>
 
         <UserCreditSystem isAdmin={isAdminMode} />
 

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -82,7 +81,7 @@ const Landing = () => {
             <Link to="/betting-queue">
               <Button className="bg-[#F97316] hover:bg-[#F97316]/80 text-black font-bold flex items-center gap-2">
                 <Ticket size={18} />
-                <span className="hidden sm:inline">Betting Queue</span>
+                <span className="hidden sm:inline">Betting</span>
               </Button>
             </Link>
           </div>
@@ -234,7 +233,7 @@ const Landing = () => {
               <Link to="/betting-queue" className="mt-6 md:mt-0">
                 <Button className="bg-gradient-to-r from-[#F97316] to-[#FBBF24] hover:from-[#F97316]/90 hover:to-[#FBBF24]/90 text-black font-bold px-8 py-6 text-lg flex items-center gap-2">
                   <Ticket size={20} />
-                  Open Betting Queue
+                  Open Betting
                 </Button>
               </Link>
             ) : (
