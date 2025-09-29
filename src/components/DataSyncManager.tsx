@@ -17,7 +17,7 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
-import { simpleUniversalSyncService } from '@/services/simpleUniversalSync';
+import { realtimeSyncService } from '@/services/realtimeSync';
 import { universalStorage } from '@/utils/universalStorage';
 import { toast } from 'sonner';
 
@@ -26,7 +26,7 @@ interface DataSyncManagerProps {
 }
 
 const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) => {
-  const [syncStatus, setSyncStatus] = useState(simpleUniversalSyncService.getStatus());
+  const [syncStatus, setSyncStatus] = useState(realtimeSyncService.getSyncStatus());
   const [dataSummary, setDataSummary] = useState({
     totalUsers: 0,
     totalBets: 0,
@@ -40,9 +40,15 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
   useEffect(() => {
     // Update status every 30 seconds
     const interval = setInterval(() => {
-      setSyncStatus(simpleUniversalSyncService.getStatus());
-      // Update data summary from simple universal sync service
-      setDataSummary(simpleUniversalSyncService.getDataSummary());
+      setSyncStatus(realtimeSyncService.getSyncStatus());
+      // Update data summary from universal storage
+      const data = universalStorage.getData();
+      setDataSummary({
+        totalUsers: data.users?.length || 0,
+        totalBets: (data.gameState?.teamAQueue?.length || 0) + (data.gameState?.teamBQueue?.length || 0),
+        totalHistory: data.betHistory?.length || 0,
+        lastUpdate: Date.now()
+      });
     }, 30000);
 
     return () => clearInterval(interval);
@@ -50,7 +56,7 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
 
   const handleExportData = () => {
     try {
-      const data = simpleUniversalSyncService.exportData();
+      const data = realtimeSyncService.exportData();
       setExportData(data);
       toast.success('Data exported successfully');
     } catch (error) {
@@ -66,12 +72,18 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
 
     setIsLoading(true);
     try {
-      const success = simpleUniversalSyncService.importData(importData);
+      const success = realtimeSyncService.importData(importData);
       if (success) {
         toast.success('Data imported successfully');
         setImportData('');
         // Update data summary
-        setDataSummary(simpleUniversalSyncService.getDataSummary());
+        const data = universalStorage.getData();
+        setDataSummary({
+          totalUsers: data.users?.length || 0,
+          totalBets: (data.gameState?.teamAQueue?.length || 0) + (data.gameState?.teamBQueue?.length || 0),
+          totalHistory: data.betHistory?.length || 0,
+          lastUpdate: Date.now()
+        });
       } else {
         toast.error('Failed to import data - invalid format');
       }
@@ -85,10 +97,10 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
   const handleForceSync = async () => {
     setIsLoading(true);
     try {
-      const success = await simpleUniversalSyncService.forceSync();
+      const success = await realtimeSyncService.forceSync();
       if (success) {
         toast.success('Data synchronized successfully');
-        setSyncStatus(simpleUniversalSyncService.getStatus());
+        setSyncStatus(realtimeSyncService.getSyncStatus());
       } else {
         toast.error('Failed to synchronize data');
       }
@@ -101,9 +113,15 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
 
   const handleClearAllData = () => {
     if (window.confirm('Are you sure you want to clear ALL data? This cannot be undone!')) {
-      simpleUniversalSyncService.clearAllData();
+      realtimeSyncService.clearAllData();
       toast.success('All data cleared');
-      setDataSummary(simpleUniversalSyncService.getDataSummary());
+      const data = universalStorage.getData();
+      setDataSummary({
+        totalUsers: data.users?.length || 0,
+        totalBets: (data.gameState?.teamAQueue?.length || 0) + (data.gameState?.teamBQueue?.length || 0),
+        totalHistory: data.betHistory?.length || 0,
+        lastUpdate: Date.now()
+      });
     }
   };
 

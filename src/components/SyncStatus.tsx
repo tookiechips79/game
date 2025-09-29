@@ -9,7 +9,7 @@ import {
   WifiOff,
   Clock
 } from 'lucide-react';
-import { simpleUniversalSyncService } from '@/services/simpleUniversalSync';
+import { realtimeSyncService } from '@/services/realtimeSync';
 import { toast } from 'sonner';
 
 interface SyncStatusProps {
@@ -17,14 +17,14 @@ interface SyncStatusProps {
 }
 
 const SyncStatus: React.FC<SyncStatusProps> = ({ className = '' }) => {
-  const [syncStatus, setSyncStatus] = useState(simpleUniversalSyncService.getStatus());
+  const [syncStatus, setSyncStatus] = useState(realtimeSyncService.getSyncStatus());
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
 
   useEffect(() => {
     // Update sync status every 30 seconds
     const interval = setInterval(() => {
-      setSyncStatus(simpleUniversalSyncService.getStatus());
+      setSyncStatus(realtimeSyncService.getSyncStatus());
     }, 30000);
 
     // Listen for online/offline events
@@ -37,26 +37,26 @@ const SyncStatus: React.FC<SyncStatusProps> = ({ className = '' }) => {
     // Listen for sync events
     const handleSync = () => {
       setLastSyncTime(new Date());
-      setSyncStatus(simpleUniversalSyncService.getStatus());
+      setSyncStatus(realtimeSyncService.getSyncStatus());
     };
 
-    window.addEventListener('simple-universal-sync', handleSync);
+    window.addEventListener('realtime-sync-message', handleSync);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      window.removeEventListener('simple-universal-sync', handleSync);
+      window.removeEventListener('realtime-sync-message', handleSync);
     };
   }, []);
 
   const handleForceSync = async () => {
     try {
-      const success = await simpleUniversalSyncService.forceSync();
+      const success = await realtimeSyncService.forceSync();
       if (success) {
         toast.success('Data synchronized successfully');
         setLastSyncTime(new Date());
-        setSyncStatus(simpleUniversalSyncService.getStatus());
+        setSyncStatus(realtimeSyncService.getSyncStatus());
       } else {
         toast.error('Failed to synchronize data');
       }
@@ -80,21 +80,21 @@ const SyncStatus: React.FC<SyncStatusProps> = ({ className = '' }) => {
   const getSyncStatusColor = () => {
     if (!isOnline) return 'destructive';
     if (!syncStatus.isEnabled) return 'secondary';
-    if (syncStatus.lastSyncTime === 0) return 'warning';
+    if (!syncStatus.isConnected) return 'warning';
     return 'default';
   };
 
   const getSyncStatusText = () => {
     if (!isOnline) return 'Offline';
     if (!syncStatus.isEnabled) return 'Disabled';
-    if (syncStatus.lastSyncTime === 0) return 'Not Synced';
-    return 'Synced';
+    if (!syncStatus.isConnected) return 'Disconnected';
+    return 'Connected';
   };
 
   const getSyncIcon = () => {
     if (!isOnline) return <WifiOff className="h-3 w-3" />;
     if (!syncStatus.isEnabled) return <AlertCircle className="h-3 w-3" />;
-    if (syncStatus.lastSyncTime === 0) return <Clock className="h-3 w-3" />;
+    if (!syncStatus.isConnected) return <AlertCircle className="h-3 w-3" />;
     return <CheckCircle className="h-3 w-3" />;
   };
 
