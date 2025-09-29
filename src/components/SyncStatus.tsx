@@ -9,7 +9,7 @@ import {
   WifiOff,
   Clock
 } from 'lucide-react';
-import { cloudSyncService } from '@/services/cloudSync';
+import { sharedDataSyncService } from '@/services/sharedDataSync';
 import { toast } from 'sonner';
 
 interface SyncStatusProps {
@@ -17,14 +17,14 @@ interface SyncStatusProps {
 }
 
 const SyncStatus: React.FC<SyncStatusProps> = ({ className = '' }) => {
-  const [syncStatus, setSyncStatus] = useState(cloudSyncService.getStatus());
+  const [syncStatus, setSyncStatus] = useState(sharedDataSyncService.getStatus());
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
 
   useEffect(() => {
     // Update sync status every 30 seconds
     const interval = setInterval(() => {
-      setSyncStatus(cloudSyncService.getStatus());
+      setSyncStatus(sharedDataSyncService.getStatus());
     }, 30000);
 
     // Listen for online/offline events
@@ -37,26 +37,26 @@ const SyncStatus: React.FC<SyncStatusProps> = ({ className = '' }) => {
     // Listen for sync events
     const handleSync = () => {
       setLastSyncTime(new Date());
-      setSyncStatus(cloudSyncService.getStatus());
+      setSyncStatus(sharedDataSyncService.getStatus());
     };
 
-    window.addEventListener('betting-app-sync', handleSync);
+    window.addEventListener('shared-data-sync', handleSync);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      window.removeEventListener('betting-app-sync', handleSync);
+      window.removeEventListener('shared-data-sync', handleSync);
     };
   }, []);
 
   const handleForceSync = async () => {
     try {
-      const success = await cloudSyncService.forceSync();
+      const success = await sharedDataSyncService.forceSync();
       if (success) {
         toast.success('Data synchronized successfully');
         setLastSyncTime(new Date());
-        setSyncStatus(cloudSyncService.getStatus());
+        setSyncStatus(sharedDataSyncService.getStatus());
       } else {
         toast.error('Failed to synchronize data');
       }

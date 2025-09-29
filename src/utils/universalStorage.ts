@@ -1,8 +1,8 @@
 // Universal Storage Utility
 // This provides a unified storage interface that can work across browsers
-// and syncs with a cloud service for cross-browser compatibility
+// and syncs with a shared data service for cross-browser compatibility
 
-import { cloudSyncService } from '@/services/cloudSync';
+import { sharedDataSyncService } from '@/services/sharedDataSync';
 
 export interface UniversalStorageData {
   gameState: any;
@@ -47,8 +47,8 @@ class UniversalStorage {
       localStorage.setItem(this.storageKey, JSON.stringify(data));
       this.notifyListeners(data);
       
-      // Sync to cloud for cross-browser compatibility
-      cloudSyncService.syncToCloud(data);
+      // Sync to shared storage for cross-browser compatibility
+      sharedDataSyncService.syncToShared(data);
     } catch (error) {
       console.error('Error saving universal storage:', error);
     }
@@ -111,8 +111,8 @@ class UniversalStorage {
       }
     });
 
-    // Listen for cloud sync events
-    cloudSyncService.setupCrossTabListener((data) => {
+    // Listen for shared data sync events
+    sharedDataSyncService.addListener((data) => {
       this.notifyListeners(data);
     });
   }

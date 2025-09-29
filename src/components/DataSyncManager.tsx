@@ -17,7 +17,7 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
-import { dataSyncService } from '@/services/dataSync';
+import { sharedDataSyncService } from '@/services/sharedDataSync';
 import { universalStorage } from '@/utils/universalStorage';
 import { toast } from 'sonner';
 
@@ -26,8 +26,13 @@ interface DataSyncManagerProps {
 }
 
 const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) => {
-  const [syncStatus, setSyncStatus] = useState(dataSyncService.getStatus());
-  const [dataSummary, setDataSummary] = useState(dataSyncService.getDataSummary());
+  const [syncStatus, setSyncStatus] = useState(sharedDataSyncService.getStatus());
+  const [dataSummary, setDataSummary] = useState({
+    totalUsers: 0,
+    totalBets: 0,
+    totalHistory: 0,
+    lastUpdate: 0
+  });
   const [exportData, setExportData] = useState('');
   const [importData, setImportData] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -35,8 +40,15 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
   useEffect(() => {
     // Update status every 30 seconds
     const interval = setInterval(() => {
-      setSyncStatus(dataSyncService.getStatus());
-      setDataSummary(dataSyncService.getDataSummary());
+      setSyncStatus(sharedDataSyncService.getStatus());
+      // Update data summary from universal storage
+      const data = universalStorage.getData();
+      setDataSummary({
+        totalUsers: data.users?.length || 0,
+        totalBets: (data.gameState?.teamAQueue?.length || 0) + (data.gameState?.teamBQueue?.length || 0),
+        totalHistory: data.betHistory?.length || 0,
+        lastUpdate: Date.now()
+      });
     }, 30000);
 
     return () => clearInterval(interval);
@@ -44,7 +56,7 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
 
   const handleExportData = () => {
     try {
-      const data = dataSyncService.exportData();
+      const data = sharedDataSyncService.exportData();
       setExportData(data);
       toast.success('Data exported successfully');
     } catch (error) {
@@ -60,11 +72,18 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
 
     setIsLoading(true);
     try {
-      const success = dataSyncService.importData(importData);
+      const success = sharedDataSyncService.importData(importData);
       if (success) {
         toast.success('Data imported successfully');
         setImportData('');
-        setDataSummary(dataSyncService.getDataSummary());
+        // Update data summary
+        const data = universalStorage.getData();
+        setDataSummary({
+          totalUsers: data.users?.length || 0,
+          totalBets: (data.gameState?.teamAQueue?.length || 0) + (data.gameState?.teamBQueue?.length || 0),
+          totalHistory: data.betHistory?.length || 0,
+          lastUpdate: Date.now()
+        });
       } else {
         toast.error('Failed to import data - invalid format');
       }
@@ -78,10 +97,10 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
   const handleForceSync = async () => {
     setIsLoading(true);
     try {
-      const success = await dataSyncService.forceSync();
+      const success = await sharedDataSyncService.forceSync();
       if (success) {
         toast.success('Data synchronized successfully');
-        setSyncStatus(dataSyncService.getStatus());
+        setSyncStatus(sharedDataSyncService.getStatus());
       } else {
         toast.error('Failed to synchronize data');
       }
@@ -94,9 +113,14 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
 
   const handleClearAllData = () => {
     if (window.confirm('Are you sure you want to clear ALL data? This cannot be undone!')) {
-      dataSyncService.clearAllData();
+      sharedDataSyncService.clearAllData();
       toast.success('All data cleared');
-      setDataSummary(dataSyncService.getDataSummary());
+      setDataSummary({
+        totalUsers: 0,
+        totalBets: 0,
+        totalHistory: 0,
+        lastUpdate: Date.now()
+      });
     }
   };
 
