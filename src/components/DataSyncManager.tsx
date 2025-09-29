@@ -17,7 +17,7 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
-import { sharedDataSyncService } from '@/services/sharedDataSync';
+import { trueUniversalSyncService } from '@/services/trueUniversalSync';
 import { universalStorage } from '@/utils/universalStorage';
 import { toast } from 'sonner';
 
@@ -26,7 +26,7 @@ interface DataSyncManagerProps {
 }
 
 const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) => {
-  const [syncStatus, setSyncStatus] = useState(sharedDataSyncService.getStatus());
+  const [syncStatus, setSyncStatus] = useState(trueUniversalSyncService.getStatus());
   const [dataSummary, setDataSummary] = useState({
     totalUsers: 0,
     totalBets: 0,
@@ -40,7 +40,7 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
   useEffect(() => {
     // Update status every 30 seconds
     const interval = setInterval(() => {
-      setSyncStatus(sharedDataSyncService.getStatus());
+      setSyncStatus(trueUniversalSyncService.getStatus());
       // Update data summary from universal storage
       const data = universalStorage.getData();
       setDataSummary({
@@ -56,7 +56,7 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
 
   const handleExportData = () => {
     try {
-      const data = sharedDataSyncService.exportData();
+      const data = trueUniversalSyncService.exportData();
       setExportData(data);
       toast.success('Data exported successfully');
     } catch (error) {
@@ -72,7 +72,7 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
 
     setIsLoading(true);
     try {
-      const success = sharedDataSyncService.importData(importData);
+      const success = trueUniversalSyncService.importData(importData);
       if (success) {
         toast.success('Data imported successfully');
         setImportData('');
@@ -97,10 +97,10 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
   const handleForceSync = async () => {
     setIsLoading(true);
     try {
-      const success = await sharedDataSyncService.forceSync();
+      const success = await trueUniversalSyncService.forceSync();
       if (success) {
         toast.success('Data synchronized successfully');
-        setSyncStatus(sharedDataSyncService.getStatus());
+        setSyncStatus(trueUniversalSyncService.getStatus());
       } else {
         toast.error('Failed to synchronize data');
       }
@@ -113,7 +113,7 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
 
   const handleClearAllData = () => {
     if (window.confirm('Are you sure you want to clear ALL data? This cannot be undone!')) {
-      sharedDataSyncService.clearAllData();
+      trueUniversalSyncService.clearAllData();
       toast.success('All data cleared');
       setDataSummary({
         totalUsers: 0,
