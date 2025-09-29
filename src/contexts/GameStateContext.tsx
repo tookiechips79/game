@@ -143,21 +143,14 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     universalStorage.updateSection('localAdminState', localAdminState);
   }, [localAdminState]);
 
-  // Listen for storage changes from other tabs/windows
+  // Listen for cross-tab synchronization
   useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === GAME_STATE_STORAGE_KEY && e.newValue) {
-        try {
-          const newState = JSON.parse(e.newValue);
-          setGameState(newState);
-        } catch (error) {
-          console.error('Error parsing updated game state:', error);
-        }
-      }
-    };
+    const unsubscribe = universalStorage.addListener((data) => {
+      if (data.gameState) setGameState(data.gameState);
+      if (data.localAdminState) setLocalAdminState(data.localAdminState);
+    });
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    return unsubscribe;
   }, []);
 
   // Check if current user is admin

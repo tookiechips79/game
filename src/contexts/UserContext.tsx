@@ -44,11 +44,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [creditTransactions, setCreditTransactions] = useState<CreditTransaction[]>([]);
 
   useEffect(() => {
-    const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
-    if (storedUsers) {
-      const parsedUsers = JSON.parse(storedUsers);
+    const storedUsers = universalStorage.getSection('users');
+    if (storedUsers && storedUsers.length > 0) {
       // Migrate existing users to include membership status
-      const migratedUsers = parsedUsers.map((user: any) => {
+      const migratedUsers = storedUsers.map((user: any) => {
         // If user doesn't have membershipStatus, set it based on whether they're admin
         if (!user.membershipStatus) {
           return {
@@ -60,8 +59,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return user;
       });
       setUsers(migratedUsers);
-      // Update localStorage with migrated users
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(migratedUsers));
+      // Update universal storage with migrated users
+      universalStorage.updateSection('users', migratedUsers);
     } else {
       const defaultAdmin: User = {
         id: "admin-" + Date.now(),
@@ -74,73 +73,79 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         subscriptionDate: Date.now()
       };
       setUsers([defaultAdmin]);
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify([defaultAdmin]));
+      universalStorage.updateSection('users', [defaultAdmin]);
     }
 
-    const storedCurrentUser = localStorage.getItem(CURRENT_USER_STORAGE_KEY);
+    const storedCurrentUser = universalStorage.getSection('currentUser');
     if (storedCurrentUser) {
-      const currentUserData = JSON.parse(storedCurrentUser);
       // Ensure current user has membership status
-      if (!currentUserData.membershipStatus) {
+      if (!storedCurrentUser.membershipStatus) {
         const updatedCurrentUser = {
-          ...currentUserData,
-          membershipStatus: currentUserData.name.toLowerCase() === 'admin' ? 'active' : 'inactive',
-          subscriptionDate: currentUserData.name.toLowerCase() === 'admin' ? Date.now() : undefined
+          ...storedCurrentUser,
+          membershipStatus: storedCurrentUser.name.toLowerCase() === 'admin' ? 'active' : 'inactive',
+          subscriptionDate: storedCurrentUser.name.toLowerCase() === 'admin' ? Date.now() : undefined
         };
         setCurrentUser(updatedCurrentUser);
-        localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(updatedCurrentUser));
+        universalStorage.updateSection('currentUser', updatedCurrentUser);
       } else {
-        setCurrentUser(currentUserData);
+        setCurrentUser(storedCurrentUser);
       }
     }
     
-    const storedBetHistory = localStorage.getItem(BET_HISTORY_STORAGE_KEY);
+    const storedBetHistory = universalStorage.getSection('betHistory');
     if (storedBetHistory) {
-      setBetHistory(JSON.parse(storedBetHistory));
+      setBetHistory(storedBetHistory);
     }
     
-    const storedUserBetReceipts = localStorage.getItem(USER_BET_RECEIPTS_KEY);
+    const storedUserBetReceipts = universalStorage.getSection('userBetReceipts');
     if (storedUserBetReceipts) {
-      setUserBetReceipts(JSON.parse(storedUserBetReceipts));
+      setUserBetReceipts(storedUserBetReceipts);
     }
     
-    const storedCreditTransactions = localStorage.getItem(CREDIT_TRANSACTIONS_KEY);
+    const storedCreditTransactions = universalStorage.getSection('creditTransactions');
     if (storedCreditTransactions) {
-      setCreditTransactions(JSON.parse(storedCreditTransactions));
+      setCreditTransactions(storedCreditTransactions);
     }
   }, []);
 
   useEffect(() => {
     if (users.length > 0) {
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+      universalStorage.updateSection('users', users);
     }
   }, [users]);
 
   useEffect(() => {
     if (currentUser) {
-      localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(currentUser));
+      universalStorage.updateSection('currentUser', currentUser);
     } else {
-      localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
+      universalStorage.updateSection('currentUser', null);
     }
   }, [currentUser]);
   
   useEffect(() => {
-    if (betHistory.length > 0) {
-      localStorage.setItem(BET_HISTORY_STORAGE_KEY, JSON.stringify(betHistory));
-    }
+    universalStorage.updateSection('betHistory', betHistory);
   }, [betHistory]);
   
   useEffect(() => {
-    if (userBetReceipts.length > 0) {
-      localStorage.setItem(USER_BET_RECEIPTS_KEY, JSON.stringify(userBetReceipts));
-    }
+    universalStorage.updateSection('userBetReceipts', userBetReceipts);
   }, [userBetReceipts]);
   
   useEffect(() => {
-    if (creditTransactions.length > 0) {
-      localStorage.setItem(CREDIT_TRANSACTIONS_KEY, JSON.stringify(creditTransactions));
-    }
+    universalStorage.updateSection('creditTransactions', creditTransactions);
   }, [creditTransactions]);
+
+  // Listen for cross-tab synchronization
+  useEffect(() => {
+    const unsubscribe = universalStorage.addListener((data) => {
+      if (data.users) setUsers(data.users);
+      if (data.currentUser) setCurrentUser(data.currentUser);
+      if (data.betHistory) setBetHistory(data.betHistory);
+      if (data.userBetReceipts) setUserBetReceipts(data.userBetReceipts);
+      if (data.creditTransactions) setCreditTransactions(data.creditTransactions);
+    });
+
+    return unsubscribe;
+  }, []);
 
   const addCreditTransaction = (transaction: Omit<CreditTransaction, "id" | "timestamp">) => {
     const newTransaction: CreditTransaction = {
