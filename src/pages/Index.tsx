@@ -19,6 +19,7 @@ import BetReceiptsLedger from "@/components/BetReceiptsLedger";
 import BirdButton from "@/components/BirdButton";
 import GameInfoWindow from "@/components/GameInfoWindow";
 import GameHistoryWindow from "@/components/GameHistoryWindow";
+import DataSyncManager from "@/components/DataSyncManager";
 import { useUser } from "@/contexts/UserContext";
 import { useGameState } from "@/contexts/GameStateContext";
 import { Bet, BookedBet, ConfirmationState } from "@/types/user";
@@ -1490,6 +1491,11 @@ const Index = () => {
           teamAName={teamAName}
           teamBName={teamBName}
         />
+
+        {/* Universal Data Management */}
+        <div className="mt-8">
+          <DataSyncManager isAdmin={isAdminMode} />
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useRef, useCallback } from 'react';
 import { Bet, BookedBet } from '@/types/user';
+import { universalStorage } from '@/utils/universalStorage';
 
 interface GameState {
   // Team Information
@@ -112,42 +113,34 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load game state from localStorage on mount
+  // Load game state from universal storage on mount
   useEffect(() => {
-    const storedGameState = localStorage.getItem(GAME_STATE_STORAGE_KEY);
+    const storedGameState = universalStorage.getSection('gameState');
     if (storedGameState) {
-      try {
-        const parsedState = JSON.parse(storedGameState);
-        setGameState(parsedState);
-      } catch (error) {
-        console.error('Error parsing stored game state:', error);
-        setGameState(defaultGameState);
-      }
+      setGameState(storedGameState);
+    } else {
+      setGameState(defaultGameState);
     }
   }, []);
 
-  // Load local admin state from localStorage on mount (separate from game state)
+  // Load local admin state from universal storage on mount (separate from game state)
   useEffect(() => {
-    const storedLocalAdminState = localStorage.getItem(LOCAL_ADMIN_STORAGE_KEY);
+    const storedLocalAdminState = universalStorage.getSection('localAdminState');
     if (storedLocalAdminState) {
-      try {
-        const parsedState = JSON.parse(storedLocalAdminState);
-        setLocalAdminState(parsedState);
-      } catch (error) {
-        console.error('Error parsing stored local admin state:', error);
-        setLocalAdminState(defaultLocalAdminState);
-      }
+      setLocalAdminState(storedLocalAdminState);
+    } else {
+      setLocalAdminState(defaultLocalAdminState);
     }
   }, []);
 
-  // Save game state to localStorage whenever it changes
+  // Save game state to universal storage whenever it changes
   useEffect(() => {
-    localStorage.setItem(GAME_STATE_STORAGE_KEY, JSON.stringify(gameState));
+    universalStorage.updateSection('gameState', gameState);
   }, [gameState]);
 
-  // Save local admin state to localStorage whenever it changes (separate from game state)
+  // Save local admin state to universal storage whenever it changes (separate from game state)
   useEffect(() => {
-    localStorage.setItem(LOCAL_ADMIN_STORAGE_KEY, JSON.stringify(localAdminState));
+    universalStorage.updateSection('localAdminState', localAdminState);
   }, [localAdminState]);
 
   // Listen for storage changes from other tabs/windows

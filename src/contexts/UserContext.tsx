@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, BetHistoryRecord, UserBetReceipt, CreditTransaction } from "@/types/user";
 import { toast } from "sonner";
+import { universalStorage } from "@/utils/universalStorage";
 
 interface UserContextType {
   users: User[];
