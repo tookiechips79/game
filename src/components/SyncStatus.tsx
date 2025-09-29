@@ -9,7 +9,7 @@ import {
   WifiOff,
   Clock
 } from 'lucide-react';
-import { trueUniversalSyncService } from '@/services/trueUniversalSync';
+import { simpleUniversalSyncService } from '@/services/simpleUniversalSync';
 import { toast } from 'sonner';
 
 interface SyncStatusProps {
@@ -17,14 +17,14 @@ interface SyncStatusProps {
 }
 
 const SyncStatus: React.FC<SyncStatusProps> = ({ className = '' }) => {
-  const [syncStatus, setSyncStatus] = useState(trueUniversalSyncService.getStatus());
+  const [syncStatus, setSyncStatus] = useState(simpleUniversalSyncService.getStatus());
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
 
   useEffect(() => {
     // Update sync status every 30 seconds
     const interval = setInterval(() => {
-      setSyncStatus(trueUniversalSyncService.getStatus());
+      setSyncStatus(simpleUniversalSyncService.getStatus());
     }, 30000);
 
     // Listen for online/offline events
@@ -37,26 +37,26 @@ const SyncStatus: React.FC<SyncStatusProps> = ({ className = '' }) => {
     // Listen for sync events
     const handleSync = () => {
       setLastSyncTime(new Date());
-      setSyncStatus(trueUniversalSyncService.getStatus());
+      setSyncStatus(simpleUniversalSyncService.getStatus());
     };
 
-    window.addEventListener('true-universal-sync', handleSync);
+    window.addEventListener('simple-universal-sync', handleSync);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      window.removeEventListener('true-universal-sync', handleSync);
+      window.removeEventListener('simple-universal-sync', handleSync);
     };
   }, []);
 
   const handleForceSync = async () => {
     try {
-      const success = await trueUniversalSyncService.forceSync();
+      const success = await simpleUniversalSyncService.forceSync();
       if (success) {
         toast.success('Data synchronized successfully');
         setLastSyncTime(new Date());
-        setSyncStatus(trueUniversalSyncService.getStatus());
+        setSyncStatus(simpleUniversalSyncService.getStatus());
       } else {
         toast.error('Failed to synchronize data');
       }
