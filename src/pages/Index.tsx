@@ -920,7 +920,7 @@ const Index = () => {
 
         <div className="w-full max-w-md mx-auto mb-8">
           <img 
-            src="/lovable-uploads/4dfcf9c9-cbb9-4a75-94ab-bcdb38a8091e.png" 
+            src="./lovable-uploads/4dfcf9c9-cbb9-4a75-94ab-bcdb38a8091e.png" 
             alt="Game Bird Logo" 
             className="w-full h-40 object-contain drop-shadow-[0_0_10px_rgba(249,115,22,0.3)]" 
           />

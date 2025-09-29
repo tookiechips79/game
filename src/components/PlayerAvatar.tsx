@@ -11,7 +11,7 @@ const PlayerAvatar = ({ playerName, className }: PlayerAvatarProps) => {
   return (
     <Avatar className={`w-20 h-20 mb-3 border-2 border-[#F97316] shadow-[0_0_15px_rgba(249,115,22,0.5)] ${className || ""}`}>
       <AvatarImage 
-        src="/lovable-uploads/default-profile.png" 
+        src="./lovable-uploads/default-profile.png" 
         alt={playerName}
         className="object-cover"
       />

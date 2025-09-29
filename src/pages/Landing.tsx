@@ -30,7 +30,7 @@ const Landing = () => {
         <nav className="flex justify-between items-center mb-12">
           <div className="flex items-center gap-2">
             <img 
-              src="/lovable-uploads/4dfcf9c9-cbb9-4a75-94ab-bcdb38a8091e.png" 
+              src="./lovable-uploads/4dfcf9c9-cbb9-4a75-94ab-bcdb38a8091e.png" 
               alt="Game Bird Logo" 
               className="w-16 h-16 object-contain drop-shadow-[0_0_10px_rgba(0,255,150,0.3)]"
             />
@@ -167,7 +167,7 @@ const Landing = () => {
           </div>
           <div className="flex-1 flex justify-center">
             <img 
-              src="/lovable-uploads/4dfcf9c9-cbb9-4a75-94ab-bcdb38a8091e.png" 
+              src="./lovable-uploads/4dfcf9c9-cbb9-4a75-94ab-bcdb38a8091e.png" 
               alt="Game Bird Logo" 
               className="w-full max-w-md drop-shadow-[0_0_20px_rgba(163,230,53,0.4)]"
             />
@@ -365,7 +365,7 @@ const Landing = () => {
             <div className="flex flex-col md:flex-row justify-between items-center">
               <div className="flex items-center gap-2 mb-6 md:mb-0">
                 <img 
-                  src="/lovable-uploads/4dfcf9c9-cbb9-4a75-94ab-bcdb38a8091e.png" 
+                  src="./lovable-uploads/4dfcf9c9-cbb9-4a75-94ab-bcdb38a8091e.png" 
                   alt="Game Bird Logo" 
                   className="w-10 h-10 object-contain"
                 />

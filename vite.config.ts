@@ -27,4 +27,5 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
+  assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.svg'],
 }));
