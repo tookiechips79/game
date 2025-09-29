@@ -116,7 +116,9 @@ class MobileSyncService {
       this.updateUrlWithData(jsonData);
       
       this.lastSyncTime = Date.now();
-      console.log('Data synced to mobile storage successfully');
+      console.log('✅ Data synced to mobile storage successfully');
+      console.log('📱 Device:', this.deviceInfo);
+      console.log('🔄 URL will be updated with latest data');
       
       // Trigger cross-device sync
       this.triggerCrossDeviceSync(syncData);
@@ -176,6 +178,15 @@ class MobileSyncService {
       
       // Update URL without page reload
       window.history.replaceState({}, '', currentUrl.toString());
+      
+      // Dispatch custom event for UI updates
+      const event = new CustomEvent('url-updated', {
+        detail: { url: currentUrl.toString() }
+      });
+      window.dispatchEvent(event);
+      
+      // Debug: Log URL update
+      console.log('🔄 URL updated with latest data:', currentUrl.toString());
     } catch (error) {
       console.warn('Failed to update URL with data:', error);
     }

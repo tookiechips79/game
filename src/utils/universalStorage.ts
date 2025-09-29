@@ -48,6 +48,7 @@ class UniversalStorage {
       this.notifyListeners(data);
       
       // Send mobile-friendly update for cross-device compatibility
+      console.log('🔄 Data changed, triggering URL sync...');
       mobileSyncService.syncToShared(data);
     } catch (error) {
       console.error('Error saving universal storage:', error);

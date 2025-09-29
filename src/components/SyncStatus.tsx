@@ -20,6 +20,7 @@ const SyncStatus: React.FC<SyncStatusProps> = ({ className = '' }) => {
   const [syncStatus, setSyncStatus] = useState(mobileSyncService.getStatus());
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     // Update sync status every 30 seconds
@@ -38,15 +39,26 @@ const SyncStatus: React.FC<SyncStatusProps> = ({ className = '' }) => {
     const handleSync = () => {
       setLastSyncTime(new Date());
       setSyncStatus(mobileSyncService.getStatus());
+      setIsUpdating(false);
+    };
+
+    // Listen for URL update events
+    const handleUrlUpdate = () => {
+      setIsUpdating(true);
+      setTimeout(() => setIsUpdating(false), 1000); // Show for 1 second
     };
 
     window.addEventListener('mobile-sync-message', handleSync);
+    window.addEventListener('hashchange', handleUrlUpdate);
+    window.addEventListener('url-updated', handleUrlUpdate);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('mobile-sync-message', handleSync);
+      window.removeEventListener('hashchange', handleUrlUpdate);
+      window.removeEventListener('url-updated', handleUrlUpdate);
     };
   }, []);
 
@@ -112,6 +124,7 @@ const SyncStatus: React.FC<SyncStatusProps> = ({ className = '' }) => {
       <Badge variant={getSyncStatusColor()} className="text-xs">
         {getSyncIcon()}
         <span className="ml-1">{getSyncStatusText()}</span>
+        {isUpdating && <span className="ml-1 animate-pulse">🔄</span>}
       </Badge>
 
       {/* Last Sync Time */}
