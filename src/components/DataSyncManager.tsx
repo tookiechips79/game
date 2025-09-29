@@ -15,9 +15,11 @@ import {
   History, 
   Trash2,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Share2,
+  Copy
 } from 'lucide-react';
-import { realtimeSyncService } from '@/services/realtimeSync';
+import { mobileSyncService } from '@/services/mobileSync';
 import { universalStorage } from '@/utils/universalStorage';
 import { toast } from 'sonner';
 
@@ -26,7 +28,7 @@ interface DataSyncManagerProps {
 }
 
 const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) => {
-  const [syncStatus, setSyncStatus] = useState(realtimeSyncService.getSyncStatus());
+  const [syncStatus, setSyncStatus] = useState(mobileSyncService.getStatus());
   const [dataSummary, setDataSummary] = useState({
     totalUsers: 0,
     totalBets: 0,
@@ -40,7 +42,7 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
   useEffect(() => {
     // Update status every 30 seconds
     const interval = setInterval(() => {
-      setSyncStatus(realtimeSyncService.getSyncStatus());
+      setSyncStatus(mobileSyncService.getStatus());
       // Update data summary from universal storage
       const data = universalStorage.getData();
       setDataSummary({
@@ -56,7 +58,7 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
 
   const handleExportData = () => {
     try {
-      const data = realtimeSyncService.exportData();
+      const data = mobileSyncService.exportData();
       setExportData(data);
       toast.success('Data exported successfully');
     } catch (error) {
@@ -72,7 +74,7 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
 
     setIsLoading(true);
     try {
-      const success = realtimeSyncService.importData(importData);
+      const success = mobileSyncService.importData(importData);
       if (success) {
         toast.success('Data imported successfully');
         setImportData('');
@@ -97,10 +99,10 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
   const handleForceSync = async () => {
     setIsLoading(true);
     try {
-      const success = await realtimeSyncService.forceSync();
+      const success = await mobileSyncService.forceSync();
       if (success) {
         toast.success('Data synchronized successfully');
-        setSyncStatus(realtimeSyncService.getSyncStatus());
+        setSyncStatus(mobileSyncService.getStatus());
       } else {
         toast.error('Failed to synchronize data');
       }
@@ -113,7 +115,7 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
 
   const handleClearAllData = () => {
     if (window.confirm('Are you sure you want to clear ALL data? This cannot be undone!')) {
-      realtimeSyncService.clearAllData();
+      mobileSyncService.clearAllData();
       toast.success('All data cleared');
       const data = universalStorage.getData();
       setDataSummary({
@@ -122,6 +124,19 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
         totalHistory: data.betHistory?.length || 0,
         lastUpdate: Date.now()
       });
+    }
+  };
+
+  const handleShareUrl = async () => {
+    try {
+      const success = await mobileSyncService.copyShareableUrl();
+      if (success) {
+        toast.success('Shareable URL copied to clipboard!');
+      } else {
+        toast.error('Failed to copy URL to clipboard');
+      }
+    } catch (error) {
+      toast.error('Failed to copy URL to clipboard');
     }
   };
 
@@ -259,6 +274,15 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Force Sync Now
+          </Button>
+          <Button 
+            onClick={handleShareUrl} 
+            disabled={isLoading}
+            variant="secondary"
+            className="flex-1"
+          >
+            <Share2 className="h-4 w-4 mr-2" />
+            Copy Shareable URL
           </Button>
           <Button 
             onClick={handleClearAllData} 
