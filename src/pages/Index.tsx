@@ -20,6 +20,7 @@ import BirdButton from "@/components/BirdButton";
 import GameInfoWindow from "@/components/GameInfoWindow";
 import GameHistoryWindow from "@/components/GameHistoryWindow";
 import DataSyncManager from "@/components/DataSyncManager";
+import SyncStatus from "@/components/SyncStatus";
 import { useUser } from "@/contexts/UserContext";
 import { useGameState } from "@/contexts/GameStateContext";
 import { Bet, BookedBet, ConfirmationState } from "@/types/user";
@@ -895,27 +896,32 @@ const Index = () => {
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
           </Link>
           
-          {isAdminMode && (
-            <div className="flex space-x-2">
-              <Link to="/reload-coins">
+          <div className="flex items-center gap-4">
+            {/* Sync Status */}
+            <SyncStatus />
+            
+            {isAdminMode && (
+              <div className="flex space-x-2">
+                <Link to="/reload-coins">
+                  <Button 
+                    variant="outline" 
+                    className="border-[#1EAEDB]/50 text-[#1EAEDB] hover:bg-[#1EAEDB]/20 hover:text-[#33C3F0]"
+                  >
+                    <Coins className="h-4 w-4 mr-2" />
+                    Reload Coins
+                  </Button>
+                </Link>
                 <Button 
                   variant="outline" 
-                  className="border-[#1EAEDB]/50 text-[#1EAEDB] hover:bg-[#1EAEDB]/20 hover:text-[#33C3F0]"
+                  className="border-[#F97316]/50 text-[#F97316] hover:bg-[#F97316]/20 hover:text-[#FBBF24]"
+                  onClick={handleResetHistory}
                 >
-                  <Coins className="h-4 w-4 mr-2" />
-                  Reload Coins
+                  <TimerReset className="h-4 w-4 mr-2" />
+                  Reset History
                 </Button>
-              </Link>
-              <Button 
-                variant="outline" 
-                className="border-[#F97316]/50 text-[#F97316] hover:bg-[#F97316]/20 hover:text-[#FBBF24]"
-                onClick={handleResetHistory}
-              >
-                <TimerReset className="h-4 w-4 mr-2" />
-                Reset History
-              </Button>
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
         
 
