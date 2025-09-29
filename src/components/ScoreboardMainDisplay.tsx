@@ -21,8 +21,9 @@ interface ScoreboardMainDisplayProps {
   showControls: boolean;
   timer: number;
   isTimerRunning: boolean;
-  toggleTimer: () => void;
-  resetTimer: () => void;
+  onStart: () => void;
+  onPause: () => void;
+  onReset: () => void;
   startMatch: () => void;
   handleBreakChange: (hasBreak: boolean) => void;
   handleTeamABallIncrement: () => void;
@@ -52,8 +53,9 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
   showControls,
   timer,
   isTimerRunning,
-  toggleTimer,
-  resetTimer,
+  onStart,
+  onPause,
+  onReset,
   startMatch,
   handleBreakChange,
   handleTeamABallIncrement,
@@ -80,14 +82,11 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
                   showControls={showControls}
                   isMatchStarted={isMatchStarted}
                   startMatch={startMatch}
-                  onTeamAWinOpen={() => setTeamAWinConfirmOpen(true)}
-                  onTeamBWinOpen={() => setTeamBWinConfirmOpen(true)}
-                  teamAName={teamAName}
-                  teamBName={teamBName}
                   timer={timer}
                   isTimerRunning={isTimerRunning}
-                  toggleTimer={toggleTimer}
-                  resetTimer={resetTimer}
+                  onStart={onStart}
+                  onPause={onPause}
+                  onReset={onReset}
                 />
               </div>
             )}
@@ -97,8 +96,9 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
               timer={timer}
               isTimerRunning={isTimerRunning}
               showControls={showControls}
-              toggleTimer={toggleTimer}
-              resetTimer={resetTimer}
+              onStart={onStart}
+              onPause={onPause}
+              onReset={onReset}
             />
             
             <div className="relative">

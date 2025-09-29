@@ -5,7 +5,6 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { BookedBet } from "@/types/user";
 import { useUser } from "@/contexts/UserContext";
 import { useState } from 'react';
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface BookedBetsReceiptProps {
   bookedBets: BookedBet[];
@@ -26,8 +25,10 @@ const BookedBetsReceipt: React.FC<BookedBetsReceiptProps> = ({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
 
-  // Combine current and next game booked bets
-  const allBookedBets = [...bookedBets, ...nextGameBets];
+  // Combine current and next game booked bets with status
+  const currentGameBets = bookedBets.map(bet => ({ ...bet, isCurrentGame: true }));
+  const nextGameBetsWithStatus = nextGameBets.map(bet => ({ ...bet, isCurrentGame: false }));
+  const allBookedBets = [...currentGameBets, ...nextGameBetsWithStatus];
 
   if (allBookedBets.length === 0) {
     return null;
@@ -45,16 +46,16 @@ const BookedBetsReceipt: React.FC<BookedBetsReceiptProps> = ({
   }
 
   return (
-    <div className={`fixed right-0 bottom-0 transition-all duration-300 ${isCollapsed ? 'h-12' : 'h-auto max-h-[30vh]'} w-auto max-w-[350px] bg-black/90 backdrop-blur-md border-t-2 border-l-2 border-[#1EAEDB]/50 rounded-tl-2xl px-4 py-3 z-50 shadow-lg`}>
+    <div className={`fixed right-0 bottom-0 transition-all duration-300 ${isCollapsed ? 'h-10' : 'h-auto max-h-[40vh]'} w-auto max-w-[300px] bg-black/90 backdrop-blur-md border-t-2 border-l-2 border-[#1EAEDB]/50 rounded-tl-2xl px-3 py-2 z-50 shadow-lg`}>
       <div className="w-full">
-        <div className="flex justify-between items-center mb-2">
+        <div className="flex justify-between items-center mb-1">
           <div className="flex items-center">
-            <ReceiptText className="h-5 w-5 text-[#00FFFF] mr-2" />
-            <h3 className="text-[#00FFFF] font-bold">{title}</h3>
+            <ReceiptText className="h-4 w-4 text-[#00FFFF] mr-1" />
+            <h3 className="text-[#00FFFF] font-bold text-sm">{title}</h3>
           </div>
           <div className="flex items-center gap-2">
-            <div className="text-white text-sm">
-              {allBookedBets.length} booked {allBookedBets.length === 1 ? 'bet' : 'bets'}
+            <div className="text-white text-xs">
+              {allBookedBets.length} booked
             </div>
             <div 
               onClick={() => setIsCollapsed(!isCollapsed)}
@@ -82,8 +83,8 @@ const BookedBetsReceipt: React.FC<BookedBetsReceiptProps> = ({
         </div>
         
         {!isCollapsed && (
-          <ScrollArea className="max-h-[25vh] pb-2">
-            <div className="flex flex-col gap-2">
+          <div className="max-h-[35vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-[#1EAEDB] scrollbar-thumb-rounded-full hover:scrollbar-thumb-[#00FFFF] transition-colors">
+            <div className="flex flex-col gap-1 pr-2">
               {allBookedBets.map((bet) => {
                 const userA = getUserById(bet.userIdA);
                 const userB = getUserById(bet.userIdB);
@@ -91,34 +92,41 @@ const BookedBetsReceipt: React.FC<BookedBetsReceiptProps> = ({
                 return (
                   <Card 
                     key={`${bet.idA}-${bet.idB}`} 
-                    className="min-w-[250px] rounded-xl bg-black border border-gray-700 shadow-md hover:shadow-[#00FFFF]/20 transition-all"
+                    className="min-w-[200px] rounded-lg bg-black border border-gray-700 shadow-md hover:shadow-[#00FFFF]/20 transition-all"
                   >
-                    <CardHeader className="py-2 px-3 bg-gradient-to-r from-[#1EAEDB]/30 to-[#00FF00]/30 rounded-t-xl">
-                      <CardTitle className="text-sm flex items-center">
-                        <Check className="h-4 w-4 text-[#00FFFF] mr-1" />
-                        Bet #{bet.idA} + #{bet.idB}
+                    <CardHeader className="py-1 px-2 bg-gradient-to-r from-[#1EAEDB]/30 to-[#00FF00]/30 rounded-t-lg">
+                      <CardTitle className="text-xs flex items-center justify-between">
+                        <div className="flex items-center">
+                          <Check className="h-3 w-3 text-[#00FFFF] mr-1" />
+                          #{bet.idA} + #{bet.idB}
+                        </div>
+                        {bet.isCurrentGame ? (
+                          <span className="text-[#a3e635] font-bold text-xs bg-black/50 px-1 py-0.5 rounded">
+                            ACTIVE
+                          </span>
+                        ) : (
+                          <span className="text-[#1EAEDB] font-bold text-xs bg-black/50 px-1 py-0.5 rounded">
+                            NEXT
+                          </span>
+                        )}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-3 text-sm">
-                      <div className="grid grid-cols-2 gap-x-2 gap-y-1">
-                        <div className="text-[#00FFFF] font-semibold">{teamAName}</div>
-                        <div className="text-[#00FF00] font-semibold">{teamBName}</div>
+                    <CardContent className="p-2 text-xs">
+                      <div className="grid grid-cols-2 gap-x-1 gap-y-0.5">
+                        <div className="text-[#00FFFF] font-semibold text-xs">{teamAName}</div>
+                        <div className="text-[#00FF00] font-semibold text-xs">{teamBName}</div>
                         
-                        <div className="text-white flex items-center gap-1">
-                          <span className="text-gray-400">User:</span> 
+                        <div className="text-white text-xs truncate">
                           {userA?.name || 'User'}
                         </div>
-                        <div className="text-white flex items-center gap-1">
-                          <span className="text-gray-400">User:</span> 
+                        <div className="text-white text-xs truncate">
                           {userB?.name || 'User'}
                         </div>
                         
-                        <div className="text-white font-bold flex items-center gap-1">
-                          <span className="text-gray-400">Bet:</span>
+                        <div className="text-white font-bold text-xs">
                           {bet.amount} COINS
                         </div>
-                        <div className="text-white font-bold flex items-center gap-1">
-                          <span className="text-gray-400">Bet:</span>
+                        <div className="text-white font-bold text-xs">
                           {bet.amount} COINS
                         </div>
                       </div>
@@ -127,7 +135,7 @@ const BookedBetsReceipt: React.FC<BookedBetsReceiptProps> = ({
                 );
               })}
             </div>
-          </ScrollArea>
+          </div>
         )}
       </div>
     </div>

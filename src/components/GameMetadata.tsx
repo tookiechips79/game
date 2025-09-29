@@ -3,9 +3,14 @@ import React from "react";
 import GameHeader from "@/components/GameHeader";
 import { TimerProps } from "@/utils/timerUtils";
 
-interface GameMetadataProps extends TimerProps {
+interface GameMetadataProps {
   gameLabel: string;
+  timer: number;
+  isTimerRunning: boolean;
   showControls: boolean;
+  onStart: () => void;
+  onPause: () => void;
+  onReset: () => void;
 }
 
 const GameMetadata: React.FC<GameMetadataProps> = ({
@@ -13,8 +18,9 @@ const GameMetadata: React.FC<GameMetadataProps> = ({
   timer,
   isTimerRunning,
   showControls,
-  toggleTimer,
-  resetTimer
+  onStart,
+  onPause,
+  onReset
 }) => {
   return (
     <GameHeader
@@ -22,8 +28,9 @@ const GameMetadata: React.FC<GameMetadataProps> = ({
       timer={timer}
       isTimerRunning={isTimerRunning}
       showControls={showControls}
-      toggleTimer={toggleTimer}
-      resetTimer={resetTimer}
+      onStart={onStart}
+      onPause={onPause}
+      onReset={onReset}
     />
   );
 };

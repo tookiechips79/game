@@ -7,8 +7,9 @@ interface GameHeaderProps {
   timer: number;
   isTimerRunning: boolean;
   showControls: boolean;
-  toggleTimer: () => void;
-  resetTimer: () => void;
+  onStart: () => void;
+  onPause: () => void;
+  onReset: () => void;
 }
 
 const GameHeader = ({ 
@@ -16,8 +17,9 @@ const GameHeader = ({
   timer, 
   isTimerRunning, 
   showControls, 
-  toggleTimer, 
-  resetTimer 
+  onStart,
+  onPause,
+  onReset
 }: GameHeaderProps) => {
   return (
     <div className="absolute top-0 left-0 right-0 flex flex-col items-center z-20 pt-4">
@@ -31,8 +33,9 @@ const GameHeader = ({
           timer={timer}
           isTimerRunning={isTimerRunning}
           showControls={showControls}
-          toggleTimer={toggleTimer}
-          resetTimer={resetTimer}
+          onStart={onStart}
+          onPause={onPause}
+          onReset={onReset}
         />
       </div>
     </div>

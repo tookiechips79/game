@@ -25,7 +25,7 @@ export const UserSelector: React.FC = () => {
           <option value="">-- Select User --</option>
           {users.map(user => (
             <option key={user.id} value={user.id}>
-              {user.name} - {user.credits} COINS
+              {user.name} - {user.credits} COINS - {user.membershipStatus === 'active' ? 'ACTIVE' : 'INACTIVE'}
             </option>
           ))}
         </select>
@@ -257,6 +257,13 @@ export const UserCreditDisplay: React.FC<{ hideCredits?: boolean }> = ({ hideCre
         <div className="flex justify-between items-center">
           <div className="text-white">
             <span className="font-bold">{currentUser.name}</span>
+            <div className={`text-xs px-2 py-1 rounded-full mt-1 inline-block ${
+              currentUser.membershipStatus === 'active' 
+                ? 'bg-green-500/20 text-green-400' 
+                : 'bg-red-500/20 text-red-400'
+            }`}>
+              {currentUser.membershipStatus === 'active' ? 'ACTIVE MEMBER' : 'INACTIVE - SUBSCRIBE TO BET'}
+            </div>
           </div>
           {!hideCredits && (
             <div className="bg-[#a3e635]/20 p-2 rounded-xl text-[#a3e635] font-bold">

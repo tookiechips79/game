@@ -52,11 +52,13 @@ const UserTransactionHistory: React.FC<UserTransactionHistoryProps> = ({
   transactionType = 'all',
   isAdmin = false 
 }) => {
-  const { userBetReceipts, getUserBetReceipts, creditTransactions, getCreditTransactions } = useUser();
+  const { userBetReceipts, getUserBetReceipts, creditTransactions, getCreditTransactions, getAllUsers, getUserById } = useUser();
   const [filter, setFilter] = useState<'all' | 'wins' | 'losses' | 'deposits' | 'withdrawals' | 'subscriptions' | 'admin' | 'cashouts'>('all');
   
-  const betReceipts = getUserBetReceipts(userId);
-  const userCreditTransactions = getCreditTransactions(userId);
+  // For admin view, get all transactions from all users
+  const allUsers = getAllUsers();
+  const betReceipts = isAdmin ? userBetReceipts : getUserBetReceipts(userId);
+  const userCreditTransactions = isAdmin ? creditTransactions : getCreditTransactions(userId);
   
   const generateTransactions = (receipts: UserBetReceipt[]): Transaction[] => {
     let transactions: Transaction[] = [];
@@ -70,51 +72,35 @@ const UserTransactionHistory: React.FC<UserTransactionHistoryProps> = ({
         return;
       }
       
+      const userName = isAdmin ? getUserById(receipt.userId)?.name || 'Unknown' : '';
+      const userPrefix = isAdmin ? `[${userName}] ` : '';
+      
       transactions.push({
         id: `bet-${receipt.id}`,
         userId: receipt.userId,
         type: receipt.won ? 'win' : 'loss',
         amount: receipt.amount,
-        details: `${receipt.won ? 'Won' : 'Lost'} bet on ${receipt.teamName} vs ${receipt.opponentName} (Game #${receipt.gameNumber})`,
+        details: `${userPrefix}${receipt.won ? 'Won' : 'Lost'} bet on ${receipt.teamName} vs ${receipt.opponentName} (Game #${receipt.gameNumber})`,
         timestamp: receipt.timestamp
       });
     });
     
     // Add credit transactions - this is where all admin add/deduct + cashouts are handled
     userCreditTransactions.forEach(tx => {
+      const userName = isAdmin ? getUserById(tx.userId)?.name || 'Unknown' : '';
+      const userPrefix = isAdmin ? `[${userName}] ` : '';
+      
       transactions.push({
         id: tx.id,
         userId: tx.userId,
         type: tx.type,
         amount: tx.amount,
-        details: tx.details,
+        details: `${userPrefix}${tx.details}`,
         timestamp: tx.timestamp
       });
     });
     
-    // Add deposit and subscription sample data if we don't have any
-    // In a real app, these would also be stored properly
-    if (!transactions.some(t => t.type === 'deposit')) {
-      transactions.push({
-        id: `deposit-${Date.now()}-1`,
-        userId: userId,
-        type: 'deposit',
-        amount: 100,
-        details: 'Added coins via credit card',
-        timestamp: Date.now() - 86400000 * 2
-      });
-    }
-    
-    if (!transactions.some(t => t.type === 'subscription')) {
-      transactions.push({
-        id: `subscription-${Date.now()}-1`,
-        userId: userId,
-        type: 'subscription',
-        amount: 20,
-        details: 'Monthly subscription payment',
-        timestamp: Date.now() - 86400000 * 5
-      });
-    }
+    // Only show real transactions - no sample data
     
     return transactions.sort((a, b) => b.timestamp - a.timestamp);
   };
@@ -276,6 +262,7 @@ const UserTransactionHistory: React.FC<UserTransactionHistoryProps> = ({
               <TableHeader className="bg-gray-800">
                 <TableRow>
                   <TableHead className="w-[100px]">Type</TableHead>
+                  {isAdmin && <TableHead className="w-[120px]">User</TableHead>}
                   <TableHead>Details</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead className="text-right">Date</TableHead>
@@ -292,6 +279,11 @@ const UserTransactionHistory: React.FC<UserTransactionHistoryProps> = ({
                         </span>
                       </div>
                     </TableCell>
+                    {isAdmin && (
+                      <TableCell className="font-medium text-blue-400">
+                        {getUserById(transaction.userId)?.name || 'Unknown'}
+                      </TableCell>
+                    )}
                     <TableCell>{transaction.details}</TableCell>
                     <TableCell className={`text-right ${getTransactionColor(transaction.type)}`}>
                       {['deposit', 'win', 'admin_add'].includes(transaction.type) ? '+' : ''}

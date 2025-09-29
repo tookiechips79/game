@@ -6,6 +6,8 @@ export interface User {
   password: string;
   wins: number;
   losses: number;
+  membershipStatus: 'inactive' | 'active';
+  subscriptionDate?: number;
 }
 
 export interface BetHistoryRecord {

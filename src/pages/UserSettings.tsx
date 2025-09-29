@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { useUser } from "@/contexts/UserContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { 
   ArrowLeft, 
   Receipt, 
@@ -13,7 +13,8 @@ import {
   BadgeAlert,
   ShieldAlert,
   Clock,
-  Wallet
+  Wallet,
+  Home
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,6 +50,16 @@ const UserSettings = () => {
       <div className="bg-gray-800 border-b border-gray-700 py-4">
         <div className="container mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
+            <Link to="/">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="text-white hover:text-[#a3e635] hover:bg-[#a3e635]/10"
+              >
+                <Home className="h-4 w-4 mr-2" />
+                Home
+              </Button>
+            </Link>
             <Button 
               variant="ghost" 
               size="icon" 
@@ -165,13 +176,14 @@ const UserSettings = () => {
               <CardHeader>
                 <CardTitle className="text-2xl flex items-center gap-2">
                   <History className="h-5 w-5" />
-                  Bet History
+                  {isAdmin ? "All Users Bet History" : "Bet History"}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <UserTransactionHistory 
                   userId={currentUser.id} 
                   transactionType="bets"
+                  isAdmin={isAdmin}
                 />
               </CardContent>
             </Card>
@@ -183,13 +195,14 @@ const UserSettings = () => {
               <CardHeader>
                 <CardTitle className="text-2xl flex items-center gap-2">
                   <CreditCard className="h-5 w-5" />
-                  Transaction History
+                  {isAdmin ? "All Users Transaction History" : "Transaction History"}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <UserTransactionHistory 
                   userId={currentUser.id} 
                   transactionType="coins"
+                  isAdmin={isAdmin}
                 />
               </CardContent>
             </Card>

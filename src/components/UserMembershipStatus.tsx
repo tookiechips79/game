@@ -25,18 +25,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { format, addMonths } from "date-fns";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
-// In a real app, these would come from a database
-// For demonstration, we'll create a mock membership that starts from today
-const mockMembership = {
-  isActive: true,
-  startDate: Date.now(),
-  nextBillingDate: addMonths(new Date(), 1).getTime(),
-  plan: "Monthly",
-  price: 20,
-  autoRenew: true
-};
+// Membership data based on user's actual status
 
 interface UserMembershipStatusProps {
   userId: string;
@@ -44,10 +35,20 @@ interface UserMembershipStatusProps {
 
 const UserMembershipStatus: React.FC<UserMembershipStatusProps> = ({ userId }) => {
   const { getUserById } = useUser();
+  const navigate = useNavigate();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-  const [membership, setMembership] = useState(mockMembership);
   
   const user = getUserById(userId);
+  
+  // Create membership data based on user's actual status
+  const membership = {
+    isActive: user?.membershipStatus === 'active',
+    startDate: user?.subscriptionDate || null,
+    nextBillingDate: user?.subscriptionDate ? addMonths(new Date(user.subscriptionDate), 1).getTime() : null,
+    plan: "Monthly",
+    price: 20,
+    autoRenew: true
+  };
   
   if (!user) {
     return <div>User not found</div>;
@@ -69,16 +70,8 @@ const UserMembershipStatus: React.FC<UserMembershipStatusProps> = ({ userId }) =
   };
   
   const handleReactivate = () => {
-    // In a real app, this would call an API to reactivate the subscription
-    setMembership({
-      ...membership,
-      isActive: true,
-      autoRenew: true
-    });
-    
-    toast.success("Membership Reactivated", {
-      description: "Your membership has been successfully reactivated."
-    });
+    // Redirect to subscription page to reactivate membership
+    navigate("/subscription");
   };
   
   return (

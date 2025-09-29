@@ -6,11 +6,10 @@ import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { 
   ArrowLeft, Zap, Coins, CheckSquare, Lock, Unlock, 
-  Wallet, TimerReset, ReceiptText, SkipForward, ArrowDownUp, ArrowDown
+  Wallet, TimerReset, ReceiptText, SkipForward, ArrowDownUp, ArrowDown, Trash2
 } from "lucide-react";
 import NumericAnimation from "@/components/NumericAnimation";
 import ScoreBoard from "@/components/ScoreBoard";
-import BetConfirmationDialog from "@/components/BetConfirmationDialog";
 import GameDescription from "@/components/GameDescription";
 import UserCreditSystem, { UserSelector } from "@/components/UserCreditSystem";
 import UserWidgetsContainer from "@/components/UserWidgetsContainer";
@@ -18,7 +17,10 @@ import BookedBetsReceipt from "@/components/BookedBetsReceipt";
 import BetLedger from "@/components/BetLedger";
 import BetReceiptsLedger from "@/components/BetReceiptsLedger";
 import BirdButton from "@/components/BirdButton";
+import GameInfoWindow from "@/components/GameInfoWindow";
+import GameHistoryWindow from "@/components/GameHistoryWindow";
 import { useUser } from "@/contexts/UserContext";
+import { useGameState } from "@/contexts/GameStateContext";
 import { Bet, BookedBet, ConfirmationState } from "@/types/user";
 
 const Index = () => {
@@ -33,33 +35,41 @@ const Index = () => {
     resetBetHistory 
   } = useUser();
   
-  const [teamAQueue, setTeamAQueue] = useState<Bet[]>([]);
-  const [teamBQueue, setTeamBQueue] = useState<Bet[]>([]);
-  const [betId, setBetId] = useState<string>("");
-  const [bookedBets, setBookedBets] = useState<BookedBet[]>([]);
-  const [totalBookedAmount, setTotalBookedAmount] = useState<number>(0);
+  const { gameState, updateGameState, isAdmin, localAdminState, updateLocalAdminState, startTimer, pauseTimer, resetTimer, setTimer, resetTimerOnMatchStart, resetTimerOnGameWin } = useGameState();
+  
+  // Extract state from gameState context
+  const {
+    teamAQueue,
+    teamBQueue,
+    nextTeamAQueue,
+    nextTeamBQueue,
+    bookedBets,
+    totalBookedAmount,
+    nextBookedBets,
+    nextTotalBookedAmount,
+    teamAName,
+    teamBName,
+    teamAGames,
+    teamABalls,
+    teamBGames,
+    teamBBalls,
+    teamAHasBreak,
+    gameLabel,
+    currentGameNumber,
+    gameDescription,
+    betCounter,
+    colorIndex,
+    timerSeconds,
+    isTimerRunning,
+    timerStartTime
+  } = gameState;
 
-  const [nextTeamAQueue, setNextTeamAQueue] = useState<Bet[]>([]);
-  const [nextTeamBQueue, setNextTeamBQueue] = useState<Bet[]>([]);
-  const [nextBookedBets, setNextBookedBets] = useState<BookedBet[]>([]);
-  const [nextTotalBookedAmount, setNextTotalBookedAmount] = useState<number>(0);
+  // Extract local admin state (not synchronized)
+  const { isAdminMode, isAgentMode } = localAdminState;
   
-  const [teamAName, setTeamAName] = useState<string>("Player A");
-  const [teamBName, setTeamBName] = useState<string>("Player B");
-  const [teamAGames, setTeamAGames] = useState<number>(0);
-  const [teamABalls, setTeamABalls] = useState<number>(0);
-  const [teamBGames, setTeamBGames] = useState<number>(0);
-  const [teamBBalls, setTeamBBalls] = useState<number>(0);
-  const [teamAHasBreak, setTeamAHasBreak] = useState<boolean>(true);
-  const [gameLabel, setGameLabel] = useState<string>("GAME*");
-  const [currentGameNumber, setCurrentGameNumber] = useState<number>(1);
-  
-  const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
-  const [isAgentMode, setIsAgentMode] = useState<boolean>(false);
+  const [betId, setBetId] = useState<string>("");
   
   const betColors = ["#00FF00", "#00FFFF", "#FF00FF", "#FFFF00", "#1EAEDB"];
-  const [colorIndex, setColorIndex] = useState<number>(0);
-  const [betCounter, setBetCounter] = useState<number>(1);
   
   const [confirmation, setConfirmation] = useState<ConfirmationState>({
     isOpen: false,
@@ -69,11 +79,12 @@ const Index = () => {
     isNextGame: false
   });
 
-  const [gameDescription, setGameDescription] = useState<string>("");
-
   const generateBetId = () => {
-    const newId = betCounter;
-    setBetCounter(prev => prev + 1);
+    // Generate a 7-digit unique ID using counter + random number
+    const random = Math.floor(Math.random() * 1000);
+    const paddedCounter = betCounter.toString().padStart(4, '0');
+    const newId = parseInt(`${paddedCounter}${random.toString().padStart(3, '0')}`);
+    updateGameState({ betCounter: betCounter + 1 });
     return newId;
   };
 
@@ -82,7 +93,7 @@ const Index = () => {
   };
 
   const toggleAdminMode = () => {
-    setIsAdminMode(!isAdminMode);
+    updateLocalAdminState({ isAdminMode: !isAdminMode });
     if (!isAdminMode) {
       toast.success("Admin Mode Activated", {
         description: "You now have access to admin controls",
@@ -91,7 +102,7 @@ const Index = () => {
   };
 
   const toggleAgentMode = () => {
-    setIsAgentMode(!isAgentMode);
+    updateLocalAdminState({ isAgentMode: !isAgentMode });
     if (!isAgentMode) {
       toast.success("Agent Mode Activated", {
         description: "You now have access to game controls",
@@ -109,15 +120,16 @@ const Index = () => {
       return;
     }
 
-    setNextTeamAQueue([...nextTeamAQueue, ...teamAQueue]);
-    setNextTeamBQueue([...nextTeamBQueue, ...teamBQueue]);
-    setNextBookedBets([...nextBookedBets, ...bookedBets]);
-    setNextTotalBookedAmount(prev => prev + totalBookedAmount);
-
-    setTeamAQueue([]);
-    setTeamBQueue([]);
-    setBookedBets([]);
-    setTotalBookedAmount(0);
+    updateGameState({
+      nextTeamAQueue: [...nextTeamAQueue, ...teamAQueue],
+      nextTeamBQueue: [...nextTeamBQueue, ...teamBQueue],
+      nextBookedBets: [...nextBookedBets, ...bookedBets],
+      nextTotalBookedAmount: nextTotalBookedAmount + totalBookedAmount,
+      teamAQueue: [],
+      teamBQueue: [],
+      bookedBets: [],
+      totalBookedAmount: 0
+    });
 
     toast.success("Bets Moved to Next Game", {
       description: "All current bets have been moved to the next game"
@@ -132,15 +144,16 @@ const Index = () => {
       return;
     }
 
-    setTeamAQueue([...teamAQueue, ...nextTeamAQueue]);
-    setTeamBQueue([...teamBQueue, ...nextTeamBQueue]);
-    setBookedBets([...bookedBets, ...nextBookedBets]);
-    setTotalBookedAmount(prev => prev + nextTotalBookedAmount);
-
-    setNextTeamAQueue([]);
-    setNextTeamBQueue([]);
-    setNextBookedBets([]);
-    setNextTotalBookedAmount(0);
+    updateGameState({
+      teamAQueue: [...teamAQueue, ...nextTeamAQueue],
+      teamBQueue: [...teamBQueue, ...nextTeamBQueue],
+      bookedBets: [...bookedBets, ...nextBookedBets],
+      totalBookedAmount: totalBookedAmount + nextTotalBookedAmount,
+      nextTeamAQueue: [],
+      nextTeamBQueue: [],
+      nextBookedBets: [],
+      nextTotalBookedAmount: 0
+    });
 
     toast.success("Bets Moved to Current Game", {
       description: "All next-game bets have been moved to the current game"
@@ -148,11 +161,13 @@ const Index = () => {
   };
 
   const handleTeamAWin = (duration: number) => {
-    setTeamAGames(prev => prev + 1);
-    setTeamABalls(0); // Reset Team A ball count to zero
-    setTeamBBalls(0); // Reset Team B ball count to zero
-    
-    setTeamAHasBreak(!teamAHasBreak);
+    updateGameState({
+      teamAGames: teamAGames + 1,
+      teamABalls: 0,
+      teamBBalls: 0,
+      teamAHasBreak: !teamAHasBreak,
+      currentGameNumber: currentGameNumber + 1
+    });
     
     toast.success(`${teamAName} Wins!`, {
       description: `${teamAName} has won a game`,
@@ -160,17 +175,20 @@ const Index = () => {
 
     processBetsForGameWin('A', duration);
     
-    setCurrentGameNumber(prev => prev + 1);
+    // Reset timer when game is won
+    resetTimerOnGameWin();
     
     playSound("win");
   };
 
   const handleTeamBWin = (duration: number) => {
-    setTeamBGames(prev => prev + 1);
-    setTeamABalls(0); // Reset Team A ball count to zero
-    setTeamBBalls(0); // Reset Team B ball count to zero
-    
-    setTeamAHasBreak(!teamAHasBreak);
+    updateGameState({
+      teamBGames: teamBGames + 1,
+      teamABalls: 0,
+      teamBBalls: 0,
+      teamAHasBreak: !teamAHasBreak,
+      currentGameNumber: currentGameNumber + 1
+    });
     
     toast.success(`${teamBName} Wins!`, {
       description: `${teamBName} has won a game`,
@@ -178,33 +196,39 @@ const Index = () => {
 
     processBetsForGameWin('B', duration);
     
-    setCurrentGameNumber(prev => prev + 1);
+    // Reset timer when game is won
+    resetTimerOnGameWin();
     
     playSound("win");
   };
   
   const processBetsForGameWin = (winningTeam: 'A' | 'B', duration: number) => {
-    const teamABets = teamAQueue.map(bet => {
-      const user = getUserById(bet.userId);
-      return {
-        userId: bet.userId,
-        userName: user?.name || 'Unknown',
-        amount: bet.amount,
-        won: winningTeam === 'A',
-        booked: bet.booked
-      };
-    });
+    // Only include booked bets in game history
+    const teamABets = teamAQueue
+      .filter(bet => bet.booked)
+      .map(bet => {
+        const user = getUserById(bet.userId);
+        return {
+          userId: bet.userId,
+          userName: user?.name || 'Unknown',
+          amount: bet.amount,
+          won: winningTeam === 'A',
+          booked: bet.booked
+        };
+      });
     
-    const teamBBets = teamBQueue.map(bet => {
-      const user = getUserById(bet.userId);
-      return {
-        userId: bet.userId,
-        userName: user?.name || 'Unknown',
-        amount: bet.amount,
-        won: winningTeam === 'B',
-        booked: bet.booked
-      };
-    });
+    const teamBBets = teamBQueue
+      .filter(bet => bet.booked)
+      .map(bet => {
+        const user = getUserById(bet.userId);
+        return {
+          userId: bet.userId,
+          userName: user?.name || 'Unknown',
+          amount: bet.amount,
+          won: winningTeam === 'B',
+          booked: bet.booked
+        };
+      });
     
     addBetHistoryRecord({
       gameNumber: teamAGames + teamBGames + 1,
@@ -270,21 +294,24 @@ const Index = () => {
     const nextMatchedBooked = [...nextBookedBets];
     const nextTotal = nextTotalBookedAmount;
     
-    setTeamAQueue([]);
-    setTeamBQueue([]);
-    setBookedBets([]);
-    setTotalBookedAmount(0);
-    
-    setNextTeamAQueue([]);
-    setNextTeamBQueue([]);
-    setNextBookedBets([]);
-    setNextTotalBookedAmount(0);
+    updateGameState({
+      teamAQueue: [],
+      teamBQueue: [],
+      bookedBets: [],
+      totalBookedAmount: 0,
+      nextTeamAQueue: [],
+      nextTeamBQueue: [],
+      nextBookedBets: [],
+      nextTotalBookedAmount: 0
+    });
     
     setTimeout(() => {
-      setTeamAQueue(nextMatchedBetsA);
-      setTeamBQueue(nextMatchedBetsB);
-      setBookedBets(nextMatchedBooked);
-      setTotalBookedAmount(nextTotal);
+      updateGameState({
+        teamAQueue: nextMatchedBetsA,
+        teamBQueue: nextMatchedBetsB,
+        bookedBets: nextMatchedBooked,
+        totalBookedAmount: nextTotal
+      });
       
       if (nextMatchedBetsA.length > 0 || nextMatchedBetsB.length > 0) {
         toast.success("Next Game Matched Bets Moved to Current Game", {
@@ -293,7 +320,7 @@ const Index = () => {
       }
     }, 100);
     
-    setBetCounter(1);
+    updateGameState({ betCounter: 1 });
     
     toast.success("All Bets Processed", {
       description: "A new betting round can begin"
@@ -338,13 +365,15 @@ const Index = () => {
     const matchedBetsA = teamAQueue.filter(bet => bet.booked);
     const matchedBetsB = teamBQueue.filter(bet => bet.booked);
     
-    setTeamAQueue(matchedBetsA);
-    setTeamBQueue(matchedBetsB);
-    
     const nextMatchedBetsA = nextTeamAQueue.filter(bet => bet.booked);
     const nextMatchedBetsB = nextTeamBQueue.filter(bet => bet.booked);
-    setNextTeamAQueue(nextMatchedBetsA);
-    setNextTeamBQueue(nextMatchedBetsB);
+    
+    updateGameState({
+      teamAQueue: matchedBetsA,
+      teamBQueue: matchedBetsB,
+      nextTeamAQueue: nextMatchedBetsA,
+      nextTeamBQueue: nextMatchedBetsB
+    });
     
     const totalUnmatchedBets = allUnmatchedBets.length + allUnmatchedNextBets.length;
     if (totalUnmatchedBets > 0) {
@@ -390,22 +419,22 @@ const Index = () => {
 
     if (confirmation.isNextGame) {
       if (confirmation.teamSide === 'A') {
-        setNextTeamAQueue(prev => [...prev, bet]);
         const updatedAQueue = [...nextTeamAQueue, bet];
+        updateGameState({ nextTeamAQueue: updatedAQueue });
         bookNextGameBets(updatedAQueue, nextTeamBQueue);
       } else {
-        setNextTeamBQueue(prev => [...prev, bet]);
         const updatedBQueue = [...nextTeamBQueue, bet];
+        updateGameState({ nextTeamBQueue: updatedBQueue });
         bookNextGameBets(nextTeamAQueue, updatedBQueue);
       }
     } else {
       if (confirmation.teamSide === 'A') {
-        setTeamAQueue(prev => [...prev, bet]);
         const updatedAQueue = [...teamAQueue, bet];
+        updateGameState({ teamAQueue: updatedAQueue });
         bookBets(updatedAQueue, teamBQueue);
       } else {
-        setTeamBQueue(prev => [...prev, bet]);
         const updatedBQueue = [...teamBQueue, bet];
+        updateGameState({ teamBQueue: updatedBQueue });
         bookBets(teamAQueue, updatedBQueue);
       }
     }
@@ -418,6 +447,15 @@ const Index = () => {
       toast.error("No User Selected", {
         description: "Please select or create a user first",
         duration: 4500,
+      });
+      return;
+    }
+
+    if (currentUser.membershipStatus === 'inactive') {
+      toast.error("Membership Required", {
+        description: "You need an active subscription to place bets. Please subscribe to activate your membership.",
+        icon: <Lock className="h-5 w-5 text-red-500" />,
+        duration: 5000,
       });
       return;
     }
@@ -440,13 +478,44 @@ const Index = () => {
       return;
     }
     
-    setConfirmation({
-      isOpen: true,
-      team: team === 'A' ? teamAName : teamBName,
-      teamSide: team,
-      amount,
-      isNextGame
-    });
+    // Directly place the bet without confirmation dialog
+    const betId = generateBetId();
+    const bet: Bet = { 
+      id: betId, 
+      amount: amount, 
+      color: null, 
+      booked: false,
+      userId: currentUser.id,
+      teamSide: team
+    };
+
+    playSound("placeBet");
+
+    if (isNextGame) {
+      if (team === 'A') {
+        const updatedAQueue = [...nextTeamAQueue, bet];
+        updateGameState({ nextTeamAQueue: updatedAQueue });
+        bookNextGameBets(updatedAQueue, nextTeamBQueue);
+      } else {
+        const updatedBQueue = [...nextTeamBQueue, bet];
+        updateGameState({ nextTeamBQueue: updatedBQueue });
+        bookNextGameBets(nextTeamAQueue, updatedBQueue);
+      }
+    } else {
+      if (team === 'A') {
+        const updatedAQueue = [...teamAQueue, bet];
+        updateGameState({ teamAQueue: updatedAQueue });
+        bookBets(updatedAQueue, teamBQueue);
+      } else {
+        const updatedBQueue = [...teamBQueue, bet];
+        updateGameState({ teamBQueue: updatedBQueue });
+        bookBets(teamAQueue, updatedBQueue);
+      }
+    }
+
+    // Deduct credits
+    deductCredits(currentUser.id, amount);
+
   };
 
   const closeBetConfirmation = () => {
@@ -488,21 +557,20 @@ const Index = () => {
           
           newTotalAmount += newAQueue[i].amount;
           
-          toast.success("Bet Booked!", {
-            description: `Bet #${newAQueue[i].id} booked with Bet #${newBQueue[matchIndex].id} for ${newAQueue[i].amount}`,
-            duration: 4500,
-          });
+          // Bet booked successfully - no toast notification
           
           playSound("match");
         }
       }
     }
 
-    setTeamAQueue(newAQueue);
-    setTeamBQueue(newBQueue);
-    setBookedBets(newBookedBets);
-    setTotalBookedAmount(newTotalAmount);
-    setColorIndex(newColorIndex);
+    updateGameState({
+      teamAQueue: newAQueue,
+      teamBQueue: newBQueue,
+      bookedBets: newBookedBets,
+      totalBookedAmount: newTotalAmount,
+      colorIndex: newColorIndex
+    });
   };
 
   const bookNextGameBets = (aQueue: Bet[] = nextTeamAQueue, bQueue: Bet[] = nextTeamBQueue) => {
@@ -534,21 +602,81 @@ const Index = () => {
           
           newTotalAmount += newAQueue[i].amount;
           
-          toast.success("Next Game Bet Booked!", {
-            description: `Next Game Bet #${newAQueue[i].id} booked with Bet #${newBQueue[matchIndex].id} for ${newAQueue[i].amount}`,
-            duration: 4500,
-          });
+          // Next game bet booked successfully - no toast notification
           
           playSound("match");
         }
       }
     }
 
-    setNextTeamAQueue(newAQueue);
-    setNextTeamBQueue(newBQueue);
-    setNextBookedBets(newBookedBets);
-    setNextTotalBookedAmount(newTotalAmount);
-    setColorIndex(newColorIndex);
+    updateGameState({
+      nextTeamAQueue: newAQueue,
+      nextTeamBQueue: newBQueue,
+      nextBookedBets: newBookedBets,
+      nextTotalBookedAmount: newTotalAmount,
+      colorIndex: newColorIndex
+    });
+  };
+
+  const deleteOpenBet = (betId: number, isNextGame: boolean = false) => {
+    if (!currentUser) {
+      toast.error("Cannot Delete Bet", {
+        description: "You must be logged in to delete bets",
+        duration: 3000,
+      });
+      return;
+    }
+
+    let betDeleted = false;
+    let deletedBet: Bet | undefined;
+    
+    if (isNextGame) {
+      // Check next game queues
+      deletedBet = nextTeamAQueue.find(bet => bet.id === betId);
+      if (deletedBet && !deletedBet.booked && deletedBet.userId === currentUser.id) {
+        const newNextTeamAQueue = nextTeamAQueue.filter(bet => bet.id !== betId);
+        updateGameState({ nextTeamAQueue: newNextTeamAQueue });
+        betDeleted = true;
+      }
+      
+      if (!betDeleted) {
+        deletedBet = nextTeamBQueue.find(bet => bet.id === betId);
+        if (deletedBet && !deletedBet.booked && deletedBet.userId === currentUser.id) {
+          const newNextTeamBQueue = nextTeamBQueue.filter(bet => bet.id !== betId);
+          updateGameState({ nextTeamBQueue: newNextTeamBQueue });
+          betDeleted = true;
+        }
+      }
+    } else {
+      // Check current game queues
+      deletedBet = teamAQueue.find(bet => bet.id === betId);
+      if (deletedBet && !deletedBet.booked && deletedBet.userId === currentUser.id) {
+        const newTeamAQueue = teamAQueue.filter(bet => bet.id !== betId);
+        updateGameState({ teamAQueue: newTeamAQueue });
+        betDeleted = true;
+      }
+      
+      if (!betDeleted) {
+        deletedBet = teamBQueue.find(bet => bet.id === betId);
+        if (deletedBet && !deletedBet.booked && deletedBet.userId === currentUser.id) {
+          const newTeamBQueue = teamBQueue.filter(bet => bet.id !== betId);
+          updateGameState({ teamBQueue: newTeamBQueue });
+          betDeleted = true;
+        }
+      }
+    }
+    
+    if (betDeleted && deletedBet) {
+      // Refund credits to the user
+      addCredits(deletedBet.userId, deletedBet.amount, true);
+      
+      // Bet deleted successfully - no toast notification
+    } else {
+      toast.error("Cannot Delete Bet", {
+        description: "Bet not found, already booked/matched, or you don't have permission to delete this bet",
+        duration: 3000,
+      });
+    }
   };
 
   const deleteBet = () => {
@@ -565,7 +693,7 @@ const Index = () => {
     const deletedBetA = teamAQueue.find(bet => bet.id === id);
     if (deletedBetA) {
       const newTeamAQueue = teamAQueue.filter(bet => bet.id !== id);
-      setTeamAQueue(newTeamAQueue);
+      updateGameState({ teamAQueue: newTeamAQueue });
       
       if (deletedBetA.booked) {
         const matchedBookedBet = bookedBets.find(bookedBet => bookedBet.idA === id);
@@ -576,12 +704,13 @@ const Index = () => {
             }
             return bet;
           });
-          setTeamBQueue(newTeamBQueue);
-          
           const newBookedBets = bookedBets.filter(bookedBet => bookedBet.idA !== id);
-          setBookedBets(newBookedBets);
           
-          setTotalBookedAmount(prev => prev - matchedBookedBet.amount);
+          updateGameState({
+            teamBQueue: newTeamBQueue,
+            bookedBets: newBookedBets,
+            totalBookedAmount: totalBookedAmount - matchedBookedBet.amount
+          });
         }
       }
       
@@ -591,7 +720,7 @@ const Index = () => {
     const deletedBetB = teamBQueue.find(bet => bet.id === id);
     if (deletedBetB && !betDeleted) {
       const newTeamBQueue = teamBQueue.filter(bet => bet.id !== id);
-      setTeamBQueue(newTeamBQueue);
+      updateGameState({ teamBQueue: newTeamBQueue });
       
       if (deletedBetB.booked) {
         const matchedBookedBet = bookedBets.find(bookedBet => bookedBet.idB === id);
@@ -602,12 +731,13 @@ const Index = () => {
             }
             return bet;
           });
-          setTeamAQueue(newTeamAQueue);
-          
           const newBookedBets = bookedBets.filter(bookedBet => bookedBet.idB !== id);
-          setBookedBets(newBookedBets);
           
-          setTotalBookedAmount(prev => prev - matchedBookedBet.amount);
+          updateGameState({
+            teamAQueue: newTeamAQueue,
+            bookedBets: newBookedBets,
+            totalBookedAmount: totalBookedAmount - matchedBookedBet.amount
+          });
         }
       }
       
@@ -618,7 +748,7 @@ const Index = () => {
       const deletedNextBetA = nextTeamAQueue.find(bet => bet.id === id);
       if (deletedNextBetA) {
         const newNextTeamAQueue = nextTeamAQueue.filter(bet => bet.id !== id);
-        setNextTeamAQueue(newNextTeamAQueue);
+        updateGameState({ nextTeamAQueue: newNextTeamAQueue });
         
         if (deletedNextBetA.booked) {
           const matchedBookedBet = nextBookedBets.find(bookedBet => bookedBet.idA === id);
@@ -629,12 +759,13 @@ const Index = () => {
               }
               return bet;
             });
-            setNextTeamBQueue(newNextTeamBQueue);
-            
             const newNextBookedBets = nextBookedBets.filter(bookedBet => bookedBet.idA !== id);
-            setNextBookedBets(newNextBookedBets);
             
-            setNextTotalBookedAmount(prev => prev - matchedBookedBet.amount);
+            updateGameState({
+              nextTeamBQueue: newNextTeamBQueue,
+              nextBookedBets: newNextBookedBets,
+              nextTotalBookedAmount: nextTotalBookedAmount - matchedBookedBet.amount
+            });
           }
         }
         
@@ -644,7 +775,7 @@ const Index = () => {
       const deletedNextBetB = nextTeamBQueue.find(bet => bet.id === id);
       if (deletedNextBetB && !betDeleted) {
         const newNextTeamBQueue = nextTeamBQueue.filter(bet => bet.id !== id);
-        setNextTeamBQueue(newNextTeamBQueue);
+        updateGameState({ nextTeamBQueue: newNextTeamBQueue });
         
         if (deletedNextBetB.booked) {
           const matchedBookedBet = nextBookedBets.find(bookedBet => bookedBet.idB === id);
@@ -655,12 +786,13 @@ const Index = () => {
               }
               return bet;
             });
-            setNextTeamAQueue(newNextTeamAQueue);
-            
             const newNextBookedBets = nextBookedBets.filter(bookedBet => bookedBet.idB !== id);
-            setNextBookedBets(newNextBookedBets);
             
-            setNextTotalBookedAmount(prev => prev - matchedBookedBet.amount);
+            updateGameState({
+              nextTeamAQueue: newNextTeamAQueue,
+              nextBookedBets: newNextBookedBets,
+              nextTotalBookedAmount: nextTotalBookedAmount - matchedBookedBet.amount
+            });
           }
         }
         
@@ -669,10 +801,7 @@ const Index = () => {
     }
     
     if (betDeleted) {
-      toast.success("Bet Deleted", {
-        description: `Bet #${id} was deleted successfully`,
-      });
-      
+      // Bet deleted successfully - no toast notification
       playSound("delete");
       setBetId("");
     } else {
@@ -725,24 +854,21 @@ const Index = () => {
   };
 
   const handleTeamABallsChange = (balls: number) => {
-    setTeamABalls(balls);
+    updateGameState({ teamABalls: balls });
   };
   
   const handleTeamBBallsChange = (balls: number) => {
-    setTeamBBalls(balls);
+    updateGameState({ teamBBalls: balls });
   };
 
   const handleTeamAGamesChange = (games: number) => {
-    setTeamAGames(games);
+    updateGameState({ teamAGames: games });
   };
   
   const handleTeamBGamesChange = (games: number) => {
-    setTeamBGames(games);
+    updateGameState({ teamBGames: games });
   };
 
-  useEffect(() => {
-    setGameLabel(`GAME ${currentGameNumber}`);
-  }, [currentGameNumber]);
 
   return (
     <div className="min-h-screen bg-black p-4 md:p-8">
@@ -769,25 +895,28 @@ const Index = () => {
           </Link>
           
           {isAdminMode && (
-            <Button 
-              variant="outline" 
-              className="border-[#F97316]/50 text-[#F97316] hover:bg-[#F97316]/20 hover:text-[#FBBF24]"
-              onClick={handleResetHistory}
-            >
-              <TimerReset className="h-4 w-4 mr-2" />
-              Reset History
-            </Button>
+            <div className="flex space-x-2">
+              <Link to="/reload-coins">
+                <Button 
+                  variant="outline" 
+                  className="border-[#1EAEDB]/50 text-[#1EAEDB] hover:bg-[#1EAEDB]/20 hover:text-[#33C3F0]"
+                >
+                  <Coins className="h-4 w-4 mr-2" />
+                  Reload Coins
+                </Button>
+              </Link>
+              <Button 
+                variant="outline" 
+                className="border-[#F97316]/50 text-[#F97316] hover:bg-[#F97316]/20 hover:text-[#FBBF24]"
+                onClick={handleResetHistory}
+              >
+                <TimerReset className="h-4 w-4 mr-2" />
+                Reset History
+              </Button>
+            </div>
           )}
         </div>
         
-        <BetConfirmationDialog
-          isOpen={confirmation.isOpen}
-          onClose={closeBetConfirmation}
-          onConfirm={handleConfirmBet}
-          team={confirmation.team || ''}
-          amount={confirmation.amount}
-          isNextGame={confirmation.isNextGame}
-        />
 
         <div className="w-full max-w-md mx-auto mb-8">
           <img 
@@ -804,8 +933,23 @@ const Index = () => {
         <GameDescription 
           isAdmin={isAdminMode || isAgentMode} 
           initialDescription={gameDescription} 
-          onDescriptionChange={setGameDescription} 
+          onDescriptionChange={(desc) => updateGameState({ gameDescription: desc })} 
         />
+
+        {/* Game Info Window */}
+        <GameInfoWindow 
+          teamAQueue={teamAQueue}
+          teamBQueue={teamBQueue}
+          nextTeamAQueue={nextTeamAQueue}
+          nextTeamBQueue={nextTeamBQueue}
+        />
+
+        {/* Realtime Scoreboard Header */}
+        <div className="text-center mb-6">
+          <h2 className="text-[#a3e635] font-bold text-2xl uppercase tracking-wider">
+            REALTIME SCOREBOARD
+          </h2>
+        </div>
 
         <ScoreBoard 
           teamAName={teamAName}
@@ -819,19 +963,34 @@ const Index = () => {
           isAgent={isAgentMode}
           gameLabel={gameLabel}
           currentGameNumber={currentGameNumber}
-          onTeamANameChange={setTeamAName}
-          onTeamBNameChange={setTeamBName}
-          onBreakChange={setTeamAHasBreak}
+          onTeamANameChange={(name) => updateGameState({ teamAName: name })}
+          onTeamBNameChange={(name) => updateGameState({ teamBName: name })}
+          onBreakChange={(hasBreak) => updateGameState({ teamAHasBreak: hasBreak })}
           onTeamAGameWin={handleTeamAWin}
           onTeamBGameWin={handleTeamBWin}
-          onGameLabelChange={setGameLabel}
-          onCurrentGameNumberChange={setCurrentGameNumber}
+          onGameLabelChange={(label) => updateGameState({ gameLabel: label })}
+          onCurrentGameNumberChange={(num) => updateGameState({ currentGameNumber: num })}
           onTeamABallsChange={handleTeamABallsChange}
           onTeamBBallsChange={handleTeamBBallsChange}
           onTeamAGamesChange={handleTeamAGamesChange}
           onTeamBGamesChange={handleTeamBGamesChange}
           onDeleteUnmatchedBets={deleteUnmatchedBets}
+          timerSeconds={timerSeconds}
+          isTimerRunning={isTimerRunning}
+          onTimerStart={startTimer}
+          onTimerPause={pauseTimer}
+          onTimerReset={resetTimer}
         />
+
+        {/* Game History Window */}
+        <GameHistoryWindow />
+
+        {/* Betting Cue Header */}
+        <div className="text-center mb-6">
+          <h2 className="text-[#a3e635] font-bold text-2xl uppercase tracking-wider">
+            BETTING CUE
+          </h2>
+        </div>
 
         <div className="mb-8">
           <Card className="glass-card border-[#F97316]/30 backdrop-blur-sm bg-[#0a192f]/70 shadow-lg rounded-2xl transition-all duration-300 mb-4 hover:shadow-[0_0_15px_rgba(249,115,22,0.3)]">
@@ -933,13 +1092,28 @@ const Index = () => {
                               </div>
                               <div className={`text-center flex justify-between items-center px-2 ${bet.booked ? 'text-black font-bold' : 'text-white'}`}>
                                 {bet.amount} COINS
-                                {!bet.booked ? (
-                                  <span className="ml-2 px-2 py-0.5 bg-[#F97316]/70 text-xs rounded-xl text-black">OPEN</span>
-                                ) : (
-                                  <span className="ml-2 px-2 py-0.5 bg-black/30 text-xs rounded-xl flex items-center text-white">
-                                    <CheckSquare className="w-3 h-3 mr-1" /> BOOKED
-                                  </span>
-                                )}
+                                <div className="flex items-center gap-2">
+                                  {!bet.booked ? (
+                                    <>
+                                      <span className="px-2 py-0.5 bg-[#F97316]/70 text-xs rounded-xl text-black">OPEN</span>
+                                      {currentUser && bet.userId === currentUser.id && (
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                                          onClick={() => deleteOpenBet(bet.id, false)}
+                                          title="Delete your open bet"
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <span className="px-2 py-0.5 bg-black/30 text-xs rounded-xl flex items-center text-white">
+                                      <CheckSquare className="w-3 h-3 mr-1" /> BOOKED
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           );
@@ -1010,13 +1184,28 @@ const Index = () => {
                               </div>
                               <div className={`text-center flex justify-between items-center px-2 ${bet.booked ? 'text-black font-bold' : 'text-white'}`}>
                                 {bet.amount} COINS
-                                {!bet.booked ? (
-                                  <span className="ml-2 px-2 py-0.5 bg-[#F97316]/70 text-xs rounded-xl text-black">OPEN</span>
-                                ) : (
-                                  <span className="ml-2 px-2 py-0.5 bg-black/30 text-xs rounded-xl flex items-center text-white">
-                                    <CheckSquare className="w-3 h-3 mr-1" /> BOOKED
-                                  </span>
-                                )}
+                                <div className="flex items-center gap-2">
+                                  {!bet.booked ? (
+                                    <>
+                                      <span className="px-2 py-0.5 bg-[#F97316]/70 text-xs rounded-xl text-black">OPEN</span>
+                                      {currentUser && bet.userId === currentUser.id && (
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                                          onClick={() => deleteOpenBet(bet.id, false)}
+                                          title="Delete your open bet"
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <span className="px-2 py-0.5 bg-black/30 text-xs rounded-xl flex items-center text-white">
+                                      <CheckSquare className="w-3 h-3 mr-1" /> BOOKED
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           );
@@ -1030,6 +1219,13 @@ const Index = () => {
               </CardContent>
             </Card>
           </div>
+        </div>
+
+        {/* Current Game Betting Cue Information */}
+        <div className="text-center mb-6">
+          <p className="text-[#a3e635] font-medium text-lg">
+            *** BETS ARE HIGHLIGHTED ONCE MATCHED ***
+          </p>
         </div>
         
         <div className="mb-8">
@@ -1139,13 +1335,28 @@ const Index = () => {
                               </div>
                               <div className={`text-center flex justify-between items-center px-2 ${bet.booked ? 'text-black font-bold' : 'text-white'}`}>
                                 {bet.amount} COINS
-                                {!bet.booked ? (
-                                  <span className="ml-2 px-2 py-0.5 bg-[#F97316]/70 text-xs rounded-xl text-black">OPEN</span>
-                                ) : (
-                                  <span className="ml-2 px-2 py-0.5 bg-black/30 text-xs rounded-xl flex items-center text-white">
-                                    <CheckSquare className="w-3 h-3 mr-1" /> BOOKED
-                                  </span>
-                                )}
+                                <div className="flex items-center gap-2">
+                                  {!bet.booked ? (
+                                    <>
+                                      <span className="px-2 py-0.5 bg-[#F97316]/70 text-xs rounded-xl text-black">OPEN</span>
+                                      {currentUser && bet.userId === currentUser.id && (
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                                          onClick={() => deleteOpenBet(bet.id, true)}
+                                          title="Delete your open bet"
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <span className="px-2 py-0.5 bg-black/30 text-xs rounded-xl flex items-center text-white">
+                                      <CheckSquare className="w-3 h-3 mr-1" /> BOOKED
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           );
@@ -1216,13 +1427,28 @@ const Index = () => {
                               </div>
                               <div className={`text-center flex justify-between items-center px-2 ${bet.booked ? 'text-black font-bold' : 'text-white'}`}>
                                 {bet.amount} COINS
-                                {!bet.booked ? (
-                                  <span className="ml-2 px-2 py-0.5 bg-[#F97316]/70 text-xs rounded-xl text-black">OPEN</span>
-                                ) : (
-                                  <span className="ml-2 px-2 py-0.5 bg-black/30 text-xs rounded-xl flex items-center text-white">
-                                    <CheckSquare className="w-3 h-3 mr-1" /> BOOKED
-                                  </span>
-                                )}
+                                <div className="flex items-center gap-2">
+                                  {!bet.booked ? (
+                                    <>
+                                      <span className="px-2 py-0.5 bg-[#F97316]/70 text-xs rounded-xl text-black">OPEN</span>
+                                      {currentUser && bet.userId === currentUser.id && (
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                                          onClick={() => deleteOpenBet(bet.id, true)}
+                                          title="Delete your open bet"
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <span className="px-2 py-0.5 bg-black/30 text-xs rounded-xl flex items-center text-white">
+                                      <CheckSquare className="w-3 h-3 mr-1" /> BOOKED
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           );
@@ -1236,6 +1462,13 @@ const Index = () => {
               </CardContent>
             </Card>
           </div>
+        </div>
+
+        {/* Betting Cue Information */}
+        <div className="text-center mb-6">
+          <p className="text-[#a3e635] font-medium text-lg">
+            *** BETS ARE HIGHLIGHTED ONCE MATCHED ***
+          </p>
         </div>
 
         <BookedBetsReceipt 

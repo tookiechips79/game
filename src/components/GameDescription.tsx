@@ -25,15 +25,17 @@ const GameDescription: React.FC<GameDescriptionProps> = ({
   initialDescription = "",
   onDescriptionChange,
 }) => {
-  const [description, setDescription] = useState<string>(initialDescription);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
+  
+  // Use the synchronized description from props instead of local state
+  const description = initialDescription;
   
   // Initialize metadata from description if available
   const parseInitialMetadata = (): GameMetadata => {
     try {
       // Try to parse the description as JSON
-      const parsed = JSON.parse(initialDescription);
+      const parsed = JSON.parse(description);
       if (parsed && typeof parsed === 'object') {
         return {
           playerA: parsed.playerA || '',
@@ -61,20 +63,20 @@ const GameDescription: React.FC<GameDescriptionProps> = ({
   
   const [metadata, setMetadata] = useState<GameMetadata>(parseInitialMetadata());
   
+  // Update metadata when description changes (for real-time sync)
+  useEffect(() => {
+    setMetadata(parseInitialMetadata());
+  }, [description]);
+  
   const handleSave = () => {
     // Create a formatted description from the metadata with *** separators
     const formattedDescription = `${metadata.playerA} vs ${metadata.playerB} *** ${metadata.spot} *** Race to ${metadata.raceTo} *** $${metadata.amountBet} *** ${metadata.location}`;
     
-    // Save both the formatted string (for display) and the structured data (for future edits)
-    const metadataJson = JSON.stringify(metadata);
-    
+    // Save the formatted string to the synchronized state
     if (onDescriptionChange) {
       onDescriptionChange(formattedDescription);
-      // Note: We're only storing the formatted string in the parent component
-      // The metadata is kept locally for editing purposes
     }
     
-    setDescription(formattedDescription);
     setIsEditing(false);
   };
 

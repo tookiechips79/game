@@ -7,7 +7,7 @@ import TeamScoreSection from "@/components/TeamScoreSection";
 import GameControls from "@/components/GameControls";
 import GameMetadata from "@/components/GameMetadata";
 import LiveIndicator from "@/components/LiveIndicator";
-import { useGameTimer } from "@/utils/timerUtils";
+import GameTimer from "@/components/GameTimer";
 import { useScoreboardState } from "@/hooks/useScoreboardState";
 import ScoreboardMainDisplay from "@/components/ScoreboardMainDisplay";
 import ScoreboardConfirmDialogs from "@/components/ScoreboardConfirmDialogs";
@@ -36,15 +36,22 @@ interface ScoreBoardProps {
   onTeamAGamesChange?: (games: number) => void;
   onTeamBGamesChange?: (games: number) => void;
   onDeleteUnmatchedBets?: () => void;
+  // Timer props
+  timerSeconds?: number;
+  isTimerRunning?: boolean;
+  onTimerStart?: () => void;
+  onTimerPause?: () => void;
+  onTimerReset?: () => void;
 }
 
 const ScoreBoard = (props: ScoreBoardProps) => {
   const {
-    timer,
-    isTimerRunning,
-    toggleTimer,
-    resetTimer
-  } = useGameTimer(0);
+    timerSeconds = 0,
+    isTimerRunning = false,
+    onTimerStart,
+    onTimerPause,
+    onTimerReset
+  } = props;
   
   const {
     teamAWinConfirmOpen,
@@ -70,8 +77,9 @@ const ScoreBoard = (props: ScoreBoardProps) => {
     handleTeamBGameDecrement
   } = useScoreboardState({
     ...props,
-    timer,
-    resetTimer
+    timer: timerSeconds,
+    resetTimer: onTimerReset,
+    resetTimerOnMatchStart: props.onTimerReset
   });
   
   const showControls = props.isAdmin || props.isAgent;
@@ -107,10 +115,11 @@ const ScoreBoard = (props: ScoreBoardProps) => {
         displayTeamBGames={displayTeamBGames}
         isMatchStarted={isMatchStarted}
         showControls={showControls}
-        timer={timer}
+        timer={timerSeconds}
         isTimerRunning={isTimerRunning}
-        toggleTimer={toggleTimer}
-        resetTimer={resetTimer}
+        onStart={onTimerStart}
+        onPause={onTimerPause}
+        onReset={onTimerReset}
         startMatch={startMatch}
         handleBreakChange={handleBreakChange}
         handleTeamABallIncrement={handleTeamABallIncrement}
@@ -130,14 +139,11 @@ const ScoreBoard = (props: ScoreBoardProps) => {
           showControls={showControls}
           isMatchStarted={isMatchStarted}
           startMatch={startMatch}
-          onTeamAWinOpen={() => setTeamAWinConfirmOpen(true)}
-          onTeamBWinOpen={() => setTeamBWinConfirmOpen(true)}
-          teamAName={props.teamAName || "TEAM A"}
-          teamBName={props.teamBName || "TEAM B"}
-          timer={timer}
+          timer={timerSeconds}
           isTimerRunning={isTimerRunning}
-          toggleTimer={toggleTimer}
-          resetTimer={resetTimer}
+          onStart={onTimerStart}
+          onPause={onTimerPause}
+          onReset={onTimerReset}
         />
       )}
       

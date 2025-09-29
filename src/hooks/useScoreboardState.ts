@@ -24,6 +24,7 @@ interface UseScoreboardStateProps {
   onTeamBBallsChange?: (balls: number) => void;
   onTeamAGamesChange?: (games: number) => void;
   onTeamBGamesChange?: (games: number) => void;
+  resetTimerOnMatchStart?: () => void;
 }
 
 export const useScoreboardState = ({
@@ -44,7 +45,8 @@ export const useScoreboardState = ({
   onTeamABallsChange,
   onTeamBBallsChange,
   onTeamAGamesChange,
-  onTeamBGamesChange
+  onTeamBGamesChange,
+  resetTimerOnMatchStart
 }: UseScoreboardStateProps) => {
   const [localBreak, setLocalBreak] = useState<boolean>(teamAHasBreak);
   const [localGameLabel, setLocalGameLabel] = useState<string>(gameLabel);
@@ -98,7 +100,12 @@ export const useScoreboardState = ({
     const initialGameNumber = onCurrentGameNumberChange ? currentGameNumber : 1;
     setLocalGameNumber(initialGameNumber);
     
-    resetTimer();
+    // Use synchronized timer reset if available, otherwise use local reset
+    if (resetTimerOnMatchStart) {
+      resetTimerOnMatchStart();
+    } else {
+      resetTimer();
+    }
     
     const newGameLabel = `GAME ${initialGameNumber}`;
     if (onGameLabelChange) {

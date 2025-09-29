@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, DollarSign, Users, BadgeCheck, Ticket, LogIn, UserPlus, LogOut, User } from "lucide-react";
+import { ArrowRight, DollarSign, Users, BadgeCheck, Ticket, LogIn, LogOut, User, Eye, Trophy, CheckCircle, X } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import AuthModal from "@/components/AuthModal";
 
@@ -17,10 +17,6 @@ const Landing = () => {
     setAuthModalOpen(true);
   };
 
-  const openRegisterModal = () => {
-    setDefaultAuthTab("register");
-    setAuthModalOpen(true);
-  };
 
   const handleLogout = () => {
     setCurrentUser(null);
@@ -41,12 +37,16 @@ const Landing = () => {
             <span className="text-2xl font-bold text-[#1EAEDB] drop-shadow-[0_0_10px_rgba(30,174,219,0.3)]">Game Bird</span>
           </div>
           <div className="flex gap-4 items-center">
-            <Button variant="ghost" className="text-[#1EAEDB] hover:text-[#33C3F0] hover:bg-[#143a4e]/70">
-              About
-            </Button>
-            <Button variant="ghost" className="text-[#1EAEDB] hover:text-[#33C3F0] hover:bg-[#143a4e]/70">
-              Features
-            </Button>
+            <Link to="/about">
+              <Button variant="ghost" className="text-[#1EAEDB] hover:text-[#33C3F0] hover:bg-[#143a4e]/70">
+                About
+              </Button>
+            </Link>
+            <Link to="/features">
+              <Button variant="ghost" className="text-[#1EAEDB] hover:text-[#33C3F0] hover:bg-[#143a4e]/70">
+                Features
+              </Button>
+            </Link>
             
             {currentUser ? (
               <>
@@ -71,10 +71,6 @@ const Landing = () => {
                   <LogIn size={18} className="mr-2" />
                   <span className="hidden sm:inline">Login</span>
                 </Button>
-                <Button variant="ghost" className="text-[#1EAEDB] hover:text-[#33C3F0] hover:bg-[#143a4e]/70" onClick={openRegisterModal}>
-                  <UserPlus size={18} className="mr-2" />
-                  <span className="hidden sm:inline">Register</span>
-                </Button>
               </>
             )}
             
@@ -95,7 +91,8 @@ const Landing = () => {
             </h1>
             <p className="text-xl text-[#a3e635] mb-8">
               Join Game Bird for the most exciting peer-to-peer betting platform. 
-              Match your bets instantly and track your winnings in real-time.
+              Create a free account to view live scoreboards and betting cues. 
+              Subscribe to place bets and win real money!
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               {currentUser ? (
@@ -106,12 +103,22 @@ const Landing = () => {
                   Start Betting Now <Ticket className="ml-2" />
                 </Button>
               ) : (
-                <Button 
-                  className="bg-gradient-to-r from-[#F97316] to-[#FBBF24] hover:from-[#F97316]/90 hover:to-[#FBBF24]/90 text-black font-bold px-6 py-6 text-lg w-full sm:w-auto"
-                  onClick={openRegisterModal}
-                >
-                  Sign Up & Start Betting <UserPlus className="ml-2" />
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                  <Link to="/member-signup">
+                    <Button 
+                      className="bg-gradient-to-r from-[#F97316] to-[#FBBF24] hover:from-[#F97316]/90 hover:to-[#FBBF24]/90 text-black font-bold px-6 py-6 text-lg w-full sm:w-auto"
+                    >
+                      Sign Up & Start Betting <LogIn className="ml-2" />
+                    </Button>
+                  </Link>
+                  <Button 
+                    variant="outline"
+                    className="border-[#1EAEDB] text-[#1EAEDB] hover:bg-[#1EAEDB]/20 px-6 py-6 text-lg w-full sm:w-auto"
+                    onClick={openLoginModal}
+                  >
+                    Log In <LogIn className="ml-2" />
+                  </Button>
+                </div>
               )}
               <Button variant="outline" className="border-[#1EAEDB] text-[#1EAEDB] hover:bg-[#1EAEDB]/20 px-6 py-6 text-lg w-full sm:w-auto">
                 Learn More
@@ -220,13 +227,118 @@ const Landing = () => {
           </div>
         </div>
 
+        {/* Access Levels Section */}
+        <div className="container mx-auto py-20 px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-white mb-4">Choose Your Access Level</h2>
+            <p className="text-xl text-[#a3e635] max-w-3xl mx-auto">
+              Start with a free account to explore, then upgrade to place bets and win real money
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Free Access */}
+            <Card className="bg-[#0a192f]/70 border-[#1EAEDB]/30 backdrop-blur-sm text-white shadow-xl hover:shadow-[0_0_15px_rgba(30,174,219,0.3)] transition-all duration-300">
+              <CardContent className="p-8">
+                <div className="text-center mb-6">
+                  <div className="rounded-full bg-[#1EAEDB] p-4 mb-4 mx-auto w-16 h-16 flex items-center justify-center">
+                    <Eye size={32} className="text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2">Free Access</h3>
+                  <p className="text-3xl font-bold text-[#1EAEDB] mb-2">$0</p>
+                  <p className="text-gray-300">Perfect for getting started</p>
+                </div>
+                
+                <ul className="space-y-3 mb-8">
+                  <li className="flex items-center text-[#a3e635]">
+                    <CheckCircle size={20} className="mr-3 flex-shrink-0" />
+                    View live scoreboard
+                  </li>
+                  <li className="flex items-center text-[#a3e635]">
+                    <CheckCircle size={20} className="mr-3 flex-shrink-0" />
+                    Watch betting cues
+                  </li>
+                  <li className="flex items-center text-[#a3e635]">
+                    <CheckCircle size={20} className="mr-3 flex-shrink-0" />
+                    Track game progress
+                  </li>
+                  <li className="flex items-center text-gray-400">
+                    <X size={20} className="mr-3 flex-shrink-0" />
+                    Place bets (requires subscription)
+                  </li>
+                </ul>
+                
+                {!currentUser && (
+                  <Link to="/member-signup" className="block">
+                    <Button className="w-full bg-[#1EAEDB] hover:bg-[#33C3F0] text-white font-bold">
+                      Get Free Access
+                    </Button>
+                  </Link>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Premium Access */}
+            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm text-white shadow-xl hover:shadow-[0_0_15px_rgba(249,115,22,0.3)] transition-all duration-300 relative">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <span className="bg-[#F97316] text-black px-4 py-1 rounded-full text-sm font-bold">
+                  Most Popular
+                </span>
+              </div>
+              <CardContent className="p-8">
+                <div className="text-center mb-6">
+                  <div className="rounded-full bg-[#F97316] p-4 mb-4 mx-auto w-16 h-16 flex items-center justify-center">
+                    <Trophy size={32} className="text-black" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2">Premium Access</h3>
+                  <p className="text-3xl font-bold text-[#F97316] mb-2">$20/month</p>
+                  <p className="text-gray-300">Full betting experience</p>
+                </div>
+                
+                <ul className="space-y-3 mb-8">
+                  <li className="flex items-center text-[#a3e635]">
+                    <CheckCircle size={20} className="mr-3 flex-shrink-0" />
+                    Everything in Free Access
+                  </li>
+                  <li className="flex items-center text-[#a3e635]">
+                    <CheckCircle size={20} className="mr-3 flex-shrink-0" />
+                    Place unlimited bets
+                  </li>
+                  <li className="flex items-center text-[#a3e635]">
+                    <CheckCircle size={20} className="mr-3 flex-shrink-0" />
+                    Win real money
+                  </li>
+                  <li className="flex items-center text-[#a3e635]">
+                    <CheckCircle size={20} className="mr-3 flex-shrink-0" />
+                    Cash out winnings
+                  </li>
+                </ul>
+                
+                {!currentUser ? (
+                  <Link to="/member-signup" className="block">
+                    <Button className="w-full bg-[#F97316] hover:bg-[#FBBF24] text-black font-bold">
+                      Sign Up & Subscribe
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link to="/subscription" className="block">
+                    <Button className="w-full bg-[#F97316] hover:bg-[#FBBF24] text-black font-bold">
+                      Subscribe Now
+                    </Button>
+                  </Link>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
         {/* CTA Section */}
         <div className="container mx-auto py-20 px-4">
           <div className="bg-[#0a192f]/70 border border-[#33C3F0]/30 backdrop-blur-sm rounded-xl p-8 flex flex-col md:flex-row items-center justify-between">
             <div>
-              <h2 className="text-3xl font-bold text-white mb-4">Ready to Place Your Bets?</h2>
+              <h2 className="text-3xl font-bold text-white mb-4">Ready to Get Started?</h2>
               <p className="text-[#a3e635] max-w-xl">
-                Join thousands of players already using Game Bird for their betting needs. Get started in seconds.
+                Join thousands of players already using Game Bird. Create your free account today!
               </p>
             </div>
             {currentUser ? (
@@ -237,13 +349,12 @@ const Landing = () => {
                 </Button>
               </Link>
             ) : (
-              <Button 
-                className="bg-gradient-to-r from-[#F97316] to-[#FBBF24] hover:from-[#F97316]/90 hover:to-[#FBBF24]/90 text-black font-bold px-8 py-6 text-lg flex items-center gap-2 mt-6 md:mt-0"
-                onClick={openRegisterModal}
-              >
-                <UserPlus size={20} />
-                Create Free Account
-              </Button>
+              <Link to="/member-signup" className="mt-6 md:mt-0">
+                <Button className="bg-gradient-to-r from-[#F97316] to-[#FBBF24] hover:from-[#F97316]/90 hover:to-[#FBBF24]/90 text-black font-bold px-8 py-6 text-lg flex items-center gap-2">
+                  <LogIn size={20} />
+                  Get Started Free
+                </Button>
+              </Link>
             )}
           </div>
         </div>

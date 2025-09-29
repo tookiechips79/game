@@ -24,6 +24,7 @@ interface UserContextType {
   processCashout: (userId: string, amount: number) => boolean;
   creditTransactions: CreditTransaction[];
   getCreditTransactions: (userId: string) => CreditTransaction[];
+  activateMembership: (userId: string) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -44,7 +45,22 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
     if (storedUsers) {
-      setUsers(JSON.parse(storedUsers));
+      const parsedUsers = JSON.parse(storedUsers);
+      // Migrate existing users to include membership status
+      const migratedUsers = parsedUsers.map((user: any) => {
+        // If user doesn't have membershipStatus, set it based on whether they're admin
+        if (!user.membershipStatus) {
+          return {
+            ...user,
+            membershipStatus: user.name.toLowerCase() === 'admin' ? 'active' : 'inactive',
+            subscriptionDate: user.name.toLowerCase() === 'admin' ? Date.now() : undefined
+          };
+        }
+        return user;
+      });
+      setUsers(migratedUsers);
+      // Update localStorage with migrated users
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(migratedUsers));
     } else {
       const defaultAdmin: User = {
         id: "admin-" + Date.now(),
@@ -52,7 +68,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         credits: 1000,
         password: "admin",
         wins: 0,
-        losses: 0
+        losses: 0,
+        membershipStatus: 'active',
+        subscriptionDate: Date.now()
       };
       setUsers([defaultAdmin]);
       localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify([defaultAdmin]));
@@ -60,7 +78,19 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const storedCurrentUser = localStorage.getItem(CURRENT_USER_STORAGE_KEY);
     if (storedCurrentUser) {
-      setCurrentUser(JSON.parse(storedCurrentUser));
+      const currentUserData = JSON.parse(storedCurrentUser);
+      // Ensure current user has membership status
+      if (!currentUserData.membershipStatus) {
+        const updatedCurrentUser = {
+          ...currentUserData,
+          membershipStatus: currentUserData.name.toLowerCase() === 'admin' ? 'active' : 'inactive',
+          subscriptionDate: currentUserData.name.toLowerCase() === 'admin' ? Date.now() : undefined
+        };
+        setCurrentUser(updatedCurrentUser);
+        localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(updatedCurrentUser));
+      } else {
+        setCurrentUser(currentUserData);
+      }
     }
     
     const storedBetHistory = localStorage.getItem(BET_HISTORY_STORAGE_KEY);
@@ -125,6 +155,39 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return creditTransactions.filter(tx => tx.userId === userId);
   };
 
+  const activateMembership = (userId: string) => {
+    setUsers(prev => prev.map(user => {
+      if (user.id === userId) {
+        const updatedUser = { 
+          ...user, 
+          membershipStatus: 'active' as const,
+          subscriptionDate: Date.now()
+        };
+        
+        if (currentUser?.id === userId) {
+          setCurrentUser(updatedUser);
+        }
+        
+        return updatedUser;
+      }
+      return user;
+    }));
+    
+    const userName = users.find(u => u.id === userId)?.name || userId;
+    
+    toast.success("Membership Activated!", {
+      description: `${userName}'s membership is now active. They can now place bets.`
+    });
+    
+    addCreditTransaction({
+      userId,
+      userName: userName,
+      type: 'subscription',
+      amount: 0,
+      details: 'Membership activated - subscription purchased'
+    });
+  };
+
   const addUser = (name: string, password: string): User => {
     if (!name.trim() || !password.trim()) {
       throw new Error("Name and password are required");
@@ -136,7 +199,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       credits: 0,
       password,
       wins: 0,
-      losses: 0
+      losses: 0,
+      membershipStatus: 'inactive'
     };
     
     setUsers(prev => [...prev, newUser]);
@@ -351,17 +415,18 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newUser: User = {
       id: userId,
       name: userName,
-      credits: 100,
+      credits: 0,
       password: randomPassword,
       wins: 0,
-      losses: 0
+      losses: 0,
+      membershipStatus: 'inactive'
     };
     
     setUsers(prev => [...prev, newUser]);
     setCurrentUser(newUser);
     
     toast.success(`${provider} Login Successful`, {
-      description: `Logged in as ${userName} with 100 bonus credits!`
+      description: `Logged in as ${userName}! You can view the scoreboard and betting cues, but need to subscribe to place bets.`
     });
     
     return newUser;
@@ -442,6 +507,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         processCashout,
         creditTransactions,
         getCreditTransactions,
+        activateMembership,
       }}
     >
       {children}

@@ -1,16 +1,16 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useUser } from "@/contexts/UserContext";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, Coins, CreditCard, Shield, Zap, DollarSign, CreditCard as CreditCardIcon } from "lucide-react";
+import { CheckCircle, Coins, CreditCard, Shield, Zap, DollarSign, CreditCard as CreditCardIcon, Home } from "lucide-react";
 import { toast } from "sonner";
 
 const PaymentPage = () => {
-  const { currentUser, addCredits } = useUser();
+  const { currentUser, addCredits, activateMembership } = useUser();
   const navigate = useNavigate();
   
   const [subscriptionSelected, setSubscriptionSelected] = useState<boolean>(false);
@@ -109,10 +109,8 @@ const PaymentPage = () => {
     setTimeout(() => {
       if (currentUser) {
         if (paymentMode === 'subscription') {
-          // Add subscription without free coins
-          toast.success("Subscription Active!", {
-            description: `Your monthly subscription is now active for ${currentUser.name}.`
-          });
+          // Activate membership
+          activateMembership(currentUser.id);
         } else {
           // Add reload credits
           addCredits(currentUser.id, reloadAmount);
@@ -124,7 +122,7 @@ const PaymentPage = () => {
         
         // Navigate to betting after successful payment
         setTimeout(() => {
-          navigate("/betting");
+          navigate("/betting-queue");
         }, 2000);
       }
       
@@ -136,7 +134,19 @@ const PaymentPage = () => {
     <div className="min-h-screen bg-black text-white flex flex-col">
       <header className="bg-gray-900 border-b border-gray-800 py-4">
         <div className="container mx-auto px-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-[#a3e635]">Gamebird Membership</h1>
+          <div className="flex items-center space-x-4">
+            <Link to="/">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-[#a3e635] hover:text-[#FBBF24] hover:bg-[#a3e635]/10"
+              >
+                <Home className="h-4 w-4 mr-2" />
+                Home
+              </Button>
+            </Link>
+            <h1 className="text-2xl font-bold text-[#a3e635]">Gamebird Membership</h1>
+          </div>
           {currentUser && (
             <div className="bg-[#a3e635]/20 p-2 rounded-lg">
               <span className="text-[#a3e635] font-bold">Current User: {currentUser.name} ({currentUser.credits} coins)</span>
@@ -157,7 +167,7 @@ const PaymentPage = () => {
                 <p className="text-red-300">Please select a user from the betting page first</p>
                 <Button 
                   variant="outline" 
-                  onClick={() => navigate("/betting")}
+                  onClick={() => navigate("/betting-queue")}
                   className="mt-2 border-red-500 text-red-300 hover:bg-red-950"
                 >
                   Go to Betting
@@ -419,7 +429,7 @@ const PaymentPage = () => {
                   type="button" 
                   variant="outline" 
                   className="mr-2"
-                  onClick={() => navigate("/betting")}
+                  onClick={() => navigate("/betting-queue")}
                 >
                   Cancel
                 </Button>
