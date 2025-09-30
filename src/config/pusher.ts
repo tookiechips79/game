@@ -3,8 +3,8 @@
 
 export const PUSHER_CONFIG = {
   // Get these from your Pusher dashboard: https://dashboard.pusher.com/
-  key: 'your-pusher-key', // Replace with your actual Pusher key
-  cluster: 'us2', // Replace with your cluster (us2, eu, ap-southeast-1, etc.)
+  key: '4c3988c483231609c9f2', // Replace with your actual Pusher key
+  cluster: 'us3', // Replace with your cluster (us2, eu, ap-southeast-1, etc.)
   encrypted: true,
   
   // Optional: For private channels (requires backend authentication)
@@ -38,16 +38,16 @@ export const getPusherConfig = () => {
     return {
       ...PUSHER_CONFIG,
       // You can use test keys for development
-      key: 'your-dev-pusher-key',
-      cluster: 'us2',
+      key: '4c3988c483231609c9f2',
+      cluster: 'us3',
     };
   } else {
     // Production configuration
     return {
       ...PUSHER_CONFIG,
       // Use production keys
-      key: 'your-prod-pusher-key',
-      cluster: 'us2',
+      key: '4c3988c483231609c9f2',
+      cluster: 'us3',
     };
   }
 };

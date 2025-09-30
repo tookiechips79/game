@@ -29,23 +29,43 @@ class PusherSyncService {
   private messageQueue: PusherMessage[] = [];
 
   constructor() {
-    this.initializePusher();
+    // Add Safari-specific initialization delay
+    const isSafari = this.getBrowserInfo() === 'Safari';
+    if (isSafari) {
+      console.log('🍎 Safari detected, adding initialization delay for WebSocket compatibility');
+      setTimeout(() => {
+        this.initializePusher();
+      }, 1000);
+    } else {
+      this.initializePusher();
+    }
+  }
+
+  private getBrowserInfo(): string {
+    const userAgent = navigator.userAgent;
+    if (userAgent.includes('Chrome')) return 'Chrome';
+    if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) return 'Safari';
+    if (userAgent.includes('Firefox')) return 'Firefox';
+    if (userAgent.includes('Edge')) return 'Edge';
+    return 'Unknown';
   }
 
   private initializePusher(): void {
     try {
-      // Initialize Pusher
+      // Initialize Pusher with Safari-compatible settings
       this.pusher = new Pusher(PUSHER_CONFIG.key, {
         cluster: PUSHER_CONFIG.cluster,
-        encrypted: PUSHER_CONFIG.encrypted,
         authEndpoint: PUSHER_CONFIG.authEndpoint,
-        enabledTransports: ['ws', 'wss'],
+        enabledTransports: ['ws', 'wss', 'xhr_polling', 'xhr_streaming'],
         disabledTransports: [],
+        forceTLS: true,
       });
 
       // Set up connection event handlers
       this.pusher.connection.bind('connected', () => {
         console.log('🔌 Pusher connected successfully');
+        console.log('🔍 Browser:', this.getBrowserInfo());
+        console.log('🔍 Transport:', (this.pusher.connection as any).transport?.name || 'unknown');
         this.isConnected = true;
         this.reconnectAttempts = 0;
         this.reconnectDelay = 1000;
@@ -62,6 +82,8 @@ class PusherSyncService {
 
       this.pusher.connection.bind('error', (error: any) => {
         console.error('🔌 Pusher connection error:', error);
+        console.error('🔍 Browser:', this.getBrowserInfo());
+        console.error('🔍 Error details:', error);
         this.handleConnectionError();
       });
 
@@ -161,12 +183,15 @@ class PusherSyncService {
       const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
       
       console.log(`🔄 Attempting to reconnect to Pusher (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay}ms`);
+      console.log(`🔍 Browser: ${this.getBrowserInfo()}, Device: ${this.getDeviceInfo()}`);
       
       setTimeout(() => {
         this.initializePusher();
       }, delay);
     } else {
       console.error('❌ Max Pusher reconnection attempts reached');
+      console.error('🔍 Browser:', this.getBrowserInfo());
+      console.error('🔍 This might be a Safari WebSocket issue. Falling back to URL sync.');
     }
   }
 
