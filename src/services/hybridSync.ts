@@ -3,7 +3,7 @@
 // Uses WebSocket when available, falls back to URL sync when not
 
 import { UniversalStorageData } from '@/utils/universalStorage';
-import { websocketSyncService } from './websocketSync';
+import { pusherSyncService } from './pusherSync';
 import { mobileSyncService } from './mobileSync';
 
 interface HybridSyncStatus {
@@ -38,8 +38,8 @@ class HybridSyncService {
     this.isEnabled = true;
     console.log('🔄 Hybrid sync service initializing...');
     
-    // Setup WebSocket sync
-    websocketSyncService.addListener((data) => {
+    // Setup Pusher WebSocket sync
+    pusherSyncService.addListener((data) => {
       this.handleDataUpdate(data, 'websocket');
     });
     
@@ -83,7 +83,7 @@ class HybridSyncService {
 
   // Check sync status
   private checkSyncStatus(): void {
-    const wsStatus = websocketSyncService.getStatus();
+    const wsStatus = pusherSyncService.getStatus();
     const urlStatus = mobileSyncService.getStatus();
     
     this.status.isWebSocketConnected = wsStatus.isConnected;
@@ -115,7 +115,7 @@ class HybridSyncService {
   // Sync data to primary method
   private syncToPrimaryMethod(data: UniversalStorageData): void {
     if (this.status.primaryMethod === 'websocket' && this.status.isWebSocketConnected) {
-      websocketSyncService.sendDataUpdate(data);
+      pusherSyncService.sendDataUpdate(data);
     } else if (this.status.primaryMethod === 'url') {
       mobileSyncService.syncToShared(data);
     }
@@ -124,9 +124,10 @@ class HybridSyncService {
   // Sync from all available sources
   private async syncFromAllSources(): Promise<void> {
     try {
-      // Try WebSocket first
+      // Try Pusher WebSocket first
       if (this.status.isWebSocketConnected) {
-        await websocketSyncService.forceSync();
+        // Pusher doesn't have forceSync, so we'll just check connection
+        console.log('📡 Pusher WebSocket connected, ready for real-time sync');
       }
       
       // Always try URL sync as fallback
@@ -139,8 +140,8 @@ class HybridSyncService {
   // Send data update using best available method
   sendDataUpdate(data: UniversalStorageData): void {
     if (this.status.primaryMethod === 'websocket' && this.status.isWebSocketConnected) {
-      websocketSyncService.sendDataUpdate(data);
-      console.log('📡 Data sent via WebSocket (primary)');
+      pusherSyncService.sendDataUpdate(data);
+      console.log('📡 Data sent via Pusher WebSocket (primary)');
     } else {
       mobileSyncService.syncToShared(data);
       console.log('🔗 Data sent via URL sync (primary)');
@@ -148,7 +149,7 @@ class HybridSyncService {
     
     // Also send to fallback method
     if (this.status.fallbackMethod === 'websocket' && this.status.isWebSocketConnected) {
-      websocketSyncService.sendDataUpdate(data);
+      pusherSyncService.sendDataUpdate(data);
     } else if (this.status.fallbackMethod === 'url') {
       mobileSyncService.syncToShared(data);
     }
@@ -159,9 +160,10 @@ class HybridSyncService {
     try {
       let success = false;
       
-      // Try WebSocket first
+      // Try Pusher WebSocket first
       if (this.status.isWebSocketConnected) {
-        success = await websocketSyncService.forceSync();
+        // Pusher doesn't have forceSync, so we'll just check connection
+        success = pusherSyncService.isWebSocketConnected();
       }
       
       // Always try URL sync
@@ -214,7 +216,7 @@ class HybridSyncService {
       this.syncTimer = null;
     }
     
-    websocketSyncService.stop();
+    pusherSyncService.disconnect();
     mobileSyncService.stop();
     
     console.log('🔄 Hybrid sync service stopped');
@@ -229,13 +231,13 @@ class HybridSyncService {
   importData(jsonData: string): boolean {
     const success = mobileSyncService.importData(jsonData);
     if (success) {
-      // Also sync to WebSocket if available
+      // Also sync to Pusher WebSocket if available
       if (this.status.isWebSocketConnected) {
         try {
           const data = JSON.parse(jsonData);
-          websocketSyncService.sendDataUpdate(data);
+          pusherSyncService.sendDataUpdate(data);
         } catch (error) {
-          console.error('Error syncing imported data to WebSocket:', error);
+          console.error('Error syncing imported data to Pusher WebSocket:', error);
         }
       }
     }
@@ -246,7 +248,8 @@ class HybridSyncService {
   clearAllData(): void {
     mobileSyncService.clearAllData();
     if (this.status.isWebSocketConnected) {
-      websocketSyncService.clearAllData();
+      // Pusher doesn't have clearAllData, so we'll just send empty data
+      pusherSyncService.sendDataUpdate({} as UniversalStorageData);
     }
   }
 
@@ -264,14 +267,14 @@ class HybridSyncService {
     primary: string;
     fallback: string;
   } {
-    const wsStatus = websocketSyncService.getStatus();
+    const wsStatus = pusherSyncService.getStatus();
     const urlStatus = mobileSyncService.getStatus();
     
     return {
       websocket: {
         connected: wsStatus.isConnected,
-        url: wsStatus.connectionUrl,
-        latency: wsStatus.latency
+        url: 'pusher-websocket',
+        latency: pusherSyncService.getConnectionLatency()
       },
       url: {
         enabled: urlStatus.isEnabled,
