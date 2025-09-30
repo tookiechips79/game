@@ -2,9 +2,9 @@
 // Replace these with your actual Pusher credentials
 
 export const PUSHER_CONFIG = {
-  // Get these from your Pusher dashboard: https://dashboard.pusher.com/
-  key: '4c3988c483231609c9f2', // Replace with your actual Pusher key
-  cluster: 'us3', // Replace with your cluster (us2, eu, ap-southeast-1, etc.)
+  // Your actual Pusher credentials
+  key: '4c3988c483231609c9f2',
+  cluster: 'us3',
   encrypted: true,
   
   // Optional: For private channels (requires backend authentication)
@@ -37,7 +37,6 @@ export const getPusherConfig = () => {
     // Development configuration
     return {
       ...PUSHER_CONFIG,
-      // You can use test keys for development
       key: '4c3988c483231609c9f2',
       cluster: 'us3',
     };
@@ -45,7 +44,6 @@ export const getPusherConfig = () => {
     // Production configuration
     return {
       ...PUSHER_CONFIG,
-      // Use production keys
       key: '4c3988c483231609c9f2',
       cluster: 'us3',
     };
