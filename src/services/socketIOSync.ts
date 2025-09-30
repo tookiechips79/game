@@ -3,9 +3,8 @@ import { UniversalStorageData } from '@/utils/universalStorage';
 
 // Socket.IO configuration
 const SOCKET_CONFIG = {
-  // For development, we'll use a public Socket.IO server
-  // In production, you'd use your own server
-  url: 'https://socketio-chat-h9jt.herokuapp.com/', // Public test server
+  // Use local Socket.IO server for development
+  url: 'http://localhost:3001',
   options: {
     transports: ['websocket', 'polling'],
     timeout: 20000,
