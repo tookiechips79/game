@@ -19,7 +19,7 @@ import {
   Share2,
   Copy
 } from 'lucide-react';
-import { mobileSyncService } from '@/services/mobileSync';
+import { hybridSyncService } from '@/services/hybridSync';
 import { universalStorage } from '@/utils/universalStorage';
 import { toast } from 'sonner';
 
@@ -28,7 +28,7 @@ interface DataSyncManagerProps {
 }
 
 const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) => {
-  const [syncStatus, setSyncStatus] = useState(mobileSyncService.getStatus());
+  const [syncStatus, setSyncStatus] = useState(hybridSyncService.getStatus());
   const [dataSummary, setDataSummary] = useState({
     totalUsers: 0,
     totalBets: 0,
@@ -42,7 +42,7 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
   useEffect(() => {
     // Update status every 30 seconds
     const interval = setInterval(() => {
-      setSyncStatus(mobileSyncService.getStatus());
+      setSyncStatus(hybridSyncService.getStatus());
       // Update data summary from universal storage
       const data = universalStorage.getData();
       setDataSummary({
@@ -58,7 +58,7 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
 
   const handleExportData = () => {
     try {
-      const data = mobileSyncService.exportData();
+      const data = hybridSyncService.exportData();
       setExportData(data);
       toast.success('Data exported successfully');
     } catch (error) {
@@ -74,7 +74,7 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
 
     setIsLoading(true);
     try {
-      const success = mobileSyncService.importData(importData);
+      const success = hybridSyncService.importData(importData);
       if (success) {
         toast.success('Data imported successfully');
         setImportData('');
@@ -99,10 +99,10 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
   const handleForceSync = async () => {
     setIsLoading(true);
     try {
-      const success = await mobileSyncService.forceSync();
+      const success = await hybridSyncService.forceSync();
       if (success) {
         toast.success('Data synchronized successfully');
-        setSyncStatus(mobileSyncService.getStatus());
+        setSyncStatus(hybridSyncService.getStatus());
       } else {
         toast.error('Failed to synchronize data');
       }
@@ -115,7 +115,7 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
 
   const handleClearAllData = () => {
     if (window.confirm('Are you sure you want to clear ALL data? This cannot be undone!')) {
-      mobileSyncService.clearAllData();
+      hybridSyncService.clearAllData();
       toast.success('All data cleared');
       const data = universalStorage.getData();
       setDataSummary({
@@ -129,6 +129,8 @@ const DataSyncManager: React.FC<DataSyncManagerProps> = ({ isAdmin = false }) =>
 
   const handleShareUrl = async () => {
     try {
+      // Use mobile sync service for URL sharing
+      const { mobileSyncService } = await import('@/services/mobileSync');
       const success = await mobileSyncService.copyShareableUrl();
       if (success) {
         toast.success('Shareable URL copied to clipboard!');

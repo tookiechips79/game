@@ -9,7 +9,7 @@ import {
   WifiOff,
   Clock
 } from 'lucide-react';
-import { mobileSyncService } from '@/services/mobileSync';
+import { hybridSyncService } from '@/services/hybridSync';
 import { toast } from 'sonner';
 
 interface SyncStatusProps {
@@ -17,7 +17,7 @@ interface SyncStatusProps {
 }
 
 const SyncStatus: React.FC<SyncStatusProps> = ({ className = '' }) => {
-  const [syncStatus, setSyncStatus] = useState(mobileSyncService.getStatus());
+  const [syncStatus, setSyncStatus] = useState(hybridSyncService.getStatus());
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -25,7 +25,7 @@ const SyncStatus: React.FC<SyncStatusProps> = ({ className = '' }) => {
   useEffect(() => {
     // Update sync status every 30 seconds
     const interval = setInterval(() => {
-      setSyncStatus(mobileSyncService.getStatus());
+      setSyncStatus(hybridSyncService.getStatus());
     }, 30000);
 
     // Listen for online/offline events
@@ -38,7 +38,7 @@ const SyncStatus: React.FC<SyncStatusProps> = ({ className = '' }) => {
     // Listen for sync events
     const handleSync = () => {
       setLastSyncTime(new Date());
-      setSyncStatus(mobileSyncService.getStatus());
+      setSyncStatus(hybridSyncService.getStatus());
       setIsUpdating(false);
     };
 
@@ -64,11 +64,11 @@ const SyncStatus: React.FC<SyncStatusProps> = ({ className = '' }) => {
 
   const handleForceSync = async () => {
     try {
-      const success = await mobileSyncService.forceSync();
+      const success = await hybridSyncService.forceSync();
       if (success) {
         toast.success('Data synchronized successfully');
         setLastSyncTime(new Date());
-        setSyncStatus(mobileSyncService.getStatus());
+        setSyncStatus(hybridSyncService.getStatus());
       } else {
         toast.error('Failed to synchronize data');
       }
@@ -91,19 +91,19 @@ const SyncStatus: React.FC<SyncStatusProps> = ({ className = '' }) => {
 
   const getSyncStatusColor = () => {
     if (!isOnline) return 'destructive';
-    if (!syncStatus.isEnabled) return 'secondary';
-    return 'default';
+    if (syncStatus.isWebSocketConnected) return 'default';
+    return 'secondary';
   };
 
   const getSyncStatusText = () => {
     if (!isOnline) return 'Offline';
-    if (!syncStatus.isEnabled) return 'Disabled';
-    return 'Synced';
+    if (syncStatus.isWebSocketConnected) return 'WebSocket';
+    return 'URL Sync';
   };
 
   const getSyncIcon = () => {
     if (!isOnline) return <WifiOff className="h-3 w-3" />;
-    if (!syncStatus.isEnabled) return <AlertCircle className="h-3 w-3" />;
+    if (syncStatus.isWebSocketConnected) return <Wifi className="h-3 w-3" />;
     return <CheckCircle className="h-3 w-3" />;
   };
 
@@ -112,6 +112,11 @@ const SyncStatus: React.FC<SyncStatusProps> = ({ className = '' }) => {
       {/* Device Info */}
       <Badge variant="outline" className="text-xs">
         {syncStatus.device}
+      </Badge>
+
+      {/* Connection Method */}
+      <Badge variant={syncStatus.isWebSocketConnected ? "default" : "secondary"} className="text-xs">
+        {syncStatus.isWebSocketConnected ? "🔌 WS" : "🔗 URL"}
       </Badge>
 
       {/* Online Status */}
