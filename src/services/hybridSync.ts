@@ -37,6 +37,7 @@ class HybridSyncService {
   initialize(): void {
     this.isEnabled = true;
     console.log('🔄 Hybrid sync service initializing...');
+    console.log('🔧 About to initialize Pusher service...');
     
     // Setup Pusher WebSocket sync
     pusherSyncService.addListener((data) => {

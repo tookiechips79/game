@@ -29,6 +29,7 @@ class PusherSyncService {
   private messageQueue: PusherMessage[] = [];
 
   constructor() {
+    console.log('🚀 PusherSyncService constructor called');
     // Add Safari-specific initialization delay
     const isSafari = this.getBrowserInfo() === 'Safari';
     if (isSafari) {
@@ -37,6 +38,7 @@ class PusherSyncService {
         this.initializePusher();
       }, 1000);
     } else {
+      console.log('🌐 Non-Safari browser detected, initializing immediately');
       this.initializePusher();
     }
   }
@@ -51,6 +53,7 @@ class PusherSyncService {
   }
 
   private initializePusher(): void {
+    console.log('🔧 Initializing Pusher with config:', PUSHER_CONFIG);
     try {
       // Initialize Pusher with Safari-compatible settings
       this.pusher = new Pusher(PUSHER_CONFIG.key, {
