@@ -112,7 +112,7 @@ class MobileSyncService {
       localStorage.setItem(this.syncKey, jsonData);
       sessionStorage.setItem(this.syncKey, jsonData);
       
-      // For mobile devices, also store in URL hash
+      // For mobile devices, also store in URL hash (if data is small enough)
       this.updateUrlWithData(jsonData);
       
       this.lastSyncTime = Date.now();
@@ -169,12 +169,40 @@ class MobileSyncService {
   // Update URL with data (for mobile sharing)
   private updateUrlWithData(jsonData: string): void {
     try {
+      // Check if data is too large for URL (limit to 2000 characters)
+      if (jsonData.length > 2000) {
+        console.warn('Data too large for URL encoding, skipping URL update');
+        return;
+      }
+      
       // Encode data for URL (mobile-friendly)
       const encodedData = btoa(jsonData);
       
-      // Update URL hash with data
+      // Check if encoded data is still too large
+      if (encodedData.length > 8000) {
+        console.warn('Encoded data too large for URL, skipping URL update');
+        return;
+      }
+      
+      // Get current URL and preserve existing hash
       const currentUrl = new URL(window.location.href);
-      currentUrl.hash = `#sync=${encodedData}`;
+      const existingHash = currentUrl.hash;
+      
+      // If there's already a hash, preserve the route part
+      let routeHash = '';
+      if (existingHash && existingHash.includes('#')) {
+        const hashParts = existingHash.split('#');
+        if (hashParts.length > 1) {
+          routeHash = hashParts[1].split('?')[0]; // Get route part before any sync data
+        }
+      }
+      
+      // Update URL hash with data, preserving route
+      if (routeHash) {
+        currentUrl.hash = `#${routeHash}&sync=${encodedData}`;
+      } else {
+        currentUrl.hash = `#sync=${encodedData}`;
+      }
       
       // Update URL without page reload
       window.history.replaceState({}, '', currentUrl.toString());
@@ -189,6 +217,7 @@ class MobileSyncService {
       console.log('🔄 URL updated with latest data:', currentUrl.toString());
     } catch (error) {
       console.warn('Failed to update URL with data:', error);
+      console.warn('Error details:', error.message);
     }
   }
 
@@ -199,15 +228,21 @@ class MobileSyncService {
       const hash = url.hash;
       
       if (hash.includes('sync=')) {
-        const dataParam = hash.split('sync=')[1];
+        // Handle both formats: #sync=... and #route&sync=...
+        const syncIndex = hash.indexOf('sync=');
+        const dataParam = hash.substring(syncIndex + 5); // Get everything after 'sync='
+        
         if (dataParam) {
-          return atob(dataParam);
+          // Remove any additional parameters after sync data
+          const cleanParam = dataParam.split('&')[0];
+          return atob(cleanParam);
         }
       }
       
       return null;
     } catch (error) {
       console.warn('Failed to get data from URL:', error);
+      console.warn('Error details:', error.message);
       return null;
     }
   }
@@ -416,9 +451,46 @@ class MobileSyncService {
     try {
       const currentData = localStorage.getItem('betting_app_universal_data');
       if (currentData) {
-        const encodedData = btoa(currentData);
+        // Check if data is small enough for URL
+        if (currentData.length <= 2000) {
+          const encodedData = btoa(currentData);
+          if (encodedData.length <= 8000) {
+            const currentUrl = new URL(window.location.href);
+            // Preserve existing route
+            const existingHash = currentUrl.hash;
+            let routeHash = '';
+            if (existingHash && existingHash.includes('#')) {
+              const hashParts = existingHash.split('#');
+              if (hashParts.length > 1) {
+                routeHash = hashParts[1].split('?')[0];
+              }
+            }
+            
+            if (routeHash) {
+              currentUrl.hash = `#${routeHash}&sync=${encodedData}`;
+            } else {
+              currentUrl.hash = `#sync=${encodedData}`;
+            }
+            return currentUrl.toString();
+          }
+        }
+        
+        // If data is too large, return URL with sync indicator
         const currentUrl = new URL(window.location.href);
-        currentUrl.hash = `#sync=${encodedData}`;
+        const existingHash = currentUrl.hash;
+        let routeHash = '';
+        if (existingHash && existingHash.includes('#')) {
+          const hashParts = existingHash.split('#');
+          if (hashParts.length > 1) {
+            routeHash = hashParts[1].split('?')[0];
+          }
+        }
+        
+        if (routeHash) {
+          currentUrl.hash = `#${routeHash}&sync=large`;
+        } else {
+          currentUrl.hash = `#sync=large`;
+        }
         return currentUrl.toString();
       }
       return window.location.href;
