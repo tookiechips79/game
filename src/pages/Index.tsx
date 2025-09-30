@@ -21,6 +21,7 @@ import GameInfoWindow from "@/components/GameInfoWindow";
 import GameHistoryWindow from "@/components/GameHistoryWindow";
 import DataSyncManager from "@/components/DataSyncManager";
 import SyncStatus from "@/components/SyncStatus";
+import PusherTest from "@/components/PusherTest";
 import { useUser } from "@/contexts/UserContext";
 import { useGameState } from "@/contexts/GameStateContext";
 import { Bet, BookedBet, ConfirmationState } from "@/types/user";
@@ -1498,10 +1499,15 @@ const Index = () => {
           teamBName={teamBName}
         />
 
-        {/* Universal Data Management */}
-        <div className="mt-8">
-          <DataSyncManager isAdmin={isAdminMode} />
-        </div>
+    {/* Pusher Connection Test */}
+    <div className="mt-8">
+      <PusherTest />
+    </div>
+
+    {/* Universal Data Management */}
+    <div className="mt-8">
+      <DataSyncManager isAdmin={isAdminMode} />
+    </div>
       </div>
     </div>
   );

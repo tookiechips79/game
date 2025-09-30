@@ -344,12 +344,29 @@ class MobileSyncService {
 
   // Force sync
   async forceSync(): Promise<boolean> {
-    const data = await this.syncFromShared();
-    if (data) {
-      this.notifyListeners(data);
-      return true;
+    try {
+      const data = await this.syncFromShared();
+      if (data) {
+        this.notifyListeners(data);
+        console.log('🔄 Force sync completed from URL/localStorage');
+        return true;
+      }
+      
+      // If no shared data, try to sync from localStorage
+      const localData = localStorage.getItem('betting_app_universal_data');
+      if (localData) {
+        const parsedData = JSON.parse(localData);
+        this.notifyListeners(parsedData);
+        console.log('🔄 Force sync completed from localStorage fallback');
+        return true;
+      }
+      
+      console.log('🔄 No data found for force sync');
+      return false;
+    } catch (error) {
+      console.error('Error during force sync:', error);
+      return false;
     }
-    return false;
   }
 
   // Get sync status
