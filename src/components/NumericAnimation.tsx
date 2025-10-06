@@ -20,7 +20,7 @@ const NumericAnimation: React.FC<NumericAnimationProps> = ({
     // Don't animate on initial render if value is 0
     if (value === 0 && displayValue === 0) return;
     
-    let startValue = displayValue;
+    const startValue = displayValue;
     const endValue = value;
     const difference = endValue - startValue;
     const startTime = performance.now();

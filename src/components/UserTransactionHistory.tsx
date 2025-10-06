@@ -61,7 +61,7 @@ const UserTransactionHistory: React.FC<UserTransactionHistoryProps> = ({
   const userCreditTransactions = isAdmin ? creditTransactions : getCreditTransactions(userId);
   
   const generateTransactions = (receipts: UserBetReceipt[]): Transaction[] => {
-    let transactions: Transaction[] = [];
+    const transactions: Transaction[] = [];
     
     // Process bet receipts for wins and losses, skip any admin transactions
     receipts.forEach(receipt => {
