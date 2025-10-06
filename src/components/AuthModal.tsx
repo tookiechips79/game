@@ -56,10 +56,12 @@ const AuthModal: React.FC<AuthModalProps> = ({
           user = addUser(randomName, randomPassword);
           toast.success(`${provider} Account Created`, {
             description: `New account created via ${provider}`,
+            className: "custom-toast-success"
           });
         } catch (error) {
           toast.error(`${provider} Sign-up Failed`, {
             description: error instanceof Error ? error.message : "An error occurred",
+            className: "custom-toast-error"
           });
           return;
         }
@@ -69,6 +71,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
         setCurrentUser(user);
         toast.success(`${provider} Login Successful`, {
           description: `Logged in as ${user.name}`,
+          className: "custom-toast-success"
         });
         onClose();
       }
@@ -81,6 +84,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
     if (!loginName.trim() || !loginPassword.trim()) {
       toast.error("Login failed", {
         description: "Please enter both username and password.",
+        className: "custom-toast-error"
       });
       return;
     }
@@ -96,11 +100,13 @@ const AuthModal: React.FC<AuthModalProps> = ({
         setCurrentUser(user);
         toast.success("Welcome back!", {
           description: `Logged in as ${user.name}`,
+          className: "custom-toast-success"
         });
         onClose();
       } else {
         toast.error("Login failed", {
           description: "Invalid username or password. Please try again.",
+          className: "custom-toast-error"
         });
       }
     }, 800); // Simulate network delay
@@ -112,6 +118,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
     if (!registerName.trim()) {
       toast.error("Registration failed", {
         description: "Please enter a valid name.",
+        className: "custom-toast-error"
       });
       return;
     }
@@ -119,6 +126,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
     if (!registerPassword.trim()) {
       toast.error("Registration failed", {
         description: "Please enter a valid password.",
+        className: "custom-toast-error"
       });
       return;
     }
@@ -126,6 +134,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
     if (registerPassword !== confirmPassword) {
       toast.error("Registration failed", {
         description: "Passwords do not match.",
+        className: "custom-toast-error"
       });
       return;
     }
@@ -143,6 +152,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
       if (userExists) {
         toast.error("Registration failed", {
           description: "This name is already taken. Please try another name.",
+          className: "custom-toast-error"
         });
         return;
       }
@@ -156,11 +166,13 @@ const AuthModal: React.FC<AuthModalProps> = ({
           onClose();
           toast.success("Welcome to Game Bird!", {
             description: `Your account has been created and you're now logged in.`,
+            className: "custom-toast-success"
           });
         }, 1500);
       } catch (error) {
         toast.error("Registration failed", {
           description: error instanceof Error ? error.message : "An error occurred during registration.",
+          className: "custom-toast-error"
         });
       }
     }, 800); // Simulate network delay

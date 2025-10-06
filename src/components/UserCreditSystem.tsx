@@ -41,12 +41,16 @@ export const CreateUserForm: React.FC = () => {
   
   const handleCreateUser = () => {
     if (!newUserName.trim()) {
-      toast.error("Please enter a valid name");
+      toast.error("Please enter a valid name", {
+        className: "custom-toast-error"
+      });
       return;
     }
     
     if (!newUserPassword.trim()) {
-      toast.error("Please enter a valid password");
+      toast.error("Please enter a valid password", {
+        className: "custom-toast-error"
+      });
       return;
     }
     
@@ -101,12 +105,16 @@ export const UserCreditsManager: React.FC = () => {
   
   const handleAddCredits = () => {
     if (!selectedUserId) {
-      toast.error("Please select a user");
+      toast.error("Please select a user", {
+        className: "custom-toast-error"
+      });
       return;
     }
     
     if (!creditAmount || creditAmount <= 0) {
-      toast.error("Please enter a valid amount");
+      toast.error("Please enter a valid amount", {
+        className: "custom-toast-error"
+      });
       return;
     }
     
@@ -116,25 +124,32 @@ export const UserCreditsManager: React.FC = () => {
   
   const handleDeleteCredits = () => {
     if (!selectedUserId) {
-      toast.error("Please select a user");
+      toast.error("Please select a user", {
+        className: "custom-toast-error"
+      });
       return;
     }
     
     if (!creditAmount || creditAmount <= 0) {
-      toast.error("Please enter a valid amount");
+      toast.error("Please enter a valid amount", {
+        className: "custom-toast-error"
+      });
       return;
     }
     
     const user = users.find(u => u.id === selectedUserId);
     if (!user) {
-      toast.error("User not found");
+      toast.error("User not found", {
+        className: "custom-toast-error"
+      });
       return;
     }
     
     const success = deductCredits(selectedUserId, creditAmount, true); // Pass isAdminAction=true flag
     if (success) {
       toast.success("COINS Deducted", {
-        description: `Removed ${creditAmount} COINS from ${user.name}`
+        description: `Removed ${creditAmount} COINS from ${user.name}`,
+        className: "custom-toast-success"
       });
       setCreditAmount(100); // Reset to default value
     }

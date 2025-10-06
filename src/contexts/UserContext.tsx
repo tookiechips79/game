@@ -176,7 +176,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const userName = users.find(u => u.id === userId)?.name || userId;
     
     toast.success("Membership Activated!", {
-      description: `${userName}'s membership is now active. They can now place bets.`
+      description: `${userName}'s membership is now active. They can now place bets.`,
+      className: "custom-toast-success"
     });
     
     addCreditTransaction({
@@ -205,7 +206,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     setUsers(prev => [...prev, newUser]);
     toast.success("User Added", {
-      description: `User "${name}" has been created`
+      description: `User "${name}" has been created`,
+      className: "custom-toast-success"
     });
     
     return newUser;
@@ -239,7 +241,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     if (isAdmin) {
       toast.success("Credits Added", {
-        description: `Added ${amount} credits to ${userName}`
+        description: `Added ${amount} credits to ${userName}`,
+        className: "custom-toast-success"
       });
       
       addCreditTransaction({
@@ -260,7 +263,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     if (user.credits < amount && !isAdminAction) {
       toast.error("Insufficient Credits", {
-        description: `${user.name} doesn't have enough credits`
+        description: `${user.name} doesn't have enough credits`,
+        className: "custom-toast-error"
       });
       return false;
     }
@@ -375,6 +379,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     toast.success("Game Results Recorded", {
       description: `Results for game #${record.gameNumber} have been saved in history`,
+      className: "custom-toast-success"
     });
   };
   
@@ -383,6 +388,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem(BET_HISTORY_STORAGE_KEY);
     toast.success("History Reset", {
       description: "All game history has been cleared",
+      className: "custom-toast-success"
     });
   };
   
@@ -426,7 +432,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCurrentUser(newUser);
     
     toast.success(`${provider} Login Successful`, {
-      description: `Logged in as ${userName}! You can view the scoreboard and betting cues, but need to subscribe to place bets.`
+      description: `Logged in as ${userName}! You can view the scoreboard and betting cues, but need to subscribe to place bets.`,
+      className: "custom-toast-success"
     });
     
     return newUser;
@@ -435,7 +442,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const processCashout = (userId: string, amount: number): boolean => {
     if (amount <= 0) {
       toast.error("Invalid Amount", {
-        description: "Please enter a valid amount greater than 0"
+        description: "Please enter a valid amount greater than 0",
+        className: "custom-toast-error"
       });
       return false;
     }
@@ -443,14 +451,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const user = users.find(u => u.id === userId);
     if (!user) {
       toast.error("User Not Found", {
-        description: "Could not find user account"
+        description: "Could not find user account",
+        className: "custom-toast-error"
       });
       return false;
     }
     
     if (user.credits < amount) {
       toast.error("Insufficient Balance", {
-        description: `You only have ${user.credits} COINS available to cashout`
+        description: `You only have ${user.credits} COINS available to cashout`,
+        className: "custom-toast-error"
       });
       return false;
     }
@@ -477,7 +487,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     
     toast.success("Cashout Successful", {
-      description: `${amount} COINS have been cashed out from your account`
+      description: `${amount} COINS have been cashed out from your account`,
+      className: "custom-toast-success"
     });
     
     return true;

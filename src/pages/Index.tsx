@@ -563,9 +563,9 @@ const Index = () => {
   const bookBets = (aQueue: Bet[] = teamAQueue, bQueue: Bet[] = teamBQueue) => {
     const newAQueue = [...aQueue];
     const newBQueue = [...bQueue];
-    const newBookedBets = [...bookedBets];
-    const newTotalAmount = totalBookedAmount;
-    const newColorIndex = colorIndex;
+    let newBookedBets = [...bookedBets];
+    let newTotalAmount = totalBookedAmount;
+    let newColorIndex = colorIndex;
 
     for (let i = 0; i < newAQueue.length; i++) {
       if (!newAQueue[i].booked) {
@@ -610,7 +610,7 @@ const Index = () => {
     const newBQueue = [...bQueue];
     let newBookedBets = [...nextBookedBets];
     let newTotalAmount = nextTotalBookedAmount;
-    const newColorIndex = colorIndex;
+    let newColorIndex = colorIndex;
 
     for (let i = 0; i < newAQueue.length; i++) {
       if (!newAQueue[i].booked) {

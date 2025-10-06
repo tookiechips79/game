@@ -72,7 +72,8 @@ const PaymentPage = () => {
     setName("Test User");
     setBillingAddress("123 Test St, Test City, TS 12345");
     toast.info("Test card applied", {
-      description: "You can now process a test payment"
+      description: "You can now process a test payment",
+      className: "custom-toast-success"
     });
   };
 
@@ -81,24 +82,31 @@ const PaymentPage = () => {
     
     // Basic validation
     if (!cardNumber || !expiryDate || !cvv || !name) {
-      toast.error("Please fill in all payment details");
+      toast.error("Please fill in all payment details", {
+        className: "custom-toast-error"
+      });
       return;
     }
 
     if (paymentMode === 'subscription' && !subscriptionSelected) {
-      toast.error("Please select the subscription plan");
+      toast.error("Please select the subscription plan", {
+        className: "custom-toast-error"
+      });
       return;
     }
 
     if (paymentMode === 'reload' && (!reloadAmount || reloadAmount < 5)) {
-      toast.error("Please enter a valid reload amount (minimum $5)");
+      toast.error("Please enter a valid reload amount (minimum $5)", {
+        className: "custom-toast-error"
+      });
       return;
     }
 
     // Check if user is selected
     if (!currentUser) {
       toast.error("Please select a user first", {
-        description: "Go to the betting page to select a user before making a purchase."
+        description: "Go to the betting page to select a user before making a purchase.",
+        className: "custom-toast-error"
       });
       return;
     }
@@ -116,7 +124,8 @@ const PaymentPage = () => {
           addCredits(currentUser.id, reloadAmount);
           
           toast.success("Coins Added!", {
-            description: `${reloadAmount} coins have been added to ${currentUser.name}'s account.`
+            description: `${reloadAmount} coins have been added to ${currentUser.name}'s account.`,
+            className: "custom-toast-success"
           });
         }
         
