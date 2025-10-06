@@ -97,6 +97,7 @@ const Index = () => {
     if (!isAdminMode) {
       toast.success("Admin Mode Activated", {
         description: "You now have access to admin controls",
+        className: "custom-toast-success",
       });
     }
   };
@@ -106,16 +107,20 @@ const Index = () => {
     if (!isAgentMode) {
       toast.success("Agent Mode Activated", {
         description: "You now have access to game controls",
+        className: "custom-toast-success",
       });
     } else {
-      toast.info("Agent Mode Deactivated");
+      toast.info("Agent Mode Deactivated", {
+        className: "custom-toast-success",
+      });
     }
   };
 
   const moveBetsToNextGame = () => {
     if (!teamAQueue.length && !teamBQueue.length) {
       toast.error("No Bets to Move", {
-        description: "There are no current bets to move to the next game"
+        description: "There are no current bets to move to the next game",
+        className: "custom-toast-error",
       });
       return;
     }
@@ -132,14 +137,16 @@ const Index = () => {
     });
 
     toast.success("Bets Moved to Next Game", {
-      description: "All current bets have been moved to the next game"
+      description: "All current bets have been moved to the next game",
+      className: "custom-toast-success",
     });
   };
 
   const moveBetsToCurrentGame = () => {
     if (!nextTeamAQueue.length && !nextTeamBQueue.length) {
       toast.error("No Bets to Move", {
-        description: "There are no next-game bets to move to the current game"
+        description: "There are no next-game bets to move to the current game",
+        className: "custom-toast-error",
       });
       return;
     }
@@ -156,7 +163,8 @@ const Index = () => {
     });
 
     toast.success("Bets Moved to Current Game", {
-      description: "All next-game bets have been moved to the current game"
+      description: "All next-game bets have been moved to the current game",
+      className: "custom-toast-success",
     });
   };
 
@@ -171,6 +179,7 @@ const Index = () => {
     
     toast.success(`${teamAName} Wins!`, {
       description: `${teamAName} has won a game`,
+      className: "custom-toast-success",
     });
 
     processBetsForGameWin('A', duration);
@@ -192,6 +201,7 @@ const Index = () => {
     
     toast.success(`${teamBName} Wins!`, {
       description: `${teamBName} has won a game`,
+      className: "custom-toast-success",
     });
 
     processBetsForGameWin('B', duration);
@@ -264,11 +274,13 @@ const Index = () => {
             incrementLosses(userB.id);
             
             toast.success(`${userA.name} Won ${bet.amount} COINS`, {
-              description: `Bet on ${teamAName} paid off!`
+              description: `Bet on ${teamAName} paid off!`,
+              className: "custom-toast-success",
             });
             
             toast.error(`${userB.name} Lost ${bet.amount} COINS`, {
-              description: `Bet on ${teamBName} didn't win.`
+              description: `Bet on ${teamBName} didn't win.`,
+              className: "custom-toast-error",
             });
           } else {
             addCredits(userB.id, bet.amount * 2);
@@ -276,11 +288,13 @@ const Index = () => {
             incrementLosses(userA.id);
             
             toast.success(`${userB.name} Won ${bet.amount} COINS`, {
-              description: `Bet on ${teamBName} paid off!`
+              description: `Bet on ${teamBName} paid off!`,
+              className: "custom-toast-success",
             });
             
             toast.error(`${userA.name} Lost ${bet.amount} COINS`, {
-              description: `Bet on ${teamAName} didn't win.`
+              description: `Bet on ${teamAName} didn't win.`,
+              className: "custom-toast-error",
             });
           }
         }
@@ -315,7 +329,8 @@ const Index = () => {
       
       if (nextMatchedBetsA.length > 0 || nextMatchedBetsB.length > 0) {
         toast.success("Next Game Matched Bets Moved to Current Game", {
-          description: "All matched bets for the next game are now active for the current game"
+          description: "All matched bets for the next game are now active for the current game",
+          className: "custom-toast-success",
         });
       }
     }, 100);
@@ -323,7 +338,8 @@ const Index = () => {
     updateGameState({ betCounter: 1 });
     
     toast.success("All Bets Processed", {
-      description: "A new betting round can begin"
+      description: "A new betting round can begin",
+      className: "custom-toast-success",
     });
   };
 
@@ -341,7 +357,8 @@ const Index = () => {
         totalRefunded += bet.amount;
         
         toast.info(`Returned ${bet.amount} COINS to ${user.name}`, {
-          description: `Unmatched bet #${bet.id} refunded`
+          description: `Unmatched bet #${bet.id} refunded`,
+          className: "custom-toast-success",
         });
       }
     });
@@ -357,7 +374,8 @@ const Index = () => {
         totalRefunded += bet.amount;
         
         toast.info(`Returned ${bet.amount} COINS to ${user.name}`, {
-          description: `Unmatched next game bet #${bet.id} refunded`
+          description: `Unmatched next game bet #${bet.id} refunded`,
+          className: "custom-toast-success",
         });
       }
     });
@@ -379,11 +397,13 @@ const Index = () => {
     if (totalUnmatchedBets > 0) {
       console.log(`Refunded ${totalUnmatchedBets} unmatched bets for a total of ${totalRefunded} COINS`);
       toast.success(`${totalUnmatchedBets} Unmatched Bets Refunded (${totalRefunded} COINS)`, {
-        description: "COINS have been returned to users and unmatched bets removed"
+        description: "COINS have been returned to users and unmatched bets removed",
+        className: "custom-toast-success",
       });
     } else {
       toast.info("No Unmatched Bets Found", {
-        description: "All current bets are already matched"
+        description: "All current bets are already matched",
+        className: "custom-toast-success",
       });
     }
   };
@@ -635,6 +655,7 @@ const Index = () => {
       toast.error("Cannot Delete Bet", {
         description: "You must be logged in to delete bets",
         duration: 3000,
+        className: "custom-toast-error",
       });
       return;
     }
@@ -687,6 +708,7 @@ const Index = () => {
       toast.error("Cannot Delete Bet", {
         description: "Bet not found, already booked/matched, or you don't have permission to delete this bet",
         duration: 3000,
+        className: "custom-toast-error",
       });
     }
   };
@@ -695,6 +717,7 @@ const Index = () => {
     if (!betId) {
       toast.error("Error", {
         description: "Please enter a valid Bet ID",
+        className: "custom-toast-error",
       });
       return;
     }
@@ -819,6 +842,7 @@ const Index = () => {
     } else {
       toast.error("Error", {
         description: `No bet found with ID ${id}`,
+        className: "custom-toast-error",
       });
     }
   };
