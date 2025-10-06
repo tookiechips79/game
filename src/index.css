@@ -2,6 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom toast styles for better contrast */
+.custom-toast-success {
+  color: #000000 !important;
+  background-color: #10b981 !important;
+}
+
+.custom-toast-success * {
+  color: #000000 !important;
+}
+
+.custom-toast-success [data-sonner-toast] {
+  color: #000000 !important;
+  background-color: #10b981 !important;
+}
+
+.custom-toast-success [data-sonner-toast] * {
+  color: #000000 !important;
+}
+
+.custom-toast-error {
+  color: #000000 !important;
+  background-color: #ef4444 !important;
+}
+
+.custom-toast-error * {
+  color: #000000 !important;
+}
+
+.custom-toast-error [data-sonner-toast] {
+  color: #000000 !important;
+  background-color: #ef4444 !important;
+}
+
+.custom-toast-error [data-sonner-toast] * {
+  color: #000000 !important;
+}
+
 @layer base {
   :root {
     --background: 0 0% 0%;

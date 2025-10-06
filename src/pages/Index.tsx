@@ -395,6 +395,7 @@ const Index = () => {
       toast.error("No User Selected", {
         description: "Please select or create a user first",
         duration: 4500,
+        className: "custom-toast-error",
       });
       closeBetConfirmation();
       return;
@@ -439,6 +440,13 @@ const Index = () => {
       }
     }
     
+    // Show success message
+    toast.success("Bet Placed!", {
+      description: `${confirmation.amount} COINS bet on ${confirmation.teamSide === 'A' ? teamAName : teamBName}`,
+      duration: 2000,
+      className: "custom-toast-success",
+    });
+    
     closeBetConfirmation();
   };
 
@@ -447,6 +455,7 @@ const Index = () => {
       toast.error("No User Selected", {
         description: "Please select or create a user first",
         duration: 4500,
+        className: "custom-toast-error",
       });
       return;
     }
@@ -456,6 +465,7 @@ const Index = () => {
         description: "You need an active subscription to place bets. Please subscribe to activate your membership.",
         icon: <Lock className="h-5 w-5 text-red-500" />,
         duration: 5000,
+        className: "custom-toast-error",
       });
       return;
     }
@@ -465,6 +475,7 @@ const Index = () => {
         description: "You have zero credits. Please ask admin to reload your account.",
         icon: <Wallet className="h-5 w-5 text-red-500" />,
         duration: 5000,
+        className: "custom-toast-error",
       });
       return;
     }
@@ -474,6 +485,7 @@ const Index = () => {
         description: `You need ${amount} credits to place this bet. Please ask admin to reload your account.`,
         icon: <Wallet className="h-5 w-5 text-red-500" />,
         duration: 5000,
+        className: "custom-toast-error",
       });
       return;
     }
