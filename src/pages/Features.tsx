@@ -33,9 +33,9 @@ import {
 
 const FeaturesPage = () => {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#052240' }}>
+    <div className="min-h-screen bg-gradient-to-br from-[#0a192f] via-[#0f2a3d] to-[#143a4e] text-white">
       {/* Header */}
-      <div style={{ backgroundColor: '#004b6b', borderBottom: '1px solid #95deff' }}>
+      <div className="bg-gradient-to-r from-[#0a192f] to-[#1a2332] border-b border-[#F97316]/30">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -43,23 +43,22 @@ const FeaturesPage = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  style={{ color: '#95deff' }}
-                  className="hover:bg-[#004b6b]/70"
+                  className="text-[#F97316] hover:text-[#FBBF24] hover:bg-[#F97316]/10"
                 >
                   <Home className="h-4 w-4 mr-2" />
                   Home
                 </Button>
               </Link>
-              <div className="h-6 w-px" style={{ backgroundColor: '#95deff' }} />
+              <div className="h-6 w-px bg-[#F97316]/30" />
               <div className="flex items-center space-x-2">
-                <Trophy className="h-6 w-6" style={{ color: '#fa1593' }} />
+                <Trophy className="h-6 w-6 text-[#F97316]" />
                 <h1 className="text-2xl font-bold text-white">Platform Features</h1>
               </div>
             </div>
             
             <div className="flex items-center space-x-3">
               <Link to="/member-signup">
-                <Button style={{ backgroundColor: '#fa1593', color: 'white' }} className="hover:opacity-90">
+                <Button className="bg-[#F97316] hover:bg-[#FBBF24] text-black font-bold">
                   <LogIn className="h-4 w-4 mr-2" />
                   Get Started
                 </Button>
@@ -72,19 +71,19 @@ const FeaturesPage = () => {
       <div className="container mx-auto px-4 py-12">
         {/* Hero Section */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-4" style={{ color: '#fa1593' }}>
+          <h2 className="text-4xl font-bold mb-4 text-[#F97316]">
             How Game Bird Platform Works
           </h2>
-          <p className="text-xl max-w-3xl mx-auto" style={{ color: '#95deff' }}>
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
             A comprehensive guide to understanding our betting platform, from account creation to winning real money
           </p>
         </div>
 
         {/* Platform Overview */}
         <div className="mb-16">
-          <Card style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }} className="backdrop-blur-sm">
+          <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="text-2xl style={{ color: '#fa1593' }} flex items-center gap-2">
+              <CardTitle className="text-2xl text-[#F97316] flex items-center gap-2">
                 <Gamepad2 className="h-6 w-6" />
                 Platform Overview
               </CardTitle>
@@ -95,22 +94,22 @@ const FeaturesPage = () => {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center">
-                  <div className="style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }} p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                    <Users className="h-8 w-8 style={{ color: '#fa1593' }}" />
+                  <div className="bg-[#F97316]/20 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                    <Users className="h-8 w-8 text-[#F97316]" />
                   </div>
                   <h3 className="text-lg font-semibold mb-2">User Management</h3>
                   <p className="text-gray-400">Create accounts, manage credits, and track betting history</p>
                 </div>
                 <div className="text-center">
-                  <div className="style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }} p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                    <Target className="h-8 w-8 style={{ color: '#fa1593' }}" />
+                  <div className="bg-[#F97316]/20 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                    <Target className="h-8 w-8 text-[#F97316]" />
                   </div>
                   <h3 className="text-lg font-semibold mb-2">Live Betting</h3>
                   <p className="text-gray-400">Place bets on current and upcoming games in real-time</p>
                 </div>
                 <div className="text-center">
-                  <div className="style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }} p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                    <DollarSign className="h-8 w-8 style={{ color: '#fa1593' }}" />
+                  <div className="bg-[#F97316]/20 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                    <DollarSign className="h-8 w-8 text-[#F97316]" />
                   </div>
                   <h3 className="text-lg font-semibold mb-2">Real Money</h3>
                   <p className="text-gray-400">Win actual money that can be cashed out to your wallet</p>
@@ -122,12 +121,12 @@ const FeaturesPage = () => {
 
         {/* Getting Started */}
         <div className="mb-16">
-          <h3 className="text-3xl font-bold mb-8 text-center style={{ color: '#fa1593' }}">Getting Started</h3>
+          <h3 className="text-3xl font-bold mb-8 text-center text-[#F97316]">Getting Started</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }} className="backdrop-blur-sm">
+            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
               <CardHeader className="text-center">
-                <div className="style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }} p-3 rounded-full w-12 h-12 mx-auto mb-4 flex items-center justify-center">
-                  <User className="h-6 w-6 style={{ color: '#fa1593' }}" />
+                <div className="bg-[#F97316]/20 p-3 rounded-full w-12 h-12 mx-auto mb-4 flex items-center justify-center">
+                  <User className="h-6 w-6 text-[#F97316]" />
                 </div>
                 <CardTitle className="text-lg">1. Create Account</CardTitle>
               </CardHeader>
@@ -138,10 +137,10 @@ const FeaturesPage = () => {
               </CardContent>
             </Card>
 
-            <Card style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }} className="backdrop-blur-sm">
+            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
               <CardHeader className="text-center">
-                <div className="style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }} p-3 rounded-full w-12 h-12 mx-auto mb-4 flex items-center justify-center">
-                  <Eye className="h-6 w-6 style={{ color: '#fa1593' }}" />
+                <div className="bg-[#F97316]/20 p-3 rounded-full w-12 h-12 mx-auto mb-4 flex items-center justify-center">
+                  <Eye className="h-6 w-6 text-[#F97316]" />
                 </div>
                 <CardTitle className="text-lg">2. View Platform</CardTitle>
               </CardHeader>
@@ -152,10 +151,10 @@ const FeaturesPage = () => {
               </CardContent>
             </Card>
 
-            <Card style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }} className="backdrop-blur-sm">
+            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
               <CardHeader className="text-center">
-                <div className="style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }} p-3 rounded-full w-12 h-12 mx-auto mb-4 flex items-center justify-center">
-                  <CreditCard className="h-6 w-6 style={{ color: '#fa1593' }}" />
+                <div className="bg-[#F97316]/20 p-3 rounded-full w-12 h-12 mx-auto mb-4 flex items-center justify-center">
+                  <CreditCard className="h-6 w-6 text-[#F97316]" />
                 </div>
                 <CardTitle className="text-lg">3. Subscribe</CardTitle>
               </CardHeader>
@@ -166,10 +165,10 @@ const FeaturesPage = () => {
               </CardContent>
             </Card>
 
-            <Card style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }} className="backdrop-blur-sm">
+            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
               <CardHeader className="text-center">
-                <div className="style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }} p-3 rounded-full w-12 h-12 mx-auto mb-4 flex items-center justify-center">
-                  <Target className="h-6 w-6 style={{ color: '#fa1593' }}" />
+                <div className="bg-[#F97316]/20 p-3 rounded-full w-12 h-12 mx-auto mb-4 flex items-center justify-center">
+                  <Target className="h-6 w-6 text-[#F97316]" />
                 </div>
                 <CardTitle className="text-lg">4. Start Betting</CardTitle>
               </CardHeader>
@@ -184,12 +183,12 @@ const FeaturesPage = () => {
 
         {/* Core Features */}
         <div className="mb-16">
-          <h3 className="text-3xl font-bold mb-8 text-center style={{ color: '#fa1593' }}">Core Features</h3>
+          <h3 className="text-3xl font-bold mb-8 text-center text-[#F97316]">Core Features</h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Real-time Scoreboard */}
-            <Card style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }} className="backdrop-blur-sm">
+            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-xl style={{ color: '#fa1593' }} flex items-center gap-2">
+                <CardTitle className="text-xl text-[#F97316] flex items-center gap-2">
                   <BarChart3 className="h-5 w-5" />
                   Real-time Scoreboard
                 </CardTitle>
@@ -217,9 +216,9 @@ const FeaturesPage = () => {
             </Card>
 
             {/* Betting System */}
-            <Card style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }} className="backdrop-blur-sm">
+            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-xl style={{ color: '#fa1593' }} flex items-center gap-2">
+                <CardTitle className="text-xl text-[#F97316] flex items-center gap-2">
                   <Target className="h-5 w-5" />
                   Betting System
                 </CardTitle>
@@ -247,9 +246,9 @@ const FeaturesPage = () => {
             </Card>
 
             {/* User Management */}
-            <Card style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }} className="backdrop-blur-sm">
+            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-xl style={{ color: '#fa1593' }} flex items-center gap-2">
+                <CardTitle className="text-xl text-[#F97316] flex items-center gap-2">
                   <Users className="h-5 w-5" />
                   User Management
                 </CardTitle>
@@ -277,9 +276,9 @@ const FeaturesPage = () => {
             </Card>
 
             {/* Financial System */}
-            <Card style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }} className="backdrop-blur-sm">
+            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="text-xl style={{ color: '#fa1593' }} flex items-center gap-2">
+                <CardTitle className="text-xl text-[#F97316] flex items-center gap-2">
                   <Wallet className="h-5 w-5" />
                   Financial System
                 </CardTitle>
@@ -310,7 +309,7 @@ const FeaturesPage = () => {
 
         {/* Membership Tiers */}
         <div className="mb-16">
-          <h3 className="text-3xl font-bold mb-8 text-center style={{ color: '#fa1593' }}">Membership Tiers</h3>
+          <h3 className="text-3xl font-bold mb-8 text-center text-[#F97316]">Membership Tiers</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Free Access */}
             <Card className="bg-[#0a192f]/70 border-[#1EAEDB]/30 backdrop-blur-sm">
@@ -353,14 +352,14 @@ const FeaturesPage = () => {
             </Card>
 
             {/* Premium Access */}
-            <Card className="style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }} backdrop-blur-sm relative">
+            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm relative">
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <Badge className="style={{ backgroundColor: '#fa1593', color: 'white' }} px-4 py-1">
+                <Badge className="bg-[#F97316] text-black px-4 py-1">
                   Most Popular
                 </Badge>
               </div>
               <CardHeader>
-                <CardTitle className="text-xl style={{ color: '#fa1593' }} flex items-center gap-2">
+                <CardTitle className="text-xl text-[#F97316] flex items-center gap-2">
                   <Trophy className="h-5 w-5" />
                   Premium Access
                 </CardTitle>
@@ -391,7 +390,7 @@ const FeaturesPage = () => {
                     <span className="text-gray-300">Full transaction history</span>
                   </li>
                 </ul>
-                <Badge variant="outline" style={{ borderColor: '#fa1593', color: '#fa1593' }}>
+                <Badge variant="outline" className="border-[#F97316] text-[#F97316]">
                   $20/month
                 </Badge>
               </CardContent>
@@ -401,25 +400,25 @@ const FeaturesPage = () => {
 
         {/* How Betting Works */}
         <div className="mb-16">
-          <h3 className="text-3xl font-bold mb-8 text-center style={{ color: '#fa1593' }}">How Betting Works</h3>
+          <h3 className="text-3xl font-bold mb-8 text-center text-[#F97316]">How Betting Works</h3>
           <div className="space-y-8">
             {/* Step 1 */}
-            <Card style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }} className="backdrop-blur-sm">
+            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
-                  <div className="style={{ backgroundColor: '#fa1593', color: 'white' }} rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">
+                  <div className="bg-[#F97316] text-black rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">
                     1
                   </div>
                   <div>
-                    <h4 className="text-xl font-semibold mb-2" style={{ color: '#fa1593' }}>Select Your Bet Amount</h4>
+                    <h4 className="text-xl font-semibold mb-2 text-[#F97316]">Select Your Bet Amount</h4>
                     <p className="text-gray-300 mb-3">
                       Choose from 10, 20, 50, or 100 coins. Each denomination has its own betting button with hover tooltips showing the exact amount.
                     </p>
                     <div className="flex gap-2">
-                      <Badge variant="outline" style={{ borderColor: '#fa1593', color: '#fa1593' }}>10 Coins</Badge>
-                      <Badge variant="outline" style={{ borderColor: '#fa1593', color: '#fa1593' }}>20 Coins</Badge>
-                      <Badge variant="outline" style={{ borderColor: '#fa1593', color: '#fa1593' }}>50 Coins</Badge>
-                      <Badge variant="outline" style={{ borderColor: '#fa1593', color: '#fa1593' }}>100 Coins</Badge>
+                      <Badge variant="outline" className="border-[#F97316] text-[#F97316]">10 Coins</Badge>
+                      <Badge variant="outline" className="border-[#F97316] text-[#F97316]">20 Coins</Badge>
+                      <Badge variant="outline" className="border-[#F97316] text-[#F97316]">50 Coins</Badge>
+                      <Badge variant="outline" className="border-[#F97316] text-[#F97316]">100 Coins</Badge>
                     </div>
                   </div>
                 </div>
@@ -427,14 +426,14 @@ const FeaturesPage = () => {
             </Card>
 
             {/* Step 2 */}
-            <Card style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }} className="backdrop-blur-sm">
+            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
-                  <div className="style={{ backgroundColor: '#fa1593', color: 'white' }} rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">
+                  <div className="bg-[#F97316] text-black rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">
                     2
                   </div>
                   <div>
-                    <h4 className="text-xl font-semibold mb-2" style={{ color: '#fa1593' }}>Choose Your Team</h4>
+                    <h4 className="text-xl font-semibold mb-2 text-[#F97316]">Choose Your Team</h4>
                     <p className="text-gray-300 mb-3">
                       Click on the betting button for either Team A or Team B. You can bet on the current game or the next upcoming game.
                     </p>
@@ -450,14 +449,14 @@ const FeaturesPage = () => {
             </Card>
 
             {/* Step 3 */}
-            <Card style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }} className="backdrop-blur-sm">
+            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
-                  <div className="style={{ backgroundColor: '#fa1593', color: 'white' }} rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">
+                  <div className="bg-[#F97316] text-black rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">
                     3
                   </div>
                   <div>
-                    <h4 className="text-xl font-semibold mb-2" style={{ color: '#fa1593' }}>Automatic Matching</h4>
+                    <h4 className="text-xl font-semibold mb-2 text-[#F97316]">Automatic Matching</h4>
                     <p className="text-gray-300 mb-3">
                       Your bet is automatically matched with other users' bets on the opposing team. The system ensures fair matching and real-time updates.
                     </p>
@@ -472,14 +471,14 @@ const FeaturesPage = () => {
             </Card>
 
             {/* Step 4 */}
-            <Card style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }} className="backdrop-blur-sm">
+            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
-                  <div className="style={{ backgroundColor: '#fa1593', color: 'white' }} rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">
+                  <div className="bg-[#F97316] text-black rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">
                     4
                   </div>
                   <div>
-                    <h4 className="text-xl font-semibold mb-2" style={{ color: '#fa1593' }}>Win or Lose</h4>
+                    <h4 className="text-xl font-semibold mb-2 text-[#F97316]">Win or Lose</h4>
                     <p className="text-gray-300 mb-3">
                       When the game ends, winning bets automatically receive their winnings. Losing bets are deducted from your account.
                     </p>
@@ -502,10 +501,10 @@ const FeaturesPage = () => {
 
         {/* Admin Features */}
         <div className="mb-16">
-          <h3 className="text-3xl font-bold mb-8 text-center style={{ color: '#fa1593' }}">Admin Features</h3>
-          <Card style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }} className="backdrop-blur-sm">
+          <h3 className="text-3xl font-bold mb-8 text-center text-[#F97316]">Admin Features</h3>
+          <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="text-xl style={{ color: '#fa1593' }} flex items-center gap-2">
+              <CardTitle className="text-xl text-[#F97316] flex items-center gap-2">
                 <Settings className="h-5 w-5" />
                 Administrative Tools
               </CardTitle>
@@ -516,7 +515,7 @@ const FeaturesPage = () => {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="space-y-3">
-                  <h4 className="font-semibold style={{ color: '#fa1593' }} flex items-center gap-2">
+                  <h4 className="font-semibold text-[#F97316] flex items-center gap-2">
                     <Users className="h-4 w-4" />
                     User Management
                   </h4>
@@ -528,7 +527,7 @@ const FeaturesPage = () => {
                   </ul>
                 </div>
                 <div className="space-y-3">
-                  <h4 className="font-semibold style={{ color: '#fa1593' }} flex items-center gap-2">
+                  <h4 className="font-semibold text-[#F97316] flex items-center gap-2">
                     <CreditCard className="h-4 w-4" />
                     Credit Management
                   </h4>
@@ -540,7 +539,7 @@ const FeaturesPage = () => {
                   </ul>
                 </div>
                 <div className="space-y-3">
-                  <h4 className="font-semibold style={{ color: '#fa1593' }} flex items-center gap-2">
+                  <h4 className="font-semibold text-[#F97316] flex items-center gap-2">
                     <BarChart3 className="h-4 w-4" />
                     Platform Control
                   </h4>
@@ -558,22 +557,22 @@ const FeaturesPage = () => {
 
         {/* Call to Action */}
         <div className="text-center">
-          <Card style={{ background: 'linear-gradient(to right, rgba(250, 21, 147, 0.2), rgba(149, 222, 255, 0.2))', borderColor: '#fa1593' }} className="backdrop-blur-sm">
+          <Card className="bg-gradient-to-r from-[#F97316]/20 to-[#FBBF24]/20 border-[#F97316]/50 backdrop-blur-sm">
             <CardContent className="p-8">
-              <h3 className="text-2xl font-bold mb-4" style={{ color: '#fa1593' }}>Ready to Start Betting?</h3>
+              <h3 className="text-2xl font-bold mb-4 text-[#F97316]">Ready to Start Betting?</h3>
               <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
                 Join thousands of users who are already winning real money on Game Bird. 
                 Create your account today and start your betting journey!
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link to="/member-signup">
-                  <Button style={{ backgroundColor: '#fa1593', color: 'white' }} className="hover:opacity-90 px-8 py-3 font-bold">
+                  <Button className="bg-[#F97316] hover:bg-[#FBBF24] text-black font-bold px-8 py-3">
                     <User className="h-4 w-4 mr-2" />
                     Create Account
                   </Button>
                 </Link>
                 <Link to="/betting-queue">
-                  <Button variant="outline" style={{ borderColor: '#fa1593', color: '#fa1593' }} className="hover:bg-[#fa1593]/20 px-8 py-3">
+                  <Button variant="outline" className="border-[#F97316] text-[#F97316] hover:bg-[#F97316]/20 px-8 py-3">
                     <Eye className="h-4 w-4 mr-2" />
                     View Platform
                   </Button>

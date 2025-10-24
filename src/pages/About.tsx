@@ -243,57 +243,57 @@ const AboutPage: React.FC = () => {
         <div className="mb-16">
           <h2 className="text-3xl font-bold text-white text-center mb-8">How It Works</h2>
           <div className="grid md:grid-cols-4 gap-6">
-            <Card className="glass-card border-2 border-[#F97316] text-center">
+            <Card className="border-2 text-center" style={{ backgroundColor: '#004b6b', borderColor: '#fa1593' }}>
               <CardHeader>
-                <div className="bg-[#F97316] rounded-full p-3 w-fit mx-auto mb-4">
+                <div className="rounded-full p-3 w-fit mx-auto mb-4" style={{ backgroundColor: '#fa1593' }}>
                   <span className="text-white font-bold text-xl">1</span>
                 </div>
                 <CardTitle className="text-white">Sign Up</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-300">
+                <p style={{ color: '#95deff' }}>
                   Create your account in seconds. Choose between free access or premium membership.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="glass-card border-2 border-[#1EAEDB] text-center">
+            <Card className="border-2 text-center" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardHeader>
-                <div className="bg-[#1EAEDB] rounded-full p-3 w-fit mx-auto mb-4">
-                  <span className="text-white font-bold text-xl">2</span>
+                <div className="rounded-full p-3 w-fit mx-auto mb-4" style={{ backgroundColor: '#95deff' }}>
+                  <span style={{ color: '#052240' }} className="font-bold text-xl">2</span>
                 </div>
                 <CardTitle className="text-white">Get Credits</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-300">
+                <p style={{ color: '#95deff' }}>
                   Load your account with digital coins. Admin can reload credits for any user.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="glass-card border-2 border-[#a3e635] text-center">
+            <Card className="border-2 text-center" style={{ backgroundColor: '#004b6b', borderColor: '#fa1593' }}>
               <CardHeader>
-                <div className="bg-[#a3e635] rounded-full p-3 w-fit mx-auto mb-4">
-                  <span className="text-black font-bold text-xl">3</span>
+                <div className="rounded-full p-3 w-fit mx-auto mb-4" style={{ backgroundColor: '#fa1593' }}>
+                  <span className="text-white font-bold text-xl">3</span>
                 </div>
                 <CardTitle className="text-white">Place Bets</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-300">
+                <p style={{ color: '#95deff' }}>
                   Bet on current or next games. Watch your bets get matched in real-time.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="glass-card border-2 border-[#FBBF24] text-center">
+            <Card className="border-2 text-center" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardHeader>
-                <div className="bg-[#FBBF24] rounded-full p-3 w-fit mx-auto mb-4">
-                  <span className="text-black font-bold text-xl">4</span>
+                <div className="rounded-full p-3 w-fit mx-auto mb-4" style={{ backgroundColor: '#95deff' }}>
+                  <span style={{ color: '#052240' }} className="font-bold text-xl">4</span>
                 </div>
                 <CardTitle className="text-white">Win & Collect</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-300">
+                <p style={{ color: '#95deff' }}>
                   Automatic payouts for winning bets. Track your history and earnings.
                 </p>
               </CardContent>
@@ -305,73 +305,73 @@ const AboutPage: React.FC = () => {
         <div className="mb-16">
           <h2 className="text-3xl font-bold text-white text-center mb-8">Platform Features</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="glass-card border border-gray-600">
+            <Card className="border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardContent className="p-6">
                 <div className="flex items-center space-x-3 mb-4">
-                  <Gamepad2 className="h-6 w-6 text-[#F97316]" />
+                  <Gamepad2 className="h-6 w-6" style={{ color: '#fa1593' }} />
                   <h3 className="text-lg font-semibold text-white">Live Scoreboard</h3>
                 </div>
-                <p className="text-gray-300 text-sm">
+                <p className="text-sm" style={{ color: '#95deff' }}>
                   Real-time score tracking with game timer and match statistics.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="glass-card border border-gray-600">
+            <Card className="border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardContent className="p-6">
                 <div className="flex items-center space-x-3 mb-4">
-                  <Users className="h-6 w-6 text-[#1EAEDB]" />
+                  <Users className="h-6 w-6" style={{ color: '#95deff' }} />
                   <h3 className="text-lg font-semibold text-white">User Management</h3>
                 </div>
-                <p className="text-gray-300 text-sm">
+                <p className="text-sm" style={{ color: '#95deff' }}>
                   Easy user creation, switching, and account management.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="glass-card border border-gray-600">
+            <Card className="border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardContent className="p-6">
                 <div className="flex items-center space-x-3 mb-4">
-                  <CreditCard className="h-6 w-6 text-[#a3e635]" />
+                  <CreditCard className="h-6 w-6" style={{ color: '#fa1593' }} />
                   <h3 className="text-lg font-semibold text-white">Transaction History</h3>
                 </div>
-                <p className="text-gray-300 text-sm">
+                <p className="text-sm" style={{ color: '#95deff' }}>
                   Complete record of all bets, wins, and credit transactions.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="glass-card border border-gray-600">
+            <Card className="border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardContent className="p-6">
                 <div className="flex items-center space-x-3 mb-4">
-                  <Globe className="h-6 w-6 text-[#FBBF24]" />
+                  <Globe className="h-6 w-6" style={{ color: '#95deff' }} />
                   <h3 className="text-lg font-semibold text-white">Multi-Device Sync</h3>
                 </div>
-                <p className="text-gray-300 text-sm">
+                <p className="text-sm" style={{ color: '#95deff' }}>
                   Synchronized experience across all devices and browsers.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="glass-card border border-gray-600">
+            <Card className="border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardContent className="p-6">
                 <div className="flex items-center space-x-3 mb-4">
-                  <Star className="h-6 w-6 text-[#F97316]" />
+                  <Star className="h-6 w-6" style={{ color: '#fa1593' }} />
                   <h3 className="text-lg font-semibold text-white">Admin Controls</h3>
                 </div>
-                <p className="text-gray-300 text-sm">
+                <p className="text-sm" style={{ color: '#95deff' }}>
                   Comprehensive admin tools for managing games and users.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="glass-card border border-gray-600">
+            <Card className="border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardContent className="p-6">
                 <div className="flex items-center space-x-3 mb-4">
-                  <CheckCircle className="h-6 w-6 text-[#1EAEDB]" />
+                  <CheckCircle className="h-6 w-6" style={{ color: '#95deff' }} />
                   <h3 className="text-lg font-semibold text-white">Bet Matching</h3>
                 </div>
-                <p className="text-gray-300 text-sm">
+                <p className="text-sm" style={{ color: '#95deff' }}>
                   Automatic bet matching system with real-time updates.
                 </p>
               </CardContent>
@@ -381,21 +381,21 @@ const AboutPage: React.FC = () => {
 
         {/* Call to Action */}
         <div className="text-center">
-          <Card className="glass-card border-2 border-[#F97316] max-w-2xl mx-auto">
+          <Card className="border-2 max-w-2xl mx-auto" style={{ backgroundColor: '#004b6b', borderColor: '#fa1593' }}>
             <CardContent className="p-8">
               <h2 className="text-2xl font-bold text-white mb-4">Ready to Start Betting?</h2>
-              <p className="text-gray-300 mb-6">
+              <p className="mb-6" style={{ color: '#95deff' }}>
                 Join the most advanced pool betting platform and experience the future of sports betting.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link to="/member-signup">
-                  <Button className="bg-gradient-to-r from-[#F97316] to-[#FBBF24] text-white hover:from-[#F97316]/90 hover:to-[#FBBF24]/90">
+                  <Button style={{ backgroundColor: '#fa1593', color: 'white' }} className="hover:opacity-90">
                     <UserCheck className="h-4 w-4 mr-2" />
                     Sign Up Now
                   </Button>
                 </Link>
                 <Link to="/features">
-                  <Button variant="outline" className="border-[#1EAEDB] text-[#1EAEDB] hover:bg-[#1EAEDB] hover:text-white">
+                  <Button variant="outline" style={{ borderColor: '#95deff', color: '#95deff' }} className="hover:bg-[#95deff] hover:text-[#052240]">
                     <Star className="h-4 w-4 mr-2" />
                     View Features
                   </Button>
