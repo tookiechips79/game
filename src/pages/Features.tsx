@@ -76,7 +76,7 @@ const FeaturesPage = () => {
             How Game Bird Platform Works
           </h2>
           <p className="text-xl max-w-3xl mx-auto" style={{ color: '#95deff' }}>
-            A comprehensive guide to understanding our betting platform, from account creation to winning real money
+            A comprehensive guide to understanding our betting platform, from account creation to winning real coins
           </p>
         </div>
 
@@ -89,7 +89,7 @@ const FeaturesPage = () => {
                 Platform Overview
               </CardTitle>
               <CardDescription style={{ color: '#95deff' }}>
-                Game Bird is a real-time betting platform where users can place bets on live games and win real money
+                Game Bird is a real-time betting platform where users can place bets on live games and win real coins
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -112,8 +112,8 @@ const FeaturesPage = () => {
                   <div className="p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }}>
                     <DollarSign className="h-8 w-8" style={{ color: '#fa1593' }} />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2 text-white">Real Money</h3>
-                  <p style={{ color: '#95deff' }}>Win actual money that can be cashed out to your wallet</p>
+                  <h3 className="text-lg font-semibold mb-2 text-white">Real Coins</h3>
+                  <p style={{ color: '#95deff' }}>Win actual coins that can be cashed out to your wallet</p>
                 </div>
               </div>
             </CardContent>
@@ -175,7 +175,7 @@ const FeaturesPage = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-sm" style={{ color: '#95deff' }}>
-                  Place bets on current and next games. Win real money and cash out your winnings.
+                  Place bets on current and next games. Win real coins and cash out your winnings.
                 </p>
               </CardContent>
             </Card>
@@ -292,7 +292,7 @@ const FeaturesPage = () => {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-white">Real money winnings and cashouts</span>
+                    <span className="text-white">Real coins winnings and cashouts</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
@@ -343,7 +343,7 @@ const FeaturesPage = () => {
                   </li>
                   <li className="flex items-start gap-2">
                     <Lock className="h-4 w-4 text-red-400 mt-1 flex-shrink-0" />
-                    <span style={{ color: '#95deff' }}>Cannot win money</span>
+                    <span style={{ color: '#95deff' }}>Cannot win coins</span>
                   </li>
                 </ul>
                 <Badge variant="outline" style={{ borderColor: '#95deff', color: '#95deff' }}>
@@ -365,7 +365,7 @@ const FeaturesPage = () => {
                   Premium Access
                 </CardTitle>
                 <CardDescription style={{ color: '#95deff' }}>
-                  Full betting experience with real money winnings
+                  Full betting experience with real coins winnings
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -380,7 +380,7 @@ const FeaturesPage = () => {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-white">Win real money</span>
+                    <span className="text-white">Win real coins</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
@@ -562,7 +562,7 @@ const FeaturesPage = () => {
             <CardContent className="p-8">
               <h3 className="text-2xl font-bold mb-4" style={{ color: '#fa1593' }}>Ready to Start Betting?</h3>
               <p className="mb-6 max-w-2xl mx-auto" style={{ color: '#95deff' }}>
-                Join thousands of users who are already winning real money on Game Bird. 
+                Join thousands of users who are already winning real coins on Game Bird. 
                 Create your account today and start your betting journey!
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
