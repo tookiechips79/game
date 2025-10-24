@@ -358,7 +358,7 @@ const SignupPage = () => {
                   <div className="flex items-start space-x-3">
                     <Trophy className="h-5 w-5 text-[#F97316] mt-1 flex-shrink-0" />
                     <div>
-                      <h3 className="text-[#F97316] font-medium">Win Real Money</h3>
+                      <h3 className="text-[#F97316] font-medium">Win Real Coins</h3>
                       <p className="text-gray-300 text-sm">
                         Cash out your winnings and track your betting history
                       </p>

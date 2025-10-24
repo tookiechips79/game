@@ -106,7 +106,7 @@ const Landing = () => {
             <p className="text-xl mb-8" style={{ color: '#95deff' }}>
               Join Game Bird for the most exciting peer-to-peer betting platform. 
               Create a free account to view live scoreboards and betting queues. 
-              Subscribe to place bets and win real money!
+              Subscribe to place bets and win real coins!
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               {currentUser ? (
@@ -251,7 +251,7 @@ const Landing = () => {
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-4">Choose Your Access Level</h2>
             <p className="text-xl max-w-3xl mx-auto" style={{ color: '#95deff' }}>
-              Start with a free account to explore, then upgrade to place bets and win real money
+              Start with a free account to explore, then upgrade to place bets and win real coins
             </p>
           </div>
           
@@ -325,7 +325,7 @@ const Landing = () => {
                   </li>
                   <li className="flex items-center" style={{ color: '#95deff' }}>
                     <CheckCircle size={20} className="mr-3 flex-shrink-0" />
-                    Win real money
+                    Win real coins
                   </li>
                   <li className="flex items-center" style={{ color: '#95deff' }}>
                     <CheckCircle size={20} className="mr-3 flex-shrink-0" />
