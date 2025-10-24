@@ -28,24 +28,22 @@ import {
 
 const AboutPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a192f] via-[#0f2a3d] to-[#143a4e] text-white">
+    <div className="min-h-screen text-white" style={{ backgroundColor: '#052240' }}>
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#0a192f] to-[#1a2332] border-b border-[#F97316]/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="bg-gradient-to-r from-[#1EAEDB] to-[#00FFFF] rounded-lg p-2">
-                <Trophy className="h-6 w-6 text-white" />
-              </div>
-              <h1 className="text-2xl font-bold text-white">About Our Platform</h1>
+      <div className="border-b py-4" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="rounded-lg p-2" style={{ backgroundColor: '#95deff' }}>
+              <Trophy className="h-6 w-6" style={{ color: '#052240' }} />
             </div>
-            <Link to="/">
-              <Button variant="ghost" className="text-[#F97316] hover:text-[#FBBF24] hover:bg-[#F97316]/10">
-                <Home className="h-4 w-4 mr-2" />
-                Home
-              </Button>
-            </Link>
+            <h1 className="text-2xl font-bold" style={{ color: '#fa1593' }}>About Our Platform</h1>
           </div>
+          <Link to="/">
+            <Button variant="ghost" className="hover:bg-transparent" style={{ color: '#fa1593' }}>
+              <Home className="h-4 w-4 mr-2" style={{ color: '#fa1593' }} />
+              Home
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -54,23 +52,23 @@ const AboutPage: React.FC = () => {
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
             The Future of
-            <span className="bg-gradient-to-r from-[#F97316] to-[#FBBF24] bg-clip-text text-transparent"> Pool Betting</span>
+            <span style={{ color: '#fa1593' }}> Pool Betting</span>
           </h1>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
+          <p className="text-xl text-white max-w-3xl mx-auto mb-8" style={{ color: '#95deff' }}>
             Experience the most advanced, secure, and user-friendly pool betting platform. 
             Bet on matches in person or from anywhere, with guaranteed payouts and real-time updates.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Badge variant="outline" className="border-[#F97316] text-[#F97316] px-4 py-2">
-              <Shield className="h-4 w-4 mr-2" />
+            <Badge variant="outline" className="px-4 py-2" style={{ borderColor: '#fa1593', color: '#fa1593' }}>
+              <Shield className="h-4 w-4 mr-2" style={{ color: '#fa1593' }} />
               Secure & Trusted
             </Badge>
-            <Badge variant="outline" className="border-[#1EAEDB] text-[#1EAEDB] px-4 py-2">
-              <Clock className="h-4 w-4 mr-2" />
+            <Badge variant="outline" className="px-4 py-2" style={{ borderColor: '#95deff', color: '#95deff' }}>
+              <Clock className="h-4 w-4 mr-2" style={{ color: '#95deff' }} />
               Real-Time Updates
             </Badge>
-            <Badge variant="outline" className="border-[#a3e635] text-[#a3e635] px-4 py-2">
-              <DollarSign className="h-4 w-4 mr-2" />
+            <Badge variant="outline" className="px-4 py-2" style={{ borderColor: '#fa1593', color: '#fa1593' }}>
+              <DollarSign className="h-4 w-4 mr-2" style={{ color: '#fa1593' }} />
               Guaranteed Payouts
             </Badge>
           </div>
@@ -80,45 +78,45 @@ const AboutPage: React.FC = () => {
         <div className="mb-16">
           <h2 className="text-3xl font-bold text-white text-center mb-8">What We Offer</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="glass-card border-2 border-[#F97316] hover:shadow-[0_0_20px_rgba(249,115,22,0.5)] transition-all duration-300">
+            <Card className="border-2 transition-all duration-300" style={{ backgroundColor: '#004b6b', borderColor: '#fa1593' }}>
               <CardHeader className="text-center">
-                <div className="bg-[#F97316] rounded-full p-3 w-fit mx-auto mb-4">
+                <div className="rounded-full p-3 w-fit mx-auto mb-4" style={{ backgroundColor: '#fa1593' }}>
                   <Users className="h-6 w-6 text-white" />
                 </div>
                 <CardTitle className="text-white">Flexible Betting</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-300 text-center">
+                <p className="text-white text-center" style={{ color: '#95deff' }}>
                   Bet on pool matches either in person at the venue or from the convenience of your computer. 
                   No more worrying about getting paid on your bets - we guarantee all payouts.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="glass-card border-2 border-[#1EAEDB] hover:shadow-[0_0_20px_rgba(30,174,219,0.5)] transition-all duration-300">
+            <Card className="border-2 transition-all duration-300" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardHeader className="text-center">
-                <div className="bg-[#1EAEDB] rounded-full p-3 w-fit mx-auto mb-4">
-                  <Target className="h-6 w-6 text-white" />
+                <div className="rounded-full p-3 w-fit mx-auto mb-4" style={{ backgroundColor: '#95deff' }}>
+                  <Target className="h-6 w-6" style={{ color: '#052240' }} />
                 </div>
                 <CardTitle className="text-white">In-Game Betting</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-300 text-center">
+                <p className="text-white text-center" style={{ color: '#95deff' }}>
                   Place bets in the middle of games! Our real-time system allows you to bet on live matches 
                   as they unfold, adding excitement to every shot.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="glass-card border-2 border-[#a3e635] hover:shadow-[0_0_20px_rgba(163,230,53,0.5)] transition-all duration-300">
+            <Card className="border-2 transition-all duration-300" style={{ backgroundColor: '#004b6b', borderColor: '#fa1593' }}>
               <CardHeader className="text-center">
-                <div className="bg-[#a3e635] rounded-full p-3 w-fit mx-auto mb-4">
-                  <Zap className="h-6 w-6 text-black" />
+                <div className="rounded-full p-3 w-fit mx-auto mb-4" style={{ backgroundColor: '#fa1593' }}>
+                  <Zap className="h-6 w-6 text-white" />
                 </div>
                 <CardTitle className="text-white">Instant Access</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-300 text-center">
+                <p className="text-white text-center" style={{ color: '#95deff' }}>
                   Anyone can bet on any side and can quit at any time. No long-term commitments, 
                   no complicated signup processes - just pure betting excitement.
                 </p>
@@ -133,12 +131,12 @@ const AboutPage: React.FC = () => {
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-6">
               <div className="flex items-start space-x-4">
-                <div className="bg-[#F97316] rounded-full p-2 flex-shrink-0">
+                <div className="rounded-full p-2 flex-shrink-0" style={{ backgroundColor: '#fa1593' }}>
                   <Shield className="h-5 w-5 text-white" />
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold text-white mb-2">Guaranteed Payouts</h3>
-                  <p className="text-gray-300">
+                  <p className="text-white" style={{ color: '#95deff' }}>
                     Never worry about getting paid on your winning bets. Our platform ensures all payouts are processed 
                     automatically and securely.
                   </p>
@@ -146,12 +144,12 @@ const AboutPage: React.FC = () => {
               </div>
 
               <div className="flex items-start space-x-4">
-                <div className="bg-[#1EAEDB] rounded-full p-2 flex-shrink-0">
-                  <Clock className="h-5 w-5 text-white" />
+                <div className="rounded-full p-2 flex-shrink-0" style={{ backgroundColor: '#95deff' }}>
+                  <Clock className="h-5 w-5" style={{ color: '#052240' }} />
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold text-white mb-2">Real-Time Updates</h3>
-                  <p className="text-gray-300">
+                  <p className="text-white" style={{ color: '#95deff' }}>
                     Get instant updates on match progress, scores, and betting queues. 
                     Stay connected to the action with live synchronization across all devices.
                   </p>
@@ -159,12 +157,12 @@ const AboutPage: React.FC = () => {
               </div>
 
               <div className="flex items-start space-x-4">
-                <div className="bg-[#a3e635] rounded-full p-2 flex-shrink-0">
-                  <Smartphone className="h-5 w-5 text-black" />
+                <div className="rounded-full p-2 flex-shrink-0" style={{ backgroundColor: '#fa1593' }}>
+                  <Smartphone className="h-5 w-5 text-white" />
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold text-white mb-2">Mobile & Desktop Access</h3>
-                  <p className="text-gray-300">
+                  <p className="text-white" style={{ color: '#95deff' }}>
                     Access the platform from any device - your phone, tablet, or computer. 
                     Responsive design ensures optimal experience everywhere.
                   </p>
@@ -172,12 +170,12 @@ const AboutPage: React.FC = () => {
               </div>
 
               <div className="flex items-start space-x-4">
-                <div className="bg-[#FBBF24] rounded-full p-2 flex-shrink-0">
-                  <Coins className="h-5 w-5 text-black" />
+                <div className="rounded-full p-2 flex-shrink-0" style={{ backgroundColor: '#95deff' }}>
+                  <Coins className="h-5 w-5" style={{ color: '#052240' }} />
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold text-white mb-2">Digital Currency System</h3>
-                  <p className="text-gray-300">
+                  <p className="text-white" style={{ color: '#95deff' }}>
                     Use our secure digital coin system for all transactions. 
                     Easy to manage, track, and transfer between users.
                   </p>
@@ -187,12 +185,12 @@ const AboutPage: React.FC = () => {
 
             <div className="space-y-6">
               <div className="flex items-start space-x-4">
-                <div className="bg-[#F97316] rounded-full p-2 flex-shrink-0">
+                <div className="rounded-full p-2 flex-shrink-0" style={{ backgroundColor: '#fa1593' }}>
                   <UserCheck className="h-5 w-5 text-white" />
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold text-white mb-2">User-Friendly Interface</h3>
-                  <p className="text-gray-300">
+                  <p className="text-white" style={{ color: '#95deff' }}>
                     Intuitive design makes betting simple and enjoyable. 
                     Clear visual indicators, easy navigation, and helpful tooltips guide you through every step.
                   </p>
@@ -200,12 +198,12 @@ const AboutPage: React.FC = () => {
               </div>
 
               <div className="flex items-start space-x-4">
-                <div className="bg-[#1EAEDB] rounded-full p-2 flex-shrink-0">
-                  <TrendingUp className="h-5 w-5 text-white" />
+                <div className="rounded-full p-2 flex-shrink-0" style={{ backgroundColor: '#95deff' }}>
+                  <TrendingUp className="h-5 w-5" style={{ color: '#052240' }} />
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold text-white mb-2">Live Betting Opportunities</h3>
-                  <p className="text-gray-300">
+                  <p className="text-white" style={{ color: '#95deff' }}>
                     Bet on matches as they happen! Our in-game betting feature allows you to place wagers 
                     during live matches, maximizing your opportunities.
                   </p>
@@ -213,12 +211,12 @@ const AboutPage: React.FC = () => {
               </div>
 
               <div className="flex items-start space-x-4">
-                <div className="bg-[#a3e635] rounded-full p-2 flex-shrink-0">
-                  <Lock className="h-5 w-5 text-black" />
+                <div className="rounded-full p-2 flex-shrink-0" style={{ backgroundColor: '#fa1593' }}>
+                  <Lock className="h-5 w-5 text-white" />
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold text-white mb-2">Secure & Private</h3>
-                  <p className="text-gray-300">
+                  <p className="text-white" style={{ color: '#95deff' }}>
                     Your data and transactions are protected with enterprise-grade security. 
                     Private betting history and secure account management.
                   </p>
@@ -226,12 +224,12 @@ const AboutPage: React.FC = () => {
               </div>
 
               <div className="flex items-start space-x-4">
-                <div className="bg-[#FBBF24] rounded-full p-2 flex-shrink-0">
-                  <Award className="h-5 w-5 text-black" />
+                <div className="rounded-full p-2 flex-shrink-0" style={{ backgroundColor: '#95deff' }}>
+                  <Award className="h-5 w-5" style={{ color: '#052240' }} />
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold text-white mb-2">Fair Play Guaranteed</h3>
-                  <p className="text-gray-300">
+                  <p className="text-white" style={{ color: '#95deff' }}>
                     Transparent betting system with clear rules and fair odds. 
                     No hidden fees, no manipulation - just honest, exciting betting.
                   </p>
