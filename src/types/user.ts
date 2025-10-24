@@ -70,6 +70,7 @@ export interface Bet {
   color: string | null;
   booked: boolean;
   userId: string;
+  userName?: string; // Added for cross-browser synchronization
   teamSide: 'A' | 'B';
 }
 

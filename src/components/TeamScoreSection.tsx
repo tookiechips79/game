@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Trophy, Circle, PlusCircle, MinusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FlipCounter from "@/components/FlipCounter";
@@ -39,8 +39,16 @@ const TeamScoreSection = ({
   onGameDecrement,
   onNameChange
 }: TeamScoreSectionProps) => {  
+  // Force re-render for Chrome compatibility
+  const [renderKey, setRenderKey] = useState(0);
+  
+  useEffect(() => {
+    // Force re-render when balls or games change to fix Chrome glitching
+    setRenderKey(prev => prev + 1);
+  }, [balls, games]);
+  
   return (
-    <div className={`col-span-1 p-4 pt-24 bg-gradient-to-r from-[${color}]/30 to-[${color}]/20 relative rounded-l-2xl`}>
+    <div key={renderKey} className={`col-span-1 p-4 pt-24 bg-gradient-to-r from-[${color}]/30 to-[${color}]/20 relative rounded-l-2xl`}>
       <div className="flex flex-col items-center justify-center mb-2 mt-8">
         <PlayerAvatar playerName={teamName} />
         
@@ -49,10 +57,10 @@ const TeamScoreSection = ({
             type="text"
             value={teamName}
             onChange={(e) => onNameChange(e.target.value)}
-            className="text-xl font-bold bg-transparent border-b border-[#F97316]/50 text-center focus:outline-none focus:border-[#F97316] text-white"
+            className="text-xl font-bold bg-transparent border-b border-[#fa1593]/50 text-center focus:outline-none focus:border-[#fa1593] text-white"
           />
         ) : (
-          <span className="text-xl font-bold text-white drop-shadow-[0_0_8px_rgba(249,115,22,0.7)]">{teamName}</span>
+          <span className="text-xl font-bold text-white drop-shadow-[0_0_8px_rgba(250,21,147,0.7)]">{teamName}</span>
         )}
       </div>
       
@@ -124,14 +132,16 @@ const TeamScoreSection = ({
         <div className="mt-4 flex justify-center space-x-2">
           <button 
             onClick={onBreakChange}
-            className={`px-3 py-1 text-sm rounded-xl ${hasBreak ? `bg-[${color}] text-gray-900` : 'bg-gray-700 text-white'} transition-colors shadow-md`}
+            className={`px-3 py-1 text-sm rounded-xl text-white transition-colors shadow-md`}
+            style={{ backgroundColor: hasBreak ? '#fa1593' : '#6b7280' }}
           >
             Has Break
           </button>
           
           <Button 
             onClick={onWinConfirmOpen}
-            className="px-3 py-1 text-sm bg-gradient-to-r from-[#a3e635] to-[#a3e635]/80 text-gray-900 rounded-xl hover:from-[#a3e635]/90 hover:to-[#a3e635]/70 shadow-[0_0_10px_rgba(163,230,53,0.5)] transition-all duration-300"
+            className="px-3 py-1 text-sm rounded-xl text-white transition-all duration-300"
+            style={{ backgroundColor: '#fa1593' }}
           >
             <Award className="h-4 w-4 mr-1" /> Win Game
           </Button>

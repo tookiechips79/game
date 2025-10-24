@@ -23,42 +23,56 @@ const Landing = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a192f] via-[#0f2a3d] to-[#143a4e]">
+    <div 
+      className="min-h-screen relative"
+      style={{
+        backgroundImage: 'url(/pool-background.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
+        position: 'relative'
+      }}
+    >
+      {/* Overlay for readability */}
+      <div className="fixed inset-0 pointer-events-none" style={{ backgroundColor: 'rgba(5, 34, 64, 0.5)', zIndex: 1 }}></div>
+      
       {/* Hero Section */}
-      <div className="container mx-auto pt-8 pb-12 px-4">
+      <div className="container mx-auto pt-8 pb-12 px-4 relative z-10">
         {/* Navigation */}
         <nav className="flex justify-between items-center mb-12">
           <div className="flex items-center gap-2">
             <img 
               src="/lovable-uploads/4dfcf9c9-cbb9-4a75-94ab-bcdb38a8091e.png" 
               alt="Game Bird Logo" 
-              className="w-16 h-16 object-contain drop-shadow-[0_0_10px_rgba(0,255,150,0.3)]"
+              className="w-16 h-16 object-contain drop-shadow-[0_0_10px_rgba(149,222,255,0.3)]"
             />
-            <span className="text-2xl font-bold text-[#1EAEDB] drop-shadow-[0_0_10px_rgba(30,174,219,0.3)]">Game Bird</span>
+            <span className="text-2xl font-bold" style={{ color: '#95deff', textShadow: '0 0 10px rgba(149, 222, 255, 0.5)' }}>Game Bird</span>
           </div>
           <div className="flex gap-4 items-center">
             <Link to="/about">
-              <Button variant="ghost" className="text-[#1EAEDB] hover:text-[#33C3F0] hover:bg-[#143a4e]/70">
+              <Button variant="ghost" style={{ color: '#95deff' }} className="hover:bg-[#004b6b]/70">
                 About
               </Button>
             </Link>
             <Link to="/features">
-              <Button variant="ghost" className="text-[#1EAEDB] hover:text-[#33C3F0] hover:bg-[#143a4e]/70">
+              <Button variant="ghost" style={{ color: '#95deff' }} className="hover:bg-[#004b6b]/70">
                 Features
               </Button>
             </Link>
             
             {currentUser ? (
               <>
-                <div className="hidden md:flex items-center bg-[#143a4e]/70 rounded-full pl-3 pr-1 py-1 mr-2">
-                  <span className="text-[#F97316] mr-2">{currentUser.name}</span>
-                  <div className="bg-[#F97316] text-black rounded-full h-7 w-7 flex items-center justify-center">
-                    <User size={16} />
+                <div className="hidden md:flex items-center rounded-full pl-3 pr-1 py-1 mr-2" style={{ backgroundColor: 'rgba(0, 75, 107, 0.7)' }}>
+                  <span className="mr-2" style={{ color: '#fa1593' }}>{currentUser.name}</span>
+                  <div className="rounded-full h-7 w-7 flex items-center justify-center" style={{ backgroundColor: '#fa1593' }}>
+                    <User size={16} style={{ color: 'white' }} />
                   </div>
                 </div>
                 <Button 
                   variant="outline" 
-                  className="border-red-400 text-red-300 hover:bg-red-900/50 hover:text-red-200"
+                  className="hover:bg-red-900/50"
+                  style={{ borderColor: '#fa1593', color: '#fa1593' }}
                   onClick={handleLogout}
                 >
                   <LogOut size={18} className="mr-2" />
@@ -67,7 +81,7 @@ const Landing = () => {
               </>
             ) : (
               <>
-                <Button variant="outline" className="border-[#F97316] text-[#F97316] hover:bg-[#F97316]/20" onClick={openLoginModal}>
+                <Button variant="outline" style={{ borderColor: '#fa1593', color: '#fa1593' }} className="hover:bg-[#fa1593]/20" onClick={openLoginModal}>
                   <LogIn size={18} className="mr-2" />
                   <span className="hidden sm:inline">Login</span>
                 </Button>
@@ -75,7 +89,7 @@ const Landing = () => {
             )}
             
             <Link to="/betting-queue">
-              <Button className="bg-[#F97316] hover:bg-[#F97316]/80 text-black font-bold flex items-center gap-2">
+              <Button className="font-bold flex items-center gap-2" style={{ backgroundColor: '#fa1593', color: 'white' }}>
                 <Ticket size={18} />
                 <span className="hidden sm:inline">Betting</span>
               </Button>
@@ -87,17 +101,18 @@ const Landing = () => {
         <div className="flex flex-col md:flex-row items-center gap-12 mb-20">
           <div className="flex-1">
             <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
-              The Ultimate <span className="text-[#33C3F0]">Betting</span> Experience
+              The Ultimate <span style={{ color: '#95deff' }}>Betting</span> Experience
             </h1>
-            <p className="text-xl text-[#a3e635] mb-8">
+            <p className="text-xl mb-8" style={{ color: '#95deff' }}>
               Join Game Bird for the most exciting peer-to-peer betting platform. 
-              Create a free account to view live scoreboards and betting cues. 
+              Create a free account to view live scoreboards and betting queues. 
               Subscribe to place bets and win real money!
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               {currentUser ? (
                 <Button 
-                  className="bg-gradient-to-r from-[#F97316] to-[#FBBF24] hover:from-[#F97316]/90 hover:to-[#FBBF24]/90 text-black font-bold px-6 py-6 text-lg w-full sm:w-auto"
+                  className="font-bold px-6 py-6 text-lg w-full sm:w-auto"
+                  style={{ backgroundColor: '#fa1593', color: 'white' }}
                   onClick={() => navigate('/betting-queue')}
                 >
                   Start Betting Now <Ticket className="ml-2" />
@@ -106,32 +121,35 @@ const Landing = () => {
                 <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                   <Link to="/member-signup">
                     <Button 
-                      className="bg-gradient-to-r from-[#F97316] to-[#FBBF24] hover:from-[#F97316]/90 hover:to-[#FBBF24]/90 text-black font-bold px-6 py-6 text-lg w-full sm:w-auto"
+                      className="font-bold px-6 py-6 text-lg w-full sm:w-auto"
+                      style={{ backgroundColor: '#fa1593', color: 'white' }}
                     >
                       Sign Up & Start Betting <LogIn className="ml-2" />
                     </Button>
                   </Link>
                   <Button 
                     variant="outline"
-                    className="border-[#1EAEDB] text-[#1EAEDB] hover:bg-[#1EAEDB]/20 px-6 py-6 text-lg w-full sm:w-auto"
+                    className="px-6 py-6 text-lg w-full sm:w-auto"
+                    style={{ borderColor: '#95deff', color: '#95deff' }}
                     onClick={openLoginModal}
                   >
                     Log In <LogIn className="ml-2" />
                   </Button>
                 </div>
               )}
-              <Button variant="outline" className="border-[#1EAEDB] text-[#1EAEDB] hover:bg-[#1EAEDB]/20 px-6 py-6 text-lg w-full sm:w-auto">
+              <Button variant="outline" className="px-6 py-6 text-lg w-full sm:w-auto" style={{ borderColor: '#95deff', color: '#95deff' }}>
                 Learn More
               </Button>
             </div>
             
             {!currentUser && (
               <div className="mt-6 flex items-center">
-                <span className="text-[#a3e635] mr-3">Or sign up with:</span>
+                <span className="mr-3" style={{ color: '#95deff' }}>Or sign up with:</span>
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="rounded-full border-[#1EAEDB] text-[#1EAEDB] h-8 w-8 p-0 mr-2"
+                  className="rounded-full h-8 w-8 p-0 mr-2"
+                  style={{ borderColor: '#95deff', color: '#95deff' }}
                   onClick={() => {
                     setDefaultAuthTab("register");
                     setAuthModalOpen(true);
@@ -148,7 +166,8 @@ const Landing = () => {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="rounded-full border-[#1EAEDB] text-[#1EAEDB] h-8 w-8 p-0"
+                  className="rounded-full h-8 w-8 p-0"
+                  style={{ borderColor: '#95deff', color: '#95deff' }}
                   onClick={() => {
                     setDefaultAuthTab("register");
                     setAuthModalOpen(true);
@@ -169,55 +188,55 @@ const Landing = () => {
             <img 
               src="/lovable-uploads/4dfcf9c9-cbb9-4a75-94ab-bcdb38a8091e.png" 
               alt="Game Bird Logo" 
-              className="w-full max-w-md drop-shadow-[0_0_20px_rgba(163,230,53,0.4)]"
+              className="w-full max-w-md drop-shadow-[0_0_20px_rgba(149,222,255,0.4)]"
             />
           </div>
         </div>
 
         {/* Features Section */}
-        <div className="bg-black/30 backdrop-blur-sm py-20">
+        <div className="py-20" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
           <div className="container mx-auto px-4">
             <h2 className="text-4xl font-bold text-center text-white mb-12">
-              Why Choose <span className="text-[#33C3F0]">Game Bird</span>
+              Why Choose <span style={{ color: '#95deff' }}>Game Bird</span>
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <Card className="bg-[#0a192f]/70 border-[#33C3F0]/30 backdrop-blur-sm text-white shadow-xl hover:shadow-[0_0_15px_rgba(30,174,219,0.3)] transition-all duration-300">
+              <Card className="text-white shadow-xl transition-all duration-300" style={{ backgroundColor: 'rgba(0, 75, 107, 0.7)', borderColor: '#95deff' }}>
                 <CardContent className="pt-6">
                   <div className="flex flex-col items-center text-center">
-                    <div className="rounded-full bg-[#F97316] p-3 mb-4">
-                      <DollarSign size={32} className="text-[#0a192f]" />
+                    <div className="rounded-full p-3 mb-4" style={{ backgroundColor: '#fa1593' }}>
+                      <DollarSign size={32} style={{ color: 'white' }} />
                     </div>
                     <h3 className="text-xl font-bold mb-2">Instant Matching</h3>
-                    <p className="text-[#a3e635]">
+                    <p style={{ color: '#95deff' }}>
                       Our smart algorithm instantly matches your bets with other players for quick, seamless transactions.
                     </p>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card className="bg-[#0a192f]/70 border-[#33C3F0]/30 backdrop-blur-sm text-white shadow-xl hover:shadow-[0_0_15px_rgba(30,174,219,0.3)] transition-all duration-300">
+              <Card className="text-white shadow-xl transition-all duration-300" style={{ backgroundColor: 'rgba(0, 75, 107, 0.7)', borderColor: '#95deff' }}>
                 <CardContent className="pt-6">
                   <div className="flex flex-col items-center text-center">
-                    <div className="rounded-full bg-[#F97316] p-3 mb-4">
-                      <Users size={32} className="text-[#0a192f]" />
+                    <div className="rounded-full p-3 mb-4" style={{ backgroundColor: '#fa1593' }}>
+                      <Users size={32} style={{ color: 'white' }} />
                     </div>
                     <h3 className="text-xl font-bold mb-2">Peer-to-Peer</h3>
-                    <p className="text-[#a3e635]">
+                    <p style={{ color: '#95deff' }}>
                       Bet directly against other players, not the house. Create and join betting pools with friends.
                     </p>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card className="bg-[#0a192f]/70 border-[#33C3F0]/30 backdrop-blur-sm text-white shadow-xl hover:shadow-[0_0_15px_rgba(30,174,219,0.3)] transition-all duration-300">
+              <Card className="text-white shadow-xl transition-all duration-300" style={{ backgroundColor: 'rgba(0, 75, 107, 0.7)', borderColor: '#95deff' }}>
                 <CardContent className="pt-6">
                   <div className="flex flex-col items-center text-center">
-                    <div className="rounded-full bg-[#F97316] p-3 mb-4">
-                      <BadgeCheck size={32} className="text-[#0a192f]" />
+                    <div className="rounded-full p-3 mb-4" style={{ backgroundColor: '#fa1593' }}>
+                      <BadgeCheck size={32} style={{ color: 'white' }} />
                     </div>
                     <h3 className="text-xl font-bold mb-2">Secure Platform</h3>
-                    <p className="text-[#a3e635]">
+                    <p style={{ color: '#95deff' }}>
                       Your transactions and data are protected with state-of-the-art security measures.
                     </p>
                   </div>
@@ -231,34 +250,34 @@ const Landing = () => {
         <div className="container mx-auto py-20 px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-4">Choose Your Access Level</h2>
-            <p className="text-xl text-[#a3e635] max-w-3xl mx-auto">
+            <p className="text-xl max-w-3xl mx-auto" style={{ color: '#95deff' }}>
               Start with a free account to explore, then upgrade to place bets and win real money
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {/* Free Access */}
-            <Card className="bg-[#0a192f]/70 border-[#1EAEDB]/30 backdrop-blur-sm text-white shadow-xl hover:shadow-[0_0_15px_rgba(30,174,219,0.3)] transition-all duration-300">
+            <Card className="text-white shadow-xl transition-all duration-300" style={{ backgroundColor: 'rgba(0, 75, 107, 0.7)', borderColor: '#95deff' }}>
               <CardContent className="p-8">
                 <div className="text-center mb-6">
-                  <div className="rounded-full bg-[#1EAEDB] p-4 mb-4 mx-auto w-16 h-16 flex items-center justify-center">
-                    <Eye size={32} className="text-white" />
+                  <div className="rounded-full p-4 mb-4 mx-auto w-16 h-16 flex items-center justify-center" style={{ backgroundColor: '#95deff' }}>
+                    <Eye size={32} style={{ color: '#052240' }} />
                   </div>
                   <h3 className="text-2xl font-bold mb-2">Free Access</h3>
-                  <p className="text-3xl font-bold text-[#1EAEDB] mb-2">$0</p>
+                  <p className="text-3xl font-bold mb-2" style={{ color: '#95deff' }}>$0</p>
                   <p className="text-gray-300">Perfect for getting started</p>
                 </div>
                 
                 <ul className="space-y-3 mb-8">
-                  <li className="flex items-center text-[#a3e635]">
+                  <li className="flex items-center" style={{ color: '#95deff' }}>
                     <CheckCircle size={20} className="mr-3 flex-shrink-0" />
                     View live scoreboard
                   </li>
-                  <li className="flex items-center text-[#a3e635]">
+                  <li className="flex items-center" style={{ color: '#95deff' }}>
                     <CheckCircle size={20} className="mr-3 flex-shrink-0" />
-                    Watch betting cues
+                    Watch betting queues
                   </li>
-                  <li className="flex items-center text-[#a3e635]">
+                  <li className="flex items-center" style={{ color: '#95deff' }}>
                     <CheckCircle size={20} className="mr-3 flex-shrink-0" />
                     Track game progress
                   </li>
@@ -270,7 +289,7 @@ const Landing = () => {
                 
                 {!currentUser && (
                   <Link to="/member-signup" className="block">
-                    <Button className="w-full bg-[#1EAEDB] hover:bg-[#33C3F0] text-white font-bold">
+                    <Button className="w-full font-bold" style={{ backgroundColor: '#95deff', color: '#052240' }}>
                       Get Free Access
                     </Button>
                   </Link>
@@ -279,36 +298,36 @@ const Landing = () => {
             </Card>
 
             {/* Premium Access */}
-            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm text-white shadow-xl hover:shadow-[0_0_15px_rgba(249,115,22,0.3)] transition-all duration-300 relative">
+            <Card className="text-white shadow-xl transition-all duration-300 relative" style={{ backgroundColor: 'rgba(0, 75, 107, 0.7)', borderColor: '#fa1593' }}>
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <span className="bg-[#F97316] text-black px-4 py-1 rounded-full text-sm font-bold">
+                <span className="px-4 py-1 rounded-full text-sm font-bold" style={{ backgroundColor: '#fa1593', color: 'white' }}>
                   Most Popular
                 </span>
               </div>
               <CardContent className="p-8">
                 <div className="text-center mb-6">
-                  <div className="rounded-full bg-[#F97316] p-4 mb-4 mx-auto w-16 h-16 flex items-center justify-center">
-                    <Trophy size={32} className="text-black" />
+                  <div className="rounded-full p-4 mb-4 mx-auto w-16 h-16 flex items-center justify-center" style={{ backgroundColor: '#fa1593' }}>
+                    <Trophy size={32} style={{ color: 'white' }} />
                   </div>
                   <h3 className="text-2xl font-bold mb-2">Premium Access</h3>
-                  <p className="text-3xl font-bold text-[#F97316] mb-2">$20/month</p>
+                  <p className="text-3xl font-bold mb-2" style={{ color: '#fa1593' }}>$20/month</p>
                   <p className="text-gray-300">Full betting experience</p>
                 </div>
                 
                 <ul className="space-y-3 mb-8">
-                  <li className="flex items-center text-[#a3e635]">
+                  <li className="flex items-center" style={{ color: '#95deff' }}>
                     <CheckCircle size={20} className="mr-3 flex-shrink-0" />
                     Everything in Free Access
                   </li>
-                  <li className="flex items-center text-[#a3e635]">
+                  <li className="flex items-center" style={{ color: '#95deff' }}>
                     <CheckCircle size={20} className="mr-3 flex-shrink-0" />
                     Place unlimited bets
                   </li>
-                  <li className="flex items-center text-[#a3e635]">
+                  <li className="flex items-center" style={{ color: '#95deff' }}>
                     <CheckCircle size={20} className="mr-3 flex-shrink-0" />
                     Win real money
                   </li>
-                  <li className="flex items-center text-[#a3e635]">
+                  <li className="flex items-center" style={{ color: '#95deff' }}>
                     <CheckCircle size={20} className="mr-3 flex-shrink-0" />
                     Cash out winnings
                   </li>
@@ -316,13 +335,13 @@ const Landing = () => {
                 
                 {!currentUser ? (
                   <Link to="/member-signup" className="block">
-                    <Button className="w-full bg-[#F97316] hover:bg-[#FBBF24] text-black font-bold">
+                    <Button className="w-full font-bold" style={{ backgroundColor: '#fa1593', color: 'white' }}>
                       Sign Up & Subscribe
                     </Button>
                   </Link>
                 ) : (
                   <Link to="/subscription" className="block">
-                    <Button className="w-full bg-[#F97316] hover:bg-[#FBBF24] text-black font-bold">
+                    <Button className="w-full font-bold" style={{ backgroundColor: '#fa1593', color: 'white' }}>
                       Subscribe Now
                     </Button>
                   </Link>
@@ -334,23 +353,23 @@ const Landing = () => {
 
         {/* CTA Section */}
         <div className="container mx-auto py-20 px-4">
-          <div className="bg-[#0a192f]/70 border border-[#33C3F0]/30 backdrop-blur-sm rounded-xl p-8 flex flex-col md:flex-row items-center justify-between">
+          <div className="rounded-xl p-8 flex flex-col md:flex-row items-center justify-between" style={{ backgroundColor: 'rgba(0, 75, 107, 0.7)', borderColor: '#95deff', borderWidth: '1px' }}>
             <div>
               <h2 className="text-3xl font-bold text-white mb-4">Ready to Get Started?</h2>
-              <p className="text-[#a3e635] max-w-xl">
+              <p className="max-w-xl" style={{ color: '#95deff' }}>
                 Join thousands of players already using Game Bird. Create your free account today!
               </p>
             </div>
             {currentUser ? (
               <Link to="/betting-queue" className="mt-6 md:mt-0">
-                <Button className="bg-gradient-to-r from-[#F97316] to-[#FBBF24] hover:from-[#F97316]/90 hover:to-[#FBBF24]/90 text-black font-bold px-8 py-6 text-lg flex items-center gap-2">
+                <Button className="font-bold px-8 py-6 text-lg flex items-center gap-2" style={{ backgroundColor: '#fa1593', color: 'white' }}>
                   <Ticket size={20} />
                   Open Betting
                 </Button>
               </Link>
             ) : (
               <Link to="/member-signup" className="mt-6 md:mt-0">
-                <Button className="bg-gradient-to-r from-[#F97316] to-[#FBBF24] hover:from-[#F97316]/90 hover:to-[#FBBF24]/90 text-black font-bold px-8 py-6 text-lg flex items-center gap-2">
+                <Button className="font-bold px-8 py-6 text-lg flex items-center gap-2" style={{ backgroundColor: '#fa1593', color: 'white' }}>
                   <LogIn size={20} />
                   Get Started Free
                 </Button>
@@ -360,7 +379,7 @@ const Landing = () => {
         </div>
 
         {/* Footer */}
-        <footer className="bg-black/50 text-white py-12">
+        <footer className="text-white py-12" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
           <div className="container mx-auto px-4">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <div className="flex items-center gap-2 mb-6 md:mb-0">
@@ -369,36 +388,36 @@ const Landing = () => {
                   alt="Game Bird Logo" 
                   className="w-10 h-10 object-contain"
                 />
-                <span className="text-xl font-bold text-[#1EAEDB]">Game Bird</span>
+                <span className="text-xl font-bold" style={{ color: '#95deff' }}>Game Bird</span>
               </div>
               <div className="flex gap-8">
                 <div>
-                  <h3 className="font-bold mb-2 text-[#F97316]">Platform</h3>
+                  <h3 className="font-bold mb-2" style={{ color: '#fa1593' }}>Platform</h3>
                   <ul className="space-y-1">
-                    <li><a href="#" className="hover:text-[#33C3F0]">How it works</a></li>
-                    <li><a href="#" className="hover:text-[#33C3F0]">Features</a></li>
-                    <li><a href="#" className="hover:text-[#33C3F0]">Security</a></li>
+                    <li><a href="#" style={{ color: '#95deff' }}>How it works</a></li>
+                    <li><a href="#" style={{ color: '#95deff' }}>Features</a></li>
+                    <li><a href="#" style={{ color: '#95deff' }}>Security</a></li>
                   </ul>
                 </div>
                 <div>
-                  <h3 className="font-bold mb-2 text-[#F97316]">Company</h3>
+                  <h3 className="font-bold mb-2" style={{ color: '#fa1593' }}>Company</h3>
                   <ul className="space-y-1">
-                    <li><a href="#" className="hover:text-[#33C3F0]">About us</a></li>
-                    <li><a href="#" className="hover:text-[#33C3F0]">Contact</a></li>
-                    <li><a href="#" className="hover:text-[#33C3F0]">Careers</a></li>
+                    <li><a href="#" style={{ color: '#95deff' }}>About us</a></li>
+                    <li><a href="#" style={{ color: '#95deff' }}>Contact</a></li>
+                    <li><a href="#" style={{ color: '#95deff' }}>Careers</a></li>
                   </ul>
                 </div>
                 <div>
-                  <h3 className="font-bold mb-2 text-[#F97316]">Legal</h3>
+                  <h3 className="font-bold mb-2" style={{ color: '#fa1593' }}>Legal</h3>
                   <ul className="space-y-1">
-                    <li><a href="#" className="hover:text-[#33C3F0]">Terms</a></li>
-                    <li><a href="#" className="hover:text-[#33C3F0]">Privacy</a></li>
-                    <li><a href="#" className="hover:text-[#33C3F0]">Cookies</a></li>
+                    <li><a href="#" style={{ color: '#95deff' }}>Terms</a></li>
+                    <li><a href="#" style={{ color: '#95deff' }}>Privacy</a></li>
+                    <li><a href="#" style={{ color: '#95deff' }}>Cookies</a></li>
                   </ul>
                 </div>
               </div>
             </div>
-            <div className="border-t border-[#143a4e] mt-8 pt-8 text-center text-[#a3e635]">
+            <div className="border-t mt-8 pt-8 text-center" style={{ borderColor: '#004b6b', color: '#95deff' }}>
               &copy; {new Date().getFullYear()} Game Bird. All rights reserved.
             </div>
           </div>

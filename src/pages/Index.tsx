@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { 
-  ArrowLeft, Zap, Coins, CheckSquare, Lock, Unlock, 
+  ArrowLeft, Zap, Coins, CheckSquare, Unlock, 
   Wallet, TimerReset, ReceiptText, SkipForward, ArrowDownUp, ArrowDown, Trash2
 } from "lucide-react";
 import NumericAnimation from "@/components/NumericAnimation";
@@ -32,7 +32,8 @@ const Index = () => {
     addBetHistoryRecord, 
     incrementWins, 
     incrementLosses,
-    resetBetHistory 
+    clearBettingQueueReceipts,
+    userBetReceipts
   } = useUser();
   
   const { gameState, updateGameState, isAdmin, localAdminState, updateLocalAdminState, startTimer, pauseTimer, resetTimer, setTimer, resetTimerOnMatchStart, resetTimerOnGameWin } = useGameState();
@@ -177,6 +178,9 @@ const Index = () => {
       currentGameNumber: currentGameNumber + 1
     });
     
+    // Reset timer to zero when game is won
+    resetTimerOnGameWin();
+    
     toast.success(`${teamAName} Wins!`, {
       description: `${teamAName} has won a game`,
       className: "custom-toast-success",
@@ -184,8 +188,7 @@ const Index = () => {
 
     processBetsForGameWin('A', duration);
     
-    // Reset timer when game is won
-    resetTimerOnGameWin();
+    // Timer will be automatically started for the next game by useScoreboardState
     
     playSound("win");
   };
@@ -199,6 +202,9 @@ const Index = () => {
       currentGameNumber: currentGameNumber + 1
     });
     
+    // Reset timer to zero when game is won
+    resetTimerOnGameWin();
+    
     toast.success(`${teamBName} Wins!`, {
       description: `${teamBName} has won a game`,
       className: "custom-toast-success",
@@ -206,42 +212,40 @@ const Index = () => {
 
     processBetsForGameWin('B', duration);
     
-    // Reset timer when game is won
-    resetTimerOnGameWin();
+    // Timer will be automatically started for the next game by useScoreboardState
     
     playSound("win");
   };
   
   const processBetsForGameWin = (winningTeam: 'A' | 'B', duration: number) => {
-    // Only include booked bets in game history
-    const teamABets = teamAQueue
-      .filter(bet => bet.booked)
-      .map(bet => {
-        const user = getUserById(bet.userId);
-        return {
-          userId: bet.userId,
-          userName: user?.name || 'Unknown',
-          amount: bet.amount,
-          won: winningTeam === 'A',
-          booked: bet.booked
-        };
-      });
+    // Include ALL bets (both booked and unbooked) in game history for accurate tracking
+    const teamABets = teamAQueue.map(bet => {
+      const user = getUserById(bet.userId);
+      return {
+        userId: bet.userId,
+        userName: bet.userName || user?.name || 'User',
+        amount: bet.amount,
+        won: winningTeam === 'A',
+        booked: bet.booked
+      };
+    });
     
-    const teamBBets = teamBQueue
-      .filter(bet => bet.booked)
-      .map(bet => {
-        const user = getUserById(bet.userId);
-        return {
-          userId: bet.userId,
-          userName: user?.name || 'Unknown',
-          amount: bet.amount,
-          won: winningTeam === 'B',
-          booked: bet.booked
-        };
-      });
+    const teamBBets = teamBQueue.map(bet => {
+      const user = getUserById(bet.userId);
+      return {
+        userId: bet.userId,
+        userName: bet.userName || user?.name || 'User',
+        amount: bet.amount,
+        won: winningTeam === 'B',
+        booked: bet.booked
+      };
+    });
+    
+    // Calculate accurate total amount for this specific game
+    const gameTotalAmount = [...teamABets, ...teamBBets].reduce((total, bet) => total + bet.amount, 0);
     
     addBetHistoryRecord({
-      gameNumber: teamAGames + teamBGames + 1,
+      gameNumber: currentGameNumber,
       teamAName,
       teamBName,
       teamAScore: winningTeam === 'A' ? 1 : 0,
@@ -255,7 +259,7 @@ const Index = () => {
         teamA: teamABets,
         teamB: teamBBets
       },
-      totalAmount: totalBookedAmount
+      totalAmount: gameTotalAmount
     });
     
     if (bookedBets.length > 0) {
@@ -435,6 +439,7 @@ const Index = () => {
       color: null, 
       booked: false,
       userId: currentUser.id,
+      userName: currentUser.name,
       teamSide: confirmation.teamSide
     };
 
@@ -480,15 +485,6 @@ const Index = () => {
       return;
     }
 
-    if (currentUser.membershipStatus === 'inactive') {
-      toast.error("Membership Required", {
-        description: "You need an active subscription to place bets. Please subscribe to activate your membership.",
-        icon: <Lock className="h-5 w-5 text-red-500" />,
-        duration: 5000,
-        className: "custom-toast-error",
-      });
-      return;
-    }
     
     if (currentUser.credits === 0) {
       toast.error("Zero Credits", {
@@ -573,15 +569,26 @@ const Index = () => {
         
         if (matchIndex !== -1) {
           const assignedColor = betColors[newColorIndex % betColors.length];
+          
+          // Determine which bet was placed first (lower ID = placed first)
+          // Use the first-placed bet's ID as the master ID
+          const teamAId = newAQueue[i].id;
+          const teamBId = newBQueue[matchIndex].id;
+          const masterId = teamAId < teamBId ? teamAId : teamBId;
+          
           newAQueue[i].color = assignedColor;
           newAQueue[i].booked = true;
           newBQueue[matchIndex].color = assignedColor;
           newBQueue[matchIndex].booked = true;
+          
+          // Make both bets use the master ID (first-placed bet's ID)
+          newAQueue[i].id = masterId;
+          newBQueue[matchIndex].id = masterId;
           newColorIndex++;
 
           newBookedBets.push({ 
-            idA: newAQueue[i].id, 
-            idB: newBQueue[matchIndex].id, 
+            idA: masterId, 
+            idB: masterId, // Use the same ID for both (first-placed bet's ID)
             amount: newAQueue[i].amount,
             userIdA: newAQueue[i].userId,
             userIdB: newBQueue[matchIndex].userId
@@ -618,15 +625,26 @@ const Index = () => {
         
         if (matchIndex !== -1) {
           const assignedColor = betColors[newColorIndex % betColors.length];
+          
+          // Determine which bet was placed first (lower ID = placed first)
+          // Use the first-placed bet's ID as the master ID
+          const teamAId = newAQueue[i].id;
+          const teamBId = newBQueue[matchIndex].id;
+          const masterId = teamAId < teamBId ? teamAId : teamBId;
+          
           newAQueue[i].color = assignedColor;
           newAQueue[i].booked = true;
           newBQueue[matchIndex].color = assignedColor;
           newBQueue[matchIndex].booked = true;
+          
+          // Make both bets use the master ID (first-placed bet's ID)
+          newAQueue[i].id = masterId;
+          newBQueue[matchIndex].id = masterId;
           newColorIndex++;
 
           newBookedBets.push({ 
-            idA: newAQueue[i].id, 
-            idB: newBQueue[matchIndex].id, 
+            idA: masterId, 
+            idB: masterId, // Use the same ID for both (first-placed bet's ID)
             amount: newAQueue[i].amount,
             userIdA: newAQueue[i].userId,
             userIdB: newBQueue[matchIndex].userId
@@ -883,12 +901,6 @@ const Index = () => {
     setUserBetAmounts(newUserBetAmounts);
   }, [teamAQueue, teamBQueue, nextTeamAQueue, nextTeamBQueue]);
 
-  const handleResetHistory = () => {
-    if (confirm("Are you sure you want to reset the betting history? This cannot be undone.")) {
-      resetBetHistory();
-    }
-  };
-
   const handleTeamABallsChange = (balls: number) => {
     updateGameState({ teamABalls: balls });
   };
@@ -907,8 +919,9 @@ const Index = () => {
 
 
   return (
-    <div className="min-h-screen bg-black p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-black p-4 md:p-8 pt-32 relative">
+      
+      <div className="max-w-6xl mx-auto relative z-10">
         <UserWidgetsContainer 
           userBetAmounts={userBetAmounts} 
           bookedBets={bookedBets}
@@ -926,31 +939,9 @@ const Index = () => {
         />
         
         <div className="mb-4 flex justify-between items-center">
-          <Link to="/" className="inline-flex items-center text-[#F97316] hover:text-[#FBBF24] transition-colors">
+          <Link to="/" className="inline-flex items-center transition-colors" style={{ color: '#95deff' }}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
           </Link>
-          
-          {isAdminMode && (
-            <div className="flex space-x-2">
-              <Link to="/reload-coins">
-                <Button 
-                  variant="outline" 
-                  className="border-[#1EAEDB]/50 text-[#1EAEDB] hover:bg-[#1EAEDB]/20 hover:text-[#33C3F0]"
-                >
-                  <Coins className="h-4 w-4 mr-2" />
-                  Reload Coins
-                </Button>
-              </Link>
-              <Button 
-                variant="outline" 
-                className="border-[#F97316]/50 text-[#F97316] hover:bg-[#F97316]/20 hover:text-[#FBBF24]"
-                onClick={handleResetHistory}
-              >
-                <TimerReset className="h-4 w-4 mr-2" />
-                Reset History
-              </Button>
-            </div>
-          )}
         </div>
         
 
@@ -962,7 +953,7 @@ const Index = () => {
           />
         </div>
 
-        <h1 className="text-4xl md:text-5xl font-bold text-center mb-6 bg-gradient-to-r from-[#F97316] via-[#FBBF24] to-[#F59E0B] bg-clip-text text-transparent drop-shadow-lg">Betting</h1>
+        <h1 className="text-4xl md:text-5xl font-bold text-center mb-6" style={{ color: '#95deff', textShadow: '0 0 15px rgba(149, 222, 255, 0.8)' }}>GameBird</h1>
 
         <UserCreditSystem isAdmin={isAdminMode} />
 
@@ -982,7 +973,7 @@ const Index = () => {
 
         {/* Realtime Scoreboard Header */}
         <div className="text-center mb-6">
-          <h2 className="text-[#a3e635] font-bold text-2xl uppercase tracking-wider">
+          <h2 className="font-bold text-2xl uppercase tracking-wider" style={{ color: '#95deff' }}>
             REALTIME SCOREBOARD
           </h2>
         </div>
@@ -1010,49 +1001,50 @@ const Index = () => {
           onTeamBBallsChange={handleTeamBBallsChange}
           onTeamAGamesChange={handleTeamAGamesChange}
           onTeamBGamesChange={handleTeamBGamesChange}
-          onDeleteUnmatchedBets={deleteUnmatchedBets}
           timerSeconds={timerSeconds}
           isTimerRunning={isTimerRunning}
           onTimerStart={startTimer}
           onTimerPause={pauseTimer}
           onTimerReset={resetTimer}
+          onToggleAdmin={toggleAdminMode}
+          onToggleAgent={toggleAgentMode}
         />
 
         {/* Game History Window */}
         <GameHistoryWindow />
 
-        {/* Betting Cue Header */}
+        {/* Betting Queue Header */}
         <div className="text-center mb-6">
-          <h2 className="text-[#a3e635] font-bold text-2xl uppercase tracking-wider">
-            BETTING CUE
+          <h2 className="font-bold text-2xl uppercase tracking-wider" style={{ color: '#95deff' }}>
+            BETTING QUEUE
           </h2>
         </div>
 
         <div className="mb-8">
-          <Card className="glass-card border-[#F97316]/30 backdrop-blur-sm bg-[#0a192f]/70 shadow-lg rounded-2xl transition-all duration-300 mb-4 hover:shadow-[0_0_15px_rgba(249,115,22,0.3)]">
+          <Card className="glass-card backdrop-blur-sm shadow-lg rounded-2xl transition-all duration-300 mb-4 hover:shadow-[0_0_15px_rgba(250,21,147,0.3)]" style={{ borderColor: '#fa1593', backgroundColor: '#004b6b' }}>
             <CardContent className="p-6 flex flex-col md:flex-row justify-between items-center">
               <div className="flex items-center mb-4 md:mb-0">
-                <div className="bg-[#F97316]/20 p-3 rounded-2xl mr-4">
-                  <Zap className="h-8 w-8 text-[#F97316]" />
+                <div className="p-3 rounded-2xl mr-4" style={{ backgroundColor: '#fa1593' }}>
+                  <Zap className="h-8 w-8 text-white" />
                 </div>
                 <div>
                   <h3 className="text-xl font-medium text-white">Game {currentGameNumber} Bets</h3>
-                  <p className="text-[#a3e635]">{countBookedBets()} booked bets</p>
+                  <p style={{ color: '#95deff' }}>{countBookedBets()} booked bets</p>
                 </div>
               </div>
               
               <div className="flex items-center">
-                <div className="bg-[#F97316]/20 p-3 rounded-2xl mr-4">
-                  <Coins className="h-8 w-8 text-[#F97316]" />
+                <div className="p-3 rounded-2xl mr-4" style={{ backgroundColor: '#fa1593' }}>
+                  <Coins className="h-8 w-8 text-white" />
                 </div>
                 <div>
                   <h3 className="text-xl font-medium text-white">Total Booked</h3>
-                  <p className="text-2xl font-bold">
+                  <p className="text-2xl font-bold text-white">
                     <NumericAnimation 
                       value={totalBookedAmount} 
-                      className="text-4xl transition-all duration-500 text-[#F97316]"
+                      className="text-4xl transition-all duration-500"
                       withGlow={true}
-                    /> <span className="text-[#F97316]">COINS</span>
+                    /> <span>COINS</span>
                   </p>
                 </div>
               </div>
@@ -1060,7 +1052,8 @@ const Index = () => {
               {isAgentMode && (
                 <Button 
                   variant="outline" 
-                  className="border-[#F97316]/50 text-[#F97316] hover:bg-[#F97316]/20 hover:text-[#FBBF24]"
+                  className="hover:text-white"
+                  style={{ borderColor: '#fa1593', color: '#fa1593' }}
                   onClick={moveBetsToNextGame}
                 >
                   <SkipForward className="h-4 w-4 mr-2" />
@@ -1071,11 +1064,11 @@ const Index = () => {
           </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <Card className="glass-card border-[#F97316]/50 bg-[#0a192f]/70 overflow-hidden shadow-lg transform transition-all hover:shadow-[0_0_15px_rgba(249,115,22,0.3)] hover:border-[#F97316]/60 rounded-2xl">
-              <CardHeader className="bg-gradient-to-r from-[#F97316] to-[#FBBF24] p-4 rounded-t-2xl">
-                <CardTitle className="text-center text-2xl text-black">{teamAName}</CardTitle>
+            <Card className="glass-card overflow-hidden shadow-lg transform transition-all rounded-2xl" style={{ borderColor: '#95deff', backgroundColor: '#004b6b' }}>
+              <CardHeader className="p-4 rounded-t-2xl" style={{ background: 'linear-gradient(to right, #95deff, #004b6b)' }}>
+                <CardTitle className="text-center text-2xl" style={{ color: 'black', textShadow: '0 0 15px rgba(250, 21, 147, 0.8)' }}>{teamAName}</CardTitle>
               </CardHeader>
-              <CardContent className="p-4 bg-[#0f2a3d]/70">
+              <CardContent className="p-4" style={{ backgroundColor: '#004b6b' }}>
                 <div className="grid grid-cols-3 gap-3 mb-5">
                   <BirdButton 
                     variant="pink" 
@@ -1098,11 +1091,11 @@ const Index = () => {
                 </div>
                 
                 <div className="relative">
-                  <div className="bg-[#F97316]/70 w-full mb-1 sticky top-0 z-10 rounded-xl">
+                  <div className="w-full mb-1 sticky top-0 z-10 rounded-xl" style={{ backgroundColor: '#95deff' }}>
                     <div className="grid grid-cols-3 py-2">
-                      <div className="text-center text-black font-medium">Bet ID</div>
-                      <div className="text-center text-black font-medium">User</div>
-                      <div className="text-center text-black font-medium">Amount</div>
+                      <div className="text-center text-white font-medium">Bet ID</div>
+                      <div className="text-center text-white font-medium">User</div>
+                      <div className="text-center text-white font-medium">Amount</div>
                     </div>
                   </div>
                   <div className="max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
@@ -1114,7 +1107,7 @@ const Index = () => {
                             <div 
                               key={bet.id} 
                               style={{ 
-                                backgroundColor: bet.color ? `${bet.color}DD` : 'rgba(31, 41, 55, 0.7)',
+                                backgroundColor: bet.booked ? bet.color : (bet.color ? `${bet.color}DD` : 'rgba(31, 41, 55, 0.7)'),
                                 transition: 'all 0.3s ease',
                                 borderLeft: bet.booked ? `4px solid ${bet.color}` : 'none'
                               }}
@@ -1124,19 +1117,28 @@ const Index = () => {
                                 #{bet.id}
                               </div>
                               <div className={`text-center font-medium ${bet.booked ? 'text-black' : 'text-white'} truncate`}>
-                                {betUser?.name || 'Unknown'}
+                                {bet.userName || betUser?.name || 'User'}
                               </div>
                               <div className={`text-center flex justify-between items-center px-2 ${bet.booked ? 'text-black font-bold' : 'text-white'}`}>
                                 {bet.amount} COINS
                                 <div className="flex items-center gap-2">
-                                  {!bet.booked ? (
+                                      {!bet.booked ? (
                                     <>
-                                      <span className="px-2 py-0.5 bg-[#F97316]/70 text-xs rounded-xl text-black">OPEN</span>
+                                      <span className="px-2 py-0.5 text-xs rounded-xl text-white" style={{ backgroundColor: '#95deff' }}>OPEN</span>
                                       {currentUser && bet.userId === currentUser.id && (
                                         <Button
                                           size="sm"
                                           variant="ghost"
-                                          className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                                          className="h-6 w-6 p-0 transition-colors"
+                                          style={{ color: '#fa1593' }}
+                                          onMouseEnter={(e) => {
+                                            e.currentTarget.style.color = '#fa1593';
+                                            e.currentTarget.style.backgroundColor = 'rgba(250, 21, 147, 0.2)';
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            e.currentTarget.style.color = '#fa1593';
+                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                          }}
                                           onClick={() => deleteOpenBet(bet.id, false)}
                                           title="Delete your open bet"
                                         >
@@ -1163,11 +1165,11 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            <Card className="glass-card border-[#F97316]/50 bg-[#0a192f]/70 overflow-hidden shadow-lg transform transition-all hover:shadow-[0_0_15px_rgba(249,115,22,0.3)] hover:border-[#F97316]/60 rounded-2xl">
-              <CardHeader className="bg-gradient-to-r from-[#F97316] to-[#FBBF24] p-4 rounded-t-2xl">
-                <CardTitle className="text-center text-2xl text-black">{teamBName}</CardTitle>
+            <Card className="glass-card overflow-hidden shadow-lg transform transition-all rounded-2xl" style={{ borderColor: '#fa1593', backgroundColor: '#750037' }}>
+              <CardHeader className="p-4 rounded-t-2xl" style={{ background: 'linear-gradient(to right, #fa1593, #750037)' }}>
+                <CardTitle className="text-center text-2xl" style={{ color: 'black', textShadow: '0 0 15px rgba(250, 21, 147, 0.8)' }}>{teamBName}</CardTitle>
               </CardHeader>
-              <CardContent className="p-4 bg-[#0f2a3d]/70">
+              <CardContent className="p-4" style={{ backgroundColor: '#750037' }}>
                 <div className="grid grid-cols-3 gap-3 mb-5">
                   <BirdButton 
                     variant="pink" 
@@ -1190,11 +1192,11 @@ const Index = () => {
                 </div>
                 
                 <div className="relative">
-                  <div className="bg-[#F97316]/70 w-full mb-1 sticky top-0 z-10 rounded-xl">
+                  <div className="w-full mb-1 sticky top-0 z-10 rounded-xl" style={{ backgroundColor: '#fa1593' }}>
                     <div className="grid grid-cols-3 py-2">
-                      <div className="text-center text-black font-medium">Bet ID</div>
-                      <div className="text-center text-black font-medium">User</div>
-                      <div className="text-center text-black font-medium">Amount</div>
+                      <div className="text-center text-white font-medium">Bet ID</div>
+                      <div className="text-center text-white font-medium">User</div>
+                      <div className="text-center text-white font-medium">Amount</div>
                     </div>
                   </div>
                   <div className="max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
@@ -1206,7 +1208,7 @@ const Index = () => {
                             <div 
                               key={bet.id} 
                               style={{ 
-                                backgroundColor: bet.color ? `${bet.color}DD` : 'rgba(31, 41, 55, 0.7)',
+                                backgroundColor: bet.booked ? bet.color : (bet.color ? `${bet.color}DD` : 'rgba(31, 41, 55, 0.7)'),
                                 transition: 'all 0.3s ease',
                                 borderLeft: bet.booked ? `4px solid ${bet.color}` : 'none'
                               }}
@@ -1216,19 +1218,28 @@ const Index = () => {
                                 #{bet.id}
                               </div>
                               <div className={`text-center font-medium ${bet.booked ? 'text-black' : 'text-white'} truncate`}>
-                                {betUser?.name || 'Unknown'}
+                                {bet.userName || betUser?.name || 'User'}
                               </div>
                               <div className={`text-center flex justify-between items-center px-2 ${bet.booked ? 'text-black font-bold' : 'text-white'}`}>
                                 {bet.amount} COINS
                                 <div className="flex items-center gap-2">
                                   {!bet.booked ? (
                                     <>
-                                      <span className="px-2 py-0.5 bg-[#F97316]/70 text-xs rounded-xl text-black">OPEN</span>
+                                      <span className="px-2 py-0.5 text-xs rounded-xl text-white" style={{ backgroundColor: '#fa1593' }}>OPEN</span>
                                       {currentUser && bet.userId === currentUser.id && (
                                         <Button
                                           size="sm"
                                           variant="ghost"
-                                          className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                                          className="h-6 w-6 p-0 transition-colors"
+                                          style={{ color: '#fa1593' }}
+                                          onMouseEnter={(e) => {
+                                            e.currentTarget.style.color = '#fa1593';
+                                            e.currentTarget.style.backgroundColor = 'rgba(250, 21, 147, 0.2)';
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            e.currentTarget.style.color = '#fa1593';
+                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                          }}
                                           onClick={() => deleteOpenBet(bet.id, false)}
                                           title="Delete your open bet"
                                         >
@@ -1257,45 +1268,45 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Current Game Betting Cue Information */}
+        {/* Current Game Betting Queue Information */}
         <div className="text-center mb-6">
-          <p className="text-[#a3e635] font-medium text-lg">
+          <p className="font-medium text-lg" style={{ color: '#95deff' }}>
             *** BETS ARE HIGHLIGHTED ONCE MATCHED ***
           </p>
         </div>
         
         <div className="mb-8">
           <div className="flex justify-center items-center mb-4">
-            <div className="bg-[#a3e635] p-3 rounded-2xl flex items-center animate-bounce">
-              <span className="text-black font-bold text-lg mr-2">BET NEXT GAME</span>
-              <ArrowDown className="h-6 w-6 text-black" />
+            <div className="p-3 rounded-2xl flex items-center animate-bounce" style={{ backgroundColor: '#fa1593' }}>
+              <span className="text-white font-bold text-lg mr-2">BET NEXT GAME</span>
+              <ArrowDown className="h-6 w-6 text-white" />
             </div>
           </div>
 
-          <Card className="glass-card border-[#F97316]/30 backdrop-blur-sm bg-[#0a192f]/70 shadow-lg rounded-2xl transition-all duration-300 mb-4 hover:shadow-[0_0_15px_rgba(249,115,22,0.3)]">
+          <Card className="glass-card backdrop-blur-sm shadow-lg rounded-2xl transition-all duration-300 mb-4 hover:shadow-[0_0_15px_rgba(250,21,147,0.3)]" style={{ borderColor: '#fa1593', backgroundColor: '#004b6b' }}>
             <CardContent className="p-6 flex flex-col md:flex-row justify-between items-center">
               <div className="flex items-center mb-4 md:mb-0">
-                <div className="bg-[#F97316]/20 p-3 rounded-2xl mr-4">
-                  <SkipForward className="h-8 w-8 text-[#F97316]" />
+                <div className="p-3 rounded-2xl mr-4" style={{ backgroundColor: '#fa1593' }}>
+                  <SkipForward className="h-8 w-8 text-white" />
                 </div>
                 <div>
                   <h3 className="text-xl font-medium text-white">Game {currentGameNumber + 1} Bets</h3>
-                  <p className="text-[#a3e635]">{countNextGameBookedBets()} booked bets</p>
+                  <p style={{ color: '#95deff' }}>{countNextGameBookedBets()} booked bets</p>
                 </div>
               </div>
               
               <div className="flex items-center">
-                <div className="bg-[#F97316]/20 p-3 rounded-2xl mr-4">
-                  <Coins className="h-8 w-8 text-[#F97316]" />
+                <div className="p-3 rounded-2xl mr-4" style={{ backgroundColor: '#fa1593' }}>
+                  <Coins className="h-8 w-8 text-white" />
                 </div>
                 <div>
                   <h3 className="text-xl font-medium text-white">Total Booked</h3>
-                  <p className="text-2xl font-bold">
+                  <p className="text-2xl font-bold text-white">
                     <NumericAnimation 
                       value={nextTotalBookedAmount} 
-                      className="text-4xl transition-all duration-500 text-[#F97316]"
+                      className="text-4xl transition-all duration-500"
                       withGlow={true}
-                    /> <span className="text-[#F97316]">COINS</span>
+                    /> <span>COINS</span>
                   </p>
                 </div>
               </div>
@@ -1303,7 +1314,8 @@ const Index = () => {
               {isAgentMode && (
                 <Button 
                   variant="outline" 
-                  className="border-[#F97316]/50 text-[#F97316] hover:bg-[#F97316]/20 hover:text-[#FBBF24]"
+                  className="hover:text-white"
+                  style={{ borderColor: '#fa1593', color: '#fa1593' }}
                   onClick={moveBetsToCurrentGame}
                 >
                   <ArrowDownUp className="h-4 w-4 mr-2" />
@@ -1314,11 +1326,11 @@ const Index = () => {
           </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <Card className="glass-card border-[#F97316]/50 bg-[#0a192f]/70 overflow-hidden shadow-lg transform transition-all hover:shadow-[0_0_15px_rgba(249,115,22,0.3)] hover:border-[#F97316]/60 rounded-2xl">
-              <CardHeader className="bg-gradient-to-r from-[#F97316] to-[#FBBF24] p-4 rounded-t-2xl">
-                <CardTitle className="text-center text-2xl text-black">{teamAName} (Next Game)</CardTitle>
+            <Card className="glass-card overflow-hidden shadow-lg transform transition-all rounded-2xl" style={{ borderColor: '#95deff', backgroundColor: '#004b6b' }}>
+              <CardHeader className="p-4 rounded-t-2xl" style={{ background: 'linear-gradient(to right, #95deff, #004b6b)' }}>
+                <CardTitle className="text-center text-2xl" style={{ color: 'black', textShadow: '0 0 15px rgba(250, 21, 147, 0.8)' }}>{teamAName} (Next Game)</CardTitle>
               </CardHeader>
-              <CardContent className="p-4 bg-[#0f2a3d]/70">
+              <CardContent className="p-4" style={{ backgroundColor: '#004b6b' }}>
                 <div className="grid grid-cols-3 gap-3 mb-5">
                   <BirdButton 
                     variant="pink" 
@@ -1341,11 +1353,11 @@ const Index = () => {
                 </div>
                 
                 <div className="relative">
-                  <div className="bg-[#F97316]/70 w-full mb-1 sticky top-0 z-10 rounded-xl">
+                  <div className="w-full mb-1 sticky top-0 z-10 rounded-xl" style={{ backgroundColor: '#95deff' }}>
                     <div className="grid grid-cols-3 py-2">
-                      <div className="text-center text-black font-medium">Bet ID</div>
-                      <div className="text-center text-black font-medium">User</div>
-                      <div className="text-center text-black font-medium">Amount</div>
+                      <div className="text-center text-white font-medium">Bet ID</div>
+                      <div className="text-center text-white font-medium">User</div>
+                      <div className="text-center text-white font-medium">Amount</div>
                     </div>
                   </div>
                   <div className="max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
@@ -1357,7 +1369,7 @@ const Index = () => {
                             <div 
                               key={bet.id} 
                               style={{ 
-                                backgroundColor: bet.color ? `${bet.color}DD` : 'rgba(31, 41, 55, 0.7)',
+                                backgroundColor: bet.booked ? bet.color : (bet.color ? `${bet.color}DD` : 'rgba(31, 41, 55, 0.7)'),
                                 transition: 'all 0.3s ease',
                                 borderLeft: bet.booked ? `4px solid ${bet.color}` : 'none'
                               }}
@@ -1367,19 +1379,28 @@ const Index = () => {
                                 #{bet.id}
                               </div>
                               <div className={`text-center font-medium ${bet.booked ? 'text-black' : 'text-white'} truncate`}>
-                                {betUser?.name || 'Unknown'}
+                                {bet.userName || betUser?.name || 'User'}
                               </div>
                               <div className={`text-center flex justify-between items-center px-2 ${bet.booked ? 'text-black font-bold' : 'text-white'}`}>
                                 {bet.amount} COINS
                                 <div className="flex items-center gap-2">
                                   {!bet.booked ? (
                                     <>
-                                      <span className="px-2 py-0.5 bg-[#F97316]/70 text-xs rounded-xl text-black">OPEN</span>
+                                      <span className="px-2 py-0.5 text-xs rounded-xl text-white" style={{ backgroundColor: '#95deff' }}>OPEN</span>
                                       {currentUser && bet.userId === currentUser.id && (
                                         <Button
                                           size="sm"
                                           variant="ghost"
-                                          className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                                          className="h-6 w-6 p-0 transition-colors"
+                                          style={{ color: '#fa1593' }}
+                                          onMouseEnter={(e) => {
+                                            e.currentTarget.style.color = '#fa1593';
+                                            e.currentTarget.style.backgroundColor = 'rgba(250, 21, 147, 0.2)';
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            e.currentTarget.style.color = '#fa1593';
+                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                          }}
                                           onClick={() => deleteOpenBet(bet.id, true)}
                                           title="Delete your open bet"
                                         >
@@ -1406,11 +1427,11 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            <Card className="glass-card border-[#F97316]/50 bg-[#0a192f]/70 overflow-hidden shadow-lg transform transition-all hover:shadow-[0_0_15px_rgba(249,115,22,0.3)] hover:border-[#F97316]/60 rounded-2xl">
-              <CardHeader className="bg-gradient-to-r from-[#F97316] to-[#FBBF24] p-4 rounded-t-2xl">
-                <CardTitle className="text-center text-2xl text-black">{teamBName} (Next Game)</CardTitle>
+            <Card className="glass-card overflow-hidden shadow-lg transform transition-all rounded-2xl" style={{ borderColor: '#fa1593', backgroundColor: '#750037' }}>
+              <CardHeader className="p-4 rounded-t-2xl" style={{ background: 'linear-gradient(to right, #fa1593, #750037)' }}>
+                <CardTitle className="text-center text-2xl" style={{ color: 'black', textShadow: '0 0 15px rgba(250, 21, 147, 0.8)' }}>{teamBName} (Next Game)</CardTitle>
               </CardHeader>
-              <CardContent className="p-4 bg-[#0f2a3d]/70">
+              <CardContent className="p-4" style={{ backgroundColor: '#750037' }}>
                 <div className="grid grid-cols-3 gap-3 mb-5">
                   <BirdButton 
                     variant="pink" 
@@ -1433,11 +1454,11 @@ const Index = () => {
                 </div>
                 
                 <div className="relative">
-                  <div className="bg-[#F97316]/70 w-full mb-1 sticky top-0 z-10 rounded-xl">
+                  <div className="w-full mb-1 sticky top-0 z-10 rounded-xl" style={{ backgroundColor: '#fa1593' }}>
                     <div className="grid grid-cols-3 py-2">
-                      <div className="text-center text-black font-medium">Bet ID</div>
-                      <div className="text-center text-black font-medium">User</div>
-                      <div className="text-center text-black font-medium">Amount</div>
+                      <div className="text-center text-white font-medium">Bet ID</div>
+                      <div className="text-center text-white font-medium">User</div>
+                      <div className="text-center text-white font-medium">Amount</div>
                     </div>
                   </div>
                   <div className="max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
@@ -1449,7 +1470,7 @@ const Index = () => {
                             <div 
                               key={bet.id} 
                               style={{ 
-                                backgroundColor: bet.color ? `${bet.color}DD` : 'rgba(31, 41, 55, 0.7)',
+                                backgroundColor: bet.booked ? bet.color : (bet.color ? `${bet.color}DD` : 'rgba(31, 41, 55, 0.7)'),
                                 transition: 'all 0.3s ease',
                                 borderLeft: bet.booked ? `4px solid ${bet.color}` : 'none'
                               }}
@@ -1459,19 +1480,28 @@ const Index = () => {
                                 #{bet.id}
                               </div>
                               <div className={`text-center font-medium ${bet.booked ? 'text-black' : 'text-white'} truncate`}>
-                                {betUser?.name || 'Unknown'}
+                                {bet.userName || betUser?.name || 'User'}
                               </div>
                               <div className={`text-center flex justify-between items-center px-2 ${bet.booked ? 'text-black font-bold' : 'text-white'}`}>
                                 {bet.amount} COINS
                                 <div className="flex items-center gap-2">
                                   {!bet.booked ? (
                                     <>
-                                      <span className="px-2 py-0.5 bg-[#F97316]/70 text-xs rounded-xl text-black">OPEN</span>
+                                      <span className="px-2 py-0.5 text-xs rounded-xl text-white" style={{ backgroundColor: '#fa1593' }}>OPEN</span>
                                       {currentUser && bet.userId === currentUser.id && (
                                         <Button
                                           size="sm"
                                           variant="ghost"
-                                          className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                                          className="h-6 w-6 p-0 transition-colors"
+                                          style={{ color: '#fa1593' }}
+                                          onMouseEnter={(e) => {
+                                            e.currentTarget.style.color = '#fa1593';
+                                            e.currentTarget.style.backgroundColor = 'rgba(250, 21, 147, 0.2)';
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            e.currentTarget.style.color = '#fa1593';
+                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                          }}
                                           onClick={() => deleteOpenBet(bet.id, true)}
                                           title="Delete your open bet"
                                         >
@@ -1500,9 +1530,9 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Betting Cue Information */}
+        {/* Betting Queue Information */}
         <div className="text-center mb-6">
-          <p className="text-[#a3e635] font-medium text-lg">
+          <p className="font-medium text-lg" style={{ color: '#95deff' }}>
             *** BETS ARE HIGHLIGHTED ONCE MATCHED ***
           </p>
         </div>

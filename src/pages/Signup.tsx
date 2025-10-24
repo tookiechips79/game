@@ -97,7 +97,7 @@ const SignupPage = () => {
       setCurrentUser(newUser);
       
       toast.success("Account Created Successfully!", {
-        description: `Welcome to Game Bird, ${newUser.name}! You can now access the scoreboard and betting cue.`,
+        description: `Welcome to Game Bird, ${newUser.name}! You can now access the scoreboard and betting queue.`,
         duration: 5000,
       });
       
@@ -310,7 +310,7 @@ const SignupPage = () => {
                     <div>
                       <h3 className="text-[#a3e635] font-medium">Free Access</h3>
                       <p className="text-gray-300 text-sm">
-                        View live scoreboard and betting cues without any cost
+                        View live scoreboard and betting queues without any cost
                       </p>
                     </div>
                   </div>

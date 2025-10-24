@@ -40,9 +40,9 @@ const GameTimer = ({
 
   return (
     <div className="flex items-center space-x-2 bg-black/40 backdrop-blur-sm px-4 py-2 rounded-full">
-      <Clock className="h-5 w-5 text-[#a3e635]" />
+      <Clock className="h-5 w-5 text-[#fa1593]" />
       <div 
-        className={`text-3xl font-bold text-[#a3e635] drop-shadow-[0_0_8px_rgba(163,230,53,0.7)] scoreboard-gradient-text ${!isTimerRunning ? 'animate-pulse' : ''}`}
+        className={`text-3xl font-bold text-[#fa1593] drop-shadow-[0_0_8px_rgba(250,21,147,0.7)] ${!isTimerRunning ? 'animate-pulse' : ''}`}
       >
         {formatTime(timer)}
       </div>
@@ -52,7 +52,7 @@ const GameTimer = ({
             onClick={isTimerRunning ? handlePauseClick : handleStartClick}
             variant="ghost" 
             size="icon" 
-            className="h-8 w-8 p-0 text-[#a3e635] hover:text-white hover:bg-[#a3e635]/30"
+            className="h-8 w-8 p-0 text-[#fa1593] hover:text-white hover:bg-[#fa1593]/30"
           >
             {isTimerRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
@@ -60,7 +60,7 @@ const GameTimer = ({
             onClick={handleResetClick} 
             variant="ghost" 
             size="icon" 
-            className="h-8 w-8 p-0 text-[#a3e635] hover:text-white hover:bg-[#a3e635]/30"
+            className="h-8 w-8 p-0 text-[#fa1593] hover:text-white hover:bg-[#fa1593]/30"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />

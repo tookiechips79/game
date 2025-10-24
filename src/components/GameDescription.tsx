@@ -85,7 +85,7 @@ const GameDescription: React.FC<GameDescriptionProps> = ({
     
     const scrollAnimation = () => {
       if (scrollerRef.current) {
-        scrollerRef.current.scrollLeft += 1;
+        scrollerRef.current.scrollLeft += 2;
         
         if (scrollerRef.current.scrollLeft >= scrollerRef.current.scrollWidth / 3) {
           requestAnimationFrame(() => {
@@ -103,13 +103,13 @@ const GameDescription: React.FC<GameDescriptionProps> = ({
       }
     };
 
-    const animationInterval = setInterval(scrollAnimation, 20);
+    const animationInterval = setInterval(scrollAnimation, 10);
     
     return () => clearInterval(animationInterval);
   }, [description, isEditing]);
   
   return (
-    <Card className="glass-card border-2 border-[#a3e635] overflow-hidden shadow-xl mb-6 hover:shadow-[#a3e635]/30 rounded-2xl transition-all">
+    <Card className="glass-card border-2 border-[#fa1593] overflow-hidden shadow-xl mb-6 hover:shadow-[#fa1593]/30 rounded-2xl transition-all" style={{ borderColor: '#fa1593', backgroundColor: '#004b6b' }}>
       <CardContent className="p-4">
         {isAdmin && isEditing ? (
           <div className="flex flex-col gap-3">
@@ -203,7 +203,7 @@ const GameDescription: React.FC<GameDescriptionProps> = ({
                 }}
               >
                 <div className="inline-block">
-                  <span className="font-extrabold text-xl md:text-2xl uppercase tracking-wider bg-gradient-to-r from-[#a3e635] via-white to-[#a3e635] text-transparent bg-clip-text animate-pulse">
+                  <span className="font-extrabold text-xl md:text-2xl uppercase tracking-wider animate-pulse" style={{ color: '#fa1593' }}>
                     {description.toUpperCase()}
                   </span>
                   <span className="font-extrabold text-xl md:text-2xl uppercase tracking-wider bg-gradient-to-r from-[#a3e635] via-white to-[#a3e635] text-transparent bg-clip-text animate-pulse ml-16">
@@ -225,7 +225,7 @@ const GameDescription: React.FC<GameDescriptionProps> = ({
                 onClick={() => setIsEditing(true)} 
                 variant="outline" 
                 size="sm" 
-                className="absolute right-0 top-0 bg-gray-700/70 text-[#a3e635] hover:bg-gray-700 hover:text-[#a3e635]/80 rounded-xl"
+                className="absolute right-0 top-0 bg-gray-700/70 text-[#fa1593] hover:bg-gray-700 hover:text-[#fa1593]/80 rounded-xl"
               >
                 Edit
               </Button>
@@ -233,7 +233,7 @@ const GameDescription: React.FC<GameDescriptionProps> = ({
             
             {description && !isAdmin && (
               <div className="absolute -left-1 top-1/2 transform -translate-y-1/2">
-                <Info className="h-5 w-5 text-[#a3e635]" />
+                <Info className="h-5 w-5 text-[#fa1593]" />
               </div>
             )}
           </div>

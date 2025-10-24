@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket.IO Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .connected { background-color: #d4edda; color: #155724; }
+        .disconnected { background-color: #f8d7da; color: #721c24; }
+        .connecting { background-color: #fff3cd; color: #856404; }
+        .log {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <h1>🔌 Socket.IO Connection Test</h1>
+    
+    <div id="status" class="status disconnected">Disconnected</div>
+    
+    <div>
+        <button id="connectBtn">Connect</button>
+        <button id="disconnectBtn" disabled>Disconnect</button>
+        <button id="testBtn" disabled>Test Message</button>
+        <button id="clearBtn">Clear Log</button>
+    </div>
+    
+    <h3>Connection Log:</h3>
+    <div id="log" class="log"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        let socket = null;
+        const statusDiv = document.getElementById('status');
+        const logDiv = document.getElementById('log');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const testBtn = document.getElementById('testBtn');
+        const clearBtn = document.getElementById('clearBtn');
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(status, className) {
+            statusDiv.textContent = status;
+            statusDiv.className = `status ${className}`;
+        }
+
+        function connect() {
+            if (socket) {
+                socket.disconnect();
+            }
+
+            const serverUrl = `http://${window.location.hostname}:3001`;
+            log(`🔌 Connecting to: ${serverUrl}`);
+            updateStatus('Connecting...', 'connecting');
+            
+            // Disable connect button to prevent multiple attempts
+            connectBtn.disabled = true;
+
+            socket = io(serverUrl, {
+                transports: ['polling', 'websocket'],
+                timeout: 8000, // Increased timeout for fallback
+                forceNew: true,
+                reconnection: false, // Disable auto-reconnection for testing
+                upgrade: true,
+                rememberUpgrade: true
+            });
+            
+            // Add connection timeout
+            const connectionTimeout = setTimeout(() => {
+                if (socket && !socket.connected) {
+                    log(`⏰ Connection timeout after 8 seconds`);
+                    updateStatus('Connection Timeout', 'disconnected');
+                    connectBtn.disabled = false;
+                    disconnectBtn.disabled = true;
+                    testBtn.disabled = true;
+                }
+            }, 8000);
+
+            socket.on('connect', () => {
+                clearTimeout(connectionTimeout);
+                log(`✅ Connected! Socket ID: ${socket.id}`);
+                updateStatus(`Connected (${socket.id})`, 'connected');
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                testBtn.disabled = false;
+            });
+
+            socket.on('disconnect', (reason) => {
+                log(`❌ Disconnected: ${reason}`);
+                updateStatus('Disconnected', 'disconnected');
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                testBtn.disabled = true;
+            });
+
+            socket.on('connect_error', (error) => {
+                clearTimeout(connectionTimeout);
+                log(`❌ Connection error: ${error.message}`);
+                log(`❌ Error details: ${JSON.stringify({
+                    message: error.message,
+                    description: error.description,
+                    context: error.context,
+                    type: error.type,
+                    transport: error.transport
+                })}`);
+                updateStatus('Connection Error', 'disconnected');
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                testBtn.disabled = true;
+            });
+
+            socket.on('reconnect', (attemptNumber) => {
+                log(`🔄 Reconnected after ${attemptNumber} attempts`);
+                updateStatus(`Reconnected (${socket.id})`, 'connected');
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                testBtn.disabled = false;
+            });
+
+            socket.on('reconnect_error', (error) => {
+                log(`❌ Reconnect error: ${error.message}`);
+            });
+
+            socket.on('reconnect_failed', () => {
+                log(`❌ Reconnect failed - giving up`);
+                updateStatus('Reconnect Failed', 'disconnected');
+            });
+
+            socket.on('reconnecting', (attemptNumber) => {
+                log(`🔄 Reconnecting... attempt ${attemptNumber}`);
+                updateStatus(`Reconnecting... (${attemptNumber})`, 'connecting');
+            });
+
+            // Listen for test responses
+            socket.on('test-response', (data) => {
+                log(`📥 Test response: ${JSON.stringify(data)}`);
+            });
+        }
+
+        function disconnect() {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+            }
+        }
+
+        function testMessage() {
+            if (socket && socket.connected) {
+                const testData = {
+                    message: 'Hello from client!',
+                    timestamp: new Date().toISOString(),
+                    clientId: socket.id
+                };
+                log(`📤 Sending test message: ${JSON.stringify(testData)}`);
+                socket.emit('test-message', testData);
+            }
+        }
+
+        function clearLog() {
+            logDiv.innerHTML = '';
+        }
+
+        // Event listeners
+        connectBtn.addEventListener('click', connect);
+        disconnectBtn.addEventListener('click', disconnect);
+        testBtn.addEventListener('click', testMessage);
+        clearBtn.addEventListener('click', clearLog);
+
+        // Page loaded - ready for manual connection
+        log('🚀 Socket.IO Connection Test Page Loaded');
+        log('📱 Current URL: ' + window.location.href);
+        log('🌐 Hostname: ' + window.location.hostname);
+        log('👆 Click "Connect" button to test connection');
+    </script>
+</body>
+</html>

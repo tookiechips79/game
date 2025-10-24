@@ -2,13 +2,15 @@
 import React, { useState } from "react";
 import { useUser } from "@/contexts/UserContext";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { 
   Tabs, TabsContent, TabsList, TabsTrigger 
 } from "@/components/ui/tabs";
-import { ChevronDown, ChevronUp, ReceiptText, EyeOff } from "lucide-react";
+import { ChevronDown, ChevronUp, ReceiptText, EyeOff, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { UserBetReceipt } from "@/types/user";
 import UserBetReceipts from "./UserBetReceipts";
-import { Button } from "@/components/ui/button";
+import UserDropdown from "./UserDropdown";
 
 interface BetReceiptsLedgerProps {
   isAdmin?: boolean;
@@ -23,22 +25,33 @@ const BetReceiptsLedger: React.FC<BetReceiptsLedgerProps> = ({
   teamBName = "Player B",
   alwaysVisible = true
 }) => {
-  const { currentUser, users, getUserBetReceipts } = useUser();
+  const { currentUser, users, getUserBetReceipts, clearBettingQueueReceipts, isUsersLoaded } = useUser();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(
     currentUser ? currentUser.id : null
   );
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isHidden, setIsHidden] = useState<boolean>(false);
   
+  const handleClearReceipts = () => {
+    if (isAdmin) {
+      clearBettingQueueReceipts();
+    } else {
+      toast.error("Admin Access Required", {
+        description: "Only administrators can clear bet receipts"
+      });
+    }
+  };
+  
   // Get all users who have bet receipts
   const usersWithReceipts = users.filter(user => 
     getUserBetReceipts(user.id).length > 0
   );
   
-  // Get the selected user's receipts
-  const selectedUserReceipts = selectedUserId 
-    ? getUserBetReceipts(selectedUserId)
-    : currentUser ? getUserBetReceipts(currentUser.id) : [];
+  // For non-admin users, always show their own receipts
+  // For admin users, show selected user's receipts or current user's if none selected
+  const selectedUserReceipts = isAdmin 
+    ? (selectedUserId ? getUserBetReceipts(selectedUserId) : currentUser ? getUserBetReceipts(currentUser.id) : [])
+    : (currentUser ? getUserBetReceipts(currentUser.id) : []);
   
   // Filter receipts by team
   const teamAReceipts = selectedUserReceipts.filter(
@@ -58,7 +71,8 @@ const BetReceiptsLedger: React.FC<BetReceiptsLedgerProps> = ({
       <Button
         variant="outline"
         size="icon"
-        className="fixed right-4 bottom-4 bg-[#F97316]/80 text-black hover:bg-[#F97316]"
+        className="fixed right-4 bottom-4 text-white hover:bg-opacity-90"
+        style={{ backgroundColor: '#95deff', borderColor: '#95deff' }}
         onClick={() => setIsHidden(false)}
       >
         <ReceiptText className="h-5 w-5" />
@@ -72,15 +86,16 @@ const BetReceiptsLedger: React.FC<BetReceiptsLedgerProps> = ({
   }
   
   return (
-    <Card className="bg-gray-800/70 border-gray-700 mb-8 rounded-2xl overflow-hidden">
+    <Card className="mb-8 rounded-2xl overflow-hidden shadow-[0_0_15px_rgba(149,222,255,0.3)]" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
       <CardHeader 
-        className="pb-2 bg-gradient-to-r from-[#F97316]/90 to-[#F97316] cursor-pointer flex flex-row items-center justify-between"
+        className="pb-2 cursor-pointer flex flex-row items-center justify-between"
+        style={{ background: 'linear-gradient(to right, #95deff, #004b6b)' }}
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
-        <CardTitle className="text-2xl text-center text-black font-bold flex items-center">
-          <ReceiptText className="h-6 w-6 mr-2" />
+        <CardTitle className="text-2xl text-center font-bold flex items-center" style={{ color: 'black', textShadow: '0 0 15px rgba(250, 21, 147, 0.8)' }}>
+          <ReceiptText className="h-6 w-6 mr-2" style={{ color: 'black', filter: 'drop-shadow(0 0 10px rgba(250, 21, 147, 0.8))' }} />
           Bet Receipts
-          <span className="ml-2 text-sm bg-black/20 px-2 py-1 rounded-full">
+          <span className="ml-2 text-sm px-2 py-1 rounded-full" style={{ backgroundColor: 'rgba(0, 0, 0, 0.2)' }}>
             {selectedUserReceipts.length}
           </span>
         </CardTitle>
@@ -90,16 +105,17 @@ const BetReceiptsLedger: React.FC<BetReceiptsLedgerProps> = ({
               e.stopPropagation();
               setIsHidden(true);
             }}
-            className="text-gray-800 hover:text-black transition-colors"
+            className="transition-colors"
+            style={{ color: '#95deff' }}
           >
-            <div className="rounded-full bg-gray-800/20 p-1">
+            <div className="rounded-full p-1" style={{ backgroundColor: 'rgba(0, 0, 0, 0.2)' }}>
               <EyeOff className="h-4 w-4" />
             </div>
           </button>
           {isCollapsed ? (
-            <ChevronDown className="h-6 w-6 text-black" />
+            <ChevronDown className="h-6 w-6 text-white" />
           ) : (
-            <ChevronUp className="h-6 w-6 text-black" />
+            <ChevronUp className="h-6 w-6 text-white" />
           )}
         </div>
       </CardHeader>
@@ -107,26 +123,42 @@ const BetReceiptsLedger: React.FC<BetReceiptsLedgerProps> = ({
       {!isCollapsed && (
         <CardContent className="p-4">
           {isAdmin && (
-            <div className="mb-4">
-              <select
-                value={selectedUserId || ''}
-                onChange={(e) => setSelectedUserId(e.target.value || null)}
-                className="w-full p-2 bg-gray-700 text-white rounded-lg border border-gray-600"
-              >
-                <option value="">Select a user</option>
-                {usersWithReceipts.map(user => (
-                  <option key={user.id} value={user.id}>{user.name}</option>
-                ))}
-              </select>
+            <div className="mb-4 space-y-3">
+              <UserDropdown
+                selectedUserId={selectedUserId || ''}
+                onUserChange={(userId) => setSelectedUserId(userId || null)}
+                placeholder="Select a user to view receipts"
+                showCredits={false}
+                showMembership={false}
+              />
+              
+              {isAdmin && (
+                <Button
+                  onClick={handleClearReceipts}
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-white transition-colors"
+                  style={{ backgroundColor: '#fa1593', borderColor: '#fa1593' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(250, 21, 147, 0.8)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#fa1593';
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Clear All Bet Receipts
+                </Button>
+              )}
             </div>
           )}
           
           <Tabs defaultValue="all" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-gray-700 rounded-xl mb-4">
-              <TabsTrigger value="all" className="rounded-lg">All Bets</TabsTrigger>
-              <TabsTrigger value="teamA" className="rounded-lg">{teamAName}</TabsTrigger>
-              <TabsTrigger value="teamB" className="rounded-lg">{teamBName}</TabsTrigger>
-              <TabsTrigger value="wins" className="rounded-lg">Wins/Losses</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4 rounded-xl mb-4" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
+              <TabsTrigger value="all" className="rounded-lg text-white">All Bets</TabsTrigger>
+              <TabsTrigger value="teamA" className="rounded-lg text-white">{teamAName}</TabsTrigger>
+              <TabsTrigger value="teamB" className="rounded-lg text-white">{teamBName}</TabsTrigger>
+              <TabsTrigger value="wins" className="rounded-lg text-white">Wins/Losses</TabsTrigger>
             </TabsList>
             
             <TabsContent value="all" className="mt-0">
@@ -159,7 +191,7 @@ const BetReceiptsLedger: React.FC<BetReceiptsLedgerProps> = ({
             <TabsContent value="wins" className="mt-0">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-xl font-semibold text-green-400 mb-3 flex items-center justify-center">
+                  <h3 className="text-xl font-semibold mb-3 flex items-center justify-center" style={{ color: '#95deff' }}>
                     Wins
                   </h3>
                   <UserBetReceipts 
@@ -170,7 +202,7 @@ const BetReceiptsLedger: React.FC<BetReceiptsLedgerProps> = ({
                   />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-red-400 mb-3 flex items-center justify-center">
+                  <h3 className="text-xl font-semibold mb-3 flex items-center justify-center" style={{ color: '#fa1593' }}>
                     Losses
                   </h3>
                   <UserBetReceipts 

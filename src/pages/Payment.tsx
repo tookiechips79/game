@@ -148,17 +148,18 @@ const PaymentPage = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-[#a3e635] hover:text-[#FBBF24] hover:bg-[#a3e635]/10"
+                className="hover:bg-opacity-20"
+                style={{ color: '#95deff' }}
               >
                 <Home className="h-4 w-4 mr-2" />
                 Home
               </Button>
             </Link>
-            <h1 className="text-2xl font-bold text-[#a3e635]">Gamebird Membership</h1>
+            <h1 className="text-2xl font-bold" style={{ color: '#95deff' }}>Gamebird Membership</h1>
           </div>
           {currentUser && (
-            <div className="bg-[#a3e635]/20 p-2 rounded-lg">
-              <span className="text-[#a3e635] font-bold">Current User: {currentUser.name} ({currentUser.credits} coins)</span>
+            <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(149, 222, 255, 0.2)' }}>
+              <span className="font-bold" style={{ color: '#95deff' }}>Current User: {currentUser.name} ({currentUser.credits} coins)</span>
             </div>
           )}
         </div>
@@ -167,7 +168,7 @@ const PaymentPage = () => {
       <main className="container mx-auto px-4 py-8 flex-grow">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-4">Become a Member777</h2>
+            <h2 className="text-3xl font-bold mb-4">Become a Member</h2>
             <p className="text-gray-400 max-w-2xl mx-auto">
               Subscribe to our platform to access all betting features and reload your coins anytime.
             </p>
@@ -187,8 +188,12 @@ const PaymentPage = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
             {/* Subscription Plan */}
-            <Card className={`w-full h-full ${subscriptionSelected ? 'bg-[#a3e635]/10 border-[#a3e635] border-2' : 'bg-gray-900 border-gray-800'}`}>
-              <CardHeader className={`${subscriptionSelected ? 'bg-[#a3e635]/20' : ''}`}>
+            <Card className={`w-full h-full ${subscriptionSelected ? 'border-2' : 'bg-gray-900 border-gray-800'}`}
+              style={subscriptionSelected ? { backgroundColor: 'rgba(149, 222, 255, 0.1)', borderColor: '#95deff' } : {}}
+            >
+              <CardHeader className={subscriptionSelected ? '' : ''}
+                style={subscriptionSelected ? { backgroundColor: 'rgba(149, 222, 255, 0.2)' } : {}}
+              >
                 <CardTitle className="flex justify-between items-center">
                   <span>Monthly Membership</span>
                 </CardTitle>
@@ -201,19 +206,19 @@ const PaymentPage = () => {
                 <p className="text-sm text-gray-300 mb-4">Full access to all betting features</p>
                 <ul className="space-y-2">
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 mt-0.5 text-[#a3e635]" />
+                    <CheckCircle className="h-5 w-5 mt-0.5" style={{ color: '#95deff' }} />
                     <span className="text-sm">Live betting on all matches</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 mt-0.5 text-[#a3e635]" />
+                    <CheckCircle className="h-5 w-5 mt-0.5" style={{ color: '#95deff' }} />
                     <span className="text-sm">Complete betting history</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 mt-0.5 text-[#a3e635]" />
+                    <CheckCircle className="h-5 w-5 mt-0.5" style={{ color: '#95deff' }} />
                     <span className="text-sm">Priority customer support</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 mt-0.5 text-[#a3e635]" />
+                    <CheckCircle className="h-5 w-5 mt-0.5" style={{ color: '#95deff' }} />
                     <span className="text-sm">Required to place bets</span>
                   </li>
                 </ul>
@@ -221,8 +226,9 @@ const PaymentPage = () => {
               <CardFooter>
                 <Button 
                   onClick={handleSubscriptionSelect} 
-                  variant={subscriptionSelected ? "lime" : "outline"}
+                  variant="outline"
                   className="w-full"
+                  style={subscriptionSelected ? { backgroundColor: '#95deff', color: '#052240', borderColor: '#95deff' } : { borderColor: 'rgba(149, 222, 255, 0.5)', color: '#95deff' }}
                 >
                   {subscriptionSelected ? "Selected" : "Select"}
                 </Button>
@@ -230,11 +236,13 @@ const PaymentPage = () => {
             </Card>
 
             {/* Reload Coins */}
-            <Card className={`w-full h-full ${paymentMode === 'reload' ? 'bg-[#a3e635]/10 border-[#a3e635] border-2' : 'bg-gray-900 border-gray-800'}`}>
+            <Card className={`w-full h-full ${paymentMode === 'reload' ? 'border-2' : 'bg-gray-900 border-gray-800'}`}
+              style={paymentMode === 'reload' ? { backgroundColor: 'rgba(149, 222, 255, 0.1)', borderColor: '#95deff' } : {}}
+            >
               <CardHeader>
                 <CardTitle className="flex justify-between items-center">
                   <span>Reload Coins</span>
-                  <Coins className="h-5 w-5 text-[#a3e635]" />
+                  <Coins className="h-5 w-5" style={{ color: '#95deff' }} />
                 </CardTitle>
                 <CardDescription className="flex items-end gap-1 mt-2">
                   <span className="text-2xl font-bold text-white">${reloadAmount}</span>
@@ -248,21 +256,24 @@ const PaymentPage = () => {
                     <Button 
                       variant="outline" 
                       onClick={() => handleReloadAmountChange(10)}
-                      className={`${reloadAmount === 10 && paymentMode === 'reload' ? 'bg-[#a3e635] text-black' : 'bg-gray-800 text-white'} border-gray-700`}
+                      className="border-gray-700"
+                      style={reloadAmount === 10 && paymentMode === 'reload' ? { backgroundColor: '#95deff', color: '#052240', borderColor: '#95deff' } : {}}
                     >
                       $10
                     </Button>
                     <Button 
                       variant="outline" 
                       onClick={() => handleReloadAmountChange(20)}
-                      className={`${reloadAmount === 20 && paymentMode === 'reload' ? 'bg-[#a3e635] text-black' : 'bg-gray-800 text-white'} border-gray-700`}
+                      className="border-gray-700"
+                      style={reloadAmount === 20 && paymentMode === 'reload' ? { backgroundColor: '#95deff', color: '#052240', borderColor: '#95deff' } : {}}
                     >
                       $20
                     </Button>
                     <Button 
                       variant="outline" 
                       onClick={() => handleReloadAmountChange(50)}
-                      className={`${reloadAmount === 50 && paymentMode === 'reload' ? 'bg-[#a3e635] text-black' : 'bg-gray-800 text-white'} border-gray-700`}
+                      className="border-gray-700"
+                      style={reloadAmount === 50 && paymentMode === 'reload' ? { backgroundColor: '#95deff', color: '#052240', borderColor: '#95deff' } : {}}
                     >
                       $50
                     </Button>
@@ -271,14 +282,16 @@ const PaymentPage = () => {
                     <Button 
                       variant="outline" 
                       onClick={() => handleReloadAmountChange(100)}
-                      className={`${reloadAmount === 100 && paymentMode === 'reload' ? 'bg-[#a3e635] text-black' : 'bg-gray-800 text-white'} border-gray-700`}
+                      className="border-gray-700"
+                      style={reloadAmount === 100 && paymentMode === 'reload' ? { backgroundColor: '#95deff', color: '#052240', borderColor: '#95deff' } : {}}
                     >
                       $100
                     </Button>
                     <Button 
                       variant="outline" 
                       onClick={() => handleReloadAmountChange(200)}
-                      className={`${reloadAmount === 200 && paymentMode === 'reload' ? 'bg-[#a3e635] text-black' : 'bg-gray-800 text-white'} border-gray-700`}
+                      className="border-gray-700"
+                      style={reloadAmount === 200 && paymentMode === 'reload' ? { backgroundColor: '#95deff', color: '#052240', borderColor: '#95deff' } : {}}
                     >
                       $200
                     </Button>
@@ -416,7 +429,7 @@ const PaymentPage = () => {
                           <span className="text-gray-300">Coin Reload</span>
                           <span>${reloadAmount}</span>
                         </div>
-                        <div className="flex justify-between mb-2 text-[#a3e635]">
+                        <div className="flex justify-between mb-2" style={{ color: '#95deff' }}>
                           <span className="flex items-center gap-1">
                             <Coins className="h-4 w-4" />
                             Added Coins
@@ -444,8 +457,8 @@ const PaymentPage = () => {
                 </Button>
                 <Button 
                   type="submit" 
-                  variant="lime"
                   className="min-w-[150px]"
+                  style={{ backgroundColor: '#95deff', color: '#052240' }}
                   disabled={isProcessing || !currentUser}
                 >
                   {isProcessing ? (

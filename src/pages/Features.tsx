@@ -146,7 +146,7 @@ const FeaturesPage = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-400 text-sm">
-                  Browse the scoreboard and betting cues. You can view all games and betting activity without membership.
+                  Browse the scoreboard and betting queues. You can view all games and betting activity without membership.
                 </p>
               </CardContent>
             </Card>
@@ -231,7 +231,7 @@ const FeaturesPage = () => {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Current game and next game betting cues</span>
+                    <span className="text-gray-300">Current game and next game betting queues</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
@@ -330,7 +330,7 @@ const FeaturesPage = () => {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Browse betting cues</span>
+                    <span className="text-gray-300">Browse betting queues</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
@@ -545,7 +545,7 @@ const FeaturesPage = () => {
                   </h4>
                   <ul className="space-y-2 text-sm text-gray-300">
                     <li>• Start and stop games</li>
-                    <li>• Reset betting cues</li>
+                    <li>• Reset betting queues</li>
                     <li>• View platform statistics</li>
                     <li>• Manage game settings</li>
                   </ul>

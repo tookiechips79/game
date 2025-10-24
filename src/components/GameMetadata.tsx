@@ -11,6 +11,8 @@ interface GameMetadataProps {
   onStart: () => void;
   onPause: () => void;
   onReset: () => void;
+  isAdmin?: boolean;
+  onToggleAdmin?: () => void;
 }
 
 const GameMetadata: React.FC<GameMetadataProps> = ({
@@ -20,7 +22,9 @@ const GameMetadata: React.FC<GameMetadataProps> = ({
   showControls,
   onStart,
   onPause,
-  onReset
+  onReset,
+  isAdmin = false,
+  onToggleAdmin
 }) => {
   return (
     <GameHeader
@@ -31,6 +35,8 @@ const GameMetadata: React.FC<GameMetadataProps> = ({
       onStart={onStart}
       onPause={onPause}
       onReset={onReset}
+      isAdmin={isAdmin}
+      onToggleAdmin={onToggleAdmin}
     />
   );
 };

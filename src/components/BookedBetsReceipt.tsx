@@ -21,14 +21,20 @@ const BookedBetsReceipt: React.FC<BookedBetsReceiptProps> = ({
   title = "BOOKED BETS",
   nextGameBets = []
 }) => {
-  const { getUserById } = useUser();
+  const { getUserById, currentUser } = useUser();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
 
-  // Combine current and next game booked bets with status
-  const currentGameBets = bookedBets.map(bet => ({ ...bet, isCurrentGame: true }));
-  const nextGameBetsWithStatus = nextGameBets.map(bet => ({ ...bet, isCurrentGame: false }));
-  const allBookedBets = [...currentGameBets, ...nextGameBetsWithStatus];
+  // Filter booked bets to only show current user's bets
+  const userCurrentGameBets = bookedBets.filter(bet => 
+    bet.userIdA === currentUser?.id || bet.userIdB === currentUser?.id
+  ).map(bet => ({ ...bet, isCurrentGame: true }));
+  
+  const userNextGameBets = nextGameBets.filter(bet => 
+    bet.userIdA === currentUser?.id || bet.userIdB === currentUser?.id
+  ).map(bet => ({ ...bet, isCurrentGame: false }));
+  
+  const allBookedBets = [...userCurrentGameBets, ...userNextGameBets];
 
   if (allBookedBets.length === 0) {
     return null;
@@ -37,45 +43,48 @@ const BookedBetsReceipt: React.FC<BookedBetsReceiptProps> = ({
   if (isHidden) {
     return (
       <div 
-        className="fixed right-4 bottom-4 bg-black p-2 rounded-full shadow-lg cursor-pointer z-50 border border-[#1EAEDB]/40"
+        className="fixed right-4 bottom-4 p-2 rounded-full shadow-lg cursor-pointer z-50"
+        style={{ backgroundColor: '#fa1593', borderColor: '#fa1593' }}
         onClick={() => setIsHidden(false)}
       >
-        <ReceiptText className="h-6 w-6 text-[#00FFFF]" />
+        <ReceiptText className="h-6 w-6 text-white" />
       </div>
     );
   }
 
   return (
-    <div className={`fixed right-0 bottom-0 transition-all duration-300 ${isCollapsed ? 'h-10' : 'h-auto max-h-[40vh]'} w-auto max-w-[300px] bg-black/90 backdrop-blur-md border-t-2 border-l-2 border-[#1EAEDB]/50 rounded-tl-2xl px-3 py-2 z-50 shadow-lg`}>
+    <div className={`fixed right-0 bottom-0 transition-all duration-300 ${isCollapsed ? 'h-10' : 'h-auto max-h-[40vh]'} w-auto max-w-[300px] backdrop-blur-md border-t-2 border-l-2 rounded-tl-2xl px-3 py-2 z-50 shadow-lg`} style={{ backgroundColor: 'rgba(236, 72, 153, 0.2)', borderColor: '#fa1593' }}>
       <div className="w-full">
         <div className="flex justify-between items-center mb-1">
           <div className="flex items-center">
-            <ReceiptText className="h-4 w-4 text-[#00FFFF] mr-1" />
-            <h3 className="text-[#00FFFF] font-bold text-sm">{title}</h3>
+            <ReceiptText className="h-4 w-4 mr-1" style={{ color: '#fa1593' }} />
+            <h3 className="font-bold text-sm" style={{ color: 'black', textShadow: '0 0 15px rgba(250, 21, 147, 0.8)' }}>{title} - MY BETS</h3>
           </div>
           <div className="flex items-center gap-2">
-            <div className="text-white text-xs">
+            <div className="text-xs" style={{ color: '#95deff' }}>
               {allBookedBets.length} booked
             </div>
             <div 
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="text-gray-400 hover:text-white transition-colors cursor-pointer"
+              className="transition-colors cursor-pointer"
+              style={{ color: '#95deff' }}
             >
               {isCollapsed ? (
-                <div className="rounded-full bg-[#1EAEDB]/30 p-1">
+                <div className="rounded-full p-1" style={{ backgroundColor: 'rgba(250, 21, 147, 0.3)' }}>
                   <Check className="h-4 w-4" />
                 </div>
               ) : (
-                <div className="rounded-full bg-gray-800 p-1">
+                <div className="rounded-full p-1" style={{ backgroundColor: 'rgba(250, 21, 147, 0.3)' }}>
                   <X className="h-4 w-4" />
                 </div>
               )}
             </div>
             <div
               onClick={() => setIsHidden(true)}
-              className="text-gray-400 hover:text-white transition-colors cursor-pointer"
+              className="transition-colors cursor-pointer"
+              style={{ color: '#95deff' }}
             >
-              <div className="rounded-full bg-gray-800 p-1">
+              <div className="rounded-full p-1" style={{ backgroundColor: 'rgba(250, 21, 147, 0.3)' }}>
                 <X className="h-4 w-4" />
               </div>
             </div>
@@ -83,7 +92,7 @@ const BookedBetsReceipt: React.FC<BookedBetsReceiptProps> = ({
         </div>
         
         {!isCollapsed && (
-          <div className="max-h-[35vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-[#1EAEDB] scrollbar-thumb-rounded-full hover:scrollbar-thumb-[#00FFFF] transition-colors">
+          <div className="max-h-[35vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-rounded-full hover:scrollbar-thumb-pink-400 transition-colors" style={{ scrollbarThumbColor: '#fa1593' }}>
             <div className="flex flex-col gap-1 pr-2">
               {allBookedBets.map((bet) => {
                 const userA = getUserById(bet.userIdA);
@@ -92,20 +101,21 @@ const BookedBetsReceipt: React.FC<BookedBetsReceiptProps> = ({
                 return (
                   <Card 
                     key={`${bet.idA}-${bet.idB}`} 
-                    className="min-w-[200px] rounded-lg bg-black border border-gray-700 shadow-md hover:shadow-[#00FFFF]/20 transition-all"
+                    className="min-w-[200px] rounded-lg shadow-md hover:shadow-pink-600/20 transition-all"
+                    style={{ backgroundColor: 'rgba(236, 72, 153, 0.2)', borderColor: '#fa1593' }}
                   >
-                    <CardHeader className="py-1 px-2 bg-gradient-to-r from-[#1EAEDB]/30 to-[#00FF00]/30 rounded-t-lg">
+                    <CardHeader className="py-1 px-2 rounded-t-lg" style={{ background: 'linear-gradient(to right, rgba(250, 21, 147, 0.3), rgba(236, 72, 153, 0.2))' }}>
                       <CardTitle className="text-xs flex items-center justify-between">
                         <div className="flex items-center">
-                          <Check className="h-3 w-3 text-[#00FFFF] mr-1" />
+                          <Check className="h-3 w-3 mr-1" style={{ color: '#fa1593' }} />
                           #{bet.idA} + #{bet.idB}
                         </div>
                         {bet.isCurrentGame ? (
-                          <span className="text-[#a3e635] font-bold text-xs bg-black/50 px-1 py-0.5 rounded">
+                          <span className="font-bold text-xs px-1 py-0.5 rounded" style={{ color: '#fa1593', backgroundColor: 'rgba(250, 21, 147, 0.2)' }}>
                             ACTIVE
                           </span>
                         ) : (
-                          <span className="text-[#1EAEDB] font-bold text-xs bg-black/50 px-1 py-0.5 rounded">
+                          <span className="font-bold text-xs px-1 py-0.5 rounded" style={{ color: '#fa1593', backgroundColor: 'rgba(250, 21, 147, 0.2)' }}>
                             NEXT
                           </span>
                         )}
@@ -113,8 +123,8 @@ const BookedBetsReceipt: React.FC<BookedBetsReceiptProps> = ({
                     </CardHeader>
                     <CardContent className="p-2 text-xs">
                       <div className="grid grid-cols-2 gap-x-1 gap-y-0.5">
-                        <div className="text-[#00FFFF] font-semibold text-xs">{teamAName}</div>
-                        <div className="text-[#00FF00] font-semibold text-xs">{teamBName}</div>
+                        <div className="font-semibold text-xs" style={{ color: '#95deff' }}>{teamAName}</div>
+                        <div className="font-semibold text-xs" style={{ color: '#fa1593' }}>{teamBName}</div>
                         
                         <div className="text-white text-xs truncate">
                           {userA?.name || 'User'}

@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useRef, useCallback } from 'react';
 import { Bet, BookedBet } from '@/types/user';
+import { socketIOService, BetSyncData, GameStateSyncData, TimerSyncData, ScoreSyncData } from '@/services/socketIOService';
+import { useUser } from './UserContext';
 
 interface GameState {
   // Team Information
@@ -14,7 +16,7 @@ interface GameState {
   currentGameNumber: number;
   gameDescription: string;
   
-  // Betting Cues
+  // Betting Queues
   teamAQueue: Bet[];
   teamBQueue: Bet[];
   nextTeamAQueue: Bet[];
@@ -78,7 +80,7 @@ const defaultGameState: GameState = {
   currentGameNumber: 1,
   gameDescription: "",
   
-  // Betting Cues
+  // Betting Queues
   teamAQueue: [],
   teamBQueue: [],
   nextTeamAQueue: [],
@@ -111,6 +113,11 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [localAdminState, setLocalAdminState] = useState<LocalAdminState>(defaultLocalAdminState);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // Ref to track if we're receiving server updates to prevent local timer conflicts
+  const isReceivingServerUpdate = useRef(false);
+  
+  // Get UserContext functions for game history sync
+  const { } = useUser();
 
   // Load game state from localStorage on mount
   useEffect(() => {
@@ -121,7 +128,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
         setGameState(parsedState);
       } catch (error) {
         console.error('Error parsing stored game state:', error);
-        setGameState(defaultGameState);
+      setGameState(defaultGameState);
       }
     }
   }, []);
@@ -135,7 +142,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
         setLocalAdminState(parsedState);
       } catch (error) {
         console.error('Error parsing stored local admin state:', error);
-        setLocalAdminState(defaultLocalAdminState);
+      setLocalAdminState(defaultLocalAdminState);
       }
     }
   }, []);
@@ -192,144 +199,289 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     return () => window.removeEventListener('storage', handleUserChange);
   }, []);
 
-  // Ultra-robust timer effect - uses Web Worker for maximum accuracy
+  // Socket.IO real-time synchronization
   useEffect(() => {
-    if (gameState.isTimerRunning) {
-      const startTime = Date.now();
-      const startSeconds = gameState.timerSeconds;
-      
-      // Create a Web Worker for accurate timing
-      const workerCode = `
-        let intervalId;
-        let startTime = ${startTime};
-        let startSeconds = ${startSeconds};
-        
-        function updateTimer() {
-          const currentTime = Date.now();
-          const elapsed = Math.floor((currentTime - startTime) / 1000);
-          const newSeconds = startSeconds + elapsed;
-          
-          self.postMessage({ type: 'TICK', seconds: newSeconds });
-        }
-        
-        self.onmessage = function(e) {
-          if (e.data.type === 'START') {
-            startTime = e.data.startTime;
-            startSeconds = e.data.startSeconds;
-            intervalId = setInterval(updateTimer, 1000);
-          } else if (e.data.type === 'STOP') {
-            if (intervalId) {
-              clearInterval(intervalId);
-              intervalId = null;
-            }
-          }
-        };
-      `;
-      
-      const blob = new Blob([workerCode], { type: 'application/javascript' });
-      const worker = new Worker(URL.createObjectURL(blob));
-      
-      worker.postMessage({ 
-        type: 'START', 
-        startTime, 
-        startSeconds 
+    // Connect to Socket.IO server
+    socketIOService.connect();
+
+    // Listen for bet updates from other clients
+    socketIOService.onBetUpdate((betData: BetSyncData) => {
+      console.log('📥 Received bet update from server:', betData);
+      console.log('📥 Current state before update:', {
+        teamAQueueLength: gameState.teamAQueue.length,
+        teamBQueueLength: gameState.teamBQueue.length,
+        bookedBetsLength: gameState.bookedBets.length
       });
       
-      worker.onmessage = (e) => {
-        if (e.data.type === 'TICK') {
-          setGameState(prev => ({
-            ...prev,
-            timerSeconds: e.data.seconds
-          }));
+      setGameState(prevState => {
+        const newState = { ...prevState };
+        let hasUpdates = false;
+        
+        // Always update queues when received to ensure highlighting syncs
+        if (betData.teamAQueue) {
+          console.log('📥 Updating teamAQueue:', betData.teamAQueue);
+          newState.teamAQueue = betData.teamAQueue;
+          hasUpdates = true;
         }
-      };
+        if (betData.teamBQueue) {
+          console.log('📥 Updating teamBQueue:', betData.teamBQueue);
+          newState.teamBQueue = betData.teamBQueue;
+          hasUpdates = true;
+        }
+        if (betData.bookedBets) {
+          console.log('📥 Updating bookedBets:', betData.bookedBets);
+          newState.bookedBets = betData.bookedBets;
+          hasUpdates = true;
+        }
+        if (betData.nextGameBets) {
+          console.log('📥 Updating nextBookedBets:', betData.nextGameBets);
+          newState.nextBookedBets = betData.nextGameBets;
+          hasUpdates = true;
+        }
+        if (betData.nextTeamAQueue) {
+          console.log('📥 Updating nextTeamAQueue:', betData.nextTeamAQueue);
+          newState.nextTeamAQueue = betData.nextTeamAQueue;
+          hasUpdates = true;
+        }
+        if (betData.nextTeamBQueue) {
+          console.log('📥 Updating nextTeamBQueue:', betData.nextTeamBQueue);
+          newState.nextTeamBQueue = betData.nextTeamBQueue;
+          hasUpdates = true;
+        }
+        
+        if (hasUpdates) {
+          console.log('📥 State updated successfully with bet data');
+        } else {
+          console.log('📥 No updates applied from bet data');
+        }
+        
+        console.log('📥 New state after update:', {
+          teamAQueueLength: newState.teamAQueue.length,
+          teamBQueueLength: newState.teamBQueue.length,
+          bookedBetsLength: newState.bookedBets.length
+        });
+        
+        return newState;
+      });
+    });
+
+    // Listen for game state updates from other clients
+    socketIOService.onGameStateUpdate((gameStateData: GameStateSyncData) => {
+      console.log('📥 Received game state update from server:', gameStateData);
       
-      // Store worker for cleanup
-      (timerIntervalRef as any).worker = worker;
+      setGameState(prevState => {
+        const newState = { ...prevState };
+        let hasUpdates = false;
+        
+        if (gameStateData.teamAScore !== undefined) {
+          newState.teamAGames = gameStateData.teamAScore;
+          hasUpdates = true;
+          console.log('📥 Updated teamAGames to:', gameStateData.teamAScore);
+        }
+        if (gameStateData.teamBScore !== undefined) {
+          newState.teamBGames = gameStateData.teamBScore;
+          hasUpdates = true;
+          console.log('📥 Updated teamBGames to:', gameStateData.teamBScore);
+        }
+        if (gameStateData.teamABalls !== undefined) {
+          newState.teamABalls = gameStateData.teamABalls;
+          hasUpdates = true;
+          console.log('📥 Updated teamABalls to:', gameStateData.teamABalls);
+        }
+        if (gameStateData.teamBBalls !== undefined) {
+          newState.teamBBalls = gameStateData.teamBBalls;
+          hasUpdates = true;
+          console.log('📥 Updated teamBBalls to:', gameStateData.teamBBalls);
+        }
+        if (gameStateData.currentGameNumber !== undefined) {
+          newState.currentGameNumber = gameStateData.currentGameNumber;
+          newState.gameLabel = `GAME ${gameStateData.currentGameNumber}`; // Update game label when game number changes
+          hasUpdates = true;
+          console.log('📥 Updated currentGameNumber to:', gameStateData.currentGameNumber);
+        }
+        if (gameStateData.teamAHasBreak !== undefined) {
+          newState.teamAHasBreak = gameStateData.teamAHasBreak;
+          hasUpdates = true;
+          console.log('📥 Break status update received, updating teamAHasBreak to:', gameStateData.teamAHasBreak);
+          console.log('📥 Current break status before update:', prevState.teamAHasBreak);
+          console.log('📥 New break status after update:', newState.teamAHasBreak);
+          console.log('📥 Full game state data received:', gameStateData);
+        }
+        if (gameStateData.isGameActive !== undefined) {
+          newState.isGameActive = gameStateData.isGameActive;
+          hasUpdates = true;
+        }
+        if (gameStateData.winner !== undefined) {
+          newState.winner = gameStateData.winner;
+          hasUpdates = true;
+        }
+        if (gameStateData.gameInfo) {
+          newState.teamAName = gameStateData.gameInfo.teamAName;
+          newState.teamBName = gameStateData.gameInfo.teamBName;
+          newState.gameDescription = gameStateData.gameInfo.gameDescription;
+          hasUpdates = true;
+        }
+        // REMOVED: Game history sync - bet history is now completely local and immutable
+        // No external updates can modify bet history
+        
+        if (hasUpdates) {
+          console.log('📥 Game state updated successfully:', {
+            teamAGames: newState.teamAGames,
+            teamBGames: newState.teamBGames,
+            teamABalls: newState.teamABalls,
+            teamBBalls: newState.teamBBalls
+          });
+        }
+        
+        return newState;
+      });
+    });
+
+    // Listen for timer updates from other clients
+    socketIOService.onTimerUpdate((timerData: TimerSyncData) => {
+      console.log('📥 Received timer update from server:', timerData);
+      
+      // Set flag to prevent local timer conflicts
+      isReceivingServerUpdate.current = true;
+      
+      // Stop local timer when receiving server update to prevent drift
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+      
+      setGameState(prevState => ({
+        ...prevState,
+        isTimerRunning: timerData.isTimerRunning,
+        timerSeconds: timerData.timerSeconds
+      }));
+      
+      // Reset flag after a short delay
+      setTimeout(() => {
+        isReceivingServerUpdate.current = false;
+      }, 100);
+    });
+
+    // Listen for dedicated break status updates
+    socketIOService.onBreakStatusUpdate((data: { teamAHasBreak: boolean }) => {
+      console.log('📥 Received dedicated break status update:', data);
+      setGameState(prevState => ({
+        ...prevState,
+        teamAHasBreak: data.teamAHasBreak
+      }));
+    });
+
+    // Listen for total booked coins updates
+    socketIOService.onTotalBookedCoinsUpdate((data: { totalBookedAmount: number, nextTotalBookedAmount: number }) => {
+      console.log('📥 Received total booked coins update:', data);
+      setGameState(prevState => ({
+        ...prevState,
+        totalBookedAmount: data.totalBookedAmount,
+        nextTotalBookedAmount: data.nextTotalBookedAmount
+      }));
+    });
+
+    // Listen for score updates from other clients
+    socketIOService.onScoreUpdate((scoreData: ScoreSyncData) => {
+      console.log('📥 Received score update from server:', scoreData);
+      
+      setGameState(prevState => ({
+        ...prevState,
+        teamAGames: scoreData.teamAScore,
+        teamBGames: scoreData.teamBScore
+      }));
+    });
+
+    return () => {
+      // Cleanup: disconnect when component unmounts
+      socketIOService.disconnect();
+    };
+  }, []);
+
+  // Server-authoritative timer effect for perfect synchronization
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+    
+    // Only run local timer if we're not receiving server updates
+    if (gameState.isTimerRunning && !isReceivingServerUpdate.current) {
+      // Request server time every second to stay synchronized
+      intervalId = setInterval(() => {
+        // Emit timer heartbeat to get server's current time
+        socketIOService.emitTimerHeartbeat();
+      }, 1000);
+      
+      // Store interval for cleanup
+      timerIntervalRef.current = intervalId;
     } else {
-      if ((timerIntervalRef as any).worker) {
-        (timerIntervalRef as any).worker.postMessage({ type: 'STOP' });
-        (timerIntervalRef as any).worker.terminate();
-        (timerIntervalRef as any).worker = null;
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
       }
     }
 
     return () => {
-      if ((timerIntervalRef as any).worker) {
-        (timerIntervalRef as any).worker.postMessage({ type: 'STOP' });
-        (timerIntervalRef as any).worker.terminate();
-        (timerIntervalRef as any).worker = null;
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
       }
     };
   }, [gameState.isTimerRunning]);
 
-  // Handle visibility changes to ensure timer accuracy when tab becomes active again
+  // Handle visibility changes to ensure timer accuracy when tab becomes active again (mobile-friendly)
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (gameState.isTimerRunning && !document.hidden) {
+      if (gameState.isTimerRunning && !document.hidden && !isReceivingServerUpdate.current) {
         // Tab became visible again, restart timer to ensure accuracy
-        if ((timerIntervalRef as any).worker) {
-          (timerIntervalRef as any).worker.postMessage({ type: 'STOP' });
-          (timerIntervalRef as any).worker.terminate();
+        console.log('📱 App became visible, restarting timer for accuracy');
+        
+        // Clear existing timer
+        if (timerIntervalRef.current) {
+          clearInterval(timerIntervalRef.current);
+          timerIntervalRef.current = null;
         }
         
+        // Restart timer with current state
         const startTime = Date.now();
         const startSeconds = gameState.timerSeconds;
         
-        // Create new worker
-        const workerCode = `
-          let intervalId;
-          let startTime = ${startTime};
-          let startSeconds = ${startSeconds};
-          
-          function updateTimer() {
+        const intervalId = setInterval(() => {
             const currentTime = Date.now();
             const elapsed = Math.floor((currentTime - startTime) / 1000);
             const newSeconds = startSeconds + elapsed;
             
-            self.postMessage({ type: 'TICK', seconds: newSeconds });
-          }
-          
-          self.onmessage = function(e) {
-            if (e.data.type === 'START') {
-              startTime = e.data.startTime;
-              startSeconds = e.data.startSeconds;
-              intervalId = setInterval(updateTimer, 1000);
-            } else if (e.data.type === 'STOP') {
-              if (intervalId) {
-                clearInterval(intervalId);
-                intervalId = null;
-              }
+          setGameState(prev => {
+            if (prev.timerSeconds !== newSeconds) {
+              return {
+                ...prev,
+                timerSeconds: newSeconds
+              };
             }
-          };
-        `;
+            return prev;
+          });
+        }, 1000);
         
-        const blob = new Blob([workerCode], { type: 'application/javascript' });
-        const worker = new Worker(URL.createObjectURL(blob));
-        
-        worker.postMessage({ 
-          type: 'START', 
-          startTime, 
-          startSeconds 
-        });
-        
-        worker.onmessage = (e) => {
-          if (e.data.type === 'TICK') {
-            setGameState(prev => ({
-              ...prev,
-              timerSeconds: e.data.seconds
-            }));
-          }
-        };
-        
-        (timerIntervalRef as any).worker = worker;
+        timerIntervalRef.current = intervalId;
+      } else if (document.hidden) {
+        console.log('📱 App went to background, timer will continue');
       }
     };
 
+    // Add event listeners for mobile app lifecycle
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Mobile-specific events
+    window.addEventListener('focus', handleVisibilityChange);
+    window.addEventListener('blur', () => {
+      console.log('📱 Window lost focus');
+    });
     
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleVisibilityChange);
+      window.removeEventListener('blur', () => {});
     };
   }, [gameState.isTimerRunning, gameState.timerSeconds]);
 
@@ -340,6 +492,89 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       // Update game label when game number changes
       if (updates.currentGameNumber !== undefined) {
         newState.gameLabel = `GAME ${updates.currentGameNumber}`;
+      }
+      
+      // Emit changes to other clients via Socket.IO
+      if (socketIOService.isSocketConnected()) {
+        console.log('📤 Socket.IO connected, emitting updates:', updates);
+        
+        // Emit bet-related updates
+        if (updates.teamAQueue || updates.teamBQueue || updates.bookedBets || updates.nextBookedBets || updates.nextTeamAQueue || updates.nextTeamBQueue) {
+          const betData: BetSyncData = {};
+          if (updates.teamAQueue) betData.teamAQueue = updates.teamAQueue;
+          if (updates.teamBQueue) betData.teamBQueue = updates.teamBQueue;
+          if (updates.bookedBets) betData.bookedBets = updates.bookedBets;
+          if (updates.nextBookedBets) betData.nextGameBets = updates.nextBookedBets;
+          if (updates.nextTeamAQueue) betData.nextTeamAQueue = updates.nextTeamAQueue;
+          if (updates.nextTeamBQueue) betData.nextTeamBQueue = updates.nextTeamBQueue;
+          
+          console.log('📤 Emitting bet update:', betData);
+          console.log('📤 Sample bet with userName:', betData.teamAQueue?.[0] || betData.teamBQueue?.[0]);
+          socketIOService.emitBetUpdate(betData);
+        }
+        
+        // Emit total booked coins updates
+        if (updates.totalBookedAmount !== undefined || updates.nextTotalBookedAmount !== undefined) {
+          const totalBookedAmount = updates.totalBookedAmount !== undefined ? updates.totalBookedAmount : newState.totalBookedAmount;
+          const nextTotalBookedAmount = updates.nextTotalBookedAmount !== undefined ? updates.nextTotalBookedAmount : newState.nextTotalBookedAmount;
+          
+          console.log('📤 Emitting total booked coins update:', { totalBookedAmount, nextTotalBookedAmount });
+          socketIOService.emitTotalBookedCoinsUpdate(totalBookedAmount, nextTotalBookedAmount);
+        }
+        
+        // Emit game state updates
+        if (updates.teamAGames !== undefined || updates.teamBGames !== undefined || 
+            updates.teamABalls !== undefined || updates.teamBBalls !== undefined ||
+            updates.isGameActive !== undefined || updates.winner !== undefined ||
+            updates.currentGameNumber !== undefined || // Added game number to condition
+            updates.teamAHasBreak !== undefined || // Added break status to condition
+            updates.teamAName || updates.teamBName || updates.gameDescription) {
+          const gameStateData: GameStateSyncData = {};
+          if (updates.teamAGames !== undefined) gameStateData.teamAScore = updates.teamAGames;
+          if (updates.teamBGames !== undefined) gameStateData.teamBScore = updates.teamBGames;
+          if (updates.teamABalls !== undefined) gameStateData.teamABalls = updates.teamABalls;
+          if (updates.teamBBalls !== undefined) gameStateData.teamBBalls = updates.teamBBalls;
+          if (updates.isGameActive !== undefined) gameStateData.isGameActive = updates.isGameActive;
+          if (updates.winner !== undefined) gameStateData.winner = updates.winner;
+          if (updates.currentGameNumber !== undefined) gameStateData.currentGameNumber = updates.currentGameNumber; // Added game number emission
+          if (updates.teamAHasBreak !== undefined) {
+            gameStateData.teamAHasBreak = updates.teamAHasBreak; // Added break status emission
+            console.log('📤 Break status change detected, emitting:', updates.teamAHasBreak);
+            // Also emit dedicated break status update
+            socketIOService.emitBreakStatusUpdate(updates.teamAHasBreak);
+          }
+          if (updates.teamAName || updates.teamBName || updates.gameDescription) {
+            gameStateData.gameInfo = {
+              teamAName: updates.teamAName || prevState.teamAName,
+              teamBName: updates.teamBName || prevState.teamBName,
+              gameTitle: "Game Bird",
+              gameDescription: updates.gameDescription || prevState.gameDescription
+            };
+          }
+          
+          console.log('📤 Emitting game state update:', gameStateData);
+          socketIOService.emitGameStateUpdate(gameStateData);
+        }
+        
+        // Emit timer updates
+        if (updates.isTimerRunning !== undefined || updates.timerSeconds !== undefined) {
+          const timerData: TimerSyncData = {
+            isTimerRunning: updates.isTimerRunning !== undefined ? updates.isTimerRunning : prevState.isTimerRunning,
+            timerSeconds: updates.timerSeconds !== undefined ? updates.timerSeconds : prevState.timerSeconds
+          };
+          
+          socketIOService.emitTimerUpdate(timerData);
+        }
+        
+        // Emit score updates
+        if (updates.teamAGames !== undefined || updates.teamBGames !== undefined) {
+          const scoreData: ScoreSyncData = {
+            teamAScore: updates.teamAGames !== undefined ? updates.teamAGames : prevState.teamAGames,
+            teamBScore: updates.teamBGames !== undefined ? updates.teamBGames : prevState.teamBGames
+          };
+          
+          socketIOService.emitScoreUpdate(scoreData);
+        }
       }
       
       return newState;
@@ -356,9 +591,8 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   // Timer control functions (admin only)
   const startTimer = () => {
-    if (!isAdmin) return;
-    
-    // Force start timer - clear any existing interval first
+    console.log('🕐 Starting timer');
+    // Clear any existing interval first
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
       timerIntervalRef.current = null;
@@ -370,13 +604,11 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   const pauseTimer = () => {
-    if (!isAdmin) return;
-    
-    // Force stop timer - terminate worker
-    if ((timerIntervalRef as any).worker) {
-      (timerIntervalRef as any).worker.postMessage({ type: 'STOP' });
-      (timerIntervalRef as any).worker.terminate();
-      (timerIntervalRef as any).worker = null;
+    console.log('⏸️ Pausing timer');
+    // Clear interval
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
     }
     
     updateGameState({
@@ -385,13 +617,11 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   const resetTimer = () => {
-    if (!isAdmin) return;
-    
-    // Force stop and reset timer
-    if ((timerIntervalRef as any).worker) {
-      (timerIntervalRef as any).worker.postMessage({ type: 'STOP' });
-      (timerIntervalRef as any).worker.terminate();
-      (timerIntervalRef as any).worker = null;
+    console.log('🔄 Resetting timer');
+    // Clear interval
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
     }
     
     updateGameState({
@@ -401,13 +631,10 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   const setTimer = (seconds: number) => {
-    if (!isAdmin) return;
-    
-    // Force stop timer when setting new value
-    if ((timerIntervalRef as any).worker) {
-      (timerIntervalRef as any).worker.postMessage({ type: 'STOP' });
-      (timerIntervalRef as any).worker.terminate();
-      (timerIntervalRef as any).worker = null;
+    // Clear interval when setting new value
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
     }
     
     updateGameState({
@@ -418,11 +645,10 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   // Auto-reset timer when match starts or game is won
   const resetTimerOnMatchStart = () => {
-    // Force stop timer
-    if ((timerIntervalRef as any).worker) {
-      (timerIntervalRef as any).worker.postMessage({ type: 'STOP' });
-      (timerIntervalRef as any).worker.terminate();
-      (timerIntervalRef as any).worker = null;
+    // Clear interval
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
     }
     
     updateGameState({
@@ -432,11 +658,11 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   const resetTimerOnGameWin = () => {
-    // Force stop timer
-    if ((timerIntervalRef as any).worker) {
-      (timerIntervalRef as any).worker.postMessage({ type: 'STOP' });
-      (timerIntervalRef as any).worker.terminate();
-      (timerIntervalRef as any).worker = null;
+    console.log('🏆 Resetting timer on game win');
+    // Clear interval
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
     }
     
     updateGameState({

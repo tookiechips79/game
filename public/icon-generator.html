@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Game Bird Icon Generator</title>
+</head>
+<body>
+    <canvas id="canvas" width="192" height="192" style="border: 1px solid #ccc;"></canvas>
+    <br>
+    <button onclick="downloadIcon()">Download Icon</button>
+    
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Draw background
+        const gradient = ctx.createLinearGradient(0, 0, 192, 192);
+        gradient.addColorStop(0, '#000000');
+        gradient.addColorStop(1, '#1a1a1a');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 192, 192);
+        
+        // Draw bird body
+        ctx.fillStyle = '#00FFFF';
+        ctx.beginPath();
+        ctx.arc(96, 80, 40, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Draw eye
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.arc(90, 70, 6, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Draw beak
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.moveTo(96, 85);
+        ctx.lineTo(100, 90);
+        ctx.lineTo(96, 95);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Draw betting chips
+        ctx.fillStyle = '#FF6B6B';
+        ctx.beginPath();
+        ctx.arc(50, 140, 12, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(50, 140, 8, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        ctx.fillStyle = '#000000';
+        ctx.font = '8px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('$', 50, 145);
+        
+        ctx.fillStyle = '#4ECDC4';
+        ctx.beginPath();
+        ctx.arc(142, 140, 12, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(142, 140, 8, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        ctx.fillStyle = '#000000';
+        ctx.fillText('$', 142, 145);
+        
+        // Draw app name
+        ctx.fillStyle = '#00FFFF';
+        ctx.font = 'bold 12px Arial';
+        ctx.fillText('GAME BIRD', 96, 170);
+        
+        function downloadIcon() {
+            const link = document.createElement('a');
+            link.download = 'icon-192.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+    </script>
+</body>
+</html>

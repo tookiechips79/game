@@ -78,9 +78,9 @@ const UserMembershipStatus: React.FC<UserMembershipStatusProps> = ({ userId }) =
     <div className="space-y-6">
       {/* Membership Status Card */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+        <div className="border-2 rounded-xl p-6" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold">Membership Status</h3>
+            <h3 className="text-xl font-bold" style={{ color: '#fa1593' }}>Membership Status</h3>
             {membership.isActive ? (
               <Badge variant="outline" className="bg-green-900/50 text-green-400 border-green-600">
                 <BadgeCheck className="h-3 w-3 mr-1" />
@@ -96,37 +96,37 @@ const UserMembershipStatus: React.FC<UserMembershipStatusProps> = ({ userId }) =
           
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center text-gray-400">
+              <div className="flex items-center" style={{ color: '#95deff' }}>
                 <Calendar className="h-5 w-5 mr-2" />
                 Start Date
               </div>
-              <div className="font-medium">
+              <div className="font-medium text-white">
                 {format(new Date(membership.startDate), "MMMM d, yyyy")}
               </div>
             </div>
             
             <div className="flex items-center justify-between">
-              <div className="flex items-center text-gray-400">
+              <div className="flex items-center" style={{ color: '#95deff' }}>
                 <Clock className="h-5 w-5 mr-2" />
                 Next Billing
               </div>
-              <div className="font-medium">
+              <div className="font-medium text-white">
                 {format(new Date(membership.nextBillingDate), "MMMM d, yyyy")}
               </div>
             </div>
             
             <div className="flex items-center justify-between">
-              <div className="flex items-center text-gray-400">
+              <div className="flex items-center" style={{ color: '#95deff' }}>
                 <CreditCard className="h-5 w-5 mr-2" />
                 Plan
               </div>
-              <div className="font-medium">
+              <div className="font-medium text-white">
                 {membership.plan} (${membership.price}/month)
               </div>
             </div>
             
             <div className="flex items-center justify-between">
-              <div className="flex items-center text-gray-400">
+              <div className="flex items-center" style={{ color: '#95deff' }}>
                 <BadgeAlert className="h-5 w-5 mr-2" />
                 Auto-Renew
               </div>
@@ -145,6 +145,7 @@ const UserMembershipStatus: React.FC<UserMembershipStatusProps> = ({ userId }) =
               <Button 
                 variant="destructive" 
                 className="w-full"
+                style={{ backgroundColor: '#fa1593' }}
                 onClick={() => setCancelDialogOpen(true)}
               >
                 Cancel Membership
@@ -152,7 +153,8 @@ const UserMembershipStatus: React.FC<UserMembershipStatusProps> = ({ userId }) =
             ) : (
               <Button 
                 variant="default" 
-                className="w-full bg-[#a3e635] hover:bg-[#a3e635]/90 text-black"
+                className="w-full text-white"
+                style={{ backgroundColor: '#fa1593' }}
                 onClick={handleReactivate}
               >
                 Reactivate Membership
@@ -161,53 +163,54 @@ const UserMembershipStatus: React.FC<UserMembershipStatusProps> = ({ userId }) =
           </div>
         </div>
         
-        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-          <h3 className="text-xl font-bold mb-4">Membership Benefits</h3>
+        <div className="border-2 rounded-xl p-6" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
+          <h3 className="text-xl font-bold mb-4" style={{ color: '#fa1593' }}>Membership Benefits</h3>
           
           <div className="space-y-3">
             <div className="flex items-start">
-              <div className="mt-1 mr-3 bg-[#a3e635]/20 p-1 rounded-full">
-                <Check className="h-4 w-4 text-[#a3e635]" />
+              <div className="mt-1 mr-3 p-1 rounded-full" style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }}>
+                <Check className="h-4 w-4" style={{ color: '#fa1593' }} />
               </div>
               <div>
-                <p className="font-medium">Full Betting Access</p>
-                <p className="text-sm text-gray-400">Place bets on all games without restrictions</p>
+                <p className="font-medium text-white">Full Betting Access</p>
+                <p className="text-sm" style={{ color: '#95deff' }}>Place bets on all games without restrictions</p>
               </div>
             </div>
             
             <div className="flex items-start">
-              <div className="mt-1 mr-3 bg-[#a3e635]/20 p-1 rounded-full">
-                <Check className="h-4 w-4 text-[#a3e635]" />
+              <div className="mt-1 mr-3 p-1 rounded-full" style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }}>
+                <Check className="h-4 w-4" style={{ color: '#fa1593' }} />
               </div>
               <div>
-                <p className="font-medium">Complete Transaction History</p>
-                <p className="text-sm text-gray-400">Track all your betting activity and coin purchases</p>
+                <p className="font-medium text-white">Complete Transaction History</p>
+                <p className="text-sm" style={{ color: '#95deff' }}>Track all your betting activity and coin purchases</p>
               </div>
             </div>
             
             <div className="flex items-start">
-              <div className="mt-1 mr-3 bg-[#a3e635]/20 p-1 rounded-full">
-                <Check className="h-4 w-4 text-[#a3e635]" />
+              <div className="mt-1 mr-3 p-1 rounded-full" style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }}>
+                <Check className="h-4 w-4" style={{ color: '#fa1593' }} />
               </div>
               <div>
-                <p className="font-medium">Premium Customer Support</p>
-                <p className="text-sm text-gray-400">Get priority assistance for any issues</p>
+                <p className="font-medium text-white">Premium Customer Support</p>
+                <p className="text-sm" style={{ color: '#95deff' }}>Get priority assistance for any issues</p>
               </div>
             </div>
             
             {!membership.isActive && (
-              <div className="mt-6 p-4 bg-red-900/20 border border-red-900/50 rounded-lg">
-                <div className="flex items-center gap-2 text-red-400 mb-2">
+              <div className="mt-6 p-4 border-2 rounded-lg" style={{ backgroundColor: 'rgba(117, 0, 55, 0.2)', borderColor: '#fa1593' }}>
+                <div className="flex items-center gap-2 mb-2" style={{ color: '#fa1593' }}>
                   <ShieldAlert className="h-5 w-5" />
                   <p className="font-bold">Membership Required</p>
                 </div>
-                <p className="text-sm text-gray-300 mb-4">
+                <p className="text-sm text-white mb-4">
                   Your membership is currently inactive. You won't be able to place bets until you reactivate your subscription.
                 </p>
                 <Link to="/subscription">
                   <Button 
                     variant="default" 
-                    className="w-full bg-[#a3e635] hover:bg-[#a3e635]/90 text-black"
+                    className="w-full text-white"
+                    style={{ backgroundColor: '#fa1593' }}
                   >
                     View Subscription Plans
                   </Button>
@@ -220,22 +223,23 @@ const UserMembershipStatus: React.FC<UserMembershipStatusProps> = ({ userId }) =
       
       {/* Cancel Membership Dialog */}
       <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
-        <AlertDialogContent className="bg-gray-800 border-gray-700">
+        <AlertDialogContent className="border-2" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Membership?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle style={{ color: '#fa1593' }}>Cancel Membership?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white">
               Your membership will remain active until the end of the current billing period 
               ({format(new Date(membership.nextBillingDate), "MMMM d, yyyy")}). 
               After that date, you will no longer be able to place bets.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-gray-700 hover:bg-gray-600 text-white">
+            <AlertDialogCancel className="text-white" style={{ backgroundColor: '#052240' }}>
               Keep Membership
             </AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleCancelMembership}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="text-white"
+              style={{ backgroundColor: '#fa1593' }}
             >
               Yes, Cancel
             </AlertDialogAction>

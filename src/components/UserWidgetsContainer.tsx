@@ -2,13 +2,10 @@
 import React, { useState } from "react";
 import { useUser } from "@/contexts/UserContext";
 import UserWidget from "./UserWidget";
-import AdminWidget from "./AdminWidget";
-import UserBetHistoryWidget from "./UserBetHistoryWidget";
 import { Bet } from "@/types/user";
 import { EyeOff, PanelLeft, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface UserWidgetsContainerProps {
   userBetAmounts: Map<string, number>;
@@ -43,7 +40,6 @@ const UserWidgetsContainer: React.FC<UserWidgetsContainerProps> = ({
 }) => {
   const { currentUser, getUserBetReceipts } = useUser();
   const [isHidden, setIsHidden] = useState(false);
-  const [activeTab, setActiveTab] = useState("wallet");
 
   // Calculate booked amount for current user
   const calculateBookedAmount = (userId: string) => {
@@ -75,85 +71,47 @@ const UserWidgetsContainer: React.FC<UserWidgetsContainerProps> = ({
 
   return (
     <>
-      {/* Admin Widget - Top Right */}
-      <div className="fixed z-10 right-0 top-0 px-2 py-4">
-        <AdminWidget 
-          onToggleAdmin={toggleAdminMode} 
-          isAdmin={isAdmin}
-          isAgent={isAgent}
-          onToggleAgent={toggleAgentMode}
-        />
-      </div>
-
-      {/* User Widgets - Left Side */}
-      <div className="fixed z-10 left-0 top-0 h-full px-2 py-4 flex flex-col gap-3 justify-start items-start max-w-[220px] overflow-y-auto custom-scrollbar">
-        <div className="self-end mb-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="bg-gray-800/80 border-gray-700 hover:bg-gray-700"
-            onClick={() => setIsHidden(true)}
-          >
-            <EyeOff className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        {currentUser && (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-2 mb-2 bg-gray-800/80 border border-gray-700">
-              <TabsTrigger value="wallet" className="data-[state=active]:bg-[#a3e635] data-[state=active]:text-black">
-                Wallet
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="data-[state=active]:bg-[#a3e635] data-[state=active]:text-black">
-                <Settings className="h-4 w-4 mr-1" />
-                Settings
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="wallet" className="mt-0">
-              <UserWidget
-                key={currentUser.id}
-                user={currentUser}
-                activeBetAmount={userBetAmounts.get(currentUser.id) || 0}
-                bookedAmount={calculateBookedAmount(currentUser.id)}
-                isActive={true}
-                hideCredits={isAgent && !isAdmin}
-              />
-              
-              <UserBetHistoryWidget 
-                user={currentUser}
-                betReceipts={getUserBetReceipts(currentUser.id)}
-                activeBets={{
-                  teamA: teamAQueue.filter(bet => bet.userId === currentUser.id),
-                  teamB: teamBQueue.filter(bet => bet.userId === currentUser.id)
-                }}
-                teamAName={teamAName}
-                teamBName={teamBName}
-                alwaysVisible={true}
-              />
-            </TabsContent>
-            
-            <TabsContent value="settings" className="mt-0">
-              <div className="bg-gray-800/90 border-2 border-[#a3e635]/50 w-full rounded-xl overflow-hidden shadow-lg">
-                <div className="w-full bg-gradient-to-r from-[#a3e635]/80 to-[#a3e635] py-2 text-center">
-                  <span className="text-sm font-bold text-black flex items-center justify-center">
-                    <Settings className="h-4 w-4 mr-1" />
-                    USER SETTINGS
-                  </span>
-                </div>
-                <div className="p-4 flex flex-col gap-3">
-                  <p className="text-sm text-[#a3e635]">Manage your account settings</p>
-                  <Link to="/user-settings" className="w-full">
-                    <Button variant="lime" size="sm" className="w-full">
-                      <Settings className="h-4 w-4 mr-1" />
-                      Open Settings
-                    </Button>
-                  </Link>
-                </div>
+      {/* User Widgets - Top Bar */}
+      <div className="fixed z-10 top-0 left-0 right-0 bg-gradient-to-r from-pink-900/80 via-rose-900/80 to-fuchsia-900/80 backdrop-blur-sm border-b border-pink-500/30 overflow-x-auto">
+        <div className="px-2 md:px-4 py-2 md:py-3 min-w-full">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 md:gap-0">
+            {currentUser && (
+              <div className="flex items-start space-x-4 flex-1 min-w-0">
+                <UserWidget
+                  key={currentUser.id}
+                  user={currentUser}
+                  activeBetAmount={userBetAmounts.get(currentUser.id) || 0}
+                  bookedAmount={calculateBookedAmount(currentUser.id)}
+                  isActive={true}
+                  hideCredits={isAgent && !isAdmin}
+                  betReceipts={getUserBetReceipts(currentUser.id)}
+                  activeBets={{
+                    teamA: teamAQueue.filter(bet => bet.userId === currentUser.id),
+                    teamB: teamBQueue.filter(bet => bet.userId === currentUser.id)
+                  }}
+                  teamAName={teamAName}
+                  teamBName={teamBName}
+                />
               </div>
-            </TabsContent>
-          </Tabs>
-        )}
+            )}
+            
+            <div className="flex items-center space-x-2 flex-shrink-0">
+              <Link to="/user-settings">
+                <Button variant="outline" size="sm" className="bg-pink-800/50 border-pink-600/50 hover:bg-pink-700/50">
+                  <Settings className="h-4 w-4 text-pink-300" />
+                </Button>
+              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-pink-400 hover:text-pink-300 hover:bg-pink-500/20"
+                onClick={() => setIsHidden(true)}
+              >
+                <EyeOff className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     </>
   );

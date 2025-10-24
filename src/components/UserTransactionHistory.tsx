@@ -52,12 +52,15 @@ const UserTransactionHistory: React.FC<UserTransactionHistoryProps> = ({
   transactionType = 'all',
   isAdmin = false 
 }) => {
-  const { userBetReceipts, getUserBetReceipts, creditTransactions, getCreditTransactions, getAllUsers, getUserById } = useUser();
+  const { userBetReceipts, getUserBetReceipts, getHardLedgerBetReceipts, creditTransactions, getCreditTransactions, getAllUsers, getUserById, getHardLedgerBetHistory } = useUser();
   const [filter, setFilter] = useState<'all' | 'wins' | 'losses' | 'deposits' | 'withdrawals' | 'subscriptions' | 'admin' | 'cashouts'>('all');
   
   // For admin view, get all transactions from all users
   const allUsers = getAllUsers();
   const betReceipts = isAdmin ? userBetReceipts : getUserBetReceipts(userId);
+  
+  // For user settings, use immutable bet receipts that can never be cleared
+  const immutableBetReceipts = isAdmin ? userBetReceipts : getHardLedgerBetReceipts(userId);
   const userCreditTransactions = isAdmin ? creditTransactions : getCreditTransactions(userId);
   
   const generateTransactions = (receipts: UserBetReceipt[]): Transaction[] => {
@@ -72,7 +75,7 @@ const UserTransactionHistory: React.FC<UserTransactionHistoryProps> = ({
         return;
       }
       
-      const userName = isAdmin ? getUserById(receipt.userId)?.name || 'Unknown' : '';
+      const userName = isAdmin ? getUserById(receipt.userId)?.name || receipt.userName || 'User' : '';
       const userPrefix = isAdmin ? `[${userName}] ` : '';
       
       transactions.push({
@@ -87,7 +90,7 @@ const UserTransactionHistory: React.FC<UserTransactionHistoryProps> = ({
     
     // Add credit transactions - this is where all admin add/deduct + cashouts are handled
     userCreditTransactions.forEach(tx => {
-      const userName = isAdmin ? getUserById(tx.userId)?.name || 'Unknown' : '';
+      const userName = isAdmin ? getUserById(tx.userId)?.name || tx.userName || 'User' : '';
       const userPrefix = isAdmin ? `[${userName}] ` : '';
       
       transactions.push({
@@ -105,7 +108,7 @@ const UserTransactionHistory: React.FC<UserTransactionHistoryProps> = ({
     return transactions.sort((a, b) => b.timestamp - a.timestamp);
   };
   
-  const transactions = generateTransactions(betReceipts);
+  const transactions = generateTransactions(immutableBetReceipts);
   
   const filteredTransactions = transactions.filter(transaction => {
     if (transactionType === 'bets') {
@@ -180,19 +183,19 @@ const UserTransactionHistory: React.FC<UserTransactionHistoryProps> = ({
       case 'loss':
         return <BadgeMinus className="h-5 w-5 text-red-500" />;
       case 'deposit':
-        return <ArrowDown className="h-5 w-5 text-[#a3e635]" />;
+        return <ArrowDown className="h-5 w-5" style={{ color: '#fa1593' }} />;
       case 'withdrawal':
         return <ArrowUp className="h-5 w-5 text-orange-500" />;
       case 'cashout':
-        return <Wallet className="h-5 w-5 text-[#F97316]" />;
+        return <Wallet className="h-5 w-5" style={{ color: '#fa1593' }} />;
       case 'subscription':
         return <CreditCard className="h-5 w-5 text-blue-500" />;
       case 'admin_add':
-        return <ShieldAlert className="h-5 w-5 text-purple-500" />;
+        return <ShieldAlert className="h-5 w-5" style={{ color: '#95deff' }} />;
       case 'admin_deduct':
         return <ShieldAlert className="h-5 w-5 text-red-500" />;
       default:
-        return <Receipt className="h-5 w-5 text-gray-500" />;
+        return <Receipt className="h-5 w-5" style={{ color: '#95deff' }} />;
     }
   };
   
@@ -203,15 +206,15 @@ const UserTransactionHistory: React.FC<UserTransactionHistoryProps> = ({
       case 'loss':
         return "text-red-500";
       case 'deposit':
-        return "text-[#a3e635]";
+        return "text-[#fa1593]";
       case 'withdrawal':
         return "text-orange-500";
       case 'cashout':
-        return "text-[#F97316]";
+        return "text-[#fa1593]";
       case 'subscription':
         return "text-blue-500";
       case 'admin_add':
-        return "text-purple-500";
+        return "text-[#95deff]";
       case 'admin_deduct':
         return "text-red-500";
       default:
@@ -236,8 +239,8 @@ const UserTransactionHistory: React.FC<UserTransactionHistoryProps> = ({
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-2">
-          <CalendarClock className="h-5 w-5 text-gray-400" />
-          <span className="text-gray-400">
+          <CalendarClock className="h-5 w-5" style={{ color: '#95deff' }} />
+          <span style={{ color: '#95deff' }}>
             Showing {filteredTransactions.length} {filteredTransactions.length === 1 ? 'record' : 'records'}
           </span>
         </div>
@@ -246,31 +249,31 @@ const UserTransactionHistory: React.FC<UserTransactionHistoryProps> = ({
           value={filter}
           onValueChange={(value) => setFilter(value as any)}
         >
-          <SelectTrigger className="w-[200px] bg-gray-700 border-gray-600">
+          <SelectTrigger className="w-[200px] border-2" style={{ backgroundColor: '#052240', borderColor: '#95deff' }}>
             <SelectValue placeholder="Filter transactions" />
           </SelectTrigger>
-          <SelectContent className="bg-gray-800 border-gray-700">
+          <SelectContent className="border-2" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
             {getFilterOptions()}
           </SelectContent>
         </Select>
       </div>
       
       {filteredTransactions.length > 0 ? (
-        <Card className="border-gray-700 bg-gray-800/50 overflow-hidden">
+        <Card className="border-2 overflow-hidden" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
           <ScrollArea className="h-[400px]">
             <Table>
-              <TableHeader className="bg-gray-800">
-                <TableRow>
-                  <TableHead className="w-[100px]">Type</TableHead>
-                  {isAdmin && <TableHead className="w-[120px]">User</TableHead>}
-                  <TableHead>Details</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-right">Date</TableHead>
+              <TableHeader style={{ backgroundColor: '#052240' }}>
+                <TableRow style={{ borderColor: '#95deff' }}>
+                  <TableHead className="w-[100px] text-white">Type</TableHead>
+                  {isAdmin && <TableHead className="w-[120px] text-white">User</TableHead>}
+                  <TableHead className="text-white">Details</TableHead>
+                  <TableHead className="text-right text-white">Amount</TableHead>
+                  <TableHead className="text-right text-white">Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredTransactions.map((transaction) => (
-                  <TableRow key={transaction.id} className="hover:bg-gray-800">
+                  <TableRow key={transaction.id} className="hover:opacity-80" style={{ backgroundColor: '#004b6b' }}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         {getTransactionIcon(transaction.type)}
@@ -280,18 +283,18 @@ const UserTransactionHistory: React.FC<UserTransactionHistoryProps> = ({
                       </div>
                     </TableCell>
                     {isAdmin && (
-                      <TableCell className="font-medium text-blue-400">
-                        {getUserById(transaction.userId)?.name || 'Unknown'}
+                      <TableCell className="font-medium" style={{ color: '#95deff' }}>
+                        {getUserById(transaction.userId)?.name || transaction.userName || 'User'}
                       </TableCell>
                     )}
-                    <TableCell>{transaction.details}</TableCell>
+                    <TableCell className="text-white">{transaction.details}</TableCell>
                     <TableCell className={`text-right ${getTransactionColor(transaction.type)}`}>
                       {['deposit', 'win', 'admin_add'].includes(transaction.type) ? '+' : ''}
                       {['withdrawal', 'loss', 'subscription', 'admin_deduct', 'cashout'].includes(transaction.type) ? '-' : ''}
                       {transaction.amount} 
                       {['subscription', 'withdrawal'].includes(transaction.type) ? '$' : ' COINS'}
                     </TableCell>
-                    <TableCell className="text-right text-gray-400">
+                    <TableCell className="text-right" style={{ color: '#95deff' }}>
                       {format(new Date(transaction.timestamp), "MMM d, yyyy h:mm a")}
                     </TableCell>
                   </TableRow>
@@ -301,10 +304,10 @@ const UserTransactionHistory: React.FC<UserTransactionHistoryProps> = ({
           </ScrollArea>
         </Card>
       ) : (
-        <div className="text-center py-12 text-gray-400 border border-dashed border-gray-700 rounded-lg">
-          <Receipt className="h-12 w-12 mx-auto mb-4 opacity-30" />
-          <p className="text-lg">No transaction history found</p>
-          <p className="text-sm mt-2">Transaction history will appear here as you place bets and make purchases.</p>
+        <div className="text-center py-12 border-2 border-dashed rounded-lg" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
+          <Receipt className="h-12 w-12 mx-auto mb-4 opacity-30" style={{ color: '#95deff' }} />
+          <p className="text-lg" style={{ color: '#95deff' }}>No transaction history found</p>
+          <p className="text-sm mt-2 text-white">Transaction history will appear here as you place bets and make purchases.</p>
         </div>
       )}
     </div>

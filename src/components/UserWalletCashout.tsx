@@ -38,29 +38,29 @@ const UserWalletCashout: React.FC<{ userId: string }> = ({ userId }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Wallet Balance Card */}
-      <Card className="bg-gray-800/70 border-gray-700">
+      <Card className="border-2" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Wallet className="h-5 w-5 text-[#a3e635]" />
+          <CardTitle className="text-lg flex items-center gap-2" style={{ color: '#fa1593' }}>
+            <Wallet className="h-5 w-5" style={{ color: '#fa1593' }} />
             Your Wallet Balance
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col space-y-4">
-            <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-6 rounded-xl border border-gray-700">
+            <div className="p-6 rounded-xl border-2" style={{ backgroundColor: '#052240', borderColor: '#95deff' }}>
               <div className="flex justify-between items-center">
-                <div className="text-gray-400">Available Balance</div>
-                <div className="text-[#a3e635] text-3xl font-bold">
+                <div style={{ color: '#95deff' }}>Available Balance</div>
+                <div className="text-3xl font-bold" style={{ color: '#fa1593' }}>
                   {currentUser.credits} <span className="text-lg">COINS</span>
                 </div>
               </div>
               
-              <div className="mt-8 pt-4 border-t border-gray-700 flex justify-between items-center">
-                <div className="text-sm text-gray-400">Win/Loss Record</div>
+              <div className="mt-8 pt-4 border-t flex justify-between items-center" style={{ borderColor: '#750037' }}>
+                <div className="text-sm" style={{ color: '#95deff' }}>Win/Loss Record</div>
                 <div className="text-sm">
-                  <span className="text-green-400">{currentUser.wins} W</span>
+                  <span style={{ color: '#95deff' }}>{currentUser.wins} W</span>
                   {" / "}
-                  <span className="text-red-400">{currentUser.losses} L</span>
+                  <span style={{ color: '#fa1593' }}>{currentUser.losses} L</span>
                   {" — "}
                   <span className="text-white">
                     {currentUser.wins + currentUser.losses > 0 
@@ -75,17 +75,17 @@ const UserWalletCashout: React.FC<{ userId: string }> = ({ userId }) => {
       </Card>
 
       {/* Cashout Card */}
-      <Card className="bg-gray-800/70 border-gray-700">
+      <Card className="border-2" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <ArrowDownToLine className="h-5 w-5 text-[#F97316]" />
+          <CardTitle className="text-lg flex items-center gap-2" style={{ color: '#fa1593' }}>
+            <ArrowDownToLine className="h-5 w-5" style={{ color: '#fa1593' }} />
             Cashout Funds
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="flex flex-col space-y-2">
-              <label className="text-sm text-gray-400">Cashout Amount</label>
+              <label className="text-sm" style={{ color: '#95deff' }}>Cashout Amount</label>
               <div className="flex gap-2">
                 <Input
                   type="number"
@@ -93,7 +93,8 @@ const UserWalletCashout: React.FC<{ userId: string }> = ({ userId }) => {
                   onChange={(e) => setCashoutAmount(Number(e.target.value))}
                   min={0}
                   max={currentUser.credits}
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="border-2 text-white"
+                  style={{ backgroundColor: '#052240', borderColor: '#95deff' }}
                   placeholder="Enter amount"
                   disabled={isProcessing}
                 />
@@ -101,7 +102,8 @@ const UserWalletCashout: React.FC<{ userId: string }> = ({ userId }) => {
                   variant="outline" 
                   size="icon" 
                   onClick={handleMaxAmount}
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="border-2 text-white"
+                  style={{ backgroundColor: '#052240', borderColor: '#95deff' }}
                   disabled={isProcessing}
                 >
                   <DollarSign className="h-4 w-4" />
@@ -113,7 +115,8 @@ const UserWalletCashout: React.FC<{ userId: string }> = ({ userId }) => {
               <Button 
                 variant="outline" 
                 onClick={() => setCashoutAmount(50)}
-                className={`${cashoutAmount === 50 ? 'bg-[#F97316] text-black' : 'bg-gray-700 text-white'} border-gray-600 rounded-lg`}
+                className={`border-2 rounded-lg ${cashoutAmount === 50 ? 'text-white' : 'text-white'}`}
+                style={cashoutAmount === 50 ? { backgroundColor: '#fa1593', borderColor: '#fa1593' } : { backgroundColor: '#052240', borderColor: '#95deff' }}
                 disabled={isProcessing || currentUser.credits < 50}
               >
                 50
@@ -121,7 +124,8 @@ const UserWalletCashout: React.FC<{ userId: string }> = ({ userId }) => {
               <Button 
                 variant="outline" 
                 onClick={() => setCashoutAmount(100)}
-                className={`${cashoutAmount === 100 ? 'bg-[#F97316] text-black' : 'bg-gray-700 text-white'} border-gray-600 rounded-lg`}
+                className={`border-2 rounded-lg ${cashoutAmount === 100 ? 'text-white' : 'text-white'}`}
+                style={cashoutAmount === 100 ? { backgroundColor: '#fa1593', borderColor: '#fa1593' } : { backgroundColor: '#052240', borderColor: '#95deff' }}
                 disabled={isProcessing || currentUser.credits < 100}
               >
                 100
@@ -129,7 +133,8 @@ const UserWalletCashout: React.FC<{ userId: string }> = ({ userId }) => {
               <Button 
                 variant="outline" 
                 onClick={() => setCashoutAmount(200)}
-                className={`${cashoutAmount === 200 ? 'bg-[#F97316] text-black' : 'bg-gray-700 text-white'} border-gray-600 rounded-lg`}
+                className={`border-2 rounded-lg ${cashoutAmount === 200 ? 'text-white' : 'text-white'}`}
+                style={cashoutAmount === 200 ? { backgroundColor: '#fa1593', borderColor: '#fa1593' } : { backgroundColor: '#052240', borderColor: '#95deff' }}
                 disabled={isProcessing || currentUser.credits < 200}
               >
                 200
@@ -138,7 +143,8 @@ const UserWalletCashout: React.FC<{ userId: string }> = ({ userId }) => {
             
             <Button 
               onClick={handleCashoutSubmit} 
-              className="w-full bg-[#F97316] hover:bg-[#F97316]/90 text-black"
+              className="w-full text-white"
+              style={{ backgroundColor: '#fa1593' }}
               disabled={isProcessing || !cashoutAmount || cashoutAmount <= 0 || cashoutAmount > currentUser.credits}
             >
               {isProcessing ? (
@@ -151,7 +157,7 @@ const UserWalletCashout: React.FC<{ userId: string }> = ({ userId }) => {
               )}
             </Button>
             
-            <div className="text-xs text-gray-400 mt-2">
+            <div className="text-xs mt-2" style={{ color: '#95deff' }}>
               Note: Cashouts will be processed according to our terms and conditions.
               The equivalent cash value will be sent to your registered payment method.
             </div>

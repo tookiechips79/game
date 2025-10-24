@@ -1,0 +1,35 @@
+<svg width="192" height="192" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#000000;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1a1a1a;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="192" height="192" rx="24" fill="url(#bg)" />
+  
+  <!-- Bird silhouette -->
+  <path d="M96 40 C 80 40, 60 60, 60 80 C 60 100, 80 120, 96 120 C 112 120, 132 100, 132 80 C 132 60, 112 40, 96 40 Z" fill="#00FFFF" />
+  
+  <!-- Eye -->
+  <circle cx="90" cy="70" r="6" fill="#000000" />
+  
+  <!-- Beak -->
+  <path d="M 96 85 L 100 90 L 96 95 Z" fill="#FFD700" />
+  
+  <!-- Wing details -->
+  <path d="M 80 90 C 85 95, 90 100, 96 100 C 102 100, 107 95, 112 90" stroke="#00FFFF" stroke-width="2" fill="none" />
+  
+  <!-- Betting chips -->
+  <circle cx="50" cy="140" r="12" fill="#FF6B6B" />
+  <circle cx="50" cy="140" r="8" fill="#FFFFFF" />
+  <text x="50" y="145" text-anchor="middle" font-family="Arial" font-size="8" fill="#000000">$</text>
+  
+  <circle cx="142" cy="140" r="12" fill="#4ECDC4" />
+  <circle cx="142" cy="140" r="8" fill="#FFFFFF" />
+  <text x="142" y="145" text-anchor="middle" font-family="Arial" font-size="8" fill="#000000">$</text>
+  
+  <!-- App name -->
+  <text x="96" y="170" text-anchor="middle" font-family="Arial" font-size="12" fill="#00FFFF" font-weight="bold">GAME BIRD</text>
+</svg>

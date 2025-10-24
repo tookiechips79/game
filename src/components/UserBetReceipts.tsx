@@ -25,14 +25,15 @@ const UserBetReceipts: React.FC<UserBetReceiptsProps> = ({
   return (
     <div className="w-full">
       <div 
-        className="flex justify-between items-center mb-3 cursor-pointer p-2 bg-gray-800/80 rounded-lg"
+        className="flex justify-between items-center mb-3 cursor-pointer p-2 rounded-lg"
+        style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
         <div className="flex items-center">
-          <ReceiptText className="h-5 w-5 text-yellow-300 mr-2" />
+          <ReceiptText className="h-5 w-5 mr-2" style={{ color: '#95deff' }} />
           <h3 className="font-bold text-white">Bet Receipts ({receipts.length})</h3>
         </div>
-        <div className="text-gray-400 hover:text-white">
+        <div style={{ color: '#95deff' }}>
           {isCollapsed ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
         </div>
       </div>
@@ -40,11 +41,11 @@ const UserBetReceipts: React.FC<UserBetReceiptsProps> = ({
       {!isCollapsed && (
         <>
           {receipts.length === 0 ? (
-            <div className="text-center py-6 text-gray-400 flex flex-col items-center">
-              <ReceiptText className="h-10 w-10 mb-2 opacity-50" />
+            <div className="text-center py-6 flex flex-col items-center" style={{ color: '#95deff' }}>
+              <ReceiptText className="h-10 w-10 mb-2 opacity-50" style={{ color: '#95deff' }} />
               <p>No bet receipts found</p>
               {alwaysVisible && (
-                <p className="mt-2 text-sm text-gray-500">
+                <p className="mt-2 text-sm" style={{ color: '#95deff' }}>
                   Your bet history will appear here after you place bets
                 </p>
               )}
@@ -67,8 +68,8 @@ const UserBetReceipts: React.FC<UserBetReceiptsProps> = ({
                           variant="outline" 
                           className={`${
                             receipt.teamSide === 'A' 
-                              ? 'bg-[#00FFFF]/20 text-[#00FFFF] border-[#00FFFF]/50' 
-                              : 'bg-[#00FF00]/20 text-[#00FF00] border-[#00FF00]/50'
+                              ? 'bg-blue-600/20 text-blue-400 border-blue-600/50' 
+                              : 'bg-purple-600/20 text-purple-400 border-purple-600/50'
                           }`}
                         >
                           {receipt.teamSide === 'A' ? teamAName : teamBName}
@@ -85,27 +86,25 @@ const UserBetReceipts: React.FC<UserBetReceiptsProps> = ({
                       </div>
                       
                       <div className="flex items-center gap-1 mb-2">
-                        <User className="h-4 w-4 text-gray-400" />
+                        <User className="h-4 w-4" style={{ color: '#95deff' }} />
                         <span className="text-white">{receipt.userName}</span>
                       </div>
                       
                       <div className="text-sm mb-1">
-                        <span className="text-gray-400">Game #{receipt.gameNumber}:</span>{' '}
+                        <span style={{ color: '#95deff' }}>Game #{receipt.gameNumber}:</span>{' '}
                         <span className="text-white">
                           {receipt.teamSide === 'A' ? teamAName : teamBName} vs {receipt.teamSide === 'A' ? teamBName : teamAName}
                         </span>
                       </div>
                       
                       <div className="text-sm mb-3">
-                        <span className="text-gray-400">Winner:</span>{' '}
-                        <span className={`${
-                          receipt.winningTeam === 'A' ? 'text-[#00FFFF]' : 'text-[#00FF00]'
-                        }`}>
+                        <span style={{ color: '#95deff' }}>Winner:</span>{' '}
+                        <span style={{ color: receipt.winningTeam === 'A' ? '#95deff' : '#fa1593' }}>
                           {receipt.winningTeam === 'A' ? teamAName : teamBName}
                         </span>
                       </div>
                       
-                      <div className="flex justify-between text-xs text-gray-400">
+                      <div className="flex justify-between text-xs" style={{ color: '#95deff' }}>
                         <div className="flex items-center">
                           <Trophy className="h-3 w-3 mr-1" />
                           {receipt.won ? 'Win' : 'Loss'} #{receipt.id.substring(0, 8)}...

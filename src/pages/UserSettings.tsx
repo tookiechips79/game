@@ -24,6 +24,7 @@ import UserTransactionHistory from "@/components/UserTransactionHistory";
 import UserMembershipStatus from "@/components/UserMembershipStatus";
 import AdminUserSelector from "@/components/AdminUserSelector";
 import UserWalletCashout from "@/components/UserWalletCashout";
+import HardLedgerBetHistory from "@/components/HardLedgerBetHistory";
 
 const UserSettings = () => {
   const { currentUser, setCurrentUser } = useUser();
@@ -45,18 +46,19 @@ const UserSettings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen" style={{ backgroundColor: '#052240' }}>
       {/* Header */}
-      <div className="bg-gray-800 border-b border-gray-700 py-4">
+      <div className="border-b py-4" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
         <div className="container mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link to="/">
               <Button 
                 variant="ghost" 
                 size="sm"
-                className="text-white hover:text-[#a3e635] hover:bg-[#a3e635]/10"
+                className="text-white hover:text-[#fa1593]"
+                style={{ color: '#fa1593' }}
               >
-                <Home className="h-4 w-4 mr-2" />
+                <Home className="h-4 w-4 mr-2" style={{ color: '#fa1593' }} />
                 Home
               </Button>
             </Link>
@@ -65,17 +67,18 @@ const UserSettings = () => {
               size="icon" 
               onClick={() => navigate("/betting-queue")}
               className="text-white"
+              style={{ color: '#95deff' }}
             >
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className="h-5 w-5" style={{ color: '#95deff' }} />
             </Button>
-            <h1 className="text-xl font-bold">Account Settings</h1>
+            <h1 className="text-xl font-bold" style={{ color: '#fa1593' }}>Account Settings</h1>
           </div>
           
           <div className="flex items-center gap-2">
-            <span className="text-gray-400">
+            <span className="text-gray-400" style={{ color: '#95deff' }}>
               {currentUser.name}
             </span>
-            <div className="bg-[#a3e635]/20 p-2 rounded-xl text-[#a3e635] font-bold">
+            <div className="p-2 rounded-xl font-bold" style={{ backgroundColor: '#95deff', color: '#052240' }}>
               {currentUser.credits} COINS
             </div>
           </div>
@@ -89,55 +92,55 @@ const UserSettings = () => {
         )}
         
         <Tabs defaultValue="account" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-8">
-            <TabsTrigger value="account" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
+          <TabsList className="grid w-full grid-cols-5 mb-8" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
+            <TabsTrigger value="account" className="flex items-center gap-2 text-white">
+              <User className="h-4 w-4" style={{ color: '#95deff' }} />
               <span className="hidden sm:inline">Account</span>
             </TabsTrigger>
-            <TabsTrigger value="wallet" className="flex items-center gap-2">
-              <Wallet className="h-4 w-4" />
+            <TabsTrigger value="wallet" className="flex items-center gap-2 text-white">
+              <Wallet className="h-4 w-4" style={{ color: '#95deff' }} />
               <span className="hidden sm:inline">Wallet</span>
             </TabsTrigger>
-            <TabsTrigger value="bets" className="flex items-center gap-2">
-              <Receipt className="h-4 w-4" />
+            <TabsTrigger value="bets" className="flex items-center gap-2 text-white">
+              <Receipt className="h-4 w-4" style={{ color: '#95deff' }} />
               <span className="hidden sm:inline">Bet History</span>
             </TabsTrigger>
-            <TabsTrigger value="transactions" className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4" />
+            <TabsTrigger value="transactions" className="flex items-center gap-2 text-white">
+              <CreditCard className="h-4 w-4" style={{ color: '#95deff' }} />
               <span className="hidden sm:inline">Transactions</span>
             </TabsTrigger>
-            <TabsTrigger value="membership" className="flex items-center gap-2">
-              <BadgeAlert className="h-4 w-4" />
+            <TabsTrigger value="membership" className="flex items-center gap-2 text-white">
+              <BadgeAlert className="h-4 w-4" style={{ color: '#95deff' }} />
               <span className="hidden sm:inline">Membership</span>
             </TabsTrigger>
           </TabsList>
           
           {/* Account Tab */}
           <TabsContent value="account">
-            <Card className="bg-gray-800/70 border-gray-700">
+            <Card className="border-2" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardHeader>
-                <CardTitle className="text-2xl">Account Information</CardTitle>
+                <CardTitle className="text-2xl" style={{ color: '#fa1593' }}>Account Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h3 className="text-gray-400 mb-1">Username</h3>
-                    <p className="text-xl font-medium">{currentUser.name}</p>
+                    <h3 className="mb-1" style={{ color: '#95deff' }}>Username</h3>
+                    <p className="text-xl font-medium text-white">{currentUser.name}</p>
                   </div>
                   <div>
-                    <h3 className="text-gray-400 mb-1">Current Balance</h3>
-                    <p className="text-xl font-medium text-[#a3e635]">{currentUser.credits} COINS</p>
+                    <h3 className="mb-1" style={{ color: '#95deff' }}>Current Balance</h3>
+                    <p className="text-xl font-medium" style={{ color: '#fa1593' }}>{currentUser.credits} COINS</p>
                   </div>
                   <div>
-                    <h3 className="text-gray-400 mb-1">Win/Loss Record</h3>
-                    <p className="text-xl font-medium">
-                      <span className="text-green-400">{currentUser.wins} Wins</span>{" "}
-                      / <span className="text-red-400">{currentUser.losses} Losses</span>
+                    <h3 className="mb-1" style={{ color: '#95deff' }}>Win/Loss Record</h3>
+                    <p className="text-xl font-medium text-white">
+                      <span style={{ color: '#95deff' }}>{currentUser.wins} Wins</span>{" "}
+                      / <span style={{ color: '#fa1593' }}>{currentUser.losses} Losses</span>
                     </p>
                   </div>
                   <div>
-                    <h3 className="text-gray-400 mb-1">Win Rate</h3>
-                    <p className="text-xl font-medium">
+                    <h3 className="mb-1" style={{ color: '#95deff' }}>Win Rate</h3>
+                    <p className="text-xl font-medium text-white">
                       {currentUser.wins + currentUser.losses > 0 
                         ? Math.round((currentUser.wins / (currentUser.wins + currentUser.losses)) * 100) 
                         : 0}%
@@ -145,9 +148,9 @@ const UserSettings = () => {
                   </div>
                 </div>
                 
-                <div className="pt-4 border-t border-gray-700">
-                  <Button onClick={handleLogout} variant="destructive" className="w-full md:w-auto">
-                    <LogOut className="h-4 w-4 mr-2" />
+                <div className="pt-4 border-t" style={{ borderColor: '#750037' }}>
+                  <Button onClick={handleLogout} variant="destructive" className="w-full md:w-auto" style={{ backgroundColor: '#fa1593' }}>
+                    <LogOut className="h-4 w-4 mr-2" style={{ color: 'white' }} />
                     Logout
                   </Button>
                 </div>
@@ -157,10 +160,10 @@ const UserSettings = () => {
           
           {/* Wallet Tab */}
           <TabsContent value="wallet">
-            <Card className="bg-gray-800/70 border-gray-700">
+            <Card className="border-2" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardHeader>
-                <CardTitle className="text-2xl flex items-center gap-2">
-                  <Wallet className="h-5 w-5 text-[#F97316]" />
+                <CardTitle className="text-2xl flex items-center gap-2" style={{ color: '#fa1593' }}>
+                  <Wallet className="h-5 w-5" style={{ color: '#fa1593' }} />
                   Wallet & Cashout
                 </CardTitle>
               </CardHeader>
@@ -172,17 +175,16 @@ const UserSettings = () => {
           
           {/* Bet History Tab */}
           <TabsContent value="bets">
-            <Card className="bg-gray-800/70 border-gray-700">
+            <Card className="border-2" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardHeader>
-                <CardTitle className="text-2xl flex items-center gap-2">
-                  <History className="h-5 w-5" />
+                <CardTitle className="text-2xl flex items-center gap-2" style={{ color: '#fa1593' }}>
+                  <History className="h-5 w-5" style={{ color: '#fa1593' }} />
                   {isAdmin ? "All Users Bet History" : "Bet History"}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <UserTransactionHistory 
+                <HardLedgerBetHistory 
                   userId={currentUser.id} 
-                  transactionType="bets"
                   isAdmin={isAdmin}
                 />
               </CardContent>
@@ -191,10 +193,10 @@ const UserSettings = () => {
           
           {/* Transactions Tab */}
           <TabsContent value="transactions">
-            <Card className="bg-gray-800/70 border-gray-700">
+            <Card className="border-2" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardHeader>
-                <CardTitle className="text-2xl flex items-center gap-2">
-                  <CreditCard className="h-5 w-5" />
+                <CardTitle className="text-2xl flex items-center gap-2" style={{ color: '#fa1593' }}>
+                  <CreditCard className="h-5 w-5" style={{ color: '#fa1593' }} />
                   {isAdmin ? "All Users Transaction History" : "Transaction History"}
                 </CardTitle>
               </CardHeader>
@@ -210,10 +212,10 @@ const UserSettings = () => {
           
           {/* Membership Tab */}
           <TabsContent value="membership">
-            <Card className="bg-gray-800/70 border-gray-700">
+            <Card className="border-2" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardHeader>
-                <CardTitle className="text-2xl flex items-center gap-2">
-                  <BadgeAlert className="h-5 w-5" />
+                <CardTitle className="text-2xl flex items-center gap-2" style={{ color: '#fa1593' }}>
+                  <BadgeAlert className="h-5 w-5" style={{ color: '#fa1593' }} />
                   Membership Status
                 </CardTitle>
               </CardHeader>

@@ -152,7 +152,7 @@ const AboutPage: React.FC = () => {
                 <div>
                   <h3 className="text-xl font-semibold text-white mb-2">Real-Time Updates</h3>
                   <p className="text-gray-300">
-                    Get instant updates on match progress, scores, and betting cues. 
+                    Get instant updates on match progress, scores, and betting queues. 
                     Stay connected to the action with live synchronization across all devices.
                   </p>
                 </div>

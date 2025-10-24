@@ -1,16 +1,12 @@
 
 import React, { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Wallet, Coins, Trophy, UserRound, ChevronDown, ChevronUp, EyeOff, Settings } from "lucide-react";
-import { User } from "@/types/user";
-import { 
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger 
-} from "@/components/ui/tooltip";
+import { Wallet, Coins, Trophy, Settings, Receipt, CircleDollarSign, ChevronDown, ChevronUp, ReceiptText } from "lucide-react";
+import { User, UserBetReceipt, Bet } from "@/types/user";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 
 interface UserWidgetProps {
   user: User;
@@ -18,6 +14,10 @@ interface UserWidgetProps {
   bookedAmount?: number;
   isActive?: boolean;
   hideCredits?: boolean;
+  betReceipts?: UserBetReceipt[];
+  activeBets?: { teamA: Bet[], teamB: Bet[] };
+  teamAName?: string;
+  teamBName?: string;
 }
 
 const UserWidget: React.FC<UserWidgetProps> = ({ 
@@ -25,189 +25,252 @@ const UserWidget: React.FC<UserWidgetProps> = ({
   activeBetAmount,
   bookedAmount = 0,
   isActive = false,
-  hideCredits = false
+  hideCredits = false,
+  betReceipts = [],
+  activeBets = { teamA: [], teamB: [] },
+  teamAName = "Player A",
+  teamBName = "Player B"
 }) => {
-  const [expanded, setExpanded] = useState<boolean>(true);
-  const [isHidden, setIsHidden] = useState<boolean>(false);
+  const [receiptsExpanded, setReceiptsExpanded] = useState<boolean>(false);
 
   const availableCredits = user.credits;
   const totalCredits = availableCredits + bookedAmount + (activeBetAmount - bookedAmount);
-  const percentage = totalCredits > 0 ? Math.round((bookedAmount / totalCredits) * 100) : 0;
   
-  const lastActivity = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  // Calculate bet receipts stats
+  const totalBets = betReceipts.length;
+  const wins = betReceipts.filter(receipt => receipt.won).length;
+  const losses = betReceipts.filter(receipt => !receipt.won).length;
+  const winRate = totalBets > 0 ? Math.round((wins / totalBets) * 100) : 0;
   
-  if (isHidden) {
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        className="w-full bg-[#a3e635]/50 border-[#a3e635]/50 hover:bg-[#a3e635]/40"
-        onClick={() => setIsHidden(false)}
-      >
-        <div className="relative">
-          <Wallet className="h-4 w-4 mr-2" />
-          <span className="absolute -top-2 -right-2 text-[0.65rem] font-bold bg-black text-[#a3e635] rounded-full px-1">
-            {totalCredits}
-          </span>
-        </div>
-        Show Wallet
-      </Button>
-    );
-  }
+  // Count active bets
+  const bookedBetsA = activeBets.teamA.filter(bet => bet.booked);
+  const bookedBetsB = activeBets.teamB.filter(bet => bet.booked);
+  const totalActiveBets = bookedBetsA.length + bookedBetsB.length;
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Card className="bg-gray-800/90 border-2 border-[#a3e635]/50 w-52 flex flex-col items-center justify-between cursor-pointer hover:bg-gray-800/95 transition-colors rounded-xl overflow-hidden shadow-lg">
-            <CardContent className="p-0 flex flex-col items-center justify-between w-full h-full relative">
-              <div className="absolute inset-0 flex flex-col justify-end">
-                <div
-                  className="bg-[#a3e635]/20 w-full transition-all duration-300 ease-in-out"
-                  style={{ height: `${percentage}%` }}
-                ></div>
-              </div>
-              
-              <div className="z-10 flex flex-col items-center justify-between w-full h-full">
-                <div 
-                  className="w-full bg-gradient-to-r from-[#a3e635]/80 to-[#a3e635] py-2 text-center flex items-center justify-between px-3 cursor-pointer"
-                  onClick={() => setExpanded(!expanded)}
-                >
-                  <div className="flex items-center">
-                    <div className="relative mr-1">
-                      <Wallet className="h-4 w-4 text-black" />
-                      <span className="absolute -top-2 -right-2 text-[0.65rem] font-bold bg-black text-[#a3e635] rounded-full px-1">
+    <div className="w-full">
+      {/* Main Horizontal Bar */}
+      <div className="flex flex-col md:flex-row md:items-center md:space-x-6 space-y-3 md:space-y-0">
+        {/* User Info */}
+        <div className="flex items-center space-x-3">
+          <div className="relative bg-gradient-to-br from-pink-600 via-rose-500 to-fuchsia-500 p-2 rounded-lg shadow-lg ring-2 ring-pink-500/50">
+            <Wallet className="h-5 w-5 text-white" />
+            <span className="absolute -top-1 -right-1 text-xs font-bold bg-white text-pink-600 rounded-full px-1.5 py-0.5 shadow-md">
                         {totalCredits}
                       </span>
                     </div>
-                    <span className="text-sm font-bold text-black">WALLET</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 text-black hover:text-black hover:bg-[#a3e635]/50"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsHidden(true);
-                      }}
-                    >
-                      <EyeOff className="h-4 w-4" />
-                    </Button>
-                    {expanded ? (
-                      <ChevronUp className="h-5 w-5 text-black" />
-                    ) : (
-                      <ChevronDown className="h-5 w-5 text-black" />
-                    )}
+          <div>
+            <div className="text-sm font-bold text-white">{user.name}</div>
+            <div className="text-xs text-pink-400 font-medium">Wallet</div>
                   </div>
                 </div>
                 
-                {expanded && (
-                  <>
-                    <div className="bg-gray-700/70 rounded-full p-1.5 w-16 h-16 flex items-center justify-center mt-2">
-                      <UserRound className="h-10 w-10 text-gray-300" />
+        {/* Stats */}
+        <div className="flex flex-wrap items-center gap-3 md:gap-6">
+          {/* Available */}
+          <div className="flex items-center space-x-2">
+            <div className="p-1.5 bg-pink-500/20 rounded-lg ring-1 ring-pink-500/30">
+              <Wallet className="h-4 w-4 text-pink-400" />
+            </div>
+            <div>
+              <div className="text-lg font-bold text-pink-300">{availableCredits}</div>
+              <div className="text-xs text-gray-400">Available</div>
+            </div>
                     </div>
                     
-                    <div className="text-md font-bold text-white truncate max-w-full">
-                      {user.name.substring(0, 12)}{user.name.length > 12 ? ".." : ""}
+          {/* Divider */}
+          <div className="hidden md:block h-8 w-px bg-pink-500/30"></div>
+
+          {/* Booked */}
+          <div className="flex items-center space-x-2">
+            <div className="p-1.5 bg-pink-500/20 rounded-lg ring-1 ring-pink-500/30">
+              <Coins className="h-4 w-4 text-pink-400" />
+            </div>
+            <div>
+              <div className="text-lg font-bold text-pink-300">{bookedAmount}</div>
+              <div className="text-xs text-gray-400">Booked</div>
+            </div>
                     </div>
                     
-                    <div className="grid grid-cols-3 gap-x-2 w-full px-3 my-1">
-                      <div className="flex flex-col items-center bg-gray-700/30 p-1 rounded">
-                        <Wallet className="h-4 w-4 text-[#a3e635]" />
-                        <span className="text-[#a3e635] text-xs font-bold">{availableCredits}</span>
-                        <span className="text-[#a3e635] text-[0.6rem]">Available</span>
+          {/* Divider */}
+          <div className="hidden md:block h-8 w-px bg-pink-500/30"></div>
+
+          {/* Total */}
+          <div className="flex items-center space-x-2">
+            <div className="p-1.5 bg-pink-500/20 rounded-lg ring-1 ring-pink-500/30">
+              <Trophy className="h-4 w-4 text-pink-400" />
+            </div>
+            <div>
+              <div className="text-lg font-bold text-pink-300">{totalCredits}</div>
+              <div className="text-xs text-gray-400">Total</div>
+            </div>
                       </div>
                       
-                      <div className="flex flex-col items-center bg-gray-700/30 p-1 rounded">
-                        <Coins className="h-4 w-4 text-[#a3e635]" />
-                        <span className="text-[#a3e635] text-xs font-bold">{bookedAmount}</span>
-                        <span className="text-[#a3e635] text-[0.6rem]">Booked</span>
+          {/* Divider */}
+          <div className="hidden md:block h-8 w-px bg-pink-500/30"></div>
+
+          {/* Bet Stats */}
+          {(totalBets > 0 || totalActiveBets > 0) && (
+            <>
+              <div className="flex items-center space-x-2">
+                <div className="p-1.5 bg-pink-500/20 rounded-lg ring-1 ring-pink-500/30">
+                  <Receipt className="h-4 w-4 text-pink-400" />
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-pink-300">{totalBets}</div>
+                  <div className="text-xs text-gray-400">All Bets</div>
+                </div>
                       </div>
                       
-                      <div className="flex flex-col items-center bg-gray-700/30 p-1 rounded">
-                        <Trophy className="h-4 w-4 text-[#a3e635]" />
-                        <span className="text-[#a3e635] text-xs font-bold">{totalCredits}</span>
-                        <span className="text-[#a3e635] text-[0.6rem]">Total</span>
+              <div className="hidden md:block h-8 w-px bg-pink-500/30"></div>
+
+              <div className="flex items-center space-x-2">
+                <div className="p-1.5 bg-pink-500/20 rounded-lg ring-1 ring-pink-500/30">
+                  <CircleDollarSign className="h-4 w-4 text-pink-400" />
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-pink-300">{totalActiveBets}</div>
+                  <div className="text-xs text-gray-400">Active</div>
                       </div>
                     </div>
 
-                    <div className="w-full px-2 flex space-x-2 mb-2">
-                      <Link to="/subscription" className="flex-1">
-                        <Button variant="lime" size="sm" className="w-full text-xs">
+              <div className="hidden md:block h-8 w-px bg-pink-500/30"></div>
+
+              <div className="flex items-center space-x-2">
+                <div>
+                  <div className="flex items-center space-x-1">
+                    <span className="text-lg font-bold text-green-400">{wins}</span>
+                    <span className="text-gray-600">•</span>
+                    <span className="text-lg font-bold text-red-400">{losses}</span>
+                  </div>
+                  <div className="text-xs text-gray-400">{winRate}% Win Rate</div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center space-x-2 md:ml-auto">
+          <Link to="/subscription">
+            <Button variant="lime" size="sm" className="text-xs font-semibold">
                           Get Coins
                         </Button>
                       </Link>
-                      <Link to="/user-settings" className="flex-shrink-0">
-                        <Button variant="outline" size="sm" className="bg-gray-700/50 border-gray-600 hover:bg-gray-700">
-                          <Settings className="h-4 w-4 text-[#a3e635]" />
-                        </Button>
-                      </Link>
+        </div>
                     </div>
-                  </>
-                )}
-                
-                <div className="w-full px-2 py-2 bg-[#a3e635]/50 text-center">
-                  {!hideCredits ? (
-                    <div className="flex justify-between items-center px-2">
-                      <div className="flex flex-col items-start">
-                        <span className="text-xs font-medium text-black">Available:</span>
-                        <span className="text-lg font-bold text-black">{availableCredits}</span>
+
+      {/* Expandable Receipts Section */}
+      {(betReceipts.length > 0 || totalActiveBets > 0) && (
+        <div className="mt-3 pt-3 border-t border-pink-500/30">
+          {/* Header */}
+          <div 
+            className="cursor-pointer flex items-center justify-between hover:bg-pink-500/10 rounded-lg p-2 transition-all"
+            onClick={() => setReceiptsExpanded(!receiptsExpanded)}
+          >
+            <div className="flex items-center space-x-2">
+              <div className="p-1.5 bg-pink-500/20 rounded-lg ring-1 ring-pink-500/30">
+                <Receipt className="h-4 w-4 text-pink-400" />
                       </div>
-                      <div className="flex flex-col items-end">
-                        <span className="text-xs font-medium text-black">Total:</span>
-                        <span className="text-lg font-bold text-black">{totalCredits}</span>
+              <h3 className="font-bold text-white text-sm">Bet Receipts</h3>
                       </div>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3 text-xs">
+                <div className="flex items-center space-x-1">
+                  <span className="text-gray-400">{totalBets}</span>
+                  <span className="text-gray-500">Bets</span>
                     </div>
-                  ) : (
-                    <span className="text-xl font-bold text-black">*** COINS</span>
-                  )}
+                <div className="flex items-center space-x-1">
+                  <span className="text-green-400 font-semibold">{wins}W</span>
+                  <span className="text-gray-600">•</span>
+                  <span className="text-red-400 font-semibold">{losses}L</span>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </TooltipTrigger>
-        <TooltipContent side="right" className="bg-gray-800 text-white border-gray-700">
-          <div className="p-2">
-            <div className="font-bold">{user.name}</div>
-            {!hideCredits ? (
-              <>
-                <div className="text-sm flex items-center">
-                  <Wallet className="h-3.5 w-3.5 text-[#a3e635] mr-1" />
-                  <span>Available: <span className="text-[#a3e635] font-bold">{availableCredits}</span> COINS</span>
-                </div>
-                <div className="text-sm flex items-center">
-                  <Coins className="h-3.5 w-3.5 text-[#a3e635] mr-1" />
-                  <span>Matched Bets: <span className="text-[#a3e635] font-bold">{bookedAmount}</span> COINS</span>
-                </div>
-                {activeBetAmount > bookedAmount && (
-                  <div className="text-sm flex items-center">
-                    <Coins className="h-3.5 w-3.5 text-gray-400 mr-1" />
-                    <span>Unmatched Bets: <span className="text-gray-400 font-bold">{activeBetAmount - bookedAmount}</span> COINS</span>
-                  </div>
-                )}
-                <div className="text-sm flex items-center">
-                  <Trophy className="h-3.5 w-3.5 text-[#a3e635] mr-1" />
-                  <span>Total Worth: <span className="text-[#a3e635] font-bold">{totalCredits}</span> COINS</span>
-                </div>
-              </>
-            ) : (
-              <div className="text-sm">Credit information hidden</div>
-            )}
-            <div className="text-xs text-gray-400 mt-1">Last active: {lastActivity}</div>
-            <div className="mt-2 pt-2 border-t border-gray-700 flex justify-between">
-              <Link to="/subscription" className="text-xs text-[#a3e635] hover:underline">
-                Get more coins
-              </Link>
-              <Link to="/user-settings" className="text-xs text-[#a3e635] hover:underline flex items-center">
-                <Settings className="h-3 w-3 mr-1" />
-                Settings
-              </Link>
+              {receiptsExpanded ? (
+                <ChevronUp className="h-4 w-4 text-pink-400" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-pink-400" />
+              )}
             </div>
           </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+          
+          {/* Expanded content */}
+          {receiptsExpanded && (
+            <div className="mt-3">
+              {/* Recent Bet Receipts */}
+              {betReceipts.length > 0 ? (
+                <div>
+                  <h4 className="font-semibold text-pink-300 mb-2 flex items-center text-xs">
+                    <ReceiptText className="h-3 w-3 mr-1" />
+                    Recent Bet Receipts
+                  </h4>
+                  <ScrollArea className="h-48 pr-2">
+                    <div className="space-y-2">
+                      {betReceipts.slice(0, 10).map(receipt => (
+                        <div 
+                          key={receipt.id} 
+                          className={`p-2 ${
+                            receipt.teamSide === 'A' 
+                              ? 'bg-[#1EAEDB]/10 border border-[#1EAEDB]/30' 
+                              : 'bg-green-600/10 border border-green-600/30'
+                          } rounded-lg hover:bg-opacity-20 transition-all`}
+                        >
+                          <div className="flex justify-between items-center mb-1">
+                            <Badge 
+                              variant="outline" 
+                              className={`${
+                                receipt.teamSide === 'A' 
+                                  ? 'bg-[#1EAEDB]/20 text-[#1EAEDB] border-[#1EAEDB]/50' 
+                                  : 'bg-green-600/20 text-green-500 border-green-600/50'
+                              } text-xs`}
+                            >
+                              {receipt.teamSide === 'A' ? teamAName : teamBName}
+                            </Badge>
+                            <Badge 
+                              className={`${
+                                receipt.won 
+                                  ? 'bg-green-700/80 text-green-100' 
+                                  : 'bg-red-700/80 text-red-100'
+                              } text-xs`}
+                            >
+                              {receipt.won ? '✓ Won' : '✗ Lost'} {receipt.amount}
+                            </Badge>
+                          </div>
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-400">Game #{receipt.gameNumber}</span>
+                            <Badge variant="outline" className="bg-gray-800/50 text-gray-400 border-gray-700 text-xs">
+                              {format(new Date(receipt.timestamp), "MM/dd • h:mm a")}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </div>
+              ) : (
+                <div className="p-3 text-center text-gray-400">
+                  <p className="text-sm">No bet receipts</p>
+                  <p className="mt-1 text-xs text-gray-500">Your bet history will appear here</p>
+                </div>
+              )}
+              
+              {/* Active Bets Section */}
+              {totalActiveBets > 0 && (
+                <div className="mt-3 pt-3 border-t border-pink-500/30">
+                  <h4 className="font-semibold text-pink-300 mb-2 flex items-center text-xs">
+                    <CircleDollarSign className="h-3 w-3 mr-1" />
+                    Active Matched Bets
+                  </h4>
+                  <div className="text-sm text-center text-pink-300 p-2 bg-pink-500/10 rounded-lg border border-pink-500/30">
+                    {totalActiveBets} active bet{totalActiveBets !== 1 ? 's' : ''} in progress
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+          </div>
   );
 };
 

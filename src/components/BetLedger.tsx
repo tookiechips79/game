@@ -40,24 +40,24 @@ const BetLedger: React.FC<BetLedgerProps> = ({
   
   if (betHistory.length === 0) {
     return (
-      <Card className="bg-gray-800/70 border-gray-700 mb-8 rounded-2xl">
-        <CardHeader className="pb-2 bg-gradient-to-r from-[#F97316]/90 to-[#F97316] cursor-pointer" onClick={() => setIsCollapsed(!isCollapsed)}>
-          <CardTitle className="text-2xl text-center text-black flex items-center justify-between">
+      <Card className="mb-8 rounded-2xl" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
+        <CardHeader className="pb-2 cursor-pointer" style={{ background: 'linear-gradient(to right, #95deff, #004b6b)' }} onClick={() => setIsCollapsed(!isCollapsed)}>
+          <CardTitle className="text-2xl text-center flex items-center justify-between" style={{ color: 'black', textShadow: '0 0 15px rgba(250, 21, 147, 0.8)' }}>
             <div className="flex items-center">
-              <History className="h-6 w-6 mr-2" />
+              <History className="h-6 w-6 mr-2" style={{ color: 'black', filter: 'drop-shadow(0 0 10px rgba(250, 21, 147, 0.8))' }} />
               Game History
             </div>
             <div>
               {isCollapsed ? (
-                <ChevronDown className="h-6 w-6 text-black" />
+                <ChevronDown className="h-6 w-6 text-white" />
               ) : (
-                <ChevronUp className="h-6 w-6 text-black" />
+                <ChevronUp className="h-6 w-6 text-white" />
               )}
             </div>
           </CardTitle>
         </CardHeader>
         {!isCollapsed && (
-          <CardContent className="text-center text-gray-400 py-8">
+          <CardContent className="text-center py-8" style={{ color: '#95deff' }}>
             <p>No bet history recorded yet. Complete a game to see results here.</p>
           </CardContent>
         )}
@@ -66,21 +66,22 @@ const BetLedger: React.FC<BetLedgerProps> = ({
   }
   
   return (
-    <Card className="bg-gray-800/70 border-gray-700 mb-8 rounded-2xl overflow-hidden">
+    <Card className="mb-8 rounded-2xl overflow-hidden" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
       <CardHeader 
-        className="pb-2 bg-gradient-to-r from-[#F97316]/90 to-[#F97316] cursor-pointer"
+        className="pb-2 cursor-pointer"
+        style={{ background: 'linear-gradient(to right, #95deff, #004b6b)' }}
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
-        <CardTitle className="text-2xl text-center text-black flex items-center justify-between">
+        <CardTitle className="text-2xl text-center flex items-center justify-between" style={{ color: 'black', textShadow: '0 0 15px rgba(250, 21, 147, 0.8)' }}>
           <div className="flex items-center">
-            <History className="h-6 w-6 mr-2" />
+            <History className="h-6 w-6 mr-2" style={{ color: 'black', filter: 'drop-shadow(0 0 10px rgba(250, 21, 147, 0.8))' }} />
             Game History
           </div>
           <div>
             {isCollapsed ? (
-              <ChevronDown className="h-6 w-6 text-black" />
+              <ChevronDown className="h-6 w-6 text-white" />
             ) : (
-              <ChevronUp className="h-6 w-6 text-black" />
+              <ChevronUp className="h-6 w-6 text-white" />
             )}
           </div>
         </CardTitle>
@@ -89,10 +90,10 @@ const BetLedger: React.FC<BetLedgerProps> = ({
       {!isCollapsed && (
         <CardContent className="p-4">
           <Tabs defaultValue="all" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-gray-700 rounded-xl mb-4">
-              <TabsTrigger value="all" className="rounded-lg">All Games</TabsTrigger>
-              <TabsTrigger value="teamA" className="rounded-lg">Wins by {teamAName}</TabsTrigger>
-              <TabsTrigger value="teamB" className="rounded-lg">Wins by {teamBName}</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 rounded-xl mb-4" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
+              <TabsTrigger value="all" className="rounded-lg text-white">All Games</TabsTrigger>
+              <TabsTrigger value="teamA" className="rounded-lg text-white">Wins by {teamAName}</TabsTrigger>
+              <TabsTrigger value="teamB" className="rounded-lg text-white">Wins by {teamBName}</TabsTrigger>
             </TabsList>
             
             <TabsContent value="all" className="mt-0">
@@ -121,13 +122,13 @@ const BetLedger: React.FC<BetLedgerProps> = ({
             className="bg-gray-700/50 rounded-xl border border-gray-600 overflow-hidden transition-all duration-300"
           >
             <div 
-              className={`p-4 cursor-pointer ${record.winningTeam === 'A' ? 'border-l-4 border-[#00FFFF]' : 'border-l-4 border-[#00FF00]'}`}
+              className={`p-4 cursor-pointer ${record.winningTeam === 'A' ? 'border-l-4 border-blue-600' : 'border-l-4 border-purple-600'}`}
               onClick={() => toggleRecordExpansion(record.id)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className={`p-2 rounded-full ${record.winningTeam === 'A' ? 'bg-[#00FFFF]/20' : 'bg-[#00FF00]/20'}`}>
-                    <Trophy className={`h-5 w-5 ${record.winningTeam === 'A' ? 'text-[#00FFFF]' : 'text-[#00FF00]'}`} />
+                  <div className={`p-2 rounded-full ${record.winningTeam === 'A' ? 'bg-blue-600/20' : 'bg-purple-600/20'}`}>
+                    <Trophy className={`h-5 w-5 ${record.winningTeam === 'A' ? 'text-blue-400' : 'text-purple-400'}`} />
                   </div>
                   <div>
                     <div className="font-medium text-gray-200">
@@ -172,11 +173,11 @@ const BetLedger: React.FC<BetLedgerProps> = ({
                       <div className="text-sm text-gray-400 mb-1">Ball Count</div>
                       <div className="flex justify-between">
                         <div>
-                          <span className="font-medium text-[#00FFFF] mr-2">{teamAName}:</span>
+                          <span className="font-medium text-blue-400 mr-2">{teamAName}:</span>
                           <span className="text-white">{record.teamABalls}</span>
                         </div>
                         <div>
-                          <span className="font-medium text-[#00FF00] mr-2">{teamBName}:</span>
+                          <span className="font-medium text-purple-400 mr-2">{teamBName}:</span>
                           <span className="text-white">{record.teamBBalls}</span>
                         </div>
                       </div>
@@ -184,8 +185,8 @@ const BetLedger: React.FC<BetLedgerProps> = ({
                     <div className="bg-gray-800/60 rounded-lg p-3 border border-gray-700">
                       <div className="text-sm text-gray-400 mb-1">Breaker</div>
                       <div className="flex items-center">
-                        <Circle className={`h-3 w-3 mr-2 ${record.breakingTeam === 'A' ? 'text-[#00FFFF]' : 'text-[#00FF00]'}`} fill="currentColor" />
-                        <span className={`font-medium ${record.breakingTeam === 'A' ? 'text-[#00FFFF]' : 'text-[#00FF00]'}`}>
+                        <Circle className={`h-3 w-3 mr-2 ${record.breakingTeam === 'A' ? 'text-blue-400' : 'text-purple-400'}`} fill="currentColor" />
+                        <span className={`font-medium ${record.breakingTeam === 'A' ? 'text-blue-400' : 'text-purple-400'}`}>
                           {record.breakingTeam === 'A' ? teamAName : teamBName}
                         </span>
                       </div>
@@ -193,12 +194,12 @@ const BetLedger: React.FC<BetLedgerProps> = ({
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
-                    <div className={`bg-gray-800/50 rounded-lg p-3 ${record.winningTeam === 'A' ? 'border-l-2 border-[#00FFFF]' : ''}`}>
+                    <div className={`bg-gray-800/50 rounded-lg p-3 ${record.winningTeam === 'A' ? 'border-l-2 border-blue-600' : ''}`}>
                       <div className="flex items-center mb-2">
-                        <div className="p-1 rounded-md bg-[#00FFFF]/20 mr-2">
-                          <Users className="h-4 w-4 text-[#00FFFF]" />
+                        <div className="p-1 rounded-md bg-blue-600/20 mr-2">
+                          <Users className="h-4 w-4 text-blue-400" />
                         </div>
-                        <span className="font-medium text-[#00FFFF]">{teamAName} Bettors</span>
+                        <span className="font-medium text-blue-400">{teamAName} Bettors</span>
                       </div>
                       
                       {record.bets.teamA.length > 0 ? (
@@ -228,12 +229,12 @@ const BetLedger: React.FC<BetLedgerProps> = ({
                       )}
                     </div>
                     
-                    <div className={`bg-gray-800/50 rounded-lg p-3 ${record.winningTeam === 'B' ? 'border-l-2 border-[#00FF00]' : ''}`}>
+                    <div className={`bg-gray-800/50 rounded-lg p-3 ${record.winningTeam === 'B' ? 'border-l-2 border-purple-600' : ''}`}>
                       <div className="flex items-center mb-2">
-                        <div className="p-1 rounded-md bg-[#00FF00]/20 mr-2">
-                          <Users className="h-4 w-4 text-[#00FF00]" />
+                        <div className="p-1 rounded-md bg-purple-600/20 mr-2">
+                          <Users className="h-4 w-4 text-purple-400" />
                         </div>
-                        <span className="font-medium text-[#00FF00]">{teamBName} Bettors</span>
+                        <span className="font-medium text-purple-400">{teamBName} Bettors</span>
                       </div>
                       
                       {record.bets.teamB.length > 0 ? (

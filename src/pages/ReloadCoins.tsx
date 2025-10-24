@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Coins, CreditCard, Zap, DollarSign, User, Wallet, Home } from "lucide-react";
 import { toast } from "sonner";
+import UserDropdown from "@/components/UserDropdown";
 
 const ReloadCoinsPage = () => {
-  const { currentUser, addCredits, users } = useUser();
+  const { currentUser, addCredits, users, isUsersLoaded } = useUser();
   const navigate = useNavigate();
   
   const [reloadAmount, setReloadAmount] = useState<number>(20);
@@ -59,7 +60,7 @@ const ReloadCoinsPage = () => {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#0a192f] to-[#1a2332] border-b border-[#F97316]/30">
+      <div className="bg-gradient-to-r from-[#0a192f] to-[#1a2332] border-b border-red-500/30">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -67,7 +68,7 @@ const ReloadCoinsPage = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-[#F97316] hover:text-[#FBBF24] hover:bg-[#F97316]/10"
+                  className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
                 >
                   <Home className="h-4 w-4 mr-2" />
                   Home
@@ -77,24 +78,24 @@ const ReloadCoinsPage = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate("/betting-queue")}
-                className="text-[#F97316] hover:text-[#FBBF24] hover:bg-[#F97316]/10"
+                className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Betting
               </Button>
-              <div className="h-6 w-px bg-[#F97316]/30" />
+              <div className="h-6 w-px bg-red-500/30" />
               <div className="flex items-center space-x-2">
-                <Coins className="h-6 w-6 text-[#F97316]" />
+                <Coins className="h-6 w-6 text-red-500" />
                 <h1 className="text-2xl font-bold text-white">Reload Coins</h1>
               </div>
             </div>
             
             {currentUser && (
-              <div className="flex items-center space-x-3 bg-[#F97316]/20 px-4 py-2 rounded-full">
-                <User className="h-4 w-4 text-[#F97316]" />
-                <span className="text-[#F97316] font-medium">{currentUser.name}</span>
+              <div className="flex items-center space-x-3 bg-red-500/20 px-4 py-2 rounded-full">
+                <User className="h-4 w-4 text-red-500" />
+                <span className="text-red-500 font-medium">{currentUser.name}</span>
                 <div className="flex items-center space-x-1">
-                  <Wallet className="h-4 w-4 text-[#F97316]" />
+                  <Wallet className="h-4 w-4 text-red-500" />
                   <span className="text-white font-bold">{currentUser.credits}</span>
                 </div>
               </div>
@@ -106,9 +107,9 @@ const ReloadCoinsPage = () => {
       {/* Main Content */}
       <div className="flex-1 container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
-          <Card className="glass-card border-[#F97316]/50 bg-[#0a192f]/70 shadow-lg rounded-2xl">
+          <Card className="glass-card border-red-500/50 bg-[#0a192f]/70 shadow-lg rounded-2xl">
             <CardHeader className="text-center pb-6">
-              <CardTitle className="text-3xl font-bold text-[#F97316] flex items-center justify-center space-x-3">
+              <CardTitle className="text-3xl font-bold text-red-500 flex items-center justify-center space-x-3">
                 <Coins className="h-8 w-8" />
                 <span>Reload Coins</span>
               </CardTitle>
@@ -121,22 +122,17 @@ const ReloadCoinsPage = () => {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* User Selection */}
                 <div className="space-y-2">
-                  <Label htmlFor="user" className="text-[#F97316] font-medium">
+                  <Label htmlFor="user" className="text-red-500 font-medium">
                     Select User
                   </Label>
-                  <select
-                    id="user"
-                    value={selectedUserId}
-                    onChange={(e) => setSelectedUserId(e.target.value)}
-                    className="w-full p-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white focus:border-[#F97316] focus:ring-2 focus:ring-[#F97316]/20 transition-all"
-                  >
-                    <option value="">Choose a user...</option>
-                    {users.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.name} ({user.credits} coins)
-                      </option>
-                    ))}
-                  </select>
+                  <UserDropdown
+                    selectedUserId={selectedUserId}
+                    onUserChange={setSelectedUserId}
+                    placeholder="Choose a user..."
+                    showCredits={true}
+                    showMembership={false}
+                    className="w-full p-3 bg-gray-800/50 border border-gray-600 rounded-lg text-white focus:border-red-500 focus:ring-2 focus:ring-[#F97316]/20 transition-all"
+                  />
                   {selectedUser && (
                     <div className="flex items-center space-x-2 text-sm text-gray-400">
                       <User className="h-4 w-4" />
@@ -147,7 +143,7 @@ const ReloadCoinsPage = () => {
 
                 {/* Amount Selection */}
                 <div className="space-y-4">
-                  <Label className="text-[#F97316] font-medium">
+                  <Label className="text-red-500 font-medium">
                     Reload Amount
                   </Label>
                   
@@ -161,8 +157,8 @@ const ReloadCoinsPage = () => {
                         onClick={() => handleReloadAmountChange(amount)}
                         className={`h-12 font-bold transition-all ${
                           reloadAmount === amount
-                            ? "bg-[#F97316] text-black hover:bg-[#FBBF24]"
-                            : "border-[#F97316]/50 text-[#F97316] hover:bg-[#F97316]/10"
+                            ? "bg-red-500 text-black hover:bg-red-400"
+                            : "border-red-500/50 text-red-500 hover:bg-red-500/10"
                         }`}
                       >
                         <Coins className="h-4 w-4 mr-2" />
@@ -184,7 +180,7 @@ const ReloadCoinsPage = () => {
                         min="1"
                         value={reloadAmount}
                         onChange={(e) => setReloadAmount(Number(e.target.value))}
-                        className="pl-10 bg-gray-800/50 border-gray-600 text-white focus:border-[#F97316] focus:ring-2 focus:ring-[#F97316]/20"
+                        className="pl-10 bg-gray-800/50 border-gray-600 text-white focus:border-red-500 focus:ring-2 focus:ring-[#F97316]/20"
                         placeholder="Enter amount"
                       />
                     </div>
@@ -193,10 +189,10 @@ const ReloadCoinsPage = () => {
 
                 {/* Reload Summary */}
                 {selectedUser && reloadAmount > 0 && (
-                  <div className="bg-[#F97316]/10 border border-[#F97316]/30 rounded-lg p-4">
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-[#F97316] font-medium">Reload Summary</p>
+                        <p className="text-red-500 font-medium">Reload Summary</p>
                         <p className="text-gray-300 text-sm">
                           Adding {reloadAmount} coins to {selectedUser.name}
                         </p>
@@ -205,7 +201,7 @@ const ReloadCoinsPage = () => {
                         <p className="text-white font-bold text-lg">
                           {selectedUser.credits} → {selectedUser.credits + reloadAmount}
                         </p>
-                        <p className="text-[#F97316] text-sm">coins</p>
+                        <p className="text-red-500 text-sm">coins</p>
                       </div>
                     </div>
                   </div>
@@ -215,7 +211,7 @@ const ReloadCoinsPage = () => {
                 <Button
                   type="submit"
                   disabled={!selectedUserId || !reloadAmount || isProcessing}
-                  className="w-full h-14 bg-[#F97316] hover:bg-[#FBBF24] text-black font-bold text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full h-14 bg-red-500 hover:bg-red-400 text-black font-bold text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isProcessing ? (
                     <div className="flex items-center space-x-2">

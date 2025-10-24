@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import BreakIndicator from "@/components/BreakIndicator";
 import TeamScoreSection from "@/components/TeamScoreSection";
@@ -35,13 +36,15 @@ interface ScoreBoardProps {
   onTeamBBallsChange?: (balls: number) => void;
   onTeamAGamesChange?: (games: number) => void;
   onTeamBGamesChange?: (games: number) => void;
-  onDeleteUnmatchedBets?: () => void;
   // Timer props
   timerSeconds?: number;
   isTimerRunning?: boolean;
   onTimerStart?: () => void;
   onTimerPause?: () => void;
   onTimerReset?: () => void;
+  // Admin panel props
+  onToggleAdmin?: () => void;
+  onToggleAgent?: () => void;
 }
 
 const ScoreBoard = (props: ScoreBoardProps) => {
@@ -78,28 +81,20 @@ const ScoreBoard = (props: ScoreBoardProps) => {
   } = useScoreboardState({
     ...props,
     timer: timerSeconds,
+    isTimerRunning: isTimerRunning,
     resetTimer: onTimerReset,
+    startTimer: onTimerStart,
     resetTimerOnMatchStart: props.onTimerReset
   });
   
   const showControls = props.isAdmin || props.isAgent;
   
-  // Process game wins with proper refund handling
+  // Process game wins
   const processTeamAWin = () => {
-    if (props.onDeleteUnmatchedBets) {
-      // Make sure to properly handle unmatched bets first
-      props.onDeleteUnmatchedBets();
-    }
-    // Then process the win
     handleTeamAWin();
   };
   
   const processTeamBWin = () => {
-    if (props.onDeleteUnmatchedBets) {
-      // Make sure to properly handle unmatched bets first
-      props.onDeleteUnmatchedBets();
-    }
-    // Then process the win
     handleTeamBWin();
   };
   
@@ -132,6 +127,10 @@ const ScoreBoard = (props: ScoreBoardProps) => {
         handleTeamBGameDecrement={handleTeamBGameDecrement}
         setTeamAWinConfirmOpen={setTeamAWinConfirmOpen}
         setTeamBWinConfirmOpen={setTeamBWinConfirmOpen}
+        isAdmin={props.isAdmin}
+        isAgent={props.isAgent}
+        onToggleAdmin={props.onToggleAdmin}
+        onToggleAgent={props.onToggleAgent}
       />
       
       {showControls && isMatchStarted && (

@@ -12,7 +12,9 @@ interface UseScoreboardStateProps {
   gameLabel?: string;
   currentGameNumber?: number;
   timer: number;
+  isTimerRunning?: boolean;
   resetTimer: () => void;
+  startTimer?: () => void;
   onTeamANameChange?: (name: string) => void;
   onTeamBNameChange?: (name: string) => void;
   onBreakChange?: (teamAHasBreak: boolean) => void;
@@ -36,7 +38,9 @@ export const useScoreboardState = ({
   teamABalls,
   teamBBalls,
   timer,
+  isTimerRunning = false,
   resetTimer,
+  startTimer,
   onBreakChange,
   onTeamAGameWin,
   onTeamBGameWin,
@@ -56,6 +60,14 @@ export const useScoreboardState = ({
   const [teamBWinConfirmOpen, setTeamBWinConfirmOpen] = useState<boolean>(false);
   
   const [isMatchStarted, setIsMatchStarted] = useState<boolean>(false);
+  
+  // Sync isMatchStarted with timer state from server
+  useEffect(() => {
+    // If timer is running or has been running (timerSeconds > 0), consider match started
+    // This ensures that when page refreshes, if server has timer running, we don't show START MATCH button
+    // Also, if we're in a game (currentGameNumber > 1), keep match started even if timer is reset
+    setIsMatchStarted(isTimerRunning || timer > 0 || currentGameNumber > 1);
+  }, [timer, isTimerRunning, currentGameNumber]);
   
   const [localTeamAGames, setLocalTeamAGames] = useState<number>(teamAGames);
   const [localTeamBGames, setLocalTeamBGames] = useState<number>(teamBGames);
@@ -129,7 +141,8 @@ export const useScoreboardState = ({
       setLocalGameNumber(nextGameNumber);
     }
     
-    resetTimer();
+    // Timer reset is handled by the parent component (Index.tsx)
+    // Don't automatically start timer - let admin control it
   };
   
   const handleTeamBWin = () => {
@@ -146,7 +159,8 @@ export const useScoreboardState = ({
       setLocalGameNumber(nextGameNumber);
     }
     
-    resetTimer();
+    // Timer reset is handled by the parent component (Index.tsx)
+    // Don't automatically start timer - let admin control it
   };
   
   const handleBreakChange = (hasBreak: boolean) => {

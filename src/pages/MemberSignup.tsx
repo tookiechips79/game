@@ -156,7 +156,7 @@ const MemberSignupPage = () => {
       setCurrentUser(newUser);
       
       toast.success("Account Created Successfully!", {
-        description: `Welcome to Game Bird, ${fullName}! You can view the scoreboard and betting cues, but need to subscribe to place bets.`,
+        description: `Welcome to Game Bird, ${fullName}! You can view the scoreboard and betting queues, but need to subscribe to place bets.`,
         duration: 5000,
       });
       
@@ -179,7 +179,7 @@ const MemberSignupPage = () => {
       const newUser = socialLogin(provider);
       
       toast.success("Account Created Successfully!", {
-        description: `Welcome to Game Bird, ${newUser.name}! You can view the scoreboard and betting cues, but need to subscribe to place bets.`,
+        description: `Welcome to Game Bird, ${newUser.name}! You can view the scoreboard and betting queues, but need to subscribe to place bets.`,
         duration: 5000,
       });
       
@@ -198,7 +198,7 @@ const MemberSignupPage = () => {
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-[#F97316] mb-2">Basic Information</h2>
+        <h2 className="text-2xl font-bold mb-2" style={{ color: '#95deff' }}>Basic Information</h2>
         <p className="text-gray-300">Let's start with your basic details</p>
       </div>
 
@@ -245,7 +245,7 @@ const MemberSignupPage = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="firstName" className="text-[#F97316] font-medium">
+          <Label htmlFor="firstName" className="font-medium" style={{ color: '#95deff' }}>
             First Name *
           </Label>
           <div className="relative">
@@ -255,7 +255,8 @@ const MemberSignupPage = () => {
               type="text"
               value={formData.firstName}
               onChange={(e) => handleInputChange("firstName", e.target.value)}
-              className="pl-10 bg-gray-800/50 border-gray-600 text-white focus:border-[#F97316] focus:ring-2 focus:ring-[#F97316]/20"
+              className="pl-10 bg-gray-800/50 border-gray-600 text-white"
+              style={{ focusBorderColor: '#95deff', focusRingColor: 'rgba(149, 222, 255, 0.2)' }}
               placeholder="Enter your first name"
               required
             />
@@ -263,7 +264,7 @@ const MemberSignupPage = () => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="lastName" className="text-[#F97316] font-medium">
+          <Label htmlFor="lastName" className="font-medium" style={{ color: '#95deff' }}>
             Last Name *
           </Label>
           <div className="relative">
@@ -273,7 +274,8 @@ const MemberSignupPage = () => {
               type="text"
               value={formData.lastName}
               onChange={(e) => handleInputChange("lastName", e.target.value)}
-              className="pl-10 bg-gray-800/50 border-gray-600 text-white focus:border-[#F97316] focus:ring-2 focus:ring-[#F97316]/20"
+              className="pl-10 bg-gray-800/50 border-gray-600 text-white"
+              style={{ focusBorderColor: '#95deff', focusRingColor: 'rgba(149, 222, 255, 0.2)' }}
               placeholder="Enter your last name"
               required
             />
@@ -282,7 +284,7 @@ const MemberSignupPage = () => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="username" className="text-[#F97316] font-medium">
+        <Label htmlFor="username" className="font-medium" style={{ color: '#95deff' }}>
           Username *
         </Label>
         <div className="relative">
@@ -292,7 +294,8 @@ const MemberSignupPage = () => {
             type="text"
             value={formData.username}
             onChange={(e) => handleInputChange("username", e.target.value)}
-            className="pl-10 bg-gray-800/50 border-gray-600 text-white focus:border-[#F97316] focus:ring-2 focus:ring-[#F97316]/20"
+            className="pl-10 bg-gray-800/50 border-gray-600 text-white"
+            style={{ focusBorderColor: '#95deff', focusRingColor: 'rgba(149, 222, 255, 0.2)' }}
             placeholder="Choose a unique username"
             required
           />
@@ -300,7 +303,7 @@ const MemberSignupPage = () => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="email" className="text-[#F97316] font-medium">
+        <Label htmlFor="email" className="font-medium" style={{ color: '#95deff' }}>
           Email Address *
         </Label>
         <div className="relative">
@@ -310,7 +313,8 @@ const MemberSignupPage = () => {
             type="email"
             value={formData.email}
             onChange={(e) => handleInputChange("email", e.target.value)}
-            className="pl-10 bg-gray-800/50 border-gray-600 text-white focus:border-[#F97316] focus:ring-2 focus:ring-[#F97316]/20"
+            className="pl-10 bg-gray-800/50 border-gray-600 text-white"
+            style={{ focusBorderColor: '#95deff', focusRingColor: 'rgba(149, 222, 255, 0.2)' }}
             placeholder="your@email.com"
             required
           />
@@ -318,7 +322,7 @@ const MemberSignupPage = () => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="phone" className="text-[#F97316] font-medium">
+        <Label htmlFor="phone" className="font-medium" style={{ color: '#95deff' }}>
           Phone Number *
         </Label>
         <div className="relative">
@@ -328,7 +332,8 @@ const MemberSignupPage = () => {
             type="tel"
             value={formData.phone}
             onChange={(e) => handleInputChange("phone", e.target.value)}
-            className="pl-10 bg-gray-800/50 border-gray-600 text-white focus:border-[#F97316] focus:ring-2 focus:ring-[#F97316]/20"
+            className="pl-10 bg-gray-800/50 border-gray-600 text-white"
+            style={{ focusBorderColor: '#95deff', focusRingColor: 'rgba(149, 222, 255, 0.2)' }}
             placeholder="(555) 123-4567"
             required
           />
@@ -337,7 +342,7 @@ const MemberSignupPage = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="password" className="text-[#F97316] font-medium">
+          <Label htmlFor="password" className="font-medium" style={{ color: '#95deff' }}>
             Password *
           </Label>
           <div className="relative">
@@ -347,7 +352,8 @@ const MemberSignupPage = () => {
               type={showPassword ? "text" : "password"}
               value={formData.password}
               onChange={(e) => handleInputChange("password", e.target.value)}
-              className="pl-10 pr-10 bg-gray-800/50 border-gray-600 text-white focus:border-[#F97316] focus:ring-2 focus:ring-[#F97316]/20"
+              className="pl-10 pr-10 bg-gray-800/50 border-gray-600 text-white"
+              style={{ focusBorderColor: '#95deff', focusRingColor: 'rgba(149, 222, 255, 0.2)' }}
               placeholder="Create a strong password"
               required
             />
@@ -364,7 +370,7 @@ const MemberSignupPage = () => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="confirmPassword" className="text-[#F97316] font-medium">
+          <Label htmlFor="confirmPassword" className="font-medium" style={{ color: '#95deff' }}>
             Confirm Password *
           </Label>
           <div className="relative">
@@ -374,7 +380,8 @@ const MemberSignupPage = () => {
               type={showConfirmPassword ? "text" : "password"}
               value={formData.confirmPassword}
               onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-              className="pl-10 pr-10 bg-gray-800/50 border-gray-600 text-white focus:border-[#F97316] focus:ring-2 focus:ring-[#F97316]/20"
+              className="pl-10 pr-10 bg-gray-800/50 border-gray-600 text-white"
+              style={{ focusBorderColor: '#95deff', focusRingColor: 'rgba(149, 222, 255, 0.2)' }}
               placeholder="Confirm your password"
               required
             />
@@ -397,7 +404,7 @@ const MemberSignupPage = () => {
   const renderStep2 = () => (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-[#F97316] mb-2">Terms & Verification</h2>
+        <h2 className="text-2xl font-bold mb-2" style={{ color: '#95deff' }}>Terms & Verification</h2>
         <p className="text-gray-300">Please review and accept our terms</p>
       </div>
 
@@ -407,7 +414,8 @@ const MemberSignupPage = () => {
             id="ageVerification"
             checked={formData.ageVerification}
             onCheckedChange={(checked) => handleInputChange("ageVerification", checked as boolean)}
-            className="border-[#F97316] data-[state=checked]:bg-[#F97316] data-[state=checked]:border-[#F97316] mt-1"
+            className="mt-1"
+            style={{ borderColor: '#95deff', ...(formData.ageVerification && { backgroundColor: '#95deff' }) }}
           />
           <Label htmlFor="ageVerification" className="text-sm text-gray-300">
             I confirm that I am at least 18 years old and legally allowed to participate in betting activities *
@@ -419,11 +427,12 @@ const MemberSignupPage = () => {
             id="agreeToTerms"
             checked={formData.agreeToTerms}
             onCheckedChange={(checked) => handleInputChange("agreeToTerms", checked as boolean)}
-            className="border-[#F97316] data-[state=checked]:bg-[#F97316] data-[state=checked]:border-[#F97316] mt-1"
+            className="mt-1"
+            style={{ borderColor: '#95deff', ...(formData.agreeToTerms && { backgroundColor: '#95deff' }) }}
           />
           <Label htmlFor="agreeToTerms" className="text-sm text-gray-300">
             I agree to the{" "}
-            <Link to="/terms" className="text-[#F97316] hover:underline">
+            <Link to="/terms" className="hover:underline" style={{ color: '#95deff' }}>
               Terms of Service
             </Link>{" "}
             and understand the betting rules and regulations *
@@ -435,11 +444,12 @@ const MemberSignupPage = () => {
             id="agreeToPrivacy"
             checked={formData.agreeToPrivacy}
             onCheckedChange={(checked) => handleInputChange("agreeToPrivacy", checked as boolean)}
-            className="border-[#F97316] data-[state=checked]:bg-[#F97316] data-[state=checked]:border-[#F97316] mt-1"
+            className="mt-1"
+            style={{ borderColor: '#95deff', ...(formData.agreeToPrivacy && { backgroundColor: '#95deff' }) }}
           />
           <Label htmlFor="agreeToPrivacy" className="text-sm text-gray-300">
             I agree to the{" "}
-            <Link to="/privacy" className="text-[#F97316] hover:underline">
+            <Link to="/privacy" className="hover:underline" style={{ color: '#95deff' }}>
               Privacy Policy
             </Link>{" "}
             and consent to the processing of my personal data *
@@ -451,7 +461,8 @@ const MemberSignupPage = () => {
             id="marketingConsent"
             checked={formData.marketingConsent}
             onCheckedChange={(checked) => handleInputChange("marketingConsent", checked as boolean)}
-            className="border-[#F97316] data-[state=checked]:bg-[#F97316] data-[state=checked]:border-[#F97316] mt-1"
+            className="mt-1"
+            style={{ borderColor: '#95deff', ...(formData.marketingConsent && { backgroundColor: '#95deff' }) }}
           />
           <Label htmlFor="marketingConsent" className="text-sm text-gray-300">
             I would like to receive promotional emails and updates about new features (optional)
@@ -459,11 +470,11 @@ const MemberSignupPage = () => {
         </div>
       </div>
 
-      <div className="bg-[#F97316]/10 border border-[#F97316]/30 rounded-lg p-4">
+      <div className="rounded-lg p-4" style={{ backgroundColor: 'rgba(149, 222, 255, 0.1)', borderColor: 'rgba(149, 222, 255, 0.3)', borderWidth: '1px' }}>
         <div className="flex items-start space-x-3">
-          <AlertCircle className="h-5 w-5 text-[#F97316] mt-1 flex-shrink-0" />
+          <AlertCircle className="h-5 w-5 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
           <div>
-            <h3 className="text-[#F97316] font-medium mb-2">Important Notice</h3>
+            <h3 className="font-medium mb-2" style={{ color: '#95deff' }}>Important Notice</h3>
             <p className="text-gray-300 text-sm">
               By creating an account, you acknowledge that you understand the risks associated with betting and 
               that you are responsible for your own actions. Please bet responsibly and within your means.
@@ -477,12 +488,12 @@ const MemberSignupPage = () => {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#0a192f] to-[#1a2332] border-b border-[#F97316]/30">
+      <div className="bg-gradient-to-r from-[#0a192f] to-[#1a2332] border-b" style={{ borderColor: 'rgba(149, 222, 255, 0.3)' }}>
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <UserPlus className="h-6 w-6 text-[#F97316]" />
+                <UserPlus className="h-6 w-6" style={{ color: '#95deff' }} />
                 <h1 className="text-2xl font-bold text-white">Member Registration</h1>
               </div>
             </div>
@@ -494,8 +505,9 @@ const MemberSignupPage = () => {
                   <div
                     key={i}
                     className={`w-3 h-3 rounded-full ${
-                      i + 1 <= currentStep ? "bg-[#F97316]" : "bg-gray-600"
+                      i + 1 <= currentStep ? "" : "bg-gray-600"
                     }`}
+                    style={i + 1 <= currentStep ? { backgroundColor: '#95deff' } : {}}
                   />
                 ))}
               </div>
@@ -507,9 +519,9 @@ const MemberSignupPage = () => {
       {/* Main Content */}
       <div className="flex-1 container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
-          <Card className="glass-card border-[#F97316]/50 bg-[#0a192f]/70 shadow-lg rounded-2xl">
+          <Card className="glass-card shadow-lg rounded-2xl" style={{ borderColor: 'rgba(149, 222, 255, 0.5)', backgroundColor: 'rgba(10, 25, 47, 0.7)' }}>
             <CardHeader className="text-center pb-6">
-              <CardTitle className="text-3xl font-bold text-[#F97316] flex items-center justify-center space-x-3">
+              <CardTitle className="text-3xl font-bold flex items-center justify-center space-x-3" style={{ color: '#95deff' }}>
                 <Shield className="h-8 w-8" />
                 <span>Complete Registration</span>
               </CardTitle>
@@ -530,7 +542,8 @@ const MemberSignupPage = () => {
                     variant="outline"
                     onClick={handlePrevious}
                     disabled={currentStep === 1}
-                    className="border-[#F97316]/50 text-[#F97316] hover:bg-[#F97316]/20"
+                    className="hover:bg-opacity-20"
+                    style={{ borderColor: 'rgba(149, 222, 255, 0.5)', color: '#95deff' }}
                   >
                     Previous
                   </Button>
@@ -539,7 +552,8 @@ const MemberSignupPage = () => {
                     <Button
                       type="button"
                       onClick={handleNext}
-                      className="bg-[#F97316] hover:bg-[#FBBF24] text-black font-bold"
+                      className="font-bold"
+                      style={{ backgroundColor: '#95deff', color: '#052240' }}
                     >
                       Next
                     </Button>
@@ -547,7 +561,8 @@ const MemberSignupPage = () => {
                     <Button
                       type="submit"
                       disabled={isLoading}
-                      className="bg-[#F97316] hover:bg-[#FBBF24] text-black font-bold px-8"
+                      className="font-bold px-8"
+                      style={{ backgroundColor: '#95deff', color: '#052240' }}
                     >
                       {isLoading ? (
                         <div className="flex items-center space-x-2">
@@ -568,14 +583,14 @@ const MemberSignupPage = () => {
           </Card>
 
           {/* Benefits Card */}
-          <Card className="mt-6 glass-card border-[#1EAEDB]/50 bg-[#0a192f]/50 shadow-lg rounded-2xl">
+          <Card className="mt-6 glass-card shadow-lg rounded-2xl" style={{ borderColor: 'rgba(149, 222, 255, 0.5)', backgroundColor: 'rgba(10, 25, 47, 0.5)' }}>
             <CardContent className="p-6">
               <div className="flex items-start space-x-3">
-                <Trophy className="h-5 w-5 text-[#1EAEDB] mt-1 flex-shrink-0" />
+                <Trophy className="h-5 w-5 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                 <div>
-                  <h3 className="text-[#1EAEDB] font-medium mb-2">What You Get After Registration</h3>
+                  <h3 className="font-medium mb-2" style={{ color: '#95deff' }}>What You Get After Registration</h3>
                   <ul className="text-gray-300 text-sm space-y-1">
-                    <li>• Access to live scoreboard and betting cues</li>
+                    <li>• Access to live scoreboard and betting queues</li>
                     <li>• View real-time game progress and betting activity</li>
                     <li>• Option to subscribe for full betting capabilities</li>
                     <li>• Secure account with encrypted data protection</li>
