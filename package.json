@@ -14,7 +14,7 @@
     "start": "npm run build && npm run server",
     "dev:full": "concurrently \"npm run dev\" \"npm run server\""
   },
-  "homepage": "https://tookiechips79.github.io/gamebirdFINAL",
+  "homepage": "https://tookiechips79.github.io/game",
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
