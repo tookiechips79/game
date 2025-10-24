@@ -33,9 +33,9 @@ import {
 
 const FeaturesPage = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a192f] via-[#0f2a3d] to-[#143a4e] text-white">
+    <div className="min-h-screen text-white" style={{ backgroundColor: '#052240' }}>
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#0a192f] to-[#1a2332] border-b border-[#F97316]/30">
+      <div className="border-b py-4" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -43,22 +43,23 @@ const FeaturesPage = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-[#F97316] hover:text-[#FBBF24] hover:bg-[#F97316]/10"
+                  style={{ color: '#fa1593' }}
+                  className="hover:bg-transparent"
                 >
-                  <Home className="h-4 w-4 mr-2" />
+                  <Home className="h-4 w-4 mr-2" style={{ color: '#fa1593' }} />
                   Home
                 </Button>
               </Link>
-              <div className="h-6 w-px bg-[#F97316]/30" />
+              <div className="h-6 w-px" style={{ backgroundColor: '#95deff' }} />
               <div className="flex items-center space-x-2">
-                <Trophy className="h-6 w-6 text-[#F97316]" />
+                <Trophy className="h-6 w-6" style={{ color: '#fa1593' }} />
                 <h1 className="text-2xl font-bold text-white">Platform Features</h1>
               </div>
             </div>
             
             <div className="flex items-center space-x-3">
               <Link to="/member-signup">
-                <Button className="bg-[#F97316] hover:bg-[#FBBF24] text-black font-bold">
+                <Button style={{ backgroundColor: '#fa1593', color: 'white' }} className="font-bold hover:opacity-90">
                   <LogIn className="h-4 w-4 mr-2" />
                   Get Started
                 </Button>
@@ -71,48 +72,48 @@ const FeaturesPage = () => {
       <div className="container mx-auto px-4 py-12">
         {/* Hero Section */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-4 text-[#F97316]">
+          <h2 className="text-4xl font-bold mb-4" style={{ color: '#fa1593' }}>
             How Game Bird Platform Works
           </h2>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+          <p className="text-xl max-w-3xl mx-auto" style={{ color: '#95deff' }}>
             A comprehensive guide to understanding our betting platform, from account creation to winning real money
           </p>
         </div>
 
         {/* Platform Overview */}
         <div className="mb-16">
-          <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
+          <Card className="border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
             <CardHeader>
-              <CardTitle className="text-2xl text-[#F97316] flex items-center gap-2">
+              <CardTitle className="text-2xl flex items-center gap-2" style={{ color: '#fa1593' }}>
                 <Gamepad2 className="h-6 w-6" />
                 Platform Overview
               </CardTitle>
-              <CardDescription className="text-gray-300">
+              <CardDescription style={{ color: '#95deff' }}>
                 Game Bird is a real-time betting platform where users can place bets on live games and win real money
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center">
-                  <div className="bg-[#F97316]/20 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                    <Users className="h-8 w-8 text-[#F97316]" />
+                  <div className="p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }}>
+                    <Users className="h-8 w-8" style={{ color: '#fa1593' }} />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">User Management</h3>
-                  <p className="text-gray-400">Create accounts, manage credits, and track betting history</p>
+                  <h3 className="text-lg font-semibold mb-2 text-white">User Management</h3>
+                  <p style={{ color: '#95deff' }}>Create accounts, manage credits, and track betting history</p>
                 </div>
                 <div className="text-center">
-                  <div className="bg-[#F97316]/20 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                    <Target className="h-8 w-8 text-[#F97316]" />
+                  <div className="p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }}>
+                    <Target className="h-8 w-8" style={{ color: '#fa1593' }} />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">Live Betting</h3>
-                  <p className="text-gray-400">Place bets on current and upcoming games in real-time</p>
+                  <h3 className="text-lg font-semibold mb-2 text-white">Live Betting</h3>
+                  <p style={{ color: '#95deff' }}>Place bets on current and upcoming games in real-time</p>
                 </div>
                 <div className="text-center">
-                  <div className="bg-[#F97316]/20 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                    <DollarSign className="h-8 w-8 text-[#F97316]" />
+                  <div className="p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }}>
+                    <DollarSign className="h-8 w-8" style={{ color: '#fa1593' }} />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">Real Money</h3>
-                  <p className="text-gray-400">Win actual money that can be cashed out to your wallet</p>
+                  <h3 className="text-lg font-semibold mb-2 text-white">Real Money</h3>
+                  <p style={{ color: '#95deff' }}>Win actual money that can be cashed out to your wallet</p>
                 </div>
               </div>
             </CardContent>
@@ -121,59 +122,59 @@ const FeaturesPage = () => {
 
         {/* Getting Started */}
         <div className="mb-16">
-          <h3 className="text-3xl font-bold mb-8 text-center text-[#F97316]">Getting Started</h3>
+          <h3 className="text-3xl font-bold mb-8 text-center" style={{ color: '#fa1593' }}>Getting Started</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
+            <Card className="border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardHeader className="text-center">
-                <div className="bg-[#F97316]/20 p-3 rounded-full w-12 h-12 mx-auto mb-4 flex items-center justify-center">
-                  <User className="h-6 w-6 text-[#F97316]" />
+                <div className="p-3 rounded-full w-12 h-12 mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }}>
+                  <User className="h-6 w-6" style={{ color: '#fa1593' }} />
                 </div>
-                <CardTitle className="text-lg">1. Create Account</CardTitle>
+                <CardTitle className="text-lg text-white">1. Create Account</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-400 text-sm">
+                <p className="text-sm" style={{ color: '#95deff' }}>
                   Sign up with your details or use Google/Apple login. All new accounts start with 0 credits and inactive membership.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
+            <Card className="border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardHeader className="text-center">
-                <div className="bg-[#F97316]/20 p-3 rounded-full w-12 h-12 mx-auto mb-4 flex items-center justify-center">
-                  <Eye className="h-6 w-6 text-[#F97316]" />
+                <div className="p-3 rounded-full w-12 h-12 mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }}>
+                  <Eye className="h-6 w-6" style={{ color: '#fa1593' }} />
                 </div>
-                <CardTitle className="text-lg">2. View Platform</CardTitle>
+                <CardTitle className="text-lg text-white">2. View Platform</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-400 text-sm">
+                <p className="text-sm" style={{ color: '#95deff' }}>
                   Browse the scoreboard and betting queues. You can view all games and betting activity without membership.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
+            <Card className="border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardHeader className="text-center">
-                <div className="bg-[#F97316]/20 p-3 rounded-full w-12 h-12 mx-auto mb-4 flex items-center justify-center">
-                  <CreditCard className="h-6 w-6 text-[#F97316]" />
+                <div className="p-3 rounded-full w-12 h-12 mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }}>
+                  <CreditCard className="h-6 w-6" style={{ color: '#fa1593' }} />
                 </div>
-                <CardTitle className="text-lg">3. Subscribe</CardTitle>
+                <CardTitle className="text-lg text-white">3. Subscribe</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-400 text-sm">
+                <p className="text-sm" style={{ color: '#95deff' }}>
                   Purchase a $20/month subscription to activate your membership and start placing bets.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
+            <Card className="border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardHeader className="text-center">
-                <div className="bg-[#F97316]/20 p-3 rounded-full w-12 h-12 mx-auto mb-4 flex items-center justify-center">
-                  <Target className="h-6 w-6 text-[#F97316]" />
+                <div className="p-3 rounded-full w-12 h-12 mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }}>
+                  <Target className="h-6 w-6" style={{ color: '#fa1593' }} />
                 </div>
-                <CardTitle className="text-lg">4. Start Betting</CardTitle>
+                <CardTitle className="text-lg text-white">4. Start Betting</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-400 text-sm">
+                <p className="text-sm" style={{ color: '#95deff' }}>
                   Place bets on current and next games. Win real money and cash out your winnings.
                 </p>
               </CardContent>
@@ -183,12 +184,12 @@ const FeaturesPage = () => {
 
         {/* Core Features */}
         <div className="mb-16">
-          <h3 className="text-3xl font-bold mb-8 text-center text-[#F97316]">Core Features</h3>
+          <h3 className="text-3xl font-bold mb-8 text-center" style={{ color: '#fa1593' }}>Core Features</h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Real-time Scoreboard */}
-            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
+            <Card className="border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardHeader>
-                <CardTitle className="text-xl text-[#F97316] flex items-center gap-2">
+                <CardTitle className="text-xl flex items-center gap-2" style={{ color: '#fa1593' }}>
                   <BarChart3 className="h-5 w-5" />
                   Real-time Scoreboard
                 </CardTitle>
@@ -197,28 +198,28 @@ const FeaturesPage = () => {
                 <ul className="space-y-3">
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Live game scores and statistics</span>
+                    <span className="text-white">Live game scores and statistics</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Current and next game information</span>
+                    <span className="text-white">Current and next game information</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Team names and game status</span>
+                    <span className="text-white">Team names and game status</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Accessible to all users (free and premium)</span>
+                    <span className="text-white">Accessible to all users (free and premium)</span>
                   </li>
                 </ul>
               </CardContent>
             </Card>
 
             {/* Betting System */}
-            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
+            <Card className="border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardHeader>
-                <CardTitle className="text-xl text-[#F97316] flex items-center gap-2">
+                <CardTitle className="text-xl flex items-center gap-2" style={{ color: '#fa1593' }}>
                   <Target className="h-5 w-5" />
                   Betting System
                 </CardTitle>
@@ -227,28 +228,28 @@ const FeaturesPage = () => {
                 <ul className="space-y-3">
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Multiple bet denominations (10, 20, 50, 100 coins)</span>
+                    <span className="text-white">Multiple bet denominations (10, 20, 50, 100 coins)</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Current game and next game betting queues</span>
+                    <span className="text-white">Current game and next game betting queues</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Automatic bet matching and booking</span>
+                    <span className="text-white">Automatic bet matching and booking</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Real-time bet status updates</span>
+                    <span className="text-white">Real-time bet status updates</span>
                   </li>
                 </ul>
               </CardContent>
             </Card>
 
             {/* User Management */}
-            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
+            <Card className="border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardHeader>
-                <CardTitle className="text-xl text-[#F97316] flex items-center gap-2">
+                <CardTitle className="text-xl flex items-center gap-2" style={{ color: '#fa1593' }}>
                   <Users className="h-5 w-5" />
                   User Management
                 </CardTitle>
@@ -257,28 +258,28 @@ const FeaturesPage = () => {
                 <ul className="space-y-3">
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Multiple user accounts support</span>
+                    <span className="text-white">Multiple user accounts support</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Admin user with special privileges</span>
+                    <span className="text-white">Admin user with special privileges</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Credit management and reloading</span>
+                    <span className="text-white">Credit management and reloading</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Membership status tracking</span>
+                    <span className="text-white">Membership status tracking</span>
                   </li>
                 </ul>
               </CardContent>
             </Card>
 
             {/* Financial System */}
-            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
+            <Card className="border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardHeader>
-                <CardTitle className="text-xl text-[#F97316] flex items-center gap-2">
+                <CardTitle className="text-xl flex items-center gap-2" style={{ color: '#fa1593' }}>
                   <Wallet className="h-5 w-5" />
                   Financial System
                 </CardTitle>
@@ -287,19 +288,19 @@ const FeaturesPage = () => {
                 <ul className="space-y-3">
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Credit-based betting system</span>
+                    <span className="text-white">Credit-based betting system</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Real money winnings and cashouts</span>
+                    <span className="text-white">Real money winnings and cashouts</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Transaction history tracking</span>
+                    <span className="text-white">Transaction history tracking</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Admin credit management tools</span>
+                    <span className="text-white">Admin credit management tools</span>
                   </li>
                 </ul>
               </CardContent>
@@ -309,16 +310,16 @@ const FeaturesPage = () => {
 
         {/* Membership Tiers */}
         <div className="mb-16">
-          <h3 className="text-3xl font-bold mb-8 text-center text-[#F97316]">Membership Tiers</h3>
+          <h3 className="text-3xl font-bold mb-8 text-center" style={{ color: '#fa1593' }}>Membership Tiers</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Free Access */}
-            <Card className="bg-[#0a192f]/70 border-[#1EAEDB]/30 backdrop-blur-sm">
+            <Card className="border relative" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardHeader>
-                <CardTitle className="text-xl text-[#1EAEDB] flex items-center gap-2">
+                <CardTitle className="text-xl flex items-center gap-2" style={{ color: '#95deff' }}>
                   <Eye className="h-5 w-5" />
                   Free Access
                 </CardTitle>
-                <CardDescription className="text-gray-300">
+                <CardDescription style={{ color: '#95deff' }}>
                   Basic platform access for viewing and learning
                 </CardDescription>
               </CardHeader>
@@ -326,44 +327,44 @@ const FeaturesPage = () => {
                 <ul className="space-y-3 mb-6">
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">View real-time scoreboard</span>
+                    <span className="text-white">View real-time scoreboard</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Browse betting queues</span>
+                    <span className="text-white">Browse betting queues</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">View game information</span>
+                    <span className="text-white">View game information</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Lock className="h-4 w-4 text-red-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-400">Cannot place bets</span>
+                    <span style={{ color: '#95deff' }}>Cannot place bets</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <Lock className="h-4 w-4 text-red-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-400">Cannot win money</span>
+                    <span style={{ color: '#95deff' }}>Cannot win money</span>
                   </li>
                 </ul>
-                <Badge variant="outline" className="border-[#1EAEDB] text-[#1EAEDB]">
+                <Badge variant="outline" style={{ borderColor: '#95deff', color: '#95deff' }}>
                   $0/month
                 </Badge>
               </CardContent>
             </Card>
 
             {/* Premium Access */}
-            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm relative">
+            <Card className="border relative" style={{ backgroundColor: '#004b6b', borderColor: '#fa1593' }}>
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <Badge className="bg-[#F97316] text-black px-4 py-1">
+                <Badge style={{ backgroundColor: '#fa1593', color: 'white' }} className="px-4 py-1">
                   Most Popular
                 </Badge>
               </div>
               <CardHeader>
-                <CardTitle className="text-xl text-[#F97316] flex items-center gap-2">
+                <CardTitle className="text-xl flex items-center gap-2" style={{ color: '#fa1593' }}>
                   <Trophy className="h-5 w-5" />
                   Premium Access
                 </CardTitle>
-                <CardDescription className="text-gray-300">
+                <CardDescription style={{ color: '#95deff' }}>
                   Full betting experience with real money winnings
                 </CardDescription>
               </CardHeader>
@@ -371,26 +372,26 @@ const FeaturesPage = () => {
                 <ul className="space-y-3 mb-6">
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Everything in Free Access</span>
+                    <span className="text-white">Everything in Free Access</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Place unlimited bets</span>
+                    <span className="text-white">Place unlimited bets</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Win real money</span>
+                    <span className="text-white">Win real money</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Cash out winnings</span>
+                    <span className="text-white">Cash out winnings</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-gray-300">Full transaction history</span>
+                    <span className="text-white">Full transaction history</span>
                   </li>
                 </ul>
-                <Badge variant="outline" className="border-[#F97316] text-[#F97316]">
+                <Badge variant="outline" style={{ borderColor: '#fa1593', color: '#fa1593' }}>
                   $20/month
                 </Badge>
               </CardContent>
@@ -400,25 +401,25 @@ const FeaturesPage = () => {
 
         {/* How Betting Works */}
         <div className="mb-16">
-          <h3 className="text-3xl font-bold mb-8 text-center text-[#F97316]">How Betting Works</h3>
+          <h3 className="text-3xl font-bold mb-8 text-center" style={{ color: '#fa1593' }}>How Betting Works</h3>
           <div className="space-y-8">
             {/* Step 1 */}
-            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
+            <Card className="border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
-                  <div className="bg-[#F97316] text-black rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">
+                  <div className="rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0" style={{ backgroundColor: '#fa1593', color: 'white' }}>
                     1
                   </div>
                   <div>
-                    <h4 className="text-xl font-semibold mb-2 text-[#F97316]">Select Your Bet Amount</h4>
-                    <p className="text-gray-300 mb-3">
+                    <h4 className="text-xl font-semibold mb-2" style={{ color: '#fa1593' }}>Select Your Bet Amount</h4>
+                    <p className="mb-3" style={{ color: '#95deff' }}>
                       Choose from 10, 20, 50, or 100 coins. Each denomination has its own betting button with hover tooltips showing the exact amount.
                     </p>
                     <div className="flex gap-2">
-                      <Badge variant="outline" className="border-[#F97316] text-[#F97316]">10 Coins</Badge>
-                      <Badge variant="outline" className="border-[#F97316] text-[#F97316]">20 Coins</Badge>
-                      <Badge variant="outline" className="border-[#F97316] text-[#F97316]">50 Coins</Badge>
-                      <Badge variant="outline" className="border-[#F97316] text-[#F97316]">100 Coins</Badge>
+                      <Badge variant="outline" style={{ borderColor: '#fa1593', color: '#fa1593' }}>10 Coins</Badge>
+                      <Badge variant="outline" style={{ borderColor: '#fa1593', color: '#fa1593' }}>20 Coins</Badge>
+                      <Badge variant="outline" style={{ borderColor: '#fa1593', color: '#fa1593' }}>50 Coins</Badge>
+                      <Badge variant="outline" style={{ borderColor: '#fa1593', color: '#fa1593' }}>100 Coins</Badge>
                     </div>
                   </div>
                 </div>
@@ -426,19 +427,19 @@ const FeaturesPage = () => {
             </Card>
 
             {/* Step 2 */}
-            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
+            <Card className="border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
-                  <div className="bg-[#F97316] text-black rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">
+                  <div className="rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0" style={{ backgroundColor: '#fa1593', color: 'white' }}>
                     2
                   </div>
                   <div>
-                    <h4 className="text-xl font-semibold mb-2 text-[#F97316]">Choose Your Team</h4>
-                    <p className="text-gray-300 mb-3">
+                    <h4 className="text-xl font-semibold mb-2" style={{ color: '#fa1593' }}>Choose Your Team</h4>
+                    <p className="mb-3" style={{ color: '#95deff' }}>
                       Click on the betting button for either Team A or Team B. You can bet on the current game or the next upcoming game.
                     </p>
-                    <div className="bg-gray-800/50 p-3 rounded-lg">
-                      <p className="text-sm text-gray-400">
+                    <div className="p-3 rounded-lg" style={{ backgroundColor: 'rgba(5, 34, 64, 0.5)' }}>
+                      <p className="text-sm" style={{ color: '#95deff' }}>
                         <strong>Current Game:</strong> Live game in progress<br/>
                         <strong>Next Game:</strong> Upcoming game in the queue
                       </p>
@@ -449,15 +450,15 @@ const FeaturesPage = () => {
             </Card>
 
             {/* Step 3 */}
-            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
+            <Card className="border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
-                  <div className="bg-[#F97316] text-black rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">
+                  <div className="rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0" style={{ backgroundColor: '#fa1593', color: 'white' }}>
                     3
                   </div>
                   <div>
-                    <h4 className="text-xl font-semibold mb-2 text-[#F97316]">Automatic Matching</h4>
-                    <p className="text-gray-300 mb-3">
+                    <h4 className="text-xl font-semibold mb-2" style={{ color: '#fa1593' }}>Automatic Matching</h4>
+                    <p className="mb-3" style={{ color: '#95deff' }}>
                       Your bet is automatically matched with other users' bets on the opposing team. The system ensures fair matching and real-time updates.
                     </p>
                     <div className="flex gap-2">
@@ -471,25 +472,25 @@ const FeaturesPage = () => {
             </Card>
 
             {/* Step 4 */}
-            <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
+            <Card className="border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
-                  <div className="bg-[#F97316] text-black rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0">
+                  <div className="rounded-full w-8 h-8 flex items-center justify-center font-bold flex-shrink-0" style={{ backgroundColor: '#fa1593', color: 'white' }}>
                     4
                   </div>
                   <div>
-                    <h4 className="text-xl font-semibold mb-2 text-[#F97316]">Win or Lose</h4>
-                    <p className="text-gray-300 mb-3">
+                    <h4 className="text-xl font-semibold mb-2" style={{ color: '#fa1593' }}>Win or Lose</h4>
+                    <p className="mb-3" style={{ color: '#95deff' }}>
                       When the game ends, winning bets automatically receive their winnings. Losing bets are deducted from your account.
                     </p>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-green-500/10 p-3 rounded-lg border border-green-500/30">
                         <h5 className="font-semibold text-green-400 mb-1">Win</h5>
-                        <p className="text-sm text-gray-300">Receive your bet amount + winnings</p>
+                        <p className="text-sm text-white">Receive your bet amount + winnings</p>
                       </div>
                       <div className="bg-red-500/10 p-3 rounded-lg border border-red-500/30">
                         <h5 className="font-semibold text-red-400 mb-1">Lose</h5>
-                        <p className="text-sm text-gray-300">Bet amount deducted from account</p>
+                        <p className="text-sm text-white">Bet amount deducted from account</p>
                       </div>
                     </div>
                   </div>
@@ -501,25 +502,25 @@ const FeaturesPage = () => {
 
         {/* Admin Features */}
         <div className="mb-16">
-          <h3 className="text-3xl font-bold mb-8 text-center text-[#F97316]">Admin Features</h3>
-          <Card className="bg-[#0a192f]/70 border-[#F97316]/30 backdrop-blur-sm">
+          <h3 className="text-3xl font-bold mb-8 text-center" style={{ color: '#fa1593' }}>Admin Features</h3>
+          <Card className="border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
             <CardHeader>
-              <CardTitle className="text-xl text-[#F97316] flex items-center gap-2">
+              <CardTitle className="text-xl flex items-center gap-2" style={{ color: '#fa1593' }}>
                 <Settings className="h-5 w-5" />
                 Administrative Tools
               </CardTitle>
-              <CardDescription className="text-gray-300">
+              <CardDescription style={{ color: '#95deff' }}>
                 Special features available to admin users for platform management
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-[#F97316] flex items-center gap-2">
+                  <h4 className="font-semibold flex items-center gap-2" style={{ color: '#fa1593' }}>
                     <Users className="h-4 w-4" />
                     User Management
                   </h4>
-                  <ul className="space-y-2 text-sm text-gray-300">
+                  <ul className="space-y-2 text-sm text-white">
                     <li>• Create and manage user accounts</li>
                     <li>• View all user betting history</li>
                     <li>• Monitor user credit balances</li>
@@ -527,11 +528,11 @@ const FeaturesPage = () => {
                   </ul>
                 </div>
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-[#F97316] flex items-center gap-2">
+                  <h4 className="font-semibold flex items-center gap-2" style={{ color: '#fa1593' }}>
                     <CreditCard className="h-4 w-4" />
                     Credit Management
                   </h4>
-                  <ul className="space-y-2 text-sm text-gray-300">
+                  <ul className="space-y-2 text-sm text-white">
                     <li>• Reload credits for any user</li>
                     <li>• Deduct credits when needed</li>
                     <li>• View all credit transactions</li>
@@ -539,11 +540,11 @@ const FeaturesPage = () => {
                   </ul>
                 </div>
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-[#F97316] flex items-center gap-2">
+                  <h4 className="font-semibold flex items-center gap-2" style={{ color: '#fa1593' }}>
                     <BarChart3 className="h-4 w-4" />
                     Platform Control
                   </h4>
-                  <ul className="space-y-2 text-sm text-gray-300">
+                  <ul className="space-y-2 text-sm text-white">
                     <li>• Start and stop games</li>
                     <li>• Reset betting queues</li>
                     <li>• View platform statistics</li>
@@ -557,22 +558,22 @@ const FeaturesPage = () => {
 
         {/* Call to Action */}
         <div className="text-center">
-          <Card className="bg-gradient-to-r from-[#F97316]/20 to-[#FBBF24]/20 border-[#F97316]/50 backdrop-blur-sm">
+          <Card className="border" style={{ backgroundColor: 'rgba(250, 21, 147, 0.1)', borderColor: '#fa1593' }}>
             <CardContent className="p-8">
-              <h3 className="text-2xl font-bold mb-4 text-[#F97316]">Ready to Start Betting?</h3>
-              <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
+              <h3 className="text-2xl font-bold mb-4" style={{ color: '#fa1593' }}>Ready to Start Betting?</h3>
+              <p className="mb-6 max-w-2xl mx-auto" style={{ color: '#95deff' }}>
                 Join thousands of users who are already winning real money on Game Bird. 
                 Create your account today and start your betting journey!
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link to="/member-signup">
-                  <Button className="bg-[#F97316] hover:bg-[#FBBF24] text-black font-bold px-8 py-3">
+                  <Button style={{ backgroundColor: '#fa1593', color: 'white' }} className="font-bold px-8 py-3 hover:opacity-90">
                     <User className="h-4 w-4 mr-2" />
                     Create Account
                   </Button>
                 </Link>
                 <Link to="/betting-queue">
-                  <Button variant="outline" className="border-[#F97316] text-[#F97316] hover:bg-[#F97316]/20 px-8 py-3">
+                  <Button variant="outline" style={{ borderColor: '#95deff', color: '#95deff' }} className="px-8 py-3 hover:bg-[#95deff] hover:text-[#052240]">
                     <Eye className="h-4 w-4 mr-2" />
                     View Platform
                   </Button>
