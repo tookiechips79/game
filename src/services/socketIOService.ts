@@ -114,6 +114,10 @@ class SocketIOService {
       console.log('🔗 Transport used:', this.socket?.io.engine.transport.name);
       this.isConnected = true;
       this.reconnectAttempts = 0;
+      
+      // Request current game state immediately on connection
+      console.log('📤 Requesting current game state from server');
+      this.socket?.emit('request-game-state');
     });
 
     this.socket.on('disconnect', (reason) => {

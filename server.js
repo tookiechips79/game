@@ -258,6 +258,15 @@ io.on('connection', (socket) => {
     console.log(`🔌 [DISCONNECT] Socket disconnected: ${socket.id}`);
   });
 
+  // Handle game state requests from new clients
+  socket.on('request-game-state', () => {
+    console.log(`📥 [REQUEST] Game state requested by ${socket.id}`);
+    socket.emit('game-state-update', serverGameState);
+    const coinsData = calculateConnectedUsersCoins();
+    socket.emit('connected-users-coins-update', coinsData);
+    console.log(`📤 [RESPONSE] Game state sent to ${socket.id}`);
+  });
+
   // Handle user login/selection - track connected users
   socket.on('user-login', (userData) => {
     console.log(`User logged in: ${userData.name} (${userData.id}) with ${userData.credits} coins`);
