@@ -5,14 +5,11 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json ./
 
-# Install dependencies using npm
-RUN npm install
+# Install dependencies using npm (production only)
+RUN npm install --production
 
 # Copy source code
 COPY . .
-
-# Build the frontend
-RUN npm run build
 
 # Expose the port
 EXPOSE 3001
