@@ -243,6 +243,19 @@ io.on('connection', (socket) => {
     socket.emit('connected-users-coins-update', coinsData);
     console.log(`✅ [EMIT 2] connected-users-coins-update emitted`);
     
+    // Also send bet data immediately on connection
+    console.log(`📤 [EMIT 3] About to emit bet-update with current queues`);
+    const betData = {
+      teamAQueue: serverGameState.teamAQueue,
+      teamBQueue: serverGameState.teamBQueue,
+      bookedBets: serverGameState.bookedBets,
+      nextGameBets: serverGameState.nextGameBets,
+      nextTeamAQueue: serverGameState.nextTeamAQueue,
+      nextTeamBQueue: serverGameState.nextTeamBQueue
+    };
+    socket.emit('bet-update', betData);
+    console.log(`✅ [EMIT 3] bet-update emitted with queues`);
+    
     console.log(`📤 [CONNECTION] Initial data sent to ${socket.id}`);
   } catch (error) {
     console.error(`❌ [CONNECTION] Error sending initial data to ${socket.id}:`, error.message);
