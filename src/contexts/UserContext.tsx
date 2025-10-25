@@ -818,7 +818,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // EMIT IMMEDIATELY with the new record (don't wait for useEffect)
     // This is the SOURCE of truth - emit only when data is created locally
     setTimeout(() => {
-      const historyToEmit = [newRecord, ...betHistory];
+      // Use the new record with current betHistory at the time of emit
+      let historyToEmit = [newRecord, ...betHistory];
       if (historyToEmit.length > 50) {
         historyToEmit = historyToEmit.slice(0, 50);
       }
@@ -941,7 +942,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // EMIT IMMEDIATELY with the new receipt (don't wait for useEffect)
     // This is the SOURCE of truth - emit only when data is created locally
     setTimeout(() => {
-      const receiptsToEmit = [newReceipt, ...userBetReceipts];
+      // Use the new receipt with current userBetReceipts at the time of emit
+      let receiptsToEmit = [newReceipt, ...userBetReceipts];
       if (receiptsToEmit.length > 250) {
         receiptsToEmit = receiptsToEmit.slice(0, 250);
       }
