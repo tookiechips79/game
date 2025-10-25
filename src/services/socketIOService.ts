@@ -62,7 +62,7 @@ class SocketIOService {
       
       // Connect to the Socket.IO server using the same host as the current page
       const serverUrl = process.env.NODE_ENV === 'production' 
-        ? window.location.origin  // Use current domain in production
+        ? 'https://game-production-0ca9.up.railway.app'  // Railway backend
         : `http://${window.location.hostname}:3001`;
       
       console.log('🔌 Connecting to Socket.IO server:', serverUrl);
