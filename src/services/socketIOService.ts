@@ -75,16 +75,14 @@ class SocketIOService {
       
       this.socket = io(serverUrl, {
         transports: ['websocket', 'polling'],
-        timeout: 10000,
+        timeout: 20000,
         forceNew: false,
         reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 500,
+        reconnectionDelayMax: 10000,
         upgrade: true,
-        rememberUpgrade: true,
-        secure: true,
-        rejectUnauthorized: false
+        rememberUpgrade: true
       });
 
       console.log('🔌 Socket.IO client created:', {
