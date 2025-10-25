@@ -9,11 +9,17 @@ import { toast } from "sonner";
 
 const GameHistoryWindow: React.FC = () => {
   const { betHistory, resetBetHistory } = useUser();
-  const { isAdmin } = useGameState();
+  const { isAdmin, resetGameState } = useGameState();
 
   const handleClearHistory = () => {
-    if (window.confirm('Are you sure you want to clear the game history? This action cannot be undone.')) {
+    if (window.confirm('Are you sure you want to clear the game history and reset all bets? This action cannot be undone.')) {
+      // Clear both game history and betting queues
       resetBetHistory();
+      resetGameState();
+      toast.success("Game History and Bets Cleared", {
+        description: "Game history has been cleared and all betting queues have been reset",
+        className: "custom-toast-success"
+      });
     }
   };
 
@@ -33,15 +39,22 @@ const GameHistoryWindow: React.FC = () => {
               GAME HISTORY
             </div>
           </CardTitle>
-          {isAdmin && recentGames.length > 0 && (
+          {isAdmin && (
             <Button
               onClick={handleClearHistory}
               variant="outline"
               size="sm"
+              disabled={recentGames.length === 0}
               className="text-white transition-colors"
-              style={{ backgroundColor: '#fa1593', borderColor: '#fa1593' }}
+              style={{ 
+                backgroundColor: recentGames.length === 0 ? '#fa1593' : '#fa1593',
+                borderColor: '#fa1593',
+                opacity: recentGames.length === 0 ? 0.5 : 1
+              }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(250, 21, 147, 0.8)';
+                if (recentGames.length > 0) {
+                  e.currentTarget.style.backgroundColor = 'rgba(250, 21, 147, 0.8)';
+                }
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = '#fa1593';

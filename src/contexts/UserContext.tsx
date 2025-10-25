@@ -773,17 +773,19 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   
   const resetBetHistory = () => {
-    // Clear only the mutable bet history (for display purposes)
-    // Keep immutable bet history intact for user settings
-    console.log('🧹 Clearing mutable bet history');
+    // Clear ALL bet history - both mutable and immutable
+    console.log('🧹 Clearing ALL bet history (mutable and immutable)');
     
+    // Clear mutable bet history
     setBetHistory([]);
-    localStorage.setItem(BET_HISTORY_STORAGE_KEY, JSON.stringify([]));
+    localStorage.removeItem(BET_HISTORY_STORAGE_KEY);
     
-    toast.success("Game History Cleared", {
-      description: "Game history has been cleared from display",
-      className: "custom-toast-success"
-    });
+    // Clear immutable bet history (the source of truth for game history)
+    setImmutableBetHistory([]);
+    localStorage.removeItem(IMMUTABLE_BET_HISTORY_KEY);
+    localStorage.removeItem(BULLETPROOF_BET_HISTORY_KEY);
+    
+    console.log('✅ All bet history cleared');
   };
 
   // HARD LEDGER - Read-only bet history for settings
