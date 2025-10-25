@@ -159,10 +159,6 @@
     @apply transition-all duration-300 hover:shadow-lg hover:scale-105 hover:border-[#F97316]/40;
   }
   
-  .custom-scrollbar {
-    @apply scrollbar-thin scrollbar-thumb-[#F97316]/50 scrollbar-track-gray-800/30;
-  }
-  
   .text-shadow-glow {
     text-shadow: 0 0 8px #fa1593, 0 0 15px #fa1593, 0 0 20px #fa1593, 0 0 25px #fa1593;
   }
