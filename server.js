@@ -14,16 +14,14 @@ const server = createServer(app);
 // CORS configuration for Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: true,
     methods: ["GET", "POST"],
-    credentials: false,
-    allowedHeaders: ["*"]
+    credentials: false
   },
   transports: ['polling', 'websocket'],
   pingTimeout: 60000,
   pingInterval: 25000,
   allowEIO3: true,
-  serveClient: true,
   allowUpgrades: true,
   maxHttpBufferSize: 1e6
 });
