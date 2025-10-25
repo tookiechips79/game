@@ -105,6 +105,9 @@ let serverGameState = {
 // Track connected users and their credits
 let connectedUsers = new Map(); // socketId -> { userId, credits, name }
 
+// Flag to pause broadcasting during clear operations
+let isListenersPaused = false;
+
 // Calculate total coins from connected users
 function calculateConnectedUsersCoins() {
   let totalCoins = 0;
@@ -326,6 +329,12 @@ io.on('connection', (socket) => {
   socket.on('bet-update', (betData) => {
     console.log('Received bet update:', betData);
     
+    // SKIP if listeners are paused (during clear)
+    if (isListenersPaused) {
+      console.log('⏸️ SERVER: Skipping bet-update broadcast - listeners paused');
+      return;
+    }
+    
     // Update server state
     if (betData.teamAQueue) serverGameState.teamAQueue = betData.teamAQueue;
     if (betData.teamBQueue) serverGameState.teamBQueue = betData.teamBQueue;
@@ -345,6 +354,13 @@ io.on('connection', (socket) => {
   // Handle game history updates - sync across all clients
   socket.on('game-history-update', (data) => {
     console.log('📥 Received game history update:', data.gameHistory?.length, 'entries');
+    
+    // SKIP if listeners are paused (during clear)
+    if (isListenersPaused) {
+      console.log('⏸️ SERVER: Skipping game-history-update broadcast - listeners paused');
+      return;
+    }
+    
     serverGameState.gameHistory = data.gameHistory || [];
     serverGameState.lastUpdated = Date.now();
     
@@ -356,6 +372,13 @@ io.on('connection', (socket) => {
   // Handle bet receipts updates - sync across all clients
   socket.on('bet-receipts-update', (data) => {
     console.log('📥 Received bet receipts update:', data.betReceipts?.length, 'entries');
+    
+    // SKIP if listeners are paused (during clear)
+    if (isListenersPaused) {
+      console.log('⏸️ SERVER: Skipping bet-receipts-update broadcast - listeners paused');
+      return;
+    }
+    
     serverGameState.betReceipts = data.betReceipts || [];
     serverGameState.lastUpdated = Date.now();
     
@@ -507,6 +530,10 @@ io.on('connection', (socket) => {
   socket.on('pause-listeners', (data) => {
     console.log('⏸️ Received pause listeners command');
     
+    // SET SERVER-SIDE PAUSE FLAG
+    isListenersPaused = true;
+    console.log('🛑 SERVER: Pausing all broadcasts');
+    
     // Broadcast to ALL clients to pause
     io.emit('pause-listeners', data);
     console.log('📤 Broadcasted pause listeners command to all clients');
@@ -515,6 +542,10 @@ io.on('connection', (socket) => {
   // Handle resume listeners command
   socket.on('resume-listeners', (data) => {
     console.log('▶️ Received resume listeners command');
+    
+    // RESET SERVER-SIDE PAUSE FLAG
+    isListenersPaused = false;
+    console.log('✅ SERVER: Resuming all broadcasts');
     
     // Broadcast to ALL clients to resume
     io.emit('resume-listeners', data);
