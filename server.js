@@ -16,14 +16,17 @@ const io = new Server(server, {
   cors: {
     origin: true,
     methods: ["GET", "POST"],
-    credentials: false
+    credentials: false,
+    allowedHeaders: []
   },
   transports: ['polling', 'websocket'],
   pingTimeout: 60000,
   pingInterval: 25000,
   allowEIO3: true,
   allowUpgrades: true,
-  maxHttpBufferSize: 1e6
+  maxHttpBufferSize: 1e6,
+  serveClient: false,
+  connectTimeout: 45000
 });
 
 // Middleware
@@ -31,9 +34,19 @@ app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["*"],
-  credentials: true
+  credentials: false
 }));
 app.use(express.json());
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Server is running' });
+});
+
+// Socket.IO endpoint (explicit for better compatibility)
+app.get('/socket.io/', (req, res) => {
+  res.json({ status: 'Socket.IO server is ready' });
+});
 
 // Serve static files from dist directory
 app.use(express.static(path.join(__dirname, 'dist')));
