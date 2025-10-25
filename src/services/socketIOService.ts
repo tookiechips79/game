@@ -381,6 +381,40 @@ class SocketIOService {
       this.isConnected = false;
     }
   }
+
+  // Game History Synchronization
+  public emitGameHistoryUpdate(gameHistory: any[]) {
+    if (this.socket && this.isSocketConnected()) {
+      console.log('📤 Emitting game history update:', gameHistory.length, 'records');
+      this.socket.emit('game-history-update', { gameHistory });
+    }
+  }
+
+  public onGameHistoryUpdate(callback: (data: { gameHistory: any[] }) => void) {
+    if (this.socket) {
+      this.socket.on('game-history-update', (data: { gameHistory: any[] }) => {
+        console.log('📥 Received game history update:', data.gameHistory?.length, 'records');
+        callback(data);
+      });
+    }
+  }
+
+  // Bet Receipts Synchronization
+  public emitBetReceiptsUpdate(betReceipts: any[]) {
+    if (this.socket && this.isSocketConnected()) {
+      console.log('📤 Emitting bet receipts update:', betReceipts.length, 'receipts');
+      this.socket.emit('bet-receipts-update', { betReceipts });
+    }
+  }
+
+  public onBetReceiptsUpdate(callback: (data: { betReceipts: any[] }) => void) {
+    if (this.socket) {
+      this.socket.on('bet-receipts-update', (data: { betReceipts: any[] }) => {
+        console.log('📥 Received bet receipts update:', data.betReceipts?.length, 'receipts');
+        callback(data);
+      });
+    }
+  }
 }
 
 // Create singleton instance
