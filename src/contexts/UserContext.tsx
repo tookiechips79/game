@@ -839,6 +839,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // EMIT IMMEDIATELY with the new record (don't wait for useEffect)
     // This is the SOURCE of truth - emit only when data is created locally
     setTimeout(() => {
+      // DO NOT EMIT if listeners are paused (during clear operation)
+      if (pauseListenersRef.current) {
+        console.log('⏸️ [addBetHistoryRecord] Skipping emit - listeners are paused');
+        return;
+      }
+      
       // Use the new record with current betHistory at the time of emit
       let historyToEmit = [newRecord, ...betHistory];
       if (historyToEmit.length > 50) {
@@ -963,6 +969,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // EMIT IMMEDIATELY with the new receipt (don't wait for useEffect)
     // This is the SOURCE of truth - emit only when data is created locally
     setTimeout(() => {
+      // DO NOT EMIT if listeners are paused (during clear operation)
+      if (pauseListenersRef.current) {
+        console.log('⏸️ [addUserBetReceipt] Skipping emit - listeners are paused');
+        return;
+      }
+      
       // Use the new receipt with current userBetReceipts at the time of emit
       let receiptsToEmit = [newReceipt, ...userBetReceipts];
       if (receiptsToEmit.length > 250) {
