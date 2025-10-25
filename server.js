@@ -452,9 +452,6 @@ io.on('connection', (socket) => {
       console.log(`📊 Connected users coins after disconnect: ${coinsData.totalCoins} coins from ${coinsData.connectedUserCount} users`);
     }
   });
-  } catch (error) {
-    console.error('❌ Error in Socket.IO connection handler:', error);
-  }
 });
 
 // API endpoint to get current game state
