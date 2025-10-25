@@ -33,6 +33,7 @@ const BetLedger: React.FC<BetLedgerProps> = ({
   };
   
   const formatDuration = (seconds: number): string => {
+    if (!seconds || isNaN(seconds)) return '00:00';
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
@@ -136,11 +137,11 @@ const BetLedger: React.FC<BetLedgerProps> = ({
                     </div>
                     <div className="text-sm text-gray-400 flex items-center">
                       <Clock className="h-3 w-3 mr-1" />
-                      {formatDistanceToNow(record.timestamp, { addSuffix: true })}
+                      {record.timestamp ? formatDistanceToNow(record.timestamp, { addSuffix: true }) : 'Unknown time'}
                       <span className="mx-2">•</span>
                       <span className="text-amber-400/90 flex items-center">
                         <Clock className="h-3 w-3 mr-1" />
-                        Duration: {formatDuration(record.duration)}
+                        Duration: {formatDuration(record.duration || 0)}
                       </span>
                     </div>
                   </div>
@@ -148,8 +149,8 @@ const BetLedger: React.FC<BetLedgerProps> = ({
                 
                 <div className="flex items-center space-x-3">
                   <div className="text-right">
-                    <div className="font-medium text-gray-200">{record.totalAmount} Credits</div>
-                    <div className="text-sm text-gray-400">{record.bets.teamA.length + record.bets.teamB.length} Bets</div>
+                    <div className="font-medium text-gray-200">{record.totalAmount || 0} Credits</div>
+                    <div className="text-sm text-gray-400">{(record.bets?.teamA?.length || 0) + (record.bets?.teamB?.length || 0)} Bets</div>
                   </div>
                   
                   <Button 
@@ -174,11 +175,11 @@ const BetLedger: React.FC<BetLedgerProps> = ({
                       <div className="flex justify-between">
                         <div>
                           <span className="font-medium text-blue-400 mr-2">{teamAName}:</span>
-                          <span className="text-white">{record.teamABalls}</span>
+                          <span className="text-white">{record.teamABalls || 0}</span>
                         </div>
                         <div>
                           <span className="font-medium text-purple-400 mr-2">{teamBName}:</span>
-                          <span className="text-white">{record.teamBBalls}</span>
+                          <span className="text-white">{record.teamBBalls || 0}</span>
                         </div>
                       </div>
                     </div>
@@ -187,7 +188,7 @@ const BetLedger: React.FC<BetLedgerProps> = ({
                       <div className="flex items-center">
                         <Circle className={`h-3 w-3 mr-2 ${record.breakingTeam === 'A' ? 'text-blue-400' : 'text-purple-400'}`} fill="currentColor" />
                         <span className={`font-medium ${record.breakingTeam === 'A' ? 'text-blue-400' : 'text-purple-400'}`}>
-                          {record.breakingTeam === 'A' ? teamAName : teamBName}
+                          {record.breakingTeam === 'A' ? teamAName : record.breakingTeam === 'B' ? teamBName : 'Unknown'}
                         </span>
                       </div>
                     </div>
