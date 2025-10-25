@@ -329,6 +329,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for game history updates from other clients
     const handleGameHistoryUpdate = (data: { gameHistory: any[] }) => {
       try {
+        // IGNORE updates during clearing to prevent re-population
+        if (isClearingRef.current) {
+          console.log('⏭️ [UserContext] Ignoring history update during clear operation');
+          return;
+        }
+        
         console.log('📥 [UserContext] Game history update received:', data.gameHistory?.length, 'entries');
         if (Array.isArray(data.gameHistory)) {
           console.log('📝 [UserContext] Setting betHistory and immutableBetHistory');
@@ -351,6 +357,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for bet receipts updates from other clients
     const handleBetReceiptsUpdate = (data: { betReceipts: any[] }) => {
       try {
+        // IGNORE updates during clearing to prevent re-population
+        if (isClearingRef.current) {
+          console.log('⏭️ [UserContext] Ignoring receipts update during clear operation');
+          return;
+        }
+        
         console.log('📥 [UserContext] Bet receipts update received:', data.betReceipts?.length, 'entries');
         if (Array.isArray(data.betReceipts)) {
           console.log('📝 [UserContext] Setting userBetReceipts and immutableBetReceipts');
