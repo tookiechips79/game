@@ -440,18 +440,20 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   // IMMUTABLE BET HISTORY - Always save to separate storage, NEVER cleared
   useEffect(() => {
+    // COMPLETELY SKIP during clearing - don't even save to localStorage
+    if (isClearingRef.current) {
+      console.log('⏭️ Skipping history useEffect during clear operation');
+      return;
+    }
+    
     try {
       // Only save to main key to conserve storage space
       localStorage.setItem(IMMUTABLE_BET_HISTORY_KEY, JSON.stringify(immutableBetHistory));
       console.log('✅ Immutable bet history saved to localStorage:', immutableBetHistory.length, 'records');
       
-      // Emit game history update via Socket.IO for real-time sync (but NOT during clearing)
-      if (!isClearingRef.current) {
-        socketIOService.emitGameHistoryUpdate(immutableBetHistory);
-        console.log('📤 Emitted game history update:', immutableBetHistory.length, 'records');
-      } else {
-        console.log('⏭️ Skipped emitting during clear operation');
-      }
+      // Emit game history update via Socket.IO for real-time sync
+      socketIOService.emitGameHistoryUpdate(immutableBetHistory);
+      console.log('📤 Emitted game history update:', immutableBetHistory.length, 'records');
     } catch (error) {
       if (error instanceof Error && error.name === 'QuotaExceededError') {
         console.error('❌ localStorage quota exceeded! Clearing old data...');
@@ -473,18 +475,20 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   // IMMUTABLE BET RECEIPTS - Always save to separate storage, NEVER cleared
   useEffect(() => {
+    // COMPLETELY SKIP during clearing - don't even save to localStorage
+    if (isClearingRef.current) {
+      console.log('⏭️ Skipping receipts useEffect during clear operation');
+      return;
+    }
+    
     try {
       // Only save to main key to conserve storage space
       localStorage.setItem(IMMUTABLE_BET_RECEIPTS_KEY, JSON.stringify(immutableBetReceipts));
       console.log('✅ Immutable bet receipts saved to localStorage:', immutableBetReceipts.length, 'receipts');
       
-      // Emit bet receipts update via Socket.IO for real-time sync (but NOT during clearing)
-      if (!isClearingRef.current) {
-        socketIOService.emitBetReceiptsUpdate(immutableBetReceipts);
-        console.log('📤 Emitted bet receipts update:', immutableBetReceipts.length, 'receipts');
-      } else {
-        console.log('⏭️ Skipped emitting receipts during clear operation');
-      }
+      // Emit bet receipts update via Socket.IO for real-time sync
+      socketIOService.emitBetReceiptsUpdate(immutableBetReceipts);
+      console.log('📤 Emitted bet receipts update:', immutableBetReceipts.length, 'receipts');
     } catch (error) {
       if (error instanceof Error && error.name === 'QuotaExceededError') {
         console.error('❌ localStorage quota exceeded! Clearing old data...');
