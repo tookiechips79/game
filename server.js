@@ -194,20 +194,21 @@ io.on('connection_error', (error) => {
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-  console.log(`User connected: ${socket.id}`);
-  
-  // Clean up any stale entries for this socket on connection
-  if (connectedUsers.has(socket.id)) {
-    console.log(`Cleaning up stale user data for socket ${socket.id}`);
-    connectedUsers.delete(socket.id);
-  }
-  
-  // Send current game state to newly connected client
-  socket.emit('game-state-update', serverGameState);
-  
-  // Send current connected users data to the new client
-  const coinsData = calculateConnectedUsersCoins();
-  socket.emit('connected-users-coins-update', coinsData);
+  try {
+    console.log(`User connected: ${socket.id}`);
+    
+    // Clean up any stale entries for this socket on connection
+    if (connectedUsers.has(socket.id)) {
+      console.log(`Cleaning up stale user data for socket ${socket.id}`);
+      connectedUsers.delete(socket.id);
+    }
+    
+    // Send current game state to newly connected client
+    socket.emit('game-state-update', serverGameState);
+    
+    // Send current connected users data to the new client
+    const coinsData = calculateConnectedUsersCoins();
+    socket.emit('connected-users-coins-update', coinsData);
   
   // Handle user login/selection - track connected users
   socket.on('user-login', (userData) => {
@@ -438,6 +439,9 @@ io.on('connection', (socket) => {
       console.log(`📊 Connected users coins after disconnect: ${coinsData.totalCoins} coins from ${coinsData.connectedUserCount} users`);
     }
   });
+  } catch (error) {
+    console.error('❌ Error in Socket.IO connection handler:', error);
+  }
 });
 
 // API endpoint to get current game state
