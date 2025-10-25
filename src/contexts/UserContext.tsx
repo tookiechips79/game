@@ -128,6 +128,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Flag to prevent emitting history updates during clear operations
   const isClearingRef = useRef(false);
 
+  // Flag to prevent re-emitting data that came FROM the socket listener
+  const isUpdatingFromSocketRef = useRef(false);
+
   // Custom setCurrentUser that emits user login/logout events
   const setCurrentUserWithLogin = (user: User | null) => {
     // Prevent rapid login/logout events
@@ -345,9 +348,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             id: record.id || `bet-history-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 9)}`
           }));
           
+          // SET FLAG to prevent re-emitting this data back to socket
+          isUpdatingFromSocketRef.current = true;
           setBetHistory([...ensuredHistory]); // Use spread for new reference
           setImmutableBetHistory([...ensuredHistory]);
-          console.log('✅ [UserContext] States updated, component will re-render');
+          console.log('✅ [UserContext] States updated from socket, component will re-render');
+          
+          // Reset flag after state updates settle
+          setTimeout(() => {
+            isUpdatingFromSocketRef.current = false;
+          }, 50);
         }
       } catch (err) {
         console.error('❌ Error handling game history update:', err);
@@ -373,9 +383,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             id: record.id || `bet-receipt-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 9)}`
           }));
           
+          // SET FLAG to prevent re-emitting this data back to socket
+          isUpdatingFromSocketRef.current = true;
           setUserBetReceipts([...ensuredReceipts]); // Use spread for new reference
           setImmutableBetReceipts([...ensuredReceipts]);
-          console.log('✅ [UserContext] States updated, component will re-render');
+          console.log('✅ [UserContext] States updated from socket, component will re-render');
+          
+          // Reset flag after state updates settle
+          setTimeout(() => {
+            isUpdatingFromSocketRef.current = false;
+          }, 50);
         }
       } catch (err) {
         console.error('❌ Error handling bet receipts update:', err);
@@ -446,6 +463,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
+    // SKIP emitting if this update came FROM the socket (to prevent re-emit loop)
+    if (isUpdatingFromSocketRef.current) {
+      console.log('⏭️ Skipping history useEffect - data came from socket, no re-emit');
+      return;
+    }
+    
     try {
       // Only save to main key to conserve storage space
       localStorage.setItem(IMMUTABLE_BET_HISTORY_KEY, JSON.stringify(immutableBetHistory));
@@ -478,6 +501,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // COMPLETELY SKIP during clearing - don't even save to localStorage
     if (isClearingRef.current) {
       console.log('⏭️ Skipping receipts useEffect during clear operation');
+      return;
+    }
+    
+    // SKIP emitting if this update came FROM the socket (to prevent re-emit loop)
+    if (isUpdatingFromSocketRef.current) {
+      console.log('⏭️ Skipping receipts useEffect - data came from socket, no re-emit');
       return;
     }
     
