@@ -22,6 +22,7 @@ import GameHistoryWindow from "@/components/GameHistoryWindow";
 import { useUser } from "@/contexts/UserContext";
 import { useGameState } from "@/contexts/GameStateContext";
 import { Bet, BookedBet, ConfirmationState } from "@/types/user";
+import { socketIOService } from "@/services/socketIOService";
 
 const Index = () => {
   const { 
@@ -33,7 +34,8 @@ const Index = () => {
     incrementWins, 
     incrementLosses,
     clearBettingQueueReceipts,
-    userBetReceipts
+    userBetReceipts,
+    betHistory
   } = useUser();
   
   const { gameState, updateGameState, isAdmin, localAdminState, updateLocalAdminState, startTimer, pauseTimer, resetTimer, setTimer, resetTimerOnMatchStart, resetTimerOnGameWin } = useGameState();
@@ -345,6 +347,15 @@ const Index = () => {
       description: "A new betting round can begin",
       className: "custom-toast-success",
     });
+    
+    // Emit updated game history to all connected clients via Socket.IO
+    // This happens after the bet history record is added
+    setTimeout(() => {
+      if (betHistory && betHistory.length > 0) {
+        console.log('📤 [processBetsForGameWin] Emitting game history after bet processing:', betHistory.length, 'records');
+        socketIOService.emitGameHistoryUpdate(betHistory);
+      }
+    }, 200);
   };
 
   const deleteUnmatchedBets = () => {
