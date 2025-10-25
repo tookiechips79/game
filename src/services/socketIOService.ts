@@ -60,12 +60,17 @@ class SocketIOService {
       
       console.log('✅ Socket.IO client library loaded successfully');
       
-      const serverUrl = process.env.NODE_ENV === 'production' 
+      // Determine if we're in production by checking the hostname
+      const isProduction = !window.location.hostname.includes('localhost') && !window.location.hostname.includes('192.168');
+      
+      const serverUrl = isProduction
         ? 'https://game-production-0ca9.up.railway.app'  // Railway backend
         : `http://${window.location.hostname}:3001`;
       
       console.log('🔌 Connecting to Socket.IO server:', serverUrl);
       console.log('🌐 Current page URL:', window.location.href);
+      console.log('📍 Hostname:', window.location.hostname);
+      console.log('🏭 Is Production:', isProduction);
       
       // Start connection timing
       const connectionStartTime = Date.now();
