@@ -65,6 +65,33 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Initialize with default admin to ensure we always have at least one user
   const [users, setUsers] = useState<User[]>(() => {
     try {
+      // CLEANUP: Remove old/unused localStorage keys to free up space
+      console.log('🧹 Cleaning up old localStorage keys...');
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (
+          key.includes('ultra_bulletproof_') ||
+          key.includes('bulletproof_') ||
+          key === BET_HISTORY_STORAGE_KEY || // Old mutable bet history
+          key === USER_BET_RECEIPTS_KEY ||  // Old mutable receipts
+          key.includes('bet_history') ||    // Any bet history key
+          key.includes('bet_receipt')       // Any bet receipt key
+        )) {
+          keysToRemove.push(key);
+        }
+      }
+      
+      keysToRemove.forEach(key => {
+        localStorage.removeItem(key);
+        console.log(`🗑️ Removed old key: ${key}`);
+      });
+      
+      if (keysToRemove.length > 0) {
+        console.log(`✅ Cleaned up ${keysToRemove.length} old keys, freed up space!`);
+      }
+      
+      // Now load users
       const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
       if (storedUsers) {
         const parsedUsers = JSON.parse(storedUsers);
@@ -134,6 +161,31 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const loadUsers = () => {
       try {
+        // CLEANUP: Remove old/unused localStorage keys to free up space
+        console.log('🧹 Cleaning up old localStorage keys...');
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (
+            key.includes('ultra_bulletproof_') ||
+            key.includes('bulletproof_') ||
+            key === BET_HISTORY_STORAGE_KEY || // Old mutable bet history
+            key === USER_BET_RECEIPTS_KEY      // Old mutable receipts
+          )) {
+            keysToRemove.push(key);
+          }
+        }
+        
+        keysToRemove.forEach(key => {
+          localStorage.removeItem(key);
+          console.log(`🗑️ Removed old key: ${key}`);
+        });
+        
+        if (keysToRemove.length > 0) {
+          console.log(`✅ Cleaned up ${keysToRemove.length} old keys`);
+        }
+        
+        // Now load users
         const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
         if (storedUsers) {
           const parsedUsers = JSON.parse(storedUsers);
@@ -635,7 +687,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const updatedHistory = [newRecord, ...prev];
       
       // QUOTA MANAGEMENT: Keep only last 100 games to prevent localStorage overflow
-      const MAX_GAMES = 100;
+      const MAX_GAMES = 50;
       if (updatedHistory.length > MAX_GAMES) {
         console.log(`⚠️ Game history limit reached (${updatedHistory.length}), trimming to ${MAX_GAMES} records`);
         return updatedHistory.slice(0, MAX_GAMES);
@@ -649,7 +701,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const updatedImmutableHistory = [newRecord, ...prev];
       
       // QUOTA MANAGEMENT: Keep only last 100 games to prevent localStorage overflow
-      const MAX_GAMES = 100;
+      const MAX_GAMES = 50;
       if (updatedImmutableHistory.length > MAX_GAMES) {
         console.log(`⚠️ Immutable history limit reached (${updatedImmutableHistory.length}), trimming to ${MAX_GAMES} records`);
         return updatedImmutableHistory.slice(0, MAX_GAMES);
@@ -737,7 +789,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const updatedReceipts = [newReceipt, ...prev];
       
       // QUOTA MANAGEMENT: Keep only last 500 receipts to prevent localStorage overflow
-      const MAX_RECEIPTS = 500;
+      const MAX_RECEIPTS = 250;
       if (updatedReceipts.length > MAX_RECEIPTS) {
         console.log(`⚠️ Bet receipts limit reached (${updatedReceipts.length}), trimming to ${MAX_RECEIPTS} receipts`);
         return updatedReceipts.slice(0, MAX_RECEIPTS);
@@ -751,7 +803,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const updatedImmutableReceipts = [newReceipt, ...prev];
       
       // QUOTA MANAGEMENT: Keep only last 500 receipts to prevent localStorage overflow
-      const MAX_RECEIPTS = 500;
+      const MAX_RECEIPTS = 250;
       if (updatedImmutableReceipts.length > MAX_RECEIPTS) {
         console.log(`⚠️ Immutable receipts limit reached (${updatedImmutableReceipts.length}), trimming to ${MAX_RECEIPTS} receipts`);
         return updatedImmutableReceipts.slice(0, MAX_RECEIPTS);
