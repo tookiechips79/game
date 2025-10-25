@@ -335,6 +335,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for game history updates from other clients
     const handleGameHistoryUpdate = (data: { gameHistory: any[] }) => {
       try {
+        console.log(`[HISTORY_LISTENER] Received update with ${data.gameHistory?.length} entries`);
+        console.log(`  pauseListenersRef=${pauseListenersRef.current}, isClearingRef=${isClearingRef.current}`);
+        
         // PAUSE listeners during clearing - completely ignore all updates
         if (pauseListenersRef.current) {
           console.log('⏸️ [UserContext] Listeners paused, ignoring history update');
@@ -350,6 +353,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('📥 [UserContext] Game history update received:', data.gameHistory?.length, 'entries');
         if (Array.isArray(data.gameHistory)) {
           console.log('📝 [UserContext] Setting betHistory and immutableBetHistory');
+          console.log('🚨 HISTORY RE-POPULATION HAPPENING NOW! Stack trace:', new Error().stack);
           
           // Ensure all records have unique IDs
           const ensuredHistory = data.gameHistory.map((record, index) => ({
