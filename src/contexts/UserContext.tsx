@@ -336,8 +336,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('📥 [UserContext] Game history update received:', data.gameHistory?.length, 'entries');
         if (Array.isArray(data.gameHistory)) {
           console.log('📝 [UserContext] Setting betHistory and immutableBetHistory');
-          setBetHistory([...data.gameHistory]); // Use spread for new reference
-          setImmutableBetHistory([...data.gameHistory]);
+          
+          // Ensure all records have unique IDs
+          const ensuredHistory = data.gameHistory.map((record, index) => ({
+            ...record,
+            id: record.id || `bet-history-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 9)}`
+          }));
+          
+          setBetHistory([...ensuredHistory]); // Use spread for new reference
+          setImmutableBetHistory([...ensuredHistory]);
           console.log('✅ [UserContext] States updated, component will re-render');
         }
       } catch (err) {
@@ -351,8 +358,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('📥 [UserContext] Bet receipts update received:', data.betReceipts?.length, 'entries');
         if (Array.isArray(data.betReceipts)) {
           console.log('📝 [UserContext] Setting userBetReceipts and immutableBetReceipts');
-          setUserBetReceipts([...data.betReceipts]); // Use spread for new reference
-          setImmutableBetReceipts([...data.betReceipts]);
+          
+          // Ensure all records have unique IDs
+          const ensuredReceipts = data.betReceipts.map((record, index) => ({
+            ...record,
+            id: record.id || `bet-receipt-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 9)}`
+          }));
+          
+          setUserBetReceipts([...ensuredReceipts]); // Use spread for new reference
+          setImmutableBetReceipts([...ensuredReceipts]);
           console.log('✅ [UserContext] States updated, component will re-render');
         }
       } catch (err) {
