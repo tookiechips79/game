@@ -422,7 +422,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         console.log('🧹 [UserContext] Clearing all data due to admin command');
         
-        // PAUSE all Socket.IO listeners to prevent any incoming updates during clear
+        // BROADCAST pause command to ALL browsers first (including this one)
+        socketIOService.emitPauseListeners();
+        
+        // PAUSE all Socket.IO listeners on this browser too
         pauseListenersRef.current = true;
         console.log('⏸️ [UserContext] Pausing Socket.IO listeners during clear');
         
@@ -446,6 +449,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setTimeout(() => {
           isClearingRef.current = false;
           pauseListenersRef.current = false;
+          
+          // BROADCAST resume command to ALL browsers
+          socketIOService.emitResumeListeners();
+          
           console.log('🔄 [UserContext] Clear complete - resuming Socket.IO listeners');
         }, 500);
       } catch (err) {
@@ -453,6 +460,18 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isClearingRef.current = false;
         pauseListenersRef.current = false;
       }
+    });
+
+    // Listen for pause command from other browsers
+    socketIOService.onPauseListeners(() => {
+      console.log('⏸️ [UserContext] Pausing listeners due to remote pause command');
+      pauseListenersRef.current = true;
+    });
+
+    // Listen for resume command from other browsers
+    socketIOService.onResumeListeners(() => {
+      console.log('▶️ [UserContext] Resuming listeners due to remote resume command');
+      pauseListenersRef.current = false;
     });
 
     return () => {

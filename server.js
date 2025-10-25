@@ -502,6 +502,24 @@ io.on('connection', (socket) => {
     io.emit('clear-all-data', data);
     console.log('📤 Broadcasted clear all data command to all clients');
   });
+
+  // Handle pause listeners command
+  socket.on('pause-listeners', (data) => {
+    console.log('⏸️ Received pause listeners command');
+    
+    // Broadcast to ALL clients to pause
+    io.emit('pause-listeners', data);
+    console.log('📤 Broadcasted pause listeners command to all clients');
+  });
+
+  // Handle resume listeners command
+  socket.on('resume-listeners', (data) => {
+    console.log('▶️ Received resume listeners command');
+    
+    // Broadcast to ALL clients to resume
+    io.emit('resume-listeners', data);
+    console.log('📤 Broadcasted resume listeners command to all clients');
+  });
   
   // Handle score updates
   socket.on('score-update', (scoreData) => {

@@ -443,6 +443,42 @@ class SocketIOService {
       });
     }
   }
+
+  // Pause listeners during clear - broadcast to all clients
+  public emitPauseListeners() {
+    if (this.socket && this.isSocketConnected()) {
+      console.log('📤 Emitting pause listeners command to ALL clients');
+      this.socket.emit('pause-listeners', { timestamp: Date.now() });
+    }
+  }
+
+  public onPauseListeners(callback: () => void) {
+    if (this.socket) {
+      this.socket.off('pause-listeners');
+      this.socket.on('pause-listeners', () => {
+        console.log('📥 [SocketIOService] Received pause listeners command');
+        callback();
+      });
+    }
+  }
+
+  // Resume listeners after clear - broadcast to all clients
+  public emitResumeListeners() {
+    if (this.socket && this.isSocketConnected()) {
+      console.log('📤 Emitting resume listeners command to ALL clients');
+      this.socket.emit('resume-listeners', { timestamp: Date.now() });
+    }
+  }
+
+  public onResumeListeners(callback: () => void) {
+    if (this.socket) {
+      this.socket.off('resume-listeners');
+      this.socket.on('resume-listeners', () => {
+        console.log('📥 [SocketIOService] Received resume listeners command');
+        callback();
+      });
+    }
+  }
 }
 
 // Create singleton instance
