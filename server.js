@@ -16,15 +16,16 @@ const io = new Server(server, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
-    credentials: true,
+    credentials: false,
     allowedHeaders: ["*"]
   },
   transports: ['polling', 'websocket'],
-  pingTimeout: 30000,
-  pingInterval: 10000,
+  pingTimeout: 60000,
+  pingInterval: 25000,
   allowEIO3: true,
   serveClient: true,
-  allowUpgrades: true
+  allowUpgrades: true,
+  maxHttpBufferSize: 1e6
 });
 
 // Middleware
@@ -172,6 +173,13 @@ function resetServerTimer() {
     timerSeconds: 0
   });
 }
+
+// Socket.IO middleware to log and accept all connections
+io.use((socket, next) => {
+  console.log('🔌 New connection attempt from:', socket.handshake.address);
+  console.log('📍 Origin:', socket.handshake.headers.origin);
+  next();
+});
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
