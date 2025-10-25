@@ -623,8 +623,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setBetHistory(prev => {
       const updatedHistory = [newRecord, ...prev];
       
-      // BET HISTORY IS LOCAL ONLY - NO SOCKET EMISSIONS
-      // This prevents any external clearing or modification
+      // QUOTA MANAGEMENT: Keep only last 100 games to prevent localStorage overflow
+      const MAX_GAMES = 100;
+      if (updatedHistory.length > MAX_GAMES) {
+        console.log(`⚠️ Game history limit reached (${updatedHistory.length}), trimming to ${MAX_GAMES} records`);
+        return updatedHistory.slice(0, MAX_GAMES);
+      }
       
       return updatedHistory;
     });
@@ -632,6 +636,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // ALSO ADD TO IMMUTABLE BET HISTORY - This can NEVER be cleared
     setImmutableBetHistory(prev => {
       const updatedImmutableHistory = [newRecord, ...prev];
+      
+      // QUOTA MANAGEMENT: Keep only last 100 games to prevent localStorage overflow
+      const MAX_GAMES = 100;
+      if (updatedImmutableHistory.length > MAX_GAMES) {
+        console.log(`⚠️ Immutable history limit reached (${updatedImmutableHistory.length}), trimming to ${MAX_GAMES} records`);
+        return updatedImmutableHistory.slice(0, MAX_GAMES);
+      }
+      
       return updatedImmutableHistory;
     });
     
@@ -713,8 +725,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUserBetReceipts(prev => {
       const updatedReceipts = [newReceipt, ...prev];
       
-      // USER SETTINGS ARE OFFLINE - NO SOCKET EMISSIONS
-      // Bet receipts are now completely local
+      // QUOTA MANAGEMENT: Keep only last 500 receipts to prevent localStorage overflow
+      const MAX_RECEIPTS = 500;
+      if (updatedReceipts.length > MAX_RECEIPTS) {
+        console.log(`⚠️ Bet receipts limit reached (${updatedReceipts.length}), trimming to ${MAX_RECEIPTS} receipts`);
+        return updatedReceipts.slice(0, MAX_RECEIPTS);
+      }
       
       return updatedReceipts;
     });
@@ -722,6 +738,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // ALSO ADD TO IMMUTABLE BET RECEIPTS - This can NEVER be cleared
     setImmutableBetReceipts(prev => {
       const updatedImmutableReceipts = [newReceipt, ...prev];
+      
+      // QUOTA MANAGEMENT: Keep only last 500 receipts to prevent localStorage overflow
+      const MAX_RECEIPTS = 500;
+      if (updatedImmutableReceipts.length > MAX_RECEIPTS) {
+        console.log(`⚠️ Immutable receipts limit reached (${updatedImmutableReceipts.length}), trimming to ${MAX_RECEIPTS} receipts`);
+        return updatedImmutableReceipts.slice(0, MAX_RECEIPTS);
+      }
+      
       return updatedImmutableReceipts;
     });
   };
