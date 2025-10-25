@@ -217,18 +217,22 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (storedImmutableBetHistory) {
         const parsedHistory = JSON.parse(storedImmutableBetHistory);
         if (Array.isArray(parsedHistory)) {
+          setBetHistory(parsedHistory); // Sync betHistory with immutableBetHistory
           setImmutableBetHistory(parsedHistory);
-          console.log('✅ Immutable bet history loaded:', parsedHistory.length, 'records');
+          console.log('✅ Bet history loaded:', parsedHistory.length, 'records');
         } else {
           console.warn('⚠️ Invalid immutable bet history format, initializing empty');
+          setBetHistory([]);
           setImmutableBetHistory([]);
         }
       } else {
         console.log('ℹ️ No immutable bet history found, initializing empty');
+        setBetHistory([]);
         setImmutableBetHistory([]);
       }
     } catch (error) {
       console.error('❌ Error loading immutable bet history:', error);
+      setBetHistory([]);
       setImmutableBetHistory([]);
     }
     
