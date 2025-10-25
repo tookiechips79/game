@@ -55,19 +55,20 @@ class SocketIOService {
       // Check if Socket.IO client is available
       if (typeof io === 'undefined') {
         console.error('❌ Socket.IO client library not loaded!');
+        console.warn('⚠️ App will work without real-time sync');
         return;
       }
       
       console.log('✅ Socket.IO client library loaded successfully');
       
-      // Connect to the Socket.IO server using the same host as the current page
+      // In production, Socket.IO might not work due to HTTPS/CORS issues
+      // The app will still function, just without real-time sync
       const serverUrl = process.env.NODE_ENV === 'production' 
         ? 'https://game-production-0ca9.up.railway.app'  // Railway backend
         : `http://${window.location.hostname}:3001`;
       
-      console.log('🔌 Connecting to Socket.IO server:', serverUrl);
+      console.log('🔌 Attempting to connect to Socket.IO server:', serverUrl);
       console.log('🌐 Current page URL:', window.location.href);
-      console.log('🌐 Hostname:', window.location.hostname);
       
       // Start connection timing
       const connectionStartTime = Date.now();
@@ -85,29 +86,21 @@ class SocketIOService {
         rememberUpgrade: true
       });
 
-      console.log('🔌 Socket.IO client created:', {
-        serverUrl,
-        socketExists: !!this.socket,
-        socketConnecting: this.socket?.connecting,
-        socketConnected: this.socket?.connected
-      });
+      console.log('🔌 Socket.IO client created');
 
       this.setupEventListeners(serverUrl, connectionStartTime);
       
-      // Add a timeout check to see if connection is taking too long
+      // Add a timeout check
       setTimeout(() => {
         if (this.socket && !this.socket.connected) {
-          console.warn('⚠️ Socket.IO connection still pending after 10 seconds:', {
-            socketExists: !!this.socket,
-            socketConnecting: this.socket?.connecting,
-            socketConnected: this.socket?.connected,
-            serverUrl
-          });
+          console.warn('⚠️ Socket.IO connection not established after 15 seconds');
+          console.warn('⚠️ App will continue working without real-time sync');
         }
-      }, 10000);
+      }, 15000);
       
     } catch (error) {
-      console.error('Failed to initialize Socket.IO:', error);
+      console.error('⚠️ Failed to initialize Socket.IO:', error);
+      console.warn('⚠️ App will continue working without real-time sync');
     }
   }
 
