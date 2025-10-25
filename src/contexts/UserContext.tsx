@@ -269,6 +269,35 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  // Socket.IO listeners for game history and bet receipts real-time sync
+  useEffect(() => {
+    socketIOService.connect();
+
+    // Listen for game history updates from other clients
+    socketIOService.onGameHistoryUpdate((data: { gameHistory: any[] }) => {
+      console.log('📥 [UserContext] Received game history update:', data.gameHistory?.length, 'entries');
+      if (Array.isArray(data.gameHistory)) {
+        setBetHistory(data.gameHistory);
+        setImmutableBetHistory(data.gameHistory);
+        console.log('✅ [UserContext] Game history synced');
+      }
+    });
+
+    // Listen for bet receipts updates from other clients
+    socketIOService.onBetReceiptsUpdate((data: { betReceipts: any[] }) => {
+      console.log('📥 [UserContext] Received bet receipts update:', data.betReceipts?.length, 'entries');
+      if (Array.isArray(data.betReceipts)) {
+        setUserBetReceipts(data.betReceipts);
+        setImmutableBetReceipts(data.betReceipts);
+        console.log('✅ [UserContext] Bet receipts synced');
+      }
+    });
+
+    return () => {
+      // Cleanup if needed
+    };
+  }, []);
+
   useEffect(() => {
     if (users.length > 0) {
       localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
@@ -297,6 +326,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const uniqueKey = "ultra_bulletproof_bet_history_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
       localStorage.setItem(uniqueKey, JSON.stringify(immutableBetHistory));
       console.log('✅ Immutable bet history saved to localStorage:', immutableBetHistory.length, 'records');
+      
+      // Emit game history update via Socket.IO for real-time sync
+      socketIOService.emitGameHistoryUpdate(immutableBetHistory);
+      console.log('📤 Emitted game history update:', immutableBetHistory.length, 'records');
     } catch (error) {
       console.error('❌ Failed to save immutable bet history:', error);
     }
@@ -317,6 +350,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const uniqueKey = "ultra_bulletproof_bet_receipts_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
       localStorage.setItem(uniqueKey, JSON.stringify(immutableBetReceipts));
       console.log('✅ Immutable bet receipts saved to localStorage:', immutableBetReceipts.length, 'receipts');
+      
+      // Emit bet receipts update via Socket.IO for real-time sync
+      socketIOService.emitBetReceiptsUpdate(immutableBetReceipts);
+      console.log('📤 Emitted bet receipts update:', immutableBetReceipts.length, 'receipts');
     } catch (error) {
       console.error('❌ Failed to save immutable bet receipts:', error);
     }

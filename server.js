@@ -340,6 +340,28 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('bet-update', betData);
   });
   
+  // Handle game history updates - sync across all clients
+  socket.on('game-history-update', (data) => {
+    console.log('📥 Received game history update:', data.gameHistory?.length, 'entries');
+    serverGameState.gameHistory = data.gameHistory || [];
+    serverGameState.lastUpdated = Date.now();
+    
+    // Broadcast to all OTHER clients (matches bet-update pattern)
+    socket.broadcast.emit('game-history-update', data);
+    console.log('📤 Broadcasted game history to all OTHER clients');
+  });
+
+  // Handle bet receipts updates - sync across all clients
+  socket.on('bet-receipts-update', (data) => {
+    console.log('📥 Received bet receipts update:', data.betReceipts?.length, 'entries');
+    serverGameState.betReceipts = data.betReceipts || [];
+    serverGameState.lastUpdated = Date.now();
+    
+    // Broadcast to all OTHER clients (matches bet-update pattern)
+    socket.broadcast.emit('bet-receipts-update', data);
+    console.log('📤 Broadcasted bet receipts to all OTHER clients');
+  });
+  
   // Handle game state updates
   socket.on('game-state-update', (gameStateData) => {
     console.log('Received game state update:', gameStateData);
