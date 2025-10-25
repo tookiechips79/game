@@ -174,9 +174,15 @@ function resetServerTimer() {
 
 // Socket.IO middleware to log and accept all connections
 io.use((socket, next) => {
-  console.log('🔌 New connection attempt from:', socket.handshake.address);
-  console.log('📍 Origin:', socket.handshake.headers.origin);
-  next();
+  try {
+    console.log('🔌 New connection attempt from:', socket.handshake.address);
+    console.log('📍 Origin:', socket.handshake.headers.origin);
+    console.log('📦 Query:', socket.handshake.query);
+    next();
+  } catch (error) {
+    console.error('❌ Middleware error:', error);
+    next(error);
+  }
 });
 
 // Socket.IO connection error handler
