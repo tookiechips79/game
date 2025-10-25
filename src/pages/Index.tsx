@@ -350,17 +350,8 @@ const Index = () => {
       className: "custom-toast-success",
     });
     
-    // Emit updated game history to all connected clients via Socket.IO
-    // Emit immediately with the new record added to current history
-    console.log('📤 [processBetsForGameWin] Emitting new game history record to all clients');
-    const updatedGameHistory = [gameHistoryRecord, ...betHistory];
-    try {
-      socketIOService.emitGameHistoryUpdate(updatedGameHistory);
-    } catch (err) {
-      console.error('❌ Error emitting game history:', err);
-    }
-    
-    // Also emit the updated bet state to clear queues for other clients
+    // NOTE: Game history is already emitted from addBetHistoryRecord(), don't duplicate here
+    // Only emit the bet state clearing so other clients clear their queues
     console.log('📤 [processBetsForGameWin] Emitting cleared bet queues to all clients');
     try {
       socketIOService.emitBetUpdate({
