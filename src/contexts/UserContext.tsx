@@ -474,9 +474,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem(IMMUTABLE_BET_HISTORY_KEY, JSON.stringify(immutableBetHistory));
       console.log('✅ Immutable bet history saved to localStorage:', immutableBetHistory.length, 'records');
       
-      // Emit game history update via Socket.IO for real-time sync
-      socketIOService.emitGameHistoryUpdate(immutableBetHistory);
-      console.log('📤 Emitted game history update:', immutableBetHistory.length, 'records');
+      // NOTE: DO NOT EMIT HERE - emit only happens in addBetHistoryRecord (the SOURCE)
+      // This prevents re-emit loops from Socket.IO listener updates
     } catch (error) {
       if (error instanceof Error && error.name === 'QuotaExceededError') {
         console.error('❌ localStorage quota exceeded! Clearing old data...');
@@ -515,9 +514,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem(IMMUTABLE_BET_RECEIPTS_KEY, JSON.stringify(immutableBetReceipts));
       console.log('✅ Immutable bet receipts saved to localStorage:', immutableBetReceipts.length, 'receipts');
       
-      // Emit bet receipts update via Socket.IO for real-time sync
-      socketIOService.emitBetReceiptsUpdate(immutableBetReceipts);
-      console.log('📤 Emitted bet receipts update:', immutableBetReceipts.length, 'receipts');
+      // NOTE: DO NOT EMIT HERE - emit only happens in addUserBetReceipt (the SOURCE)
+      // This prevents re-emit loops from Socket.IO listener updates
     } catch (error) {
       if (error instanceof Error && error.name === 'QuotaExceededError') {
         console.error('❌ localStorage quota exceeded! Clearing old data...');
@@ -786,6 +784,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       timestamp: Date.now()
     };
     
+    let finalHistory: BetHistoryRecord[] = [];
+    
     setBetHistory(prev => {
       const updatedHistory = [newRecord, ...prev];
       
@@ -793,9 +793,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const MAX_GAMES = 50;
       if (updatedHistory.length > MAX_GAMES) {
         console.log(`⚠️ Game history limit reached (${updatedHistory.length}), trimming to ${MAX_GAMES} records`);
-        return updatedHistory.slice(0, MAX_GAMES);
+        finalHistory = updatedHistory.slice(0, MAX_GAMES);
+        return finalHistory;
       }
       
+      finalHistory = updatedHistory;
       return updatedHistory;
     });
     
@@ -812,6 +814,21 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return updatedImmutableHistory;
     });
+    
+    // EMIT IMMEDIATELY with the new record (don't wait for useEffect)
+    // This is the SOURCE of truth - emit only when data is created locally
+    setTimeout(() => {
+      const historyToEmit = [newRecord, ...betHistory];
+      if (historyToEmit.length > 50) {
+        historyToEmit = historyToEmit.slice(0, 50);
+      }
+      try {
+        console.log('📤 [addBetHistoryRecord] Emitting new game to all clients immediately');
+        socketIOService.emitGameHistoryUpdate(historyToEmit);
+      } catch (err) {
+        console.error('❌ Error emitting game history:', err);
+      }
+    }, 0);
     
     const gameNumber = record.gameNumber;
     
@@ -890,6 +907,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       transactionType: receipt.transactionType || 'bet'
     };
     
+    let finalReceipts: UserBetReceipt[] = [];
+    
     setUserBetReceipts(prev => {
       const updatedReceipts = [newReceipt, ...prev];
       
@@ -897,9 +916,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const MAX_RECEIPTS = 250;
       if (updatedReceipts.length > MAX_RECEIPTS) {
         console.log(`⚠️ Bet receipts limit reached (${updatedReceipts.length}), trimming to ${MAX_RECEIPTS} receipts`);
-        return updatedReceipts.slice(0, MAX_RECEIPTS);
+        finalReceipts = updatedReceipts.slice(0, MAX_RECEIPTS);
+        return finalReceipts;
       }
       
+      finalReceipts = updatedReceipts;
       return updatedReceipts;
     });
     
@@ -916,6 +937,21 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return updatedImmutableReceipts;
     });
+    
+    // EMIT IMMEDIATELY with the new receipt (don't wait for useEffect)
+    // This is the SOURCE of truth - emit only when data is created locally
+    setTimeout(() => {
+      const receiptsToEmit = [newReceipt, ...userBetReceipts];
+      if (receiptsToEmit.length > 250) {
+        receiptsToEmit = receiptsToEmit.slice(0, 250);
+      }
+      try {
+        console.log('📤 [addUserBetReceipt] Emitting new receipt to all clients immediately');
+        socketIOService.emitBetReceiptsUpdate(receiptsToEmit);
+      } catch (err) {
+        console.error('❌ Error emitting bet receipts:', err);
+      }
+    }, 0);
   };
   
   const getUserBetReceipts = (userId: string) => {
