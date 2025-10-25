@@ -271,30 +271,36 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Socket.IO listeners for game history and bet receipts real-time sync
   useEffect(() => {
+    console.log('🔌 Setting up Socket.IO listeners');
     socketIOService.connect();
 
     // Listen for game history updates from other clients
-    socketIOService.onGameHistoryUpdate((data: { gameHistory: any[] }) => {
-      console.log('📥 [UserContext] Received game history update:', data.gameHistory?.length, 'entries');
-      if (Array.isArray(data.gameHistory)) {
-        setBetHistory(data.gameHistory);
-        setImmutableBetHistory(data.gameHistory);
-        console.log('✅ [UserContext] Game history synced');
+    const gameHistoryListener = (data: { gameHistory: any[] }) => {
+      console.log('📥 [UserContext] Game history update received:', data.gameHistory?.length, 'entries');
+      if (Array.isArray(data.gameHistory) && data.gameHistory.length >= 0) {
+        console.log('📝 Updating betHistory state with:', data.gameHistory.length, 'records');
+        setBetHistory([...data.gameHistory]); // Use spread to force new reference
+        setImmutableBetHistory([...data.gameHistory]);
+        console.log('✅ [UserContext] Game history state updated');
       }
-    });
+    };
+    socketIOService.onGameHistoryUpdate(gameHistoryListener);
 
     // Listen for bet receipts updates from other clients
-    socketIOService.onBetReceiptsUpdate((data: { betReceipts: any[] }) => {
-      console.log('📥 [UserContext] Received bet receipts update:', data.betReceipts?.length, 'entries');
-      if (Array.isArray(data.betReceipts)) {
-        setUserBetReceipts(data.betReceipts);
-        setImmutableBetReceipts(data.betReceipts);
-        console.log('✅ [UserContext] Bet receipts synced');
+    const betReceiptsListener = (data: { betReceipts: any[] }) => {
+      console.log('📥 [UserContext] Bet receipts update received:', data.betReceipts?.length, 'entries');
+      if (Array.isArray(data.betReceipts) && data.betReceipts.length >= 0) {
+        console.log('📝 Updating betReceipts state with:', data.betReceipts.length, 'receipts');
+        setUserBetReceipts([...data.betReceipts]); // Use spread to force new reference
+        setImmutableBetReceipts([...data.betReceipts]);
+        console.log('✅ [UserContext] Bet receipts state updated');
       }
-    });
+    };
+    socketIOService.onBetReceiptsUpdate(betReceiptsListener);
 
     return () => {
-      // Cleanup if needed
+      console.log('🔌 Cleaning up Socket.IO listeners');
+      // Listeners will be removed with socket cleanup
     };
   }, []);
 

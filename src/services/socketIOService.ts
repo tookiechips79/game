@@ -392,8 +392,12 @@ class SocketIOService {
 
   public onGameHistoryUpdate(callback: (data: { gameHistory: any[] }) => void) {
     if (this.socket) {
+      // Remove any existing listeners first to prevent duplicates
+      this.socket.off('game-history-update');
+      
       this.socket.on('game-history-update', (data: { gameHistory: any[] }) => {
-        console.log('📥 Received game history update:', data.gameHistory?.length, 'records');
+        console.log('📥 [SocketIOService] Received game history update:', data.gameHistory?.length, 'records');
+        console.log('🔔 [SocketIOService] Calling callback with', data.gameHistory?.length, 'records');
         callback(data);
       });
     }
@@ -409,8 +413,12 @@ class SocketIOService {
 
   public onBetReceiptsUpdate(callback: (data: { betReceipts: any[] }) => void) {
     if (this.socket) {
+      // Remove any existing listeners first to prevent duplicates
+      this.socket.off('bet-receipts-update');
+      
       this.socket.on('bet-receipts-update', (data: { betReceipts: any[] }) => {
-        console.log('📥 Received bet receipts update:', data.betReceipts?.length, 'receipts');
+        console.log('📥 [SocketIOService] Received bet receipts update:', data.betReceipts?.length, 'receipts');
+        console.log('🔔 [SocketIOService] Calling callback with', data.betReceipts?.length, 'receipts');
         callback(data);
       });
     }
