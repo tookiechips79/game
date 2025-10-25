@@ -78,12 +78,15 @@ class SocketIOService {
       
       this.socket = io(serverUrl, {
         transports: ['polling'],
-        timeout: 20000,
+        timeout: 30000,
         forceNew: false,
         reconnection: true,
-        reconnectionAttempts: 10,
-        reconnectionDelay: 500,
-        reconnectionDelayMax: 10000
+        reconnectionAttempts: 15,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        query: { 
+          timestamp: Date.now()
+        }
       });
 
       console.log('🔌 Socket.IO client created');
