@@ -365,7 +365,8 @@ const Index = () => {
       totalBookedAmount: 0,
       nextGameBets: [],
       nextTeamAQueue: [],
-      nextTeamBQueue: []
+      nextTeamBQueue: [],
+      nextTotalBookedAmount: 0
     });
   };
 

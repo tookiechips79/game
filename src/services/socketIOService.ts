@@ -7,6 +7,8 @@ export interface BetSyncData {
   nextGameBets?: any[];
   nextTeamAQueue?: any[];
   nextTeamBQueue?: any[];
+  totalBookedAmount?: number;
+  nextTotalBookedAmount?: number;
 }
 
 export interface GameStateSyncData {

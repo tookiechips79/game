@@ -249,6 +249,18 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
           hasUpdates = true;
         }
         
+        if (betData.totalBookedAmount !== undefined) {
+          console.log('📥 Updating totalBookedAmount:', betData.totalBookedAmount);
+          newState.totalBookedAmount = betData.totalBookedAmount;
+          hasUpdates = true;
+        }
+        
+        if (betData.nextTotalBookedAmount !== undefined) {
+          console.log('📥 Updating nextTotalBookedAmount:', betData.nextTotalBookedAmount);
+          newState.nextTotalBookedAmount = betData.nextTotalBookedAmount;
+          hasUpdates = true;
+        }
+        
         if (hasUpdates) {
           console.log('📥 State updated successfully with bet data');
         } else {

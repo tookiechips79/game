@@ -333,6 +333,8 @@ io.on('connection', (socket) => {
     if (betData.nextGameBets) serverGameState.nextGameBets = betData.nextGameBets;
     if (betData.nextTeamAQueue) serverGameState.nextTeamAQueue = betData.nextTeamAQueue;
     if (betData.nextTeamBQueue) serverGameState.nextTeamBQueue = betData.nextTeamBQueue;
+    if (betData.totalBookedAmount !== undefined) serverGameState.totalBookedAmount = betData.totalBookedAmount;
+    if (betData.nextTotalBookedAmount !== undefined) serverGameState.nextTotalBookedAmount = betData.nextTotalBookedAmount;
     
     serverGameState.lastUpdated = Date.now();
     
