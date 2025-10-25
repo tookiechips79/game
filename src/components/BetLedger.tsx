@@ -137,7 +137,7 @@ const BetLedger: React.FC<BetLedgerProps> = ({
                     </div>
                     <div className="text-sm text-gray-400 flex items-center">
                       <Clock className="h-3 w-3 mr-1" />
-                      {record.timestamp ? formatDistanceToNow(record.timestamp, { addSuffix: true }) : 'Unknown time'}
+                      {record.timestamp && record.timestamp > 0 ? formatDistanceToNow(record.timestamp, { addSuffix: true }) : 'Unknown time'}
                       <span className="mx-2">•</span>
                       <span className="text-amber-400/90 flex items-center">
                         <Clock className="h-3 w-3 mr-1" />
