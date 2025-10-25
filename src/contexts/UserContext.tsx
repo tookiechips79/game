@@ -322,10 +322,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [currentUser]);
   
-  useEffect(() => {
-    // Always save bet history to localStorage - it's a permanent ledger
-      localStorage.setItem(BET_HISTORY_STORAGE_KEY, JSON.stringify(betHistory));
-  }, [betHistory]);
+  // NOTE: betHistory is synced via Socket.IO, don't save to localStorage separately
   
   // IMMUTABLE BET HISTORY - Always save to separate storage, NEVER cleared
   useEffect(() => {
@@ -354,11 +351,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [immutableBetHistory]);
   
-  useEffect(() => {
-    if (userBetReceipts.length > 0) {
-      localStorage.setItem(USER_BET_RECEIPTS_KEY, JSON.stringify(userBetReceipts));
-    }
-  }, [userBetReceipts]);
+  // NOTE: userBetReceipts is synced via Socket.IO, don't save to localStorage separately
   
   // IMMUTABLE BET RECEIPTS - Always save to separate storage, NEVER cleared
   useEffect(() => {
