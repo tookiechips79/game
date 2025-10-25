@@ -261,10 +261,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Load immutable bet history - this can NEVER be cleared
     try {
       let storedImmutableBetHistory = localStorage.getItem(IMMUTABLE_BET_HISTORY_KEY);
-      if (!storedImmutableBetHistory) {
-        // Fallback to bulletproof key if main key doesn't exist
-        storedImmutableBetHistory = localStorage.getItem(BULLETPROOF_BET_HISTORY_KEY);
-      }
       
       if (storedImmutableBetHistory) {
         const parsedHistory = JSON.parse(storedImmutableBetHistory);
@@ -296,10 +292,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Load immutable bet receipts - this can NEVER be cleared
     try {
       let storedImmutableBetReceipts = localStorage.getItem(IMMUTABLE_BET_RECEIPTS_KEY);
-      if (!storedImmutableBetReceipts) {
-        // Fallback to bulletproof key if main key doesn't exist
-        storedImmutableBetReceipts = localStorage.getItem(BULLETPROOF_BET_RECEIPTS_KEY);
-      }
       
       if (storedImmutableBetReceipts) {
         const parsedReceipts = JSON.parse(storedImmutableBetReceipts);
