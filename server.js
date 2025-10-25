@@ -28,14 +28,13 @@ const io = new Server(server, {
     credentials: false,
     allowedHeaders: "*"
   },
-  transports: ['polling', 'websocket'],
+  transports: ['polling'],
   pingTimeout: 60000,
   pingInterval: 25000,
   allowEIO3: true,
-  allowUpgrades: true,
   maxHttpBufferSize: 1e6,
   serveClient: false,
-  connectTimeout: 45000,
+  connectTimeout: 60000,
   perMessageDeflate: false
 });
 
