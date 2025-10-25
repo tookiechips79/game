@@ -275,32 +275,32 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     socketIOService.connect();
 
     // Listen for game history updates from other clients
-    const gameHistoryListener = (data: { gameHistory: any[] }) => {
+    const handleGameHistoryUpdate = (data: { gameHistory: any[] }) => {
       console.log('📥 [UserContext] Game history update received:', data.gameHistory?.length, 'entries');
-      if (Array.isArray(data.gameHistory) && data.gameHistory.length >= 0) {
-        console.log('📝 Updating betHistory state with:', data.gameHistory.length, 'records');
-        setBetHistory([...data.gameHistory]); // Use spread to force new reference
+      if (Array.isArray(data.gameHistory)) {
+        console.log('📝 [UserContext] Setting betHistory and immutableBetHistory');
+        setBetHistory([...data.gameHistory]); // Use spread for new reference
         setImmutableBetHistory([...data.gameHistory]);
-        console.log('✅ [UserContext] Game history state updated');
+        console.log('✅ [UserContext] States updated, component will re-render');
       }
     };
-    socketIOService.onGameHistoryUpdate(gameHistoryListener);
 
     // Listen for bet receipts updates from other clients
-    const betReceiptsListener = (data: { betReceipts: any[] }) => {
+    const handleBetReceiptsUpdate = (data: { betReceipts: any[] }) => {
       console.log('📥 [UserContext] Bet receipts update received:', data.betReceipts?.length, 'entries');
-      if (Array.isArray(data.betReceipts) && data.betReceipts.length >= 0) {
-        console.log('📝 Updating betReceipts state with:', data.betReceipts.length, 'receipts');
-        setUserBetReceipts([...data.betReceipts]); // Use spread to force new reference
+      if (Array.isArray(data.betReceipts)) {
+        console.log('📝 [UserContext] Setting userBetReceipts and immutableBetReceipts');
+        setUserBetReceipts([...data.betReceipts]); // Use spread for new reference
         setImmutableBetReceipts([...data.betReceipts]);
-        console.log('✅ [UserContext] Bet receipts state updated');
+        console.log('✅ [UserContext] States updated, component will re-render');
       }
     };
-    socketIOService.onBetReceiptsUpdate(betReceiptsListener);
+
+    socketIOService.onGameHistoryUpdate(handleGameHistoryUpdate);
+    socketIOService.onBetReceiptsUpdate(handleBetReceiptsUpdate);
 
     return () => {
       console.log('🔌 Cleaning up Socket.IO listeners');
-      // Listeners will be removed with socket cleanup
     };
   }, []);
 
