@@ -1,6 +1,6 @@
 {
   "build": {
-    "buildCommand": "npm install --legacy-peer-deps"
+    "buildCommand": "npm install --legacy-peer-deps && echo 'Cache bust: Oct 25 2025'"
   },
   "deploy": {
     "startCommand": "node server.js",
