@@ -493,6 +493,15 @@ io.on('connection', (socket) => {
     
     console.log(`📊 Sent connected users data: ${coinsData.totalCoins} coins from ${coinsData.connectedUserCount} users`);
   });
+
+  // Handle clear all data command from admin
+  socket.on('clear-all-data', (data) => {
+    console.log('🧹 Received clear all data command from admin');
+    
+    // Broadcast to ALL clients (including sender) to clear everything
+    io.emit('clear-all-data', data);
+    console.log('📤 Broadcasted clear all data command to all clients');
+  });
   
   // Handle score updates
   socket.on('score-update', (scoreData) => {

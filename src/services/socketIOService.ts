@@ -425,6 +425,24 @@ class SocketIOService {
       });
     }
   }
+
+  // Clear All Data - Admin command to clear everything on all clients
+  public emitClearAllData() {
+    if (this.socket && this.isSocketConnected()) {
+      console.log('📤 Emitting clear all data command');
+      this.socket.emit('clear-all-data', { timestamp: Date.now() });
+    }
+  }
+
+  public onClearAllData(callback: () => void) {
+    if (this.socket) {
+      this.socket.off('clear-all-data');
+      this.socket.on('clear-all-data', () => {
+        console.log('📥 [SocketIOService] Received clear all data command');
+        callback();
+      });
+    }
+  }
 }
 
 // Create singleton instance

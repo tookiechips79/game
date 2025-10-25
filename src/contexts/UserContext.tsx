@@ -369,6 +369,26 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     socketIOService.onGameHistoryUpdate(handleGameHistoryUpdate);
     socketIOService.onBetReceiptsUpdate(handleBetReceiptsUpdate);
 
+    // Listen for clear all data command from admin
+    socketIOService.onClearAllData(() => {
+      try {
+        console.log('🧹 [UserContext] Clearing all data due to admin command');
+        setBetHistory([]);
+        setImmutableBetHistory([]);
+        setUserBetReceipts([]);
+        setImmutableBetReceipts([]);
+        
+        // Also clear localStorage
+        localStorage.removeItem(IMMUTABLE_BET_HISTORY_KEY);
+        localStorage.removeItem(IMMUTABLE_BET_RECEIPTS_KEY);
+        localStorage.removeItem(BET_HISTORY_STORAGE_KEY);
+        localStorage.removeItem(USER_BET_RECEIPTS_KEY);
+        console.log('✅ [UserContext] All data cleared');
+      } catch (err) {
+        console.error('❌ Error clearing all data:', err);
+      }
+    });
+
     return () => {
       console.log('🔌 Cleaning up Socket.IO listeners');
     };

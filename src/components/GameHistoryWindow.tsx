@@ -18,21 +18,11 @@ const GameHistoryWindow: React.FC = () => {
       resetBetHistory();
       resetGameState();
       
-      // Emit empty history via Socket.IO so other browsers also clear
+      // Emit clear command via Socket.IO so ALL clients clear (including this one)
       try {
-        socketIOService.emitGameHistoryUpdate([]);
-        socketIOService.emitBetUpdate({
-          teamAQueue: [],
-          teamBQueue: [],
-          bookedBets: [],
-          totalBookedAmount: 0,
-          nextGameBets: [],
-          nextTeamAQueue: [],
-          nextTeamBQueue: [],
-          nextTotalBookedAmount: 0
-        });
+        socketIOService.emitClearAllData();
       } catch (err) {
-        console.error('Error emitting clear via Socket.IO:', err);
+        console.error('Error emitting clear all data:', err);
       }
       
       toast.success("Game History and Bets Cleared", {
