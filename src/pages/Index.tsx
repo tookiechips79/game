@@ -354,20 +354,28 @@ const Index = () => {
     // Emit immediately with the new record added to current history
     console.log('📤 [processBetsForGameWin] Emitting new game history record to all clients');
     const updatedGameHistory = [gameHistoryRecord, ...betHistory];
-    socketIOService.emitGameHistoryUpdate(updatedGameHistory);
+    try {
+      socketIOService.emitGameHistoryUpdate(updatedGameHistory);
+    } catch (err) {
+      console.error('❌ Error emitting game history:', err);
+    }
     
     // Also emit the updated bet state to clear queues for other clients
     console.log('📤 [processBetsForGameWin] Emitting cleared bet queues to all clients');
-    socketIOService.emitBetUpdate({
-      teamAQueue: [],
-      teamBQueue: [],
-      bookedBets: [],
-      totalBookedAmount: 0,
-      nextGameBets: [],
-      nextTeamAQueue: [],
-      nextTeamBQueue: [],
-      nextTotalBookedAmount: 0
-    });
+    try {
+      socketIOService.emitBetUpdate({
+        teamAQueue: [],
+        teamBQueue: [],
+        bookedBets: [],
+        totalBookedAmount: 0,
+        nextGameBets: [],
+        nextTeamAQueue: [],
+        nextTeamBQueue: [],
+        nextTotalBookedAmount: 0
+      });
+    } catch (err) {
+      console.error('❌ Error emitting bet update:', err);
+    }
   };
 
   const deleteUnmatchedBets = () => {

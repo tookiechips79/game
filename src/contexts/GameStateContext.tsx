@@ -206,75 +206,79 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     // Listen for bet updates from other clients
     socketIOService.onBetUpdate((betData: BetSyncData) => {
-      console.log('📥 Received bet update from server:', betData);
-      console.log('📥 Current state before update:', {
-        teamAQueueLength: gameState.teamAQueue.length,
-        teamBQueueLength: gameState.teamBQueue.length,
-        bookedBetsLength: gameState.bookedBets.length
-      });
-      
-      setGameState(prevState => {
-        const newState = { ...prevState };
-        let hasUpdates = false;
-        
-        // Always update queues when received to ensure highlighting syncs
-        if (betData.teamAQueue) {
-          console.log('📥 Updating teamAQueue:', betData.teamAQueue);
-          newState.teamAQueue = betData.teamAQueue;
-          hasUpdates = true;
-        }
-        if (betData.teamBQueue) {
-          console.log('📥 Updating teamBQueue:', betData.teamBQueue);
-          newState.teamBQueue = betData.teamBQueue;
-          hasUpdates = true;
-        }
-        if (betData.bookedBets) {
-          console.log('📥 Updating bookedBets:', betData.bookedBets);
-          newState.bookedBets = betData.bookedBets;
-          hasUpdates = true;
-        }
-        if (betData.nextGameBets) {
-          console.log('📥 Updating nextBookedBets:', betData.nextGameBets);
-          newState.nextBookedBets = betData.nextGameBets;
-          hasUpdates = true;
-        }
-        if (betData.nextTeamAQueue) {
-          console.log('📥 Updating nextTeamAQueue:', betData.nextTeamAQueue);
-          newState.nextTeamAQueue = betData.nextTeamAQueue;
-          hasUpdates = true;
-        }
-        if (betData.nextTeamBQueue) {
-          console.log('📥 Updating nextTeamBQueue:', betData.nextTeamBQueue);
-          newState.nextTeamBQueue = betData.nextTeamBQueue;
-          hasUpdates = true;
-        }
-        
-        if (betData.totalBookedAmount !== undefined) {
-          console.log('📥 Updating totalBookedAmount:', betData.totalBookedAmount);
-          newState.totalBookedAmount = betData.totalBookedAmount;
-          hasUpdates = true;
-        }
-        
-        if (betData.nextTotalBookedAmount !== undefined) {
-          console.log('📥 Updating nextTotalBookedAmount:', betData.nextTotalBookedAmount);
-          newState.nextTotalBookedAmount = betData.nextTotalBookedAmount;
-          hasUpdates = true;
-        }
-        
-        if (hasUpdates) {
-          console.log('📥 State updated successfully with bet data');
-        } else {
-          console.log('📥 No updates applied from bet data');
-        }
-        
-        console.log('📥 New state after update:', {
-          teamAQueueLength: newState.teamAQueue.length,
-          teamBQueueLength: newState.teamBQueue.length,
-          bookedBetsLength: newState.bookedBets.length
+      try {
+        console.log('📥 Received bet update from server:', betData);
+        console.log('📥 Current state before update:', {
+          teamAQueueLength: gameState.teamAQueue.length,
+          teamBQueueLength: gameState.teamBQueue.length,
+          bookedBetsLength: gameState.bookedBets.length
         });
         
-        return newState;
-      });
+        setGameState(prevState => {
+          const newState = { ...prevState };
+          let hasUpdates = false;
+          
+          // Always update queues when received to ensure highlighting syncs
+          if (betData.teamAQueue) {
+            console.log('📥 Updating teamAQueue:', betData.teamAQueue);
+            newState.teamAQueue = betData.teamAQueue;
+            hasUpdates = true;
+          }
+          if (betData.teamBQueue) {
+            console.log('📥 Updating teamBQueue:', betData.teamBQueue);
+            newState.teamBQueue = betData.teamBQueue;
+            hasUpdates = true;
+          }
+          if (betData.bookedBets) {
+            console.log('📥 Updating bookedBets:', betData.bookedBets);
+            newState.bookedBets = betData.bookedBets;
+            hasUpdates = true;
+          }
+          if (betData.nextGameBets) {
+            console.log('📥 Updating nextBookedBets:', betData.nextGameBets);
+            newState.nextBookedBets = betData.nextGameBets;
+            hasUpdates = true;
+          }
+          if (betData.nextTeamAQueue) {
+            console.log('📥 Updating nextTeamAQueue:', betData.nextTeamAQueue);
+            newState.nextTeamAQueue = betData.nextTeamAQueue;
+            hasUpdates = true;
+          }
+          if (betData.nextTeamBQueue) {
+            console.log('📥 Updating nextTeamBQueue:', betData.nextTeamBQueue);
+            newState.nextTeamBQueue = betData.nextTeamBQueue;
+            hasUpdates = true;
+          }
+          
+          if (betData.totalBookedAmount !== undefined) {
+            console.log('📥 Updating totalBookedAmount:', betData.totalBookedAmount);
+            newState.totalBookedAmount = betData.totalBookedAmount;
+            hasUpdates = true;
+          }
+          
+          if (betData.nextTotalBookedAmount !== undefined) {
+            console.log('📥 Updating nextTotalBookedAmount:', betData.nextTotalBookedAmount);
+            newState.nextTotalBookedAmount = betData.nextTotalBookedAmount;
+            hasUpdates = true;
+          }
+          
+          if (hasUpdates) {
+            console.log('📥 State updated successfully with bet data');
+          } else {
+            console.log('📥 No updates applied from bet data');
+          }
+          
+          console.log('📥 New state after update:', {
+            teamAQueueLength: newState.teamAQueue.length,
+            teamBQueueLength: newState.teamBQueue.length,
+            bookedBetsLength: newState.bookedBets.length
+          });
+          
+          return newState;
+        });
+      } catch (err) {
+        console.error('❌ Error processing bet update:', err);
+      }
     });
 
     // Listen for game state updates from other clients

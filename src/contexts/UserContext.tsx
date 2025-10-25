@@ -332,23 +332,31 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Listen for game history updates from other clients
     const handleGameHistoryUpdate = (data: { gameHistory: any[] }) => {
-      console.log('📥 [UserContext] Game history update received:', data.gameHistory?.length, 'entries');
-      if (Array.isArray(data.gameHistory)) {
-        console.log('📝 [UserContext] Setting betHistory and immutableBetHistory');
-        setBetHistory([...data.gameHistory]); // Use spread for new reference
-        setImmutableBetHistory([...data.gameHistory]);
-        console.log('✅ [UserContext] States updated, component will re-render');
+      try {
+        console.log('📥 [UserContext] Game history update received:', data.gameHistory?.length, 'entries');
+        if (Array.isArray(data.gameHistory)) {
+          console.log('📝 [UserContext] Setting betHistory and immutableBetHistory');
+          setBetHistory([...data.gameHistory]); // Use spread for new reference
+          setImmutableBetHistory([...data.gameHistory]);
+          console.log('✅ [UserContext] States updated, component will re-render');
+        }
+      } catch (err) {
+        console.error('❌ Error handling game history update:', err);
       }
     };
 
     // Listen for bet receipts updates from other clients
     const handleBetReceiptsUpdate = (data: { betReceipts: any[] }) => {
-      console.log('📥 [UserContext] Bet receipts update received:', data.betReceipts?.length, 'entries');
-      if (Array.isArray(data.betReceipts)) {
-        console.log('📝 [UserContext] Setting userBetReceipts and immutableBetReceipts');
-        setUserBetReceipts([...data.betReceipts]); // Use spread for new reference
-        setImmutableBetReceipts([...data.betReceipts]);
-        console.log('✅ [UserContext] States updated, component will re-render');
+      try {
+        console.log('📥 [UserContext] Bet receipts update received:', data.betReceipts?.length, 'entries');
+        if (Array.isArray(data.betReceipts)) {
+          console.log('📝 [UserContext] Setting userBetReceipts and immutableBetReceipts');
+          setUserBetReceipts([...data.betReceipts]); // Use spread for new reference
+          setImmutableBetReceipts([...data.betReceipts]);
+          console.log('✅ [UserContext] States updated, component will re-render');
+        }
+      } catch (err) {
+        console.error('❌ Error handling bet receipts update:', err);
       }
     };
 
