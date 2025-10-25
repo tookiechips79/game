@@ -46,6 +46,13 @@ app.use(cors({
   allowedHeaders: ["*"],
   credentials: false
 }));
+
+// Log all incoming requests
+app.use((req, res, next) => {
+  console.log(`📨 [HTTP] ${req.method} ${req.path} from ${req.ip}`);
+  next();
+});
+
 app.use(express.json());
 
 // Health check endpoint
