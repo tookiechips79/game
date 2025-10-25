@@ -64,7 +64,7 @@ class SocketIOService {
       const isProduction = !window.location.hostname.includes('localhost') && !window.location.hostname.includes('192.168');
       
       const serverUrl = isProduction
-        ? 'https://game-production-0ca9.up.railway.app'  // Railway backend
+        ? 'https://game-production-861d.up.railway.app'  // Railway backend
         : `http://${window.location.hostname}:3001`;
       
       console.log('🔌 Connecting to Socket.IO server:', serverUrl);
