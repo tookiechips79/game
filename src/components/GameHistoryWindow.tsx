@@ -62,9 +62,9 @@ const GameHistoryWindow: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-rounded-full hover:scrollbar-thumb-blue-400 transition-colors" style={{ scrollbarThumbColor: '#95deff' }}>
-            {recentGames.slice().reverse().map((game) => (
+            {recentGames.slice().reverse().map((game, index) => (
               <div 
-                key={game.id} 
+                key={game.id || `game-${game.gameNumber}-${index}`} 
                 className="rounded-lg p-2 hover:bg-opacity-50 transition-colors"
                 style={{ backgroundColor: 'rgba(0, 75, 107, 0.2)' }}
               >
@@ -82,7 +82,7 @@ const GameHistoryWindow: React.FC = () => {
                         Game#{game.gameNumber} {game.winningTeam === 'A' ? game.teamAName : game.winningTeam === 'B' ? game.teamBName : 'Tie'}
                       </span>
                       <div className="flex items-center space-x-2 text-xs" style={{ color: '#95deff' }}>
-                        <span>Break: {game.breakingTeam === 'A' ? game.teamAName : game.teamBName}</span>
+                        <span>Break: {game.breakingTeam === 'A' ? game.teamAName : game.breakingTeam === 'B' ? game.teamBName : 'Unknown'}</span>
                         <span>•</span>
                         <div className="flex items-center space-x-1">
                           <Clock className="h-3 w-3" />
