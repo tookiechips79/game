@@ -181,6 +181,13 @@ io.use((socket, next) => {
   next();
 });
 
+// Socket.IO connection error handler
+io.on('connection_error', (error) => {
+  console.error('❌ Socket.IO connection error:', error);
+  console.error('Error message:', error.message);
+  console.error('Error data:', error.data);
+});
+
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);

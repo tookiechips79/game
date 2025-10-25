@@ -74,16 +74,17 @@ class SocketIOService {
       console.log('⏱️ Connection attempt started at:', new Date().toISOString());
       
       this.socket = io(serverUrl, {
-        transports: ['polling', 'websocket'],
-        timeout: 8000,
-        forceNew: true,
+        transports: ['websocket', 'polling'],
+        timeout: 10000,
+        forceNew: false,
         reconnection: true,
-        reconnectionAttempts: 3,
+        reconnectionAttempts: 5,
         reconnectionDelay: 1000,
-        reconnectionDelayMax: 2000,
-        maxReconnectionAttempts: 3,
+        reconnectionDelayMax: 5000,
         upgrade: true,
-        rememberUpgrade: true
+        rememberUpgrade: true,
+        secure: true,
+        rejectUnauthorized: false
       });
 
       console.log('🔌 Socket.IO client created:', {
