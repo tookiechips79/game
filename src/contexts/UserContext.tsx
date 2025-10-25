@@ -330,18 +330,27 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // IMMUTABLE BET HISTORY - Always save to separate storage, NEVER cleared
   useEffect(() => {
     try {
+      // Only save to main key to conserve storage space
       localStorage.setItem(IMMUTABLE_BET_HISTORY_KEY, JSON.stringify(immutableBetHistory));
-      localStorage.setItem(BULLETPROOF_BET_HISTORY_KEY, JSON.stringify(immutableBetHistory));
-      // Additional protection: save to a completely unique key
-      const uniqueKey = "ultra_bulletproof_bet_history_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem(uniqueKey, JSON.stringify(immutableBetHistory));
       console.log('✅ Immutable bet history saved to localStorage:', immutableBetHistory.length, 'records');
       
       // Emit game history update via Socket.IO for real-time sync
       socketIOService.emitGameHistoryUpdate(immutableBetHistory);
       console.log('📤 Emitted game history update:', immutableBetHistory.length, 'records');
     } catch (error) {
-      console.error('❌ Failed to save immutable bet history:', error);
+      if (error instanceof Error && error.name === 'QuotaExceededError') {
+        console.error('❌ localStorage quota exceeded! Clearing old data...');
+        // If quota exceeded, trim more aggressively and retry
+        const trimmedHistory = immutableBetHistory.slice(0, 50);
+        try {
+          localStorage.setItem(IMMUTABLE_BET_HISTORY_KEY, JSON.stringify(trimmedHistory));
+          console.log('✅ Recovered by trimming to 50 records');
+        } catch (retryError) {
+          console.error('❌ Still failed after trimming:', retryError);
+        }
+      } else {
+        console.error('❌ Failed to save immutable bet history:', error);
+      }
     }
   }, [immutableBetHistory]);
   
@@ -354,18 +363,27 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // IMMUTABLE BET RECEIPTS - Always save to separate storage, NEVER cleared
   useEffect(() => {
     try {
+      // Only save to main key to conserve storage space
       localStorage.setItem(IMMUTABLE_BET_RECEIPTS_KEY, JSON.stringify(immutableBetReceipts));
-      localStorage.setItem(BULLETPROOF_BET_RECEIPTS_KEY, JSON.stringify(immutableBetReceipts));
-      // Additional protection: save to a completely unique key
-      const uniqueKey = "ultra_bulletproof_bet_receipts_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem(uniqueKey, JSON.stringify(immutableBetReceipts));
       console.log('✅ Immutable bet receipts saved to localStorage:', immutableBetReceipts.length, 'receipts');
       
       // Emit bet receipts update via Socket.IO for real-time sync
       socketIOService.emitBetReceiptsUpdate(immutableBetReceipts);
       console.log('📤 Emitted bet receipts update:', immutableBetReceipts.length, 'receipts');
     } catch (error) {
-      console.error('❌ Failed to save immutable bet receipts:', error);
+      if (error instanceof Error && error.name === 'QuotaExceededError') {
+        console.error('❌ localStorage quota exceeded! Clearing old data...');
+        // If quota exceeded, trim more aggressively and retry
+        const trimmedReceipts = immutableBetReceipts.slice(0, 250);
+        try {
+          localStorage.setItem(IMMUTABLE_BET_RECEIPTS_KEY, JSON.stringify(trimmedReceipts));
+          console.log('✅ Recovered by trimming to 250 receipts');
+        } catch (retryError) {
+          console.error('❌ Still failed after trimming:', retryError);
+        }
+      } else {
+        console.error('❌ Failed to save immutable bet receipts:', error);
+      }
     }
   }, [immutableBetReceipts]);
   
