@@ -196,6 +196,10 @@ io.engine.on('connection_error', (err) => {
   console.error('❌ [ENGINE] Connection error:', err.code, err.message);
 });
 
+io.engine.on('parse_error', (err) => {
+  console.error('❌ [ENGINE] Parse error:', err);
+});
+
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log(`✅ [CONNECTION] Socket connected: ${socket.id}`);
@@ -209,6 +213,15 @@ io.on('connection', (socket) => {
   } catch (error) {
     console.error(`❌ [CONNECTION] Error sending initial data to ${socket.id}:`, error.message);
   }
+  
+  // Handle any socket errors
+  socket.on('error', (error) => {
+    console.error(`❌ [SOCKET ERROR] ${socket.id}:`, error);
+  });
+  
+  socket.on('disconnect', () => {
+    console.log(`🔌 [DISCONNECT] Socket disconnected: ${socket.id}`);
+  });
 
   // Handle user login/selection - track connected users
   socket.on('user-login', (userData) => {
