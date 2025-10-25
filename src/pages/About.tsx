@@ -28,9 +28,20 @@ import {
 
 const AboutPage: React.FC = () => {
   return (
-    <div className="min-h-screen text-white" style={{ backgroundColor: '#052240' }}>
+    <div
+      className="min-h-screen text-white"
+      style={{
+        backgroundImage: 'url(/111.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
+        position: 'relative'
+      }}
+    >
+      <div className="fixed inset-0 pointer-events-none" style={{ backgroundColor: 'rgba(5, 34, 64, 0.5)', zIndex: 1 }}></div>
       {/* Header */}
-      <div className="border-b py-4" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
+      <div className="border-b py-4 relative z-10" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="rounded-lg p-2" style={{ backgroundColor: '#95deff' }}>
@@ -47,7 +58,7 @@ const AboutPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
