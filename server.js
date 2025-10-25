@@ -14,9 +14,10 @@ const server = createServer(app);
 // CORS configuration for Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: ["https://game-henna-pi.vercel.app", "http://localhost:8080", "http://localhost:8081", "http://192.168.4.83:8080", "http://192.168.4.83:8081"],
+    origin: "*",
     methods: ["GET", "POST"],
-    credentials: false
+    credentials: false,
+    allowedHeaders: "*"
   },
   transports: ['polling', 'websocket'],
   pingTimeout: 60000,
@@ -25,7 +26,8 @@ const io = new Server(server, {
   allowUpgrades: true,
   maxHttpBufferSize: 1e6,
   serveClient: false,
-  connectTimeout: 45000
+  connectTimeout: 45000,
+  perMessageDeflate: false
 });
 
 // Middleware
@@ -203,15 +205,23 @@ io.engine.on('parse_error', (err) => {
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log(`✅ [CONNECTION] Socket connected: ${socket.id}`);
+  console.log(`📍 [CONNECTION] Handshake headers:`, JSON.stringify(socket.handshake.headers));
   
   // Send current game state to newly connected client
   try {
+    console.log(`📤 [EMIT 1] About to emit game-state-update`);
     socket.emit('game-state-update', serverGameState);
+    console.log(`✅ [EMIT 1] game-state-update emitted`);
+    
+    console.log(`📤 [EMIT 2] About to emit connected-users-coins-update`);
     const coinsData = calculateConnectedUsersCoins();
     socket.emit('connected-users-coins-update', coinsData);
+    console.log(`✅ [EMIT 2] connected-users-coins-update emitted`);
+    
     console.log(`📤 [CONNECTION] Initial data sent to ${socket.id}`);
   } catch (error) {
     console.error(`❌ [CONNECTION] Error sending initial data to ${socket.id}:`, error.message);
+    console.error(`❌ [CONNECTION] Stack:`, error.stack);
   }
   
   // Handle any socket errors
