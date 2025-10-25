@@ -6,6 +6,7 @@ import { useUser } from "@/contexts/UserContext";
 import { useGameState } from "@/contexts/GameStateContext";
 import { formatDuration } from "date-fns";
 import { toast } from "sonner";
+import { socketIOService } from "@/services/socketIOService";
 
 const GameHistoryWindow: React.FC = () => {
   const { betHistory, resetBetHistory } = useUser();
@@ -16,6 +17,24 @@ const GameHistoryWindow: React.FC = () => {
       // Clear both game history and betting queues
       resetBetHistory();
       resetGameState();
+      
+      // Emit empty history via Socket.IO so other browsers also clear
+      try {
+        socketIOService.emitGameHistoryUpdate([]);
+        socketIOService.emitBetUpdate({
+          teamAQueue: [],
+          teamBQueue: [],
+          bookedBets: [],
+          totalBookedAmount: 0,
+          nextGameBets: [],
+          nextTeamAQueue: [],
+          nextTeamBQueue: [],
+          nextTotalBookedAmount: 0
+        });
+      } catch (err) {
+        console.error('Error emitting clear via Socket.IO:', err);
+      }
+      
       toast.success("Game History and Bets Cleared", {
         description: "Game history has been cleared and all betting queues have been reset",
         className: "custom-toast-success"
