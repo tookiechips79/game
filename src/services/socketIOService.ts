@@ -72,15 +72,13 @@ class SocketIOService {
       console.log('⏱️ Connection attempt started at:', new Date().toISOString());
       
       this.socket = io(serverUrl, {
-        transports: ['websocket', 'polling'],
+        transports: ['polling'],
         timeout: 20000,
         forceNew: false,
         reconnection: true,
         reconnectionAttempts: 10,
         reconnectionDelay: 500,
-        reconnectionDelayMax: 10000,
-        upgrade: true,
-        rememberUpgrade: true
+        reconnectionDelayMax: 10000
       });
 
       console.log('🔌 Socket.IO client created');
