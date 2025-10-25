@@ -186,45 +186,30 @@ function resetServerTimer() {
 
 // Socket.IO middleware to log and accept all connections
 io.use((socket, next) => {
-  try {
-    console.log('🔌 [MIDDLEWARE] New connection attempt');
-    console.log('📍 [MIDDLEWARE] Address:', socket.handshake.address);
-    console.log('📍 [MIDDLEWARE] Origin:', socket.handshake.headers.origin);
-    console.log('📍 [MIDDLEWARE] User-Agent:', socket.handshake.headers['user-agent']);
-    next();
-  } catch (error) {
-    console.error('❌ [MIDDLEWARE] Error:', error);
-    next(error);
-  }
+  console.log('🔌 [MIDDLEWARE] Connection attempt from origin:', socket.handshake.headers.origin);
+  // Accept all connections - no auth needed
+  next();
 });
 
-// Socket.IO connection error handler
-io.on('connection_error', (error) => {
-  console.error('❌ Socket.IO connection error:', error);
-  console.error('Error message:', error.message);
-  console.error('Error data:', error.data);
+// Socket.IO error handler
+io.engine.on('connection_error', (err) => {
+  console.error('❌ [ENGINE] Connection error:', err.code, err.message);
 });
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
+  console.log(`✅ [CONNECTION] Socket connected: ${socket.id}`);
+  
+  // Send current game state to newly connected client
   try {
-    console.log(`✅ [CONNECTION] Socket connected: ${socket.id}`);
-    
-    // Clean up any stale entries for this socket on connection
-    if (connectedUsers.has(socket.id)) {
-      console.log(`🧹 [CONNECTION] Cleaning up stale data for socket ${socket.id}`);
-      connectedUsers.delete(socket.id);
-    }
-    
-    console.log(`📤 [CONNECTION] Sending game state to ${socket.id}`);
-    // Send current game state to newly connected client
     socket.emit('game-state-update', serverGameState);
-    
-    console.log(`📤 [CONNECTION] Sending connected users to ${socket.id}`);
-    // Send current connected users data to the new client
     const coinsData = calculateConnectedUsersCoins();
     socket.emit('connected-users-coins-update', coinsData);
-  
+    console.log(`📤 [CONNECTION] Initial data sent to ${socket.id}`);
+  } catch (error) {
+    console.error(`❌ [CONNECTION] Error sending initial data to ${socket.id}:`, error.message);
+  }
+
   // Handle user login/selection - track connected users
   socket.on('user-login', (userData) => {
     console.log(`User logged in: ${userData.name} (${userData.id}) with ${userData.credits} coins`);
