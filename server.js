@@ -5,6 +5,15 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+// Global error handlers
+process.on('uncaughtException', (error) => {
+  console.error('❌ [GLOBAL] Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ [GLOBAL] Unhandled Rejection:', reason);
+});
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -189,8 +198,18 @@ function resetServerTimer() {
 // Socket.IO middleware to log and accept all connections
 io.use((socket, next) => {
   console.log('🔌 [MIDDLEWARE] Connection attempt from origin:', socket.handshake.headers.origin);
+  console.log('📦 [MIDDLEWARE] EIO:', socket.handshake.query.EIO);
+  console.log('📦 [MIDDLEWARE] Transport:', socket.handshake.query.transport);
+  console.log('✅ [MIDDLEWARE] Calling next() to accept connection');
+  
   // Accept all connections - no auth needed
-  next();
+  try {
+    next();
+    console.log('✅ [MIDDLEWARE] next() completed successfully');
+  } catch (error) {
+    console.error('❌ [MIDDLEWARE] Error in next():', error.message);
+    next(error);
+  }
 });
 
 // Socket.IO error handler
