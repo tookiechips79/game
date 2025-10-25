@@ -131,6 +131,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Flag to prevent re-emitting data that came FROM the socket listener
   const isUpdatingFromSocketRef = useRef(false);
 
+  // Flag to pause Socket.IO listener processing during clear operations
+  const pauseListenersRef = useRef(false);
+
   // Custom setCurrentUser that emits user login/logout events
   const setCurrentUserWithLogin = (user: User | null) => {
     // Prevent rapid login/logout events
@@ -332,6 +335,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for game history updates from other clients
     const handleGameHistoryUpdate = (data: { gameHistory: any[] }) => {
       try {
+        // PAUSE listeners during clearing - completely ignore all updates
+        if (pauseListenersRef.current) {
+          console.log('⏸️ [UserContext] Listeners paused, ignoring history update');
+          return;
+        }
+        
         // IGNORE updates during clearing to prevent re-population
         if (isClearingRef.current) {
           console.log('⏭️ [UserContext] Ignoring history update during clear operation');
@@ -367,6 +376,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for bet receipts updates from other clients
     const handleBetReceiptsUpdate = (data: { betReceipts: any[] }) => {
       try {
+        // PAUSE listeners during clearing - completely ignore all updates
+        if (pauseListenersRef.current) {
+          console.log('⏸️ [UserContext] Listeners paused, ignoring receipts update');
+          return;
+        }
+        
         // IGNORE updates during clearing to prevent re-population
         if (isClearingRef.current) {
           console.log('⏭️ [UserContext] Ignoring receipts update during clear operation');
@@ -407,6 +422,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         console.log('🧹 [UserContext] Clearing all data due to admin command');
         
+        // PAUSE all Socket.IO listeners to prevent any incoming updates during clear
+        pauseListenersRef.current = true;
+        console.log('⏸️ [UserContext] Pausing Socket.IO listeners during clear');
+        
         // Set flag to prevent emitting during clear
         isClearingRef.current = true;
         
@@ -422,15 +441,17 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem(USER_BET_RECEIPTS_KEY);
         console.log('✅ [UserContext] All data cleared');
         
-        // Reset flag after a longer delay (500ms) to allow all React state updates and re-renders to complete
+        // Reset flags after a longer delay (500ms) to allow all React state updates and re-renders to complete
         // This prevents the listeners from processing incoming updates during the clear cascade
         setTimeout(() => {
           isClearingRef.current = false;
-          console.log('🔄 [UserContext] Clear flag reset - now accepting updates again');
+          pauseListenersRef.current = false;
+          console.log('🔄 [UserContext] Clear complete - resuming Socket.IO listeners');
         }, 500);
       } catch (err) {
         console.error('❌ Error clearing all data:', err);
         isClearingRef.current = false;
+        pauseListenersRef.current = false;
       }
     });
 
