@@ -14,10 +14,9 @@ const server = createServer(app);
 // CORS configuration for Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: true,
+    origin: ["https://game-henna-pi.vercel.app", "http://localhost:8080", "http://localhost:8081", "http://192.168.4.83:8080", "http://192.168.4.83:8081"],
     methods: ["GET", "POST"],
-    credentials: false,
-    allowedHeaders: []
+    credentials: false
   },
   transports: ['polling', 'websocket'],
   pingTimeout: 60000,
