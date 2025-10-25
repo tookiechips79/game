@@ -60,34 +60,32 @@ class SocketIOService {
       
       console.log('✅ Socket.IO client library loaded successfully');
       
-      // Determine if we're in production by checking the hostname
-      const isProduction = !window.location.hostname.includes('localhost') && !window.location.hostname.includes('192.168');
+      // For Render deployment, backend and frontend are on the same domain
+      // For local dev, use localhost:3001
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const serverUrl = isLocalhost ? `http://${window.location.hostname}:3001` : undefined;
       
-      const serverUrl = isProduction
-        ? 'https://game-production-861d.up.railway.app'  // Railway backend
-        : `http://${window.location.hostname}:3001`;
-      
-      console.log('🔌 Connecting to Socket.IO server:', serverUrl);
+      console.log('🔌 Connecting to Socket.IO');
       console.log('🌐 Current page URL:', window.location.href);
       console.log('📍 Hostname:', window.location.hostname);
-      console.log('🏭 Is Production:', isProduction);
+      console.log('🏭 Is Localhost:', isLocalhost);
+      console.log('📌 Server URL:', serverUrl || 'same domain (Render)');
       
       // Start connection timing
       const connectionStartTime = Date.now();
       console.log('⏱️ Connection attempt started at:', new Date().toISOString());
       
-      this.socket = io(serverUrl, {
-        transports: ['polling'],
+      const ioOptions = {
+        transports: ['polling', 'websocket'],
         timeout: 30000,
         forceNew: false,
         reconnection: true,
         reconnectionAttempts: 15,
         reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000,
-        query: { 
-          timestamp: Date.now()
-        }
-      });
+        reconnectionDelayMax: 5000
+      };
+      
+      this.socket = serverUrl ? io(serverUrl, ioOptions) : io(ioOptions);
 
       console.log('🔌 Socket.IO client created');
 
