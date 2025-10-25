@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, BetHistoryRecord, UserBetReceipt, CreditTransaction } from "@/types/user";
 import { toast } from "sonner";
 import { socketIOService } from "@/services/socketIOService";
+import { useRef } from "react";
 
 interface UserContextType {
   users: User[];
@@ -123,6 +124,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [creditTransactions, setCreditTransactions] = useState<CreditTransaction[]>([]);
   const [isUsersLoaded, setIsUsersLoaded] = useState<boolean>(true); // Start as true since we initialize with users
   const [connectedUsersCoins, setConnectedUsersCoins] = useState<{ totalCoins: number; connectedUserCount: number; connectedUsers: any[] }>({ totalCoins: 0, connectedUserCount: 0, connectedUsers: [] });
+
+  // Flag to prevent emitting history updates during clear operations
+  const isClearingRef = useRef(false);
 
   // Custom setCurrentUser that emits user login/logout events
   const setCurrentUserWithLogin = (user: User | null) => {
@@ -373,6 +377,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     socketIOService.onClearAllData(() => {
       try {
         console.log('🧹 [UserContext] Clearing all data due to admin command');
+        
+        // Set flag to prevent emitting during clear
+        isClearingRef.current = true;
+        
         setBetHistory([]);
         setImmutableBetHistory([]);
         setUserBetReceipts([]);
@@ -384,8 +392,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem(BET_HISTORY_STORAGE_KEY);
         localStorage.removeItem(USER_BET_RECEIPTS_KEY);
         console.log('✅ [UserContext] All data cleared');
+        
+        // Reset flag after a small delay to allow state updates to complete
+        setTimeout(() => {
+          isClearingRef.current = false;
+          console.log('🔄 [UserContext] Clear flag reset');
+        }, 100);
       } catch (err) {
         console.error('❌ Error clearing all data:', err);
+        isClearingRef.current = false;
       }
     });
 
@@ -417,9 +432,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem(IMMUTABLE_BET_HISTORY_KEY, JSON.stringify(immutableBetHistory));
       console.log('✅ Immutable bet history saved to localStorage:', immutableBetHistory.length, 'records');
       
-      // Emit game history update via Socket.IO for real-time sync
-      socketIOService.emitGameHistoryUpdate(immutableBetHistory);
-      console.log('📤 Emitted game history update:', immutableBetHistory.length, 'records');
+      // Emit game history update via Socket.IO for real-time sync (but NOT during clearing)
+      if (!isClearingRef.current) {
+        socketIOService.emitGameHistoryUpdate(immutableBetHistory);
+        console.log('📤 Emitted game history update:', immutableBetHistory.length, 'records');
+      } else {
+        console.log('⏭️ Skipped emitting during clear operation');
+      }
     } catch (error) {
       if (error instanceof Error && error.name === 'QuotaExceededError') {
         console.error('❌ localStorage quota exceeded! Clearing old data...');
@@ -446,9 +465,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem(IMMUTABLE_BET_RECEIPTS_KEY, JSON.stringify(immutableBetReceipts));
       console.log('✅ Immutable bet receipts saved to localStorage:', immutableBetReceipts.length, 'receipts');
       
-      // Emit bet receipts update via Socket.IO for real-time sync
-      socketIOService.emitBetReceiptsUpdate(immutableBetReceipts);
-      console.log('📤 Emitted bet receipts update:', immutableBetReceipts.length, 'receipts');
+      // Emit bet receipts update via Socket.IO for real-time sync (but NOT during clearing)
+      if (!isClearingRef.current) {
+        socketIOService.emitBetReceiptsUpdate(immutableBetReceipts);
+        console.log('📤 Emitted bet receipts update:', immutableBetReceipts.length, 'receipts');
+      } else {
+        console.log('⏭️ Skipped emitting receipts during clear operation');
+      }
     } catch (error) {
       if (error instanceof Error && error.name === 'QuotaExceededError') {
         console.error('❌ localStorage quota exceeded! Clearing old data...');
