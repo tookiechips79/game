@@ -405,11 +405,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem(USER_BET_RECEIPTS_KEY);
         console.log('✅ [UserContext] All data cleared');
         
-        // Reset flag after a small delay to allow state updates to complete
+        // Reset flag after a longer delay (500ms) to allow all React state updates and re-renders to complete
+        // This prevents the listeners from processing incoming updates during the clear cascade
         setTimeout(() => {
           isClearingRef.current = false;
-          console.log('🔄 [UserContext] Clear flag reset');
-        }, 100);
+          console.log('🔄 [UserContext] Clear flag reset - now accepting updates again');
+        }, 500);
       } catch (err) {
         console.error('❌ Error clearing all data:', err);
         isClearingRef.current = false;
