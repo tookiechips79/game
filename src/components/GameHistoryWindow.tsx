@@ -8,7 +8,7 @@ import { formatDuration } from "date-fns";
 import { toast } from "sonner";
 
 const GameHistoryWindow: React.FC = () => {
-  const { betHistory, resetBetHistory, getHardLedgerBetHistory } = useUser();
+  const { betHistory, resetBetHistory } = useUser();
   const { isAdmin } = useGameState();
 
   const handleClearHistory = () => {
@@ -18,9 +18,7 @@ const GameHistoryWindow: React.FC = () => {
   };
 
   const getRecentGames = () => {
-    // Use hard ledger for always-fresh data, fall back to betHistory
-    const hardLedger = getHardLedgerBetHistory();
-    return hardLedger.length > 0 ? hardLedger : betHistory;
+    return betHistory; // Show all games instead of just 5
   };
 
   const recentGames = getRecentGames();

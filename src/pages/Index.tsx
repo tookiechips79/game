@@ -355,6 +355,18 @@ const Index = () => {
     console.log('📤 [processBetsForGameWin] Emitting new game history record to all clients');
     const updatedGameHistory = [gameHistoryRecord, ...betHistory];
     socketIOService.emitGameHistoryUpdate(updatedGameHistory);
+    
+    // Also emit the updated bet state to clear queues for other clients
+    console.log('📤 [processBetsForGameWin] Emitting cleared bet queues to all clients');
+    socketIOService.emitBetUpdate({
+      teamAQueue: [],
+      teamBQueue: [],
+      bookedBets: [],
+      totalBookedAmount: 0,
+      nextGameBets: [],
+      nextTeamAQueue: [],
+      nextTeamBQueue: []
+    });
   };
 
   const deleteUnmatchedBets = () => {
