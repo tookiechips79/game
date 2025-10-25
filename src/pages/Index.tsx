@@ -246,7 +246,7 @@ const Index = () => {
     // Calculate accurate total amount for this specific game
     const gameTotalAmount = [...teamABets, ...teamBBets].reduce((total, bet) => total + bet.amount, 0);
     
-    addBetHistoryRecord({
+    const gameHistoryRecord = {
       gameNumber: currentGameNumber,
       teamAName,
       teamBName,
@@ -262,7 +262,9 @@ const Index = () => {
         teamB: teamBBets
       },
       totalAmount: gameTotalAmount
-    });
+    };
+    
+    addBetHistoryRecord(gameHistoryRecord);
     
     if (bookedBets.length > 0) {
       let totalProcessed = 0;
@@ -349,13 +351,10 @@ const Index = () => {
     });
     
     // Emit updated game history to all connected clients via Socket.IO
-    // This happens after the bet history record is added
-    setTimeout(() => {
-      if (betHistory && betHistory.length > 0) {
-        console.log('📤 [processBetsForGameWin] Emitting game history after bet processing:', betHistory.length, 'records');
-        socketIOService.emitGameHistoryUpdate(betHistory);
-      }
-    }, 200);
+    // Emit immediately with the new record added to current history
+    console.log('📤 [processBetsForGameWin] Emitting new game history record to all clients');
+    const updatedGameHistory = [gameHistoryRecord, ...betHistory];
+    socketIOService.emitGameHistoryUpdate(updatedGameHistory);
   };
 
   const deleteUnmatchedBets = () => {
