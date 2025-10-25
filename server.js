@@ -187,12 +187,13 @@ function resetServerTimer() {
 // Socket.IO middleware to log and accept all connections
 io.use((socket, next) => {
   try {
-    console.log('🔌 New connection attempt from:', socket.handshake.address);
-    console.log('📍 Origin:', socket.handshake.headers.origin);
-    console.log('📦 Query:', socket.handshake.query);
+    console.log('🔌 [MIDDLEWARE] New connection attempt');
+    console.log('📍 [MIDDLEWARE] Address:', socket.handshake.address);
+    console.log('📍 [MIDDLEWARE] Origin:', socket.handshake.headers.origin);
+    console.log('📍 [MIDDLEWARE] User-Agent:', socket.handshake.headers['user-agent']);
     next();
   } catch (error) {
-    console.error('❌ Middleware error:', error);
+    console.error('❌ [MIDDLEWARE] Error:', error);
     next(error);
   }
 });
@@ -207,17 +208,19 @@ io.on('connection_error', (error) => {
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   try {
-    console.log(`User connected: ${socket.id}`);
+    console.log(`✅ [CONNECTION] Socket connected: ${socket.id}`);
     
     // Clean up any stale entries for this socket on connection
     if (connectedUsers.has(socket.id)) {
-      console.log(`Cleaning up stale user data for socket ${socket.id}`);
+      console.log(`🧹 [CONNECTION] Cleaning up stale data for socket ${socket.id}`);
       connectedUsers.delete(socket.id);
     }
     
+    console.log(`📤 [CONNECTION] Sending game state to ${socket.id}`);
     // Send current game state to newly connected client
     socket.emit('game-state-update', serverGameState);
     
+    console.log(`📤 [CONNECTION] Sending connected users to ${socket.id}`);
     // Send current connected users data to the new client
     const coinsData = calculateConnectedUsersCoins();
     socket.emit('connected-users-coins-update', coinsData);
