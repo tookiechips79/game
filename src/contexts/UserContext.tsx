@@ -134,6 +134,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Flag to pause Socket.IO listener processing during clear operations
   const pauseListenersRef = useRef(false);
 
+  // Flag to track if we've loaded initial data from localStorage
+  const isInitialLoadRef = useRef(false);
+
   // Custom setCurrentUser that emits user login/logout events
   const setCurrentUserWithLogin = (user: User | null) => {
     // Prevent rapid login/logout events
@@ -277,6 +280,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (Array.isArray(parsedHistory)) {
           setBetHistory(parsedHistory); // Sync betHistory with immutableBetHistory
           setImmutableBetHistory(parsedHistory);
+          isInitialLoadRef.current = true; // Mark as loaded
           console.log('✅ Bet history loaded:', parsedHistory.length, 'records');
         } else {
           console.warn('⚠️ Invalid immutable bet history format, initializing empty');
@@ -336,7 +340,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const handleGameHistoryUpdate = (data: { gameHistory: any[] }) => {
       try {
         console.log(`[HISTORY_LISTENER] Received update with ${data.gameHistory?.length} entries`);
-        console.log(`  pauseListenersRef=${pauseListenersRef.current}, isClearingRef=${isClearingRef.current}`);
+        console.log(`  pauseListenersRef=${pauseListenersRef.current}, isClearingRef=${isClearingRef.current}, isInitialLoadRef=${isInitialLoadRef.current}`);
         
         // PAUSE listeners during clearing - completely ignore all updates
         if (pauseListenersRef.current) {
@@ -350,10 +354,18 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return;
         }
         
+        // PROTECT local data on initial load - only update if server has more/different data
+        if (isInitialLoadRef.current && immutableBetHistory.length > 0) {
+          console.log('🛡️ [UserContext] Local data already loaded, checking if server has newer data');
+          if (data.gameHistory?.length <= immutableBetHistory.length) {
+            console.log('✅ [UserContext] Local data is same or more recent, preserving local data');
+            return; // Keep local data
+          }
+        }
+        
         console.log('📥 [UserContext] Game history update received:', data.gameHistory?.length, 'entries');
         if (Array.isArray(data.gameHistory)) {
           console.log('📝 [UserContext] Setting betHistory and immutableBetHistory');
-          console.log('🚨 HISTORY RE-POPULATION HAPPENING NOW! Stack trace:', new Error().stack);
           
           // Ensure all records have unique IDs
           const ensuredHistory = data.gameHistory.map((record, index) => ({
@@ -390,6 +402,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (isClearingRef.current) {
           console.log('⏭️ [UserContext] Ignoring receipts update during clear operation');
           return;
+        }
+        
+        // PROTECT local data on initial load - only update if server has more/different data
+        if (isInitialLoadRef.current && immutableBetReceipts.length > 0) {
+          console.log('🛡️ [UserContext] Local receipts already loaded, checking if server has newer data');
+          if (data.betReceipts?.length <= immutableBetReceipts.length) {
+            console.log('✅ [UserContext] Local receipts are same or more recent, preserving local data');
+            return; // Keep local data
+          }
         }
         
         console.log('📥 [UserContext] Bet receipts update received:', data.betReceipts?.length, 'entries');
