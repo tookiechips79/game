@@ -1047,18 +1047,8 @@ const Index = () => {
         </div>
 
         <div className="mb-8">
-          <Card className="glass-card backdrop-blur-sm shadow-lg rounded-2xl transition-all duration-300 mb-4 hover:shadow-[0_0_15px_rgba(250,21,147,0.3)] relative" style={{ borderColor: '#fa1593', backgroundColor: '#004b6b' }}>
-            <video 
-              autoPlay 
-              loop 
-              muted 
-              className="absolute inset-0 w-full h-full object-cover rounded-2xl"
-              style={{ zIndex: 0 }}
-            >
-              <source src="/vid.mp4" type="video/mp4" />
-            </video>
-            <div className="absolute inset-0 bg-black/30 rounded-2xl" style={{ zIndex: 1 }}></div>
-            <CardContent className="p-6 flex flex-col md:flex-row justify-between items-center relative" style={{ zIndex: 2 }}>
+          <Card className="glass-card backdrop-blur-sm shadow-lg rounded-2xl transition-all duration-300 mb-4 hover:shadow-[0_0_15px_rgba(250,21,147,0.3)]" style={{ borderColor: '#fa1593', backgroundColor: '#004b6b' }}>
+            <CardContent className="p-6 flex flex-col md:flex-row justify-between items-center">
               <div className="flex items-center mb-4 md:mb-0">
                 <div className="p-3 rounded-2xl mr-4" style={{ backgroundColor: '#fa1593' }}>
                   <Zap className="h-8 w-8 text-white" />
