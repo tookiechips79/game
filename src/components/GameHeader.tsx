@@ -1,8 +1,9 @@
 
 import React from "react";
 import GameTimer from "@/components/GameTimer";
+import LiveIndicator from "@/components/LiveIndicator";
 import { Button } from "@/components/ui/button";
-import { Unlock } from "lucide-react";
+import { Unlock, Lock } from "lucide-react";
 
 interface GameHeaderProps {
   gameLabel: string;
@@ -14,6 +15,9 @@ interface GameHeaderProps {
   onReset: () => void;
   isAdmin?: boolean;
   onToggleAdmin?: () => void;
+  adminLocked?: boolean;
+  setAdminLocked?: (locked: boolean) => void;
+  adminModalRef?: React.RefObject<{ openModal: () => void }>;
 }
 
 const GameHeader = ({ 
@@ -25,11 +29,21 @@ const GameHeader = ({
   onPause,
   onReset,
   isAdmin = false,
-  onToggleAdmin
+  onToggleAdmin,
+  adminLocked,
+  setAdminLocked,
+  adminModalRef
 }: GameHeaderProps) => {
   return (
-    <div className="absolute top-0 left-0 right-0 flex flex-col items-center z-20 pt-4">
-      <div className="flex flex-col items-center space-y-3">
+    <div className="absolute top-0 left-0 right-0 flex items-start justify-between z-50 pt-4 px-4 pointer-events-none">
+      {/* Left side - empty for balance */}
+      <div className="w-24"></div>
+      
+      {/* Center - Game info */}
+      <div className="flex flex-col items-center space-y-3 pointer-events-auto">
+        {/* Live Indicator */}
+        <LiveIndicator isLive={isTimerRunning} />
+        
         <div className="px-4 py-1 rounded-xl mb-1">
           <span className="text-3xl font-bold text-[#fa1593] drop-shadow-[0_0_8px_rgba(250,21,147,0.7)]">
             {gameLabel}
@@ -43,21 +57,49 @@ const GameHeader = ({
           onPause={onPause}
           onReset={onReset}
         />
+      </div>
+      
+      {/* Right side - Admin button - ALWAYS VISIBLE AND ACCESSIBLE */}
+      <div className="flex justify-end w-32 pointer-events-auto">
         <Button
           variant="outline"
           size="sm"
-          className={`text-xs ${
+          className={`text-xs whitespace-nowrap font-semibold ${
             isAdmin ? 'text-white hover:bg-opacity-90' : ''
           }`}
           style={isAdmin ? { backgroundColor: '#fa1593', borderColor: '#fa1593' } : { borderColor: '#fa1593', color: '#95deff' }}
           onClick={() => {
-            if (onToggleAdmin) {
-              onToggleAdmin();
+            console.log('🔐 [GameHeader] Admin button clicked, adminLocked:', adminLocked);
+            if (adminLocked) {
+              // If locked, we just need to keep admin locked which will trigger the modal in CompactAdminWidget
+              // The modal should already be opening because adminLocked = true
+              console.log('🔐 [GameHeader] Admin is locked, modal should be opening');
+              if (adminModalRef?.current) {
+                adminModalRef.current.openModal();
+              }
+            } else {
+              // If unlocked, lock admin mode
+              console.log('🔐 [GameHeader] Admin is unlocked, locking it now');
+              if (setAdminLocked) {
+                setAdminLocked(true);
+              }
+              if (onToggleAdmin) {
+                onToggleAdmin();
+              }
             }
           }}
         >
-          <Unlock className="h-3 w-3 mr-1" />
-          {isAdmin ? 'Admin' : 'Admin'}
+          {adminLocked ? (
+            <>
+              <Lock className="h-4 w-4 mr-1" />
+              Unlock
+            </>
+          ) : (
+            <>
+              <Unlock className="h-4 w-4 mr-1" />
+              Lock
+            </>
+          )}
         </Button>
       </div>
     </div>

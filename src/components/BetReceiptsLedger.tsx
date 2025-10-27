@@ -86,16 +86,16 @@ const BetReceiptsLedger: React.FC<BetReceiptsLedgerProps> = ({
   }
   
   return (
-    <Card className="mb-8 rounded-2xl overflow-hidden shadow-[0_0_15px_rgba(149,222,255,0.3)]" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
+    <Card className="mb-8 rounded-2xl overflow-hidden border-2 shadow-[0_0_30px_rgba(250,21,147,0.8)]" style={{ backgroundColor: '#052240', borderColor: '#fa1593' }}>
       <CardHeader 
         className="pb-2 cursor-pointer flex flex-row items-center justify-between"
-        style={{ background: 'linear-gradient(to right, #95deff, #004b6b)' }}
+        style={{ background: 'linear-gradient(to right, #fa1593, #004b6b)' }}
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
-        <CardTitle className="text-2xl text-center font-bold flex items-center" style={{ color: 'black', textShadow: '0 0 15px rgba(250, 21, 147, 0.8)' }}>
-          <ReceiptText className="h-6 w-6 mr-2" style={{ color: 'black', filter: 'drop-shadow(0 0 10px rgba(250, 21, 147, 0.8))' }} />
-          Bet Receipts
-          <span className="ml-2 text-sm px-2 py-1 rounded-full" style={{ backgroundColor: 'rgba(0, 0, 0, 0.2)' }}>
+        <CardTitle className="text-2xl text-center font-bold flex items-center text-white">
+          <ReceiptText className="h-6 w-6 mr-2" style={{ color: '#95deff' }} />
+          BET RECEIPTS
+          <span className="ml-2 text-sm px-2 py-1 rounded-full text-white" style={{ backgroundColor: 'rgba(0, 0, 0, 0.2)' }}>
             {selectedUserReceipts.length}
           </span>
         </CardTitle>
@@ -191,7 +191,7 @@ const BetReceiptsLedger: React.FC<BetReceiptsLedgerProps> = ({
             <TabsContent value="wins" className="mt-0">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-xl font-semibold mb-3 flex items-center justify-center" style={{ color: '#95deff' }}>
+                  <h3 className="text-xl font-semibold mb-3 flex items-center justify-center text-white">
                     Wins
                   </h3>
                   <UserBetReceipts 
@@ -202,7 +202,7 @@ const BetReceiptsLedger: React.FC<BetReceiptsLedgerProps> = ({
                   />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-3 flex items-center justify-center" style={{ color: '#fa1593' }}>
+                  <h3 className="text-xl font-semibold mb-3 flex items-center justify-center text-white">
                     Losses
                   </h3>
                   <UserBetReceipts 

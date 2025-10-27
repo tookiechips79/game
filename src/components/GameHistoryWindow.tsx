@@ -14,9 +14,9 @@ const GameHistoryWindow: React.FC = () => {
 
   const handleClearHistory = () => {
     if (window.confirm('Are you sure you want to clear the game history and reset all bets? This action cannot be undone.')) {
-      // Clear both game history and betting queues
+      // Clear game history only - DO NOT reset scoreboard
       resetBetHistory();
-      resetGameState();
+      // REMOVED: resetGameState() - this should NOT affect the scoreboard
       
       // Emit clear command via Socket.IO so ALL clients clear (including this one)
       try {
@@ -39,12 +39,12 @@ const GameHistoryWindow: React.FC = () => {
   const recentGames = getRecentGames();
 
   return (
-    <Card className="glass-card border-2 overflow-hidden shadow-[0_0_30px_rgba(149,222,255,0.8)] mb-6 hover:shadow-[0_0_40px_rgba(149,222,255,1)] rounded-3xl" style={{ borderColor: '#95deff', backgroundColor: '#004b6b' }}>
-      <CardHeader className="py-3 px-4 rounded-t-3xl" style={{ background: 'linear-gradient(to right, #95deff, #004b6b)' }}>
+    <Card className="glass-card border-2 overflow-hidden shadow-[0_0_30px_rgba(250,21,147,0.8)] mb-6 hover:shadow-[0_0_40px_rgba(250,21,147,1)] rounded-3xl" style={{ borderColor: '#fa1593', backgroundColor: '#052240' }}>
+      <CardHeader className="py-3 px-4 rounded-t-3xl" style={{ background: 'linear-gradient(to right, #fa1593, #004b6b)' }}>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-bold flex items-center" style={{ color: 'black', textShadow: '0 0 15px rgba(250, 21, 147, 0.8)' }}>
+          <CardTitle className="text-lg font-bold flex items-center text-white">
             <div className="flex items-center">
-              <Trophy className="h-5 w-5 mr-2" style={{ color: 'black', filter: 'drop-shadow(0 0 10px rgba(250, 21, 147, 0.8))' }} />
+              <Trophy className="h-5 w-5 mr-2" style={{ color: '#95deff' }} />
               GAME HISTORY
             </div>
           </CardTitle>
@@ -79,8 +79,8 @@ const GameHistoryWindow: React.FC = () => {
         {recentGames.length === 0 ? (
           <div className="text-center py-8">
             <Trophy className="h-12 w-12 mx-auto mb-4" style={{ color: '#95deff' }} />
-            <p className="text-sm" style={{ color: '#95deff' }}>No games played yet</p>
-            <p className="text-xs mt-1" style={{ color: '#052240' }}>Game history will appear here</p>
+            <p className="text-sm text-white">No games played yet</p>
+            <p className="text-xs mt-1 text-gray-400">Game history will appear here</p>
           </div>
         ) : (
           <div className="space-y-2 max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-rounded-full hover:scrollbar-thumb-blue-400 transition-colors" style={{ scrollbarThumbColor: '#95deff' }}>
@@ -88,7 +88,7 @@ const GameHistoryWindow: React.FC = () => {
               <div 
                 key={game.id || `game-${game.gameNumber}-${index}`} 
                 className="rounded-lg p-2 hover:bg-opacity-50 transition-colors"
-                style={{ backgroundColor: 'rgba(0, 75, 107, 0.2)' }}
+                style={{ backgroundColor: '#052240', borderLeft: `3px solid ${game.winningTeam === 'A' ? '#95deff' : game.winningTeam === 'B' ? '#fa1593' : '#052240'}` }}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
@@ -100,10 +100,10 @@ const GameHistoryWindow: React.FC = () => {
                         : 'bg-[#052240]'
                     }`} />
                     <div className="flex flex-col">
-                      <span className="text-sm" style={{ color: '#95deff' }}>
+                      <span className="text-sm text-white">
                         Game#{game.gameNumber} {game.winningTeam === 'A' ? game.teamAName : game.winningTeam === 'B' ? game.teamBName : 'Tie'}
                       </span>
-                      <div className="flex items-center space-x-2 text-xs" style={{ color: '#95deff' }}>
+                      <div className="flex items-center space-x-2 text-xs text-gray-400">
                         <span>Break: {game.breakingTeam === 'A' ? game.teamAName : game.breakingTeam === 'B' ? game.teamBName : 'Unknown'}</span>
                         <span>•</span>
                         <div className="flex items-center space-x-1">
@@ -115,19 +115,19 @@ const GameHistoryWindow: React.FC = () => {
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="flex items-center space-x-1">
-                      <div className="rounded w-8 h-8 flex items-center justify-center" style={{ backgroundColor: '#004b6b' }}>
-                        <span className="text-sm font-mono" style={{ color: '#95deff' }}>
+                      <div className="rounded w-8 h-8 flex items-center justify-center border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
+                        <span className="text-sm font-mono text-cyan-400">
                           {game.teamABalls || 0}
                         </span>
                       </div>
-                      <div className="rounded w-8 h-8 flex items-center justify-center" style={{ backgroundColor: '#750037' }}>
-                        <span className="text-sm font-mono" style={{ color: '#fa1593' }}>
+                      <div className="rounded w-8 h-8 flex items-center justify-center border" style={{ backgroundColor: '#750037', borderColor: '#fa1593' }}>
+                        <span className="text-sm font-mono text-pink-400">
                           {game.teamBBalls || 0}
                         </span>
                       </div>
                     </div>
                     <div className="rounded w-8 h-8 flex items-center justify-center" style={{ backgroundColor: '#95deff' }}>
-                      <span className="text-sm font-semibold" style={{ color: '#052240' }}>
+                      <span className="text-sm font-semibold" style={{ color: '#004b6b' }}>
                         {game.totalAmount?.toLocaleString() || 0}
                       </span>
                     </div>

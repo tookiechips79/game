@@ -13,6 +13,9 @@ interface GameMetadataProps {
   onReset: () => void;
   isAdmin?: boolean;
   onToggleAdmin?: () => void;
+  adminLocked?: boolean;
+  setAdminLocked?: (locked: boolean) => void;
+  adminModalRef?: React.RefObject<{ openModal: () => void }>;
 }
 
 const GameMetadata: React.FC<GameMetadataProps> = ({
@@ -24,7 +27,10 @@ const GameMetadata: React.FC<GameMetadataProps> = ({
   onPause,
   onReset,
   isAdmin = false,
-  onToggleAdmin
+  onToggleAdmin,
+  adminLocked,
+  setAdminLocked,
+  adminModalRef
 }) => {
   return (
     <GameHeader
@@ -37,6 +43,9 @@ const GameMetadata: React.FC<GameMetadataProps> = ({
       onReset={onReset}
       isAdmin={isAdmin}
       onToggleAdmin={onToggleAdmin}
+      adminLocked={adminLocked}
+      setAdminLocked={setAdminLocked}
+      adminModalRef={adminModalRef}
     />
   );
 };

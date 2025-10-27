@@ -61,7 +61,7 @@ const UserWidget: React.FC<UserWidgetProps> = ({
                     </div>
           <div>
             <div className="text-sm font-bold text-white">{user.name}</div>
-            <div className="text-xs text-pink-400 font-medium">Wallet</div>
+            <div className="text-xs text-white font-medium">Wallet</div>
                   </div>
                 </div>
                 
@@ -74,7 +74,7 @@ const UserWidget: React.FC<UserWidgetProps> = ({
             </div>
             <div>
               <div className="text-lg font-bold text-pink-300">{availableCredits}</div>
-              <div className="text-xs text-gray-400">Available</div>
+              <div className="text-xs text-white">Available</div>
             </div>
                     </div>
                     
@@ -88,7 +88,7 @@ const UserWidget: React.FC<UserWidgetProps> = ({
             </div>
             <div>
               <div className="text-lg font-bold text-pink-300">{bookedAmount}</div>
-              <div className="text-xs text-gray-400">Booked</div>
+              <div className="text-xs text-white">Booked</div>
             </div>
                     </div>
                     
@@ -102,7 +102,7 @@ const UserWidget: React.FC<UserWidgetProps> = ({
             </div>
             <div>
               <div className="text-lg font-bold text-pink-300">{totalCredits}</div>
-              <div className="text-xs text-gray-400">Total</div>
+              <div className="text-xs text-white">Total</div>
             </div>
                       </div>
                       
@@ -118,7 +118,7 @@ const UserWidget: React.FC<UserWidgetProps> = ({
                 </div>
                 <div>
                   <div className="text-lg font-bold text-pink-300">{totalBets}</div>
-                  <div className="text-xs text-gray-400">All Bets</div>
+                  <div className="text-xs text-white">All Bets</div>
                 </div>
                       </div>
                       
@@ -130,7 +130,7 @@ const UserWidget: React.FC<UserWidgetProps> = ({
                 </div>
                 <div>
                   <div className="text-lg font-bold text-pink-300">{totalActiveBets}</div>
-                  <div className="text-xs text-gray-400">Active</div>
+                  <div className="text-xs text-white">Active</div>
                       </div>
                     </div>
 
@@ -140,10 +140,10 @@ const UserWidget: React.FC<UserWidgetProps> = ({
                 <div>
                   <div className="flex items-center space-x-1">
                     <span className="text-lg font-bold text-green-400">{wins}</span>
-                    <span className="text-gray-600">•</span>
+                    <span className="text-white">•</span>
                     <span className="text-lg font-bold text-red-400">{losses}</span>
                   </div>
-                  <div className="text-xs text-gray-400">{winRate}% Win Rate</div>
+                  <div className="text-xs text-white">{winRate}% Win Rate</div>
                 </div>
               </div>
             </>
@@ -177,12 +177,12 @@ const UserWidget: React.FC<UserWidgetProps> = ({
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-3 text-xs">
                 <div className="flex items-center space-x-1">
-                  <span className="text-gray-400">{totalBets}</span>
-                  <span className="text-gray-500">Bets</span>
+                  <span className="text-white">{totalBets}</span>
+                  <span className="text-white">Bets</span>
                     </div>
                 <div className="flex items-center space-x-1">
                   <span className="text-green-400 font-semibold">{wins}W</span>
-                  <span className="text-gray-600">•</span>
+                  <span className="text-white">•</span>
                   <span className="text-red-400 font-semibold">{losses}L</span>
                 </div>
               </div>
@@ -211,8 +211,8 @@ const UserWidget: React.FC<UserWidgetProps> = ({
                           key={receipt.id} 
                           className={`p-2 ${
                             receipt.teamSide === 'A' 
-                              ? 'bg-[#1EAEDB]/10 border border-[#1EAEDB]/30' 
-                              : 'bg-green-600/10 border border-green-600/30'
+                              ? 'bg-[#95deff]/10 border border-[#95deff]/30' 
+                              : 'bg-[#fa1593]/10 border border-[#fa1593]/30'
                           } rounded-lg hover:bg-opacity-20 transition-all`}
                         >
                           <div className="flex justify-between items-center mb-1">
@@ -220,8 +220,8 @@ const UserWidget: React.FC<UserWidgetProps> = ({
                               variant="outline" 
                               className={`${
                                 receipt.teamSide === 'A' 
-                                  ? 'bg-[#1EAEDB]/20 text-[#1EAEDB] border-[#1EAEDB]/50' 
-                                  : 'bg-green-600/20 text-green-500 border-green-600/50'
+                                  ? 'bg-[#95deff]/20 text-[#95deff] border-[#95deff]/50' 
+                                  : 'bg-[#fa1593]/20 text-[#fa1593] border-[#fa1593]/50'
                               } text-xs`}
                             >
                               {receipt.teamSide === 'A' ? teamAName : teamBName}
@@ -237,7 +237,7 @@ const UserWidget: React.FC<UserWidgetProps> = ({
                             </Badge>
                           </div>
                           <div className="flex justify-between items-center text-xs">
-                            <span className="text-gray-400">Game #{receipt.gameNumber}</span>
+                            <span className="text-white">Game #{receipt.gameNumber}</span>
                             <Badge variant="outline" className="bg-gray-800/50 text-gray-400 border-gray-700 text-xs">
                               {format(new Date(receipt.timestamp), "MM/dd • h:mm a")}
                             </Badge>
@@ -248,9 +248,9 @@ const UserWidget: React.FC<UserWidgetProps> = ({
                   </ScrollArea>
                 </div>
               ) : (
-                <div className="p-3 text-center text-gray-400">
+                <div className="p-3 text-center text-white">
                   <p className="text-sm">No bet receipts</p>
-                  <p className="mt-1 text-xs text-gray-500">Your bet history will appear here</p>
+                  <p className="mt-1 text-xs text-white">Your bet history will appear here</p>
                 </div>
               )}
               

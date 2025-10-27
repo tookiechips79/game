@@ -53,15 +53,15 @@ const BookedBetsReceipt: React.FC<BookedBetsReceiptProps> = ({
   }
 
   return (
-    <div className={`fixed right-0 bottom-0 transition-all duration-300 ${isCollapsed ? 'h-10' : 'h-auto max-h-[40vh]'} w-auto max-w-[300px] backdrop-blur-md border-t-2 border-l-2 rounded-tl-2xl px-3 py-2 z-50 shadow-lg`} style={{ backgroundColor: 'rgba(236, 72, 153, 0.2)', borderColor: '#fa1593' }}>
+    <div className={`fixed right-0 bottom-0 transition-all duration-300 ${isCollapsed ? 'h-10' : 'h-auto max-h-[40vh]'} w-auto max-w-[300px] backdrop-blur-md border-t-2 border-l-2 rounded-tl-2xl px-3 py-2 z-50 shadow-[0_0_30px_rgba(250,21,147,0.8)]`} style={{ backgroundColor: '#052240', borderColor: '#fa1593' }}>
       <div className="w-full">
         <div className="flex justify-between items-center mb-1">
           <div className="flex items-center">
-            <ReceiptText className="h-4 w-4 mr-1" style={{ color: '#fa1593' }} />
-            <h3 className="font-bold text-sm" style={{ color: 'black', textShadow: '0 0 15px rgba(250, 21, 147, 0.8)' }}>{title} - MY BETS</h3>
+            <ReceiptText className="h-4 w-4 mr-1" style={{ color: '#95deff' }} />
+            <h3 className="font-bold text-sm text-white">{title} - MY BETS</h3>
           </div>
           <div className="flex items-center gap-2">
-            <div className="text-xs" style={{ color: '#95deff' }}>
+            <div className="text-xs text-white">
               {allBookedBets.length} booked
             </div>
             <div 
@@ -101,21 +101,21 @@ const BookedBetsReceipt: React.FC<BookedBetsReceiptProps> = ({
                 return (
                   <Card 
                     key={`${bet.idA}-${bet.idB}`} 
-                    className="min-w-[200px] rounded-lg shadow-md hover:shadow-pink-600/20 transition-all"
-                    style={{ backgroundColor: 'rgba(236, 72, 153, 0.2)', borderColor: '#fa1593' }}
+                    className="min-w-[200px] rounded-lg border-2 shadow-md hover:shadow-pink-600/40 transition-all"
+                    style={{ backgroundColor: '#004b6b', borderColor: '#fa1593' }}
                   >
-                    <CardHeader className="py-1 px-2 rounded-t-lg" style={{ background: 'linear-gradient(to right, rgba(250, 21, 147, 0.3), rgba(236, 72, 153, 0.2))' }}>
-                      <CardTitle className="text-xs flex items-center justify-between">
+                    <CardHeader className="py-1 px-2 rounded-t-lg" style={{ background: 'linear-gradient(to right, #fa1593, #004b6b)' }}>
+                      <CardTitle className="text-xs flex items-center justify-between text-white">
                         <div className="flex items-center">
-                          <Check className="h-3 w-3 mr-1" style={{ color: '#fa1593' }} />
+                          <Check className="h-3 w-3 mr-1" style={{ color: '#95deff' }} />
                           #{bet.idA} + #{bet.idB}
                         </div>
                         {bet.isCurrentGame ? (
-                          <span className="font-bold text-xs px-1 py-0.5 rounded" style={{ color: '#fa1593', backgroundColor: 'rgba(250, 21, 147, 0.2)' }}>
+                          <span className="font-bold text-xs px-1 py-0.5 rounded text-white" style={{ backgroundColor: 'rgba(149, 222, 255, 0.2)' }}>
                             ACTIVE
                           </span>
                         ) : (
-                          <span className="font-bold text-xs px-1 py-0.5 rounded" style={{ color: '#fa1593', backgroundColor: 'rgba(250, 21, 147, 0.2)' }}>
+                          <span className="font-bold text-xs px-1 py-0.5 rounded text-white" style={{ backgroundColor: 'rgba(149, 222, 255, 0.2)' }}>
                             NEXT
                           </span>
                         )}
@@ -123,8 +123,8 @@ const BookedBetsReceipt: React.FC<BookedBetsReceiptProps> = ({
                     </CardHeader>
                     <CardContent className="p-2 text-xs">
                       <div className="grid grid-cols-2 gap-x-1 gap-y-0.5">
-                        <div className="font-semibold text-xs" style={{ color: '#95deff' }}>{teamAName}</div>
-                        <div className="font-semibold text-xs" style={{ color: '#fa1593' }}>{teamBName}</div>
+                        <div className="font-semibold text-xs text-white">{teamAName}</div>
+                        <div className="font-semibold text-xs text-white">{teamBName}</div>
                         
                         <div className="text-white text-xs truncate">
                           {userA?.name || 'User'}

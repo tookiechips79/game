@@ -7,8 +7,6 @@ import TeamScoreSection from "@/components/TeamScoreSection";
 import GameControls from "@/components/GameControls";
 import GameMetadata from "@/components/GameMetadata";
 import CompactAdminWidget from "@/components/CompactAdminWidget";
-import { Coins } from "lucide-react";
-import { Link } from "react-router-dom";
 
 interface ScoreboardMainDisplayProps {
   teamAName?: string;
@@ -23,6 +21,10 @@ interface ScoreboardMainDisplayProps {
   displayTeamBGames: number;
   isMatchStarted: boolean;
   showControls: boolean;
+  controlsDisabled?: boolean;
+  adminLocked?: boolean;
+  setAdminLocked?: (locked: boolean) => void;
+  adminModalRef?: React.RefObject<{ openModal: () => void }>;
   timer: number;
   isTimerRunning: boolean;
   onStart: () => void;
@@ -47,6 +49,9 @@ interface ScoreboardMainDisplayProps {
   isAgent?: boolean;
   onToggleAdmin?: () => void;
   onToggleAgent?: () => void;
+  adminLocked?: boolean;
+  setAdminLocked?: (locked: boolean) => void;
+  adminModalRef?: React.RefObject<HTMLDivElement>;
 }
 
 const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
@@ -82,7 +87,10 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
   isAdmin = false,
   isAgent = false,
   onToggleAdmin,
-  onToggleAgent
+  onToggleAgent,
+  adminLocked,
+  setAdminLocked,
+  adminModalRef
 }) => {
   // Force re-render for Chrome compatibility when scoreboard data changes
   const [renderKey, setRenderKey] = useState(0);
@@ -93,34 +101,23 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
   }, [teamABalls, teamBBalls, displayTeamAGames, displayTeamBGames, displayBreak]);
   
   return (
-    <div className="relative">
-      {/* Admin Panel */}
-      {(isAdmin || isAgent) && (
-        <div className="mb-4">
-          <CompactAdminWidget
-            isAdmin={isAdmin}
-            isAgent={isAgent}
-          />
-        </div>
-      )}
+    <>
+      {/* CompactAdminWidget Portal - render at root to allow modals to display properly */}
+      <CompactAdminWidget
+        ref={adminModalRef}
+        isAdmin={isAdmin}
+        isAgent={isAgent}
+        onToggleAdmin={onToggleAdmin}
+        setAdminLocked={setAdminLocked}
+        adminLocked={adminLocked}
+      />
       
-      <Card key={renderKey} className="glass-card border-2 overflow-hidden shadow-[0_0_30px_rgba(250,21,147,0.8)] mb-8 hover:shadow-[0_0_40px_rgba(250,21,147,1)] rounded-3xl relative" style={{ borderColor: '#fa1593', backgroundColor: '#052240' }}>
-        {isAdmin && (
-          <div className="absolute top-4 right-4 z-30 flex items-center gap-2 pointer-events-auto">
-            <Link to="/reload-coins">
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="hover:text-white"
-                style={{ borderColor: '#95deff', color: '#95deff' }}
-              >
-                <Coins className="h-4 w-4 mr-2" />
-                Reload Coins
-              </Button>
-            </Link>
-          </div>
-        )}
+      <div className="relative">
         
+      <Card key={renderKey} className="glass-card overflow-hidden rounded-3xl relative mb-8" style={{ 
+        backgroundColor: '#052240',
+        boxShadow: isTimerRunning ? '0 0 40px rgba(149, 222, 255, 1), 0 0 60px rgba(149, 222, 255, 0.6)' : 'none'
+      }}>
         <CardContent className="p-0 relative">
           <div className="grid grid-cols-2 divide-x" style={{ borderColor: '#750037' }}>
             {showControls && !isMatchStarted && (
@@ -148,6 +145,9 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
               onReset={onReset}
               isAdmin={isAdmin}
               onToggleAdmin={onToggleAdmin}
+              adminLocked={adminLocked}
+              setAdminLocked={setAdminLocked}
+              adminModalRef={adminModalRef}
             />
             
             <div className="relative" style={{ backgroundColor: '#004b6b' }}>
@@ -195,6 +195,7 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
         </CardContent>
       </Card>
     </div>
+    </>
   );
 };
 

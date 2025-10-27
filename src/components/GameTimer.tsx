@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Clock, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -20,10 +20,35 @@ const GameTimer = ({
   onPause,
   onReset
 }: GameTimerProps) => {
+  const [milliseconds, setMilliseconds] = useState(0);
+  
+  // Update milliseconds every 10ms when timer is running
+  useEffect(() => {
+    if (!isTimerRunning) {
+      setMilliseconds(0);
+      return;
+    }
+    
+    const interval = setInterval(() => {
+      setMilliseconds(prev => {
+        const next = prev + 10;
+        return next >= 1000 ? 0 : next; // Count from 0 to 990ms (displays as .00 to .99)
+      });
+    }, 10);
+    
+    return () => clearInterval(interval);
+  }, [isTimerRunning]);
+  
+  // Reset milliseconds when timer seconds change (server update)
+  useEffect(() => {
+    setMilliseconds(0);
+  }, [timer]);
+
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    const ms = Math.floor(milliseconds / 10); // Convert milliseconds to centiseconds (0-99)
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
   };
 
   const handleStartClick = () => {
@@ -42,7 +67,7 @@ const GameTimer = ({
     <div className="flex items-center space-x-2 bg-black/40 backdrop-blur-sm px-4 py-2 rounded-full">
       <Clock className="h-5 w-5 text-[#fa1593]" />
       <div 
-        className={`text-3xl font-bold text-[#fa1593] drop-shadow-[0_0_8px_rgba(250,21,147,0.7)] ${!isTimerRunning ? 'animate-pulse' : ''}`}
+        className={`text-3xl font-bold text-[#fa1593] drop-shadow-[0_0_8px_rgba(250,21,147,0.7)] font-mono ${!isTimerRunning ? 'animate-pulse' : ''}`}
       >
         {formatTime(timer)}
       </div>

@@ -575,6 +575,27 @@ io.on('connection', (socket) => {
     });
   });
 
+  // Handle peer-to-peer game history requests
+  socket.on('request-game-history-from-clients', () => {
+    console.log('📨 [P2P] Client requesting game history from peers');
+    // Broadcast to ALL other connected clients asking them to share their game history
+    socket.broadcast.emit('client-requesting-game-history', {
+      clientId: socket.id,
+      requestedAt: Date.now()
+    });
+  });
+
+  // Handle clients providing game history to the requesting client
+  socket.on('provide-game-history-to-client', (data) => {
+    console.log('📥 [P2P] Client providing game history:', data.gameHistory?.length || 0, 'records');
+    // Broadcast to ALL clients (the requesting client will receive peer data)
+    io.emit('receive-game-history-from-clients', {
+      gameHistory: data.gameHistory || [],
+      providedBy: socket.id,
+      providedAt: Date.now()
+    });
+  });
+
   // Handle disconnect
   socket.on('disconnect', () => {
     console.log(`User disconnected: ${socket.id}`);

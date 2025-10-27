@@ -263,54 +263,12 @@ export const UserCreditsManager: React.FC = () => {
   );
 };
 
-export const UserCreditDisplay: React.FC<{ hideCredits?: boolean }> = ({ hideCredits = false }) => {
-  const { currentUser } = useUser();
-  
-  if (!currentUser) return null;
-  
-  return (
-    <Card className="mb-4 shadow-[0_0_15px_rgba(149,222,255,0.3)] rounded-2xl" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm flex items-center gap-2" style={{ color: '#fa1593' }}>
-          <UserIcon className="h-4 w-4" />
-          Current User
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex justify-between items-center">
-          <div className="text-white">
-            <span className="font-bold">{currentUser.name}</span>
-            <div className={`text-xs px-2 py-1 rounded-full mt-1 inline-block ${
-              currentUser.membershipStatus === 'active' 
-                ? 'bg-green-500/20 text-green-400' 
-                : 'bg-red-500/20 text-red-400'
-            }`}>
-              {currentUser.membershipStatus === 'active' ? 'ACTIVE MEMBER' : 'INACTIVE - SUBSCRIBE TO BET'}
-            </div>
-          </div>
-          {!hideCredits && (
-            <div className="p-2 rounded-xl text-white font-bold" style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }}>
-              {currentUser.credits} COINS
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
 const UserCreditSystem: React.FC<{ isAdmin: boolean, isAgent?: boolean }> = ({ isAdmin, isAgent = false }) => {
   const hideCredits = isAgent && !isAdmin;
   
   return (
     <div className="mb-6">
-      <UserCreditDisplay hideCredits={hideCredits} />
-      
-      {!isAdmin && !isAgent && (
-        <div className="flex flex-col gap-4">
-          <UserSelector />
-        </div>
-      )}
+      <UserSelector />
       
       {isAdmin && (
         <div className="flex flex-col gap-4">

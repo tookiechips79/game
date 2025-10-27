@@ -63,6 +63,27 @@ const createDefaultAdmin = (): User => ({
 });
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // *** MOVE ALL useRef DECLARATIONS HERE - FIRST, BEFORE ANY useState ***
+  // Flag to prevent emitting history updates during clear operations
+  const isClearingRef = useRef(false);
+
+  // Flag to prevent re-emitting data that came FROM the socket listener
+  const isUpdatingFromSocketRef = useRef(false);
+
+  // Flag to pause Socket.IO listener processing during clear operations
+  const pauseListenersRef = useRef(false);
+
+  // Flag to track if we've loaded initial data from localStorage
+  const isInitialLoadRef = useRef(false);
+
+  // Flag to prevent re-emitting bet receipts updates during clear operations
+  const hasReceivedFirstBetReceiptsUpdateRef = useRef(false);
+
+  // CRITICAL: Backup tracking of all games ever added - prevents loss during rapid adds
+  // This ref maintains a complete history that acts as a safety net
+  const allGamesEverAddedRef = useRef<BetHistoryRecord[]>([]);
+
+  // *** NOW - STATE DECLARATIONS COME HERE ***
   // Initialize with default admin to ensure we always have at least one user
   const [users, setUsers] = useState<User[]>(() => {
     try {
@@ -76,8 +97,19 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           key.includes('bulletproof_') ||
           key === BET_HISTORY_STORAGE_KEY || // Old mutable bet history
           key === USER_BET_RECEIPTS_KEY ||  // Old mutable receipts
-          key.includes('bet_history') ||    // Any bet history key
-          key.includes('bet_receipt')       // Any bet receipt key
+          // OLD VERSIONS - but NOT the current v7 keys!
+          key === 'betting_app_immutable_bet_history_v1' ||
+          key === 'betting_app_immutable_bet_history_v2' ||
+          key === 'betting_app_immutable_bet_history_v3' ||
+          key === 'betting_app_immutable_bet_history_v4' ||
+          key === 'betting_app_immutable_bet_history_v5' ||
+          key === 'betting_app_immutable_bet_history_v6' ||
+          key === 'betting_app_immutable_bet_receipts_v1' ||
+          key === 'betting_app_immutable_bet_receipts_v2' ||
+          key === 'betting_app_immutable_bet_receipts_v3' ||
+          key === 'betting_app_immutable_bet_receipts_v4' ||
+          key === 'betting_app_immutable_bet_receipts_v5' ||
+          key === 'betting_app_immutable_bet_receipts_v6'
         )) {
           keysToRemove.push(key);
         }
@@ -110,32 +142,53 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
   
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [betHistory, setBetHistory] = useState<BetHistoryRecord[]>([]);
   
-  // IMMUTABLE BET HISTORY - This can NEVER be cleared or modified
-  const [immutableBetHistory, setImmutableBetHistory] = useState<BetHistoryRecord[]>([]);
+  // SINGLE SOURCE OF TRUTH: Use only immutableBetHistory for all game history
+  // Load from localStorage synchronously on mount to ensure data exists BEFORE socket connects
+  const [immutableBetHistory, setImmutableBetHistory] = useState<BetHistoryRecord[]>(() => {
+    try {
+      const stored = localStorage.getItem(IMMUTABLE_BET_HISTORY_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          console.log('✅ [INIT] Bet history initialized from localStorage:', parsed.length, 'records');
+          // CRITICAL: Mark as initial load IMMEDIATELY so guards activate BEFORE socket messages arrive
+          isInitialLoadRef.current = true;
+          return parsed;
+        }
+      }
+    } catch (error) {
+      console.error('❌ [INIT] Error loading immutable bet history:', error);
+    }
+    return [];
+  });
   
   // PRIVATE: setBetHistory is now completely internal and cannot be called externally
   // This ensures bet history can only be modified through addBetHistoryRecord
   const [userBetReceipts, setUserBetReceipts] = useState<UserBetReceipt[]>([]);
   
   // IMMUTABLE BET RECEIPTS - This can NEVER be cleared or modified
-  const [immutableBetReceipts, setImmutableBetReceipts] = useState<UserBetReceipt[]>([]);
+  // Load from localStorage synchronously on mount to ensure data exists BEFORE socket connects
+  const [immutableBetReceipts, setImmutableBetReceipts] = useState<UserBetReceipt[]>(() => {
+    try {
+      const stored = localStorage.getItem(IMMUTABLE_BET_RECEIPTS_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          console.log('✅ [INIT] Bet receipts initialized from localStorage:', parsed.length, 'receipts');
+          // CRITICAL: Mark as first update received so guards activate BEFORE socket messages arrive
+          hasReceivedFirstBetReceiptsUpdateRef.current = true;
+          return parsed;
+        }
+      }
+    } catch (error) {
+      console.error('❌ [INIT] Error loading immutable bet receipts:', error);
+    }
+    return [];
+  });
   const [creditTransactions, setCreditTransactions] = useState<CreditTransaction[]>([]);
   const [isUsersLoaded, setIsUsersLoaded] = useState<boolean>(true); // Start as true since we initialize with users
   const [connectedUsersCoins, setConnectedUsersCoins] = useState<{ totalCoins: number; connectedUserCount: number; connectedUsers: any[] }>({ totalCoins: 0, connectedUserCount: 0, connectedUsers: [] });
-
-  // Flag to prevent emitting history updates during clear operations
-  const isClearingRef = useRef(false);
-
-  // Flag to prevent re-emitting data that came FROM the socket listener
-  const isUpdatingFromSocketRef = useRef(false);
-
-  // Flag to pause Socket.IO listener processing during clear operations
-  const pauseListenersRef = useRef(false);
-
-  // Flag to track if we've loaded initial data from localStorage
-  const isInitialLoadRef = useRef(false);
 
   // Custom setCurrentUser that emits user login/logout events
   const setCurrentUserWithLogin = (user: User | null) => {
@@ -266,65 +319,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
     
-    const storedBetHistory = localStorage.getItem(BET_HISTORY_STORAGE_KEY);
-    if (storedBetHistory) {
-      setBetHistory(JSON.parse(storedBetHistory));
-    }
-    
-    // Load immutable bet history - this can NEVER be cleared
-    try {
-      let storedImmutableBetHistory = localStorage.getItem(IMMUTABLE_BET_HISTORY_KEY);
-      
-      if (storedImmutableBetHistory) {
-        const parsedHistory = JSON.parse(storedImmutableBetHistory);
-        if (Array.isArray(parsedHistory)) {
-          setBetHistory(parsedHistory); // Sync betHistory with immutableBetHistory
-          setImmutableBetHistory(parsedHistory);
-          isInitialLoadRef.current = true; // Mark as loaded
-          console.log('✅ Bet history loaded:', parsedHistory.length, 'records');
-        } else {
-          console.warn('⚠️ Invalid immutable bet history format, initializing empty');
-          setBetHistory([]);
-          setImmutableBetHistory([]);
-        }
-      } else {
-        console.log('ℹ️ No immutable bet history found, initializing empty');
-        setBetHistory([]);
-        setImmutableBetHistory([]);
-      }
-    } catch (error) {
-      console.error('❌ Error loading immutable bet history:', error);
-      setBetHistory([]);
-      setImmutableBetHistory([]);
-    }
-    
-    const storedUserBetReceipts = localStorage.getItem(USER_BET_RECEIPTS_KEY);
-    if (storedUserBetReceipts) {
-      setUserBetReceipts(JSON.parse(storedUserBetReceipts));
-    }
-    
-    // Load immutable bet receipts - this can NEVER be cleared
-    try {
-      let storedImmutableBetReceipts = localStorage.getItem(IMMUTABLE_BET_RECEIPTS_KEY);
-      
-      if (storedImmutableBetReceipts) {
-        const parsedReceipts = JSON.parse(storedImmutableBetReceipts);
-        if (Array.isArray(parsedReceipts)) {
-          setImmutableBetReceipts(parsedReceipts);
-          console.log('✅ Immutable bet receipts loaded:', parsedReceipts.length, 'receipts');
-        } else {
-          console.warn('⚠️ Invalid immutable bet receipts format, initializing empty');
-          setImmutableBetReceipts([]);
-        }
-      } else {
-        console.log('ℹ️ No immutable bet receipts found, initializing empty');
-        setImmutableBetReceipts([]);
-      }
-    } catch (error) {
-      console.error('❌ Error loading immutable bet receipts:', error);
-      setImmutableBetReceipts([]);
-    }
-    
     const storedCreditTransactions = localStorage.getItem(CREDIT_TRANSACTIONS_KEY);
     if (storedCreditTransactions) {
       setCreditTransactions(JSON.parse(storedCreditTransactions));
@@ -336,11 +330,66 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('🔌 Setting up Socket.IO listeners');
     socketIOService.connect();
 
+    // Listen for game history from other clients (peer-to-peer)
+    socketIOService.onReceiveGameHistoryFromClients((data) => {
+      try {
+        console.log('📥 [PEER-HISTORY] Received history from peers:', data.gameHistory?.length, 'records');
+        // ALWAYS accept peer data - it's from real clients, not the empty server!
+        if (Array.isArray(data.gameHistory) && data.gameHistory.length > 0) {
+          const ensuredHistory = data.gameHistory.map((record, index) => ({
+            ...record,
+            id: record.id || `bet-history-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 9)}`
+          }));
+          
+          // Update state and localStorage with peer data - BYPASS ALL GUARDS
+          console.log('✅ [PEER-HISTORY] Accepting peer data, updating state and localStorage');
+          setImmutableBetHistory([...ensuredHistory]);
+          localStorage.setItem(IMMUTABLE_BET_HISTORY_KEY, JSON.stringify(ensuredHistory));
+          console.log('✅ [PEER-HISTORY] Updated game history from peers and saved to localStorage');
+          isInitialLoadRef.current = true; // Mark as loaded so guards don't interfere
+        }
+      } catch (err) {
+        console.error('❌ Error handling peer history:', err);
+      }
+    });
+
+    // Listen for when OTHER clients request our game history and share it with them
+    socketIOService.onClientRequestsGameHistory((data) => {
+      try {
+        console.log('🚀 [PEER-SHARE] Another client requested our game history, sharing:', immutableBetHistory.length, 'records');
+        if (immutableBetHistory.length > 0) {
+          // Share our local game history with the requesting client
+          socketIOService.sendGameHistoryToClient(immutableBetHistory);
+        }
+      } catch (err) {
+        console.error('❌ Error sharing game history with peer:', err);
+      }
+    });
+
+    // Request game history from other connected clients (BEFORE server sends empty)
+    setTimeout(() => {
+      console.log('🔍 [PEER-REQUEST] Requesting game history from other connected clients...');
+      socketIOService.requestGameHistoryFromClients();
+    }, 200);
+
     // Listen for game history updates from other clients
     const handleGameHistoryUpdate = (data: { gameHistory: any[] }) => {
       try {
-        console.log(`[HISTORY_LISTENER] Received update with ${data.gameHistory?.length} entries`);
+        console.log(`[HISTORY_LISTENER] Received update:`, {
+          receivedLength: data.gameHistory?.length,
+          currentStateLength: immutableBetHistory.length,
+          dataType: typeof data.gameHistory,
+          isArray: Array.isArray(data.gameHistory),
+          isEmpty: data.gameHistory?.length === 0
+        });
         console.log(`  pauseListenersRef=${pauseListenersRef.current}, isClearingRef=${isClearingRef.current}, isInitialLoadRef=${isInitialLoadRef.current}`);
+        
+        // HARD RULE: NEVER accept empty arrays from server - they kill the history!
+        if (!data.gameHistory || data.gameHistory.length === 0) {
+          console.warn('⚠️ [HISTORY_LISTENER] BLOCKED: Server sent empty/null array - NEVER accepting empty history!');
+          console.warn('   This is a hard rule - game history is protected');
+          return; // NEVER accept empty history
+        }
         
         // PAUSE listeners during clearing - completely ignore all updates
         if (pauseListenersRef.current) {
@@ -363,8 +412,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
         
-        console.log('📥 [UserContext] Game history update received:', data.gameHistory?.length, 'entries');
-        if (Array.isArray(data.gameHistory)) {
+        console.log('📥 [UserContext] Game history update ACCEPTED:', data.gameHistory?.length, 'entries');
+        if (Array.isArray(data.gameHistory) && data.gameHistory.length > 0) {
           console.log('📝 [UserContext] Setting betHistory and immutableBetHistory');
           
           // Ensure all records have unique IDs
@@ -373,25 +422,31 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             id: record.id || `bet-history-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 9)}`
           }));
           
-          // SET FLAG to prevent re-emitting this data back to socket
-          isUpdatingFromSocketRef.current = true;
-          setBetHistory([...ensuredHistory]); // Use spread for new reference
-          setImmutableBetHistory([...ensuredHistory]);
-          console.log('✅ [UserContext] States updated from socket, component will re-render');
-          
-          // Reset flag after state updates settle
-          setTimeout(() => {
-            isUpdatingFromSocketRef.current = false;
-          }, 50);
+          // Update state - the useEffect will automatically save to localStorage
+          setImmutableBetHistory([...ensuredHistory]); // Use spread for new reference
+          console.log('✅ [UserContext] States updated from socket, useEffect will save to localStorage');
         }
       } catch (err) {
         console.error('❌ Error handling game history update:', err);
       }
     };
 
-    // Listen for bet receipts updates from other clients
+  // Listen for bet receipts updates from other clients
     const handleBetReceiptsUpdate = (data: { betReceipts: any[] }) => {
       try {
+        console.log(`[RECEIPTS_LISTENER] Received update:`, {
+          receivedLength: data.betReceipts?.length,
+          currentStateLength: immutableBetReceipts.length,
+          isEmpty: data.betReceipts?.length === 0
+        });
+        
+        // HARD RULE: NEVER accept empty arrays from server - they kill the receipts!
+        if (!data.betReceipts || data.betReceipts.length === 0) {
+          console.warn('⚠️ [RECEIPTS_LISTENER] BLOCKED: Server sent empty/null array - NEVER accepting empty receipts!');
+          console.warn('   This is a hard rule - bet receipts are protected');
+          return; // NEVER accept empty receipts
+        }
+        
         // PAUSE listeners during clearing - completely ignore all updates
         if (pauseListenersRef.current) {
           console.log('⏸️ [UserContext] Listeners paused, ignoring receipts update');
@@ -457,16 +512,18 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Set flag to prevent emitting during clear
         isClearingRef.current = true;
         
-        setBetHistory([]);
         setImmutableBetHistory([]);
-        setUserBetReceipts([]);
-        setImmutableBetReceipts([]);
-        
-        // Also clear localStorage
         localStorage.removeItem(IMMUTABLE_BET_HISTORY_KEY);
-        localStorage.removeItem(IMMUTABLE_BET_RECEIPTS_KEY);
-        localStorage.removeItem(BET_HISTORY_STORAGE_KEY);
+        localStorage.removeItem(BULLETPROOF_BET_HISTORY_KEY);
+        
+        setUserBetReceipts([]);
         localStorage.removeItem(USER_BET_RECEIPTS_KEY);
+        localStorage.removeItem(IMMUTABLE_BET_RECEIPTS_KEY);
+        localStorage.removeItem(BULLETPROOF_BET_RECEIPTS_KEY);
+        
+        setCreditTransactions([]);
+        localStorage.removeItem(CREDIT_TRANSACTIONS_KEY);
+        
         console.log('✅ [UserContext] All data cleared');
         
         // Reset flags after a longer delay (500ms) to allow all React state updates and re-renders to complete
@@ -501,6 +558,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       console.log('🔌 Cleaning up Socket.IO listeners');
+      // CRITICAL: Remove all socket listeners to prevent duplicates and stale closures
+      socketIOService.offGameHistoryUpdate();
+      socketIOService.offBetReceiptsUpdate();
+      socketIOService.offClearAllData();
+      socketIOService.offPauseListeners();
+      socketIOService.offResumeListeners();
+      socketIOService.offClientRequestsGameHistory();
+      socketIOService.offReceiveGameHistoryFromClients();
     };
   }, []);
 
@@ -511,13 +576,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [users]);
 
   useEffect(() => {
-    if (currentUser) {
+      if (currentUser) {
       localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(currentUser));
     } else {
       localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
     }
   }, [currentUser]);
-  
+
   // NOTE: betHistory is synced via Socket.IO, don't save to localStorage separately
   
   // IMMUTABLE BET HISTORY - Always save to separate storage, NEVER cleared
@@ -528,16 +593,32 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    // SKIP emitting if this update came FROM the socket (to prevent re-emit loop)
-    if (isUpdatingFromSocketRef.current) {
-      console.log('⏭️ Skipping history useEffect - data came from socket, no re-emit');
-      return;
-    }
-    
+    // IMPORTANT: Always save to localStorage, regardless of where the update came from
+    // Whether from local addBetHistoryRecord or from socket listeners, we MUST persist it
     try {
+      // Update backup ref for safety
+      allGamesEverAddedRef.current = immutableBetHistory;
+      
       // Only save to main key to conserve storage space
-      localStorage.setItem(IMMUTABLE_BET_HISTORY_KEY, JSON.stringify(immutableBetHistory));
+      const serialized = JSON.stringify(immutableBetHistory);
+      localStorage.setItem(IMMUTABLE_BET_HISTORY_KEY, serialized);
       console.log('✅ Immutable bet history saved to localStorage:', immutableBetHistory.length, 'records');
+      console.log('   📦 Stored data size:', (serialized.length / 1024).toFixed(2), 'KB');
+      console.log('   🔑 Storage key:', IMMUTABLE_BET_HISTORY_KEY);
+      console.log('   🔄 Backup ref updated with:', immutableBetHistory.length, 'records');
+      
+      // DEBUG: Verify it was actually saved
+      const verify = localStorage.getItem(IMMUTABLE_BET_HISTORY_KEY);
+      if (verify) {
+        const verifiedCount = JSON.parse(verify).length;
+        if (verifiedCount === immutableBetHistory.length) {
+          console.log('   ✔️ Verified: All', verifiedCount, 'records persisted');
+        } else {
+          console.error('   ❌ MISMATCH: Expected', immutableBetHistory.length, 'but found', verifiedCount);
+        }
+      } else {
+        console.error('   ❌ ERROR: Data NOT found in localStorage after saving!');
+      }
       
       // NOTE: DO NOT EMIT HERE - emit only happens in addBetHistoryRecord (the SOURCE)
       // This prevents re-emit loops from Socket.IO listener updates
@@ -547,6 +628,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // If quota exceeded, trim more aggressively and retry
         const trimmedHistory = immutableBetHistory.slice(0, 50);
         try {
+          allGamesEverAddedRef.current = trimmedHistory;
           localStorage.setItem(IMMUTABLE_BET_HISTORY_KEY, JSON.stringify(trimmedHistory));
           console.log('✅ Recovered by trimming to 50 records');
         } catch (retryError) {
@@ -568,12 +650,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    // SKIP emitting if this update came FROM the socket (to prevent re-emit loop)
-    if (isUpdatingFromSocketRef.current) {
-      console.log('⏭️ Skipping receipts useEffect - data came from socket, no re-emit');
-      return;
-    }
-    
+    // IMPORTANT: Always save to localStorage, regardless of where the update came from
+    // Whether from local addUserBetReceipt or from socket listeners, we MUST persist it
     try {
       // Only save to main key to conserve storage space
       localStorage.setItem(IMMUTABLE_BET_RECEIPTS_KEY, JSON.stringify(immutableBetReceipts));
@@ -849,54 +927,73 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       timestamp: Date.now()
     };
     
-    let finalHistory: BetHistoryRecord[] = [];
+    console.log('🎮 [addBetHistoryRecord] Adding new game record, game#:', record.gameNumber);
     
-    setBetHistory(prev => {
-      const updatedHistory = [newRecord, ...prev];
-      
-      // QUOTA MANAGEMENT: Keep only last 100 games to prevent localStorage overflow
-      const MAX_GAMES = 50;
-      if (updatedHistory.length > MAX_GAMES) {
-        console.log(`⚠️ Game history limit reached (${updatedHistory.length}), trimming to ${MAX_GAMES} records`);
-        finalHistory = updatedHistory.slice(0, MAX_GAMES);
-        return finalHistory;
+    // CRITICAL FIX: Always read from localStorage instead of closure to prevent loss during rapid adds
+    // This ensures we get the LATEST data, not stale closure data
+    let currentHistoryFromStorage: BetHistoryRecord[] = [];
+    try {
+      const stored = localStorage.getItem(IMMUTABLE_BET_HISTORY_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          currentHistoryFromStorage = parsed;
+          console.log('📖 [addBetHistoryRecord] Read from localStorage:', currentHistoryFromStorage.length, 'existing records');
+        }
       }
-      
-      finalHistory = updatedHistory;
-      return updatedHistory;
-    });
+    } catch (err) {
+      console.error('❌ Error reading from localStorage:', err);
+      // Fallback: use the ref backup
+      currentHistoryFromStorage = allGamesEverAddedRef.current;
+      console.log('⚠️ [addBetHistoryRecord] Using backup ref instead, length:', currentHistoryFromStorage.length);
+    }
     
-    // ALSO ADD TO IMMUTABLE BET HISTORY - This can NEVER be cleared
+    // Combine new record with what we just read from storage
+    const MAX_GAMES = 50;
+    const immediateHistory = [newRecord, ...currentHistoryFromStorage].slice(0, MAX_GAMES);
+    
+    console.log('📊 [addBetHistoryRecord] After adding, total will be:', immediateHistory.length, 'records');
+    
+    // Update backup ref immediately
+    allGamesEverAddedRef.current = immediateHistory;
+    
     setImmutableBetHistory(prev => {
       const updatedImmutableHistory = [newRecord, ...prev];
-      
-      // QUOTA MANAGEMENT: Keep only last 100 games to prevent localStorage overflow
-      const MAX_GAMES = 50;
       if (updatedImmutableHistory.length > MAX_GAMES) {
-        console.log(`⚠️ Immutable history limit reached (${updatedImmutableHistory.length}), trimming to ${MAX_GAMES} records`);
         return updatedImmutableHistory.slice(0, MAX_GAMES);
       }
-      
       return updatedImmutableHistory;
     });
     
-    // EMIT IMMEDIATELY with the new record (don't wait for useEffect)
-    // This is the SOURCE of truth - emit only when data is created locally
+    // IMMEDIATELY SAVE TO LOCALSTORAGE with the complete calculated history from storage
+    // This ensures we never lose games even if state updates are slow
+    localStorage.setItem(IMMUTABLE_BET_HISTORY_KEY, JSON.stringify(immediateHistory));
+    console.log('💾 [addBetHistoryRecord] SAVED to localStorage:', immediateHistory.length, 'records');
+    console.log('   📦 Data IDs:', immediateHistory.map(r => r.id));
+    
+    // Verify it was saved correctly
+    const verified = localStorage.getItem(IMMUTABLE_BET_HISTORY_KEY);
+    if (verified) {
+      const parsed = JSON.parse(verified);
+      if (parsed.length === immediateHistory.length) {
+        console.log('✅ [addBetHistoryRecord] Verified in localStorage:', parsed.length, 'records');
+      } else {
+        console.error('❌ [addBetHistoryRecord] VERIFICATION FAILED! Expected:', immediateHistory.length, 'Got:', parsed.length);
+      }
+    } else {
+      console.error('❌ [addBetHistoryRecord] Failed to read back from localStorage!');
+    }
+    
+    // EMIT IMMEDIATELY with the complete calculated history
     setTimeout(() => {
-      // DO NOT EMIT if listeners are paused (during clear operation)
       if (pauseListenersRef.current) {
         console.log('⏸️ [addBetHistoryRecord] Skipping emit - listeners are paused');
         return;
       }
       
-      // Use the new record with current betHistory at the time of emit
-      let historyToEmit = [newRecord, ...betHistory];
-      if (historyToEmit.length > 50) {
-        historyToEmit = historyToEmit.slice(0, 50);
-      }
       try {
-        console.log('📤 [addBetHistoryRecord] Emitting new game to all clients immediately');
-        socketIOService.emitGameHistoryUpdate(historyToEmit);
+        console.log('📤 [addBetHistoryRecord] Emitting history to server and peers');
+        socketIOService.emitGameHistoryUpdate(immediateHistory);
       } catch (err) {
         console.error('❌ Error emitting game history:', err);
       }
@@ -947,10 +1044,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('🧹 Clearing ALL bet history (mutable and immutable)');
     
     // Clear mutable bet history
-    setBetHistory([]);
-    localStorage.removeItem(BET_HISTORY_STORAGE_KEY);
-    
-    // Clear immutable bet history (the source of truth for game history)
     setImmutableBetHistory([]);
     localStorage.removeItem(IMMUTABLE_BET_HISTORY_KEY);
     localStorage.removeItem(BULLETPROOF_BET_HISTORY_KEY);
@@ -1191,7 +1284,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         deductCredits,
         getUserById,
         getAllUsers,
-        betHistory,
+        betHistory: immutableBetHistory, // Expose immutableBetHistory as betHistory
         addBetHistoryRecord,
         resetBetHistory,
         getHardLedgerBetHistory,

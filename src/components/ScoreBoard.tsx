@@ -7,7 +7,6 @@ import BreakIndicator from "@/components/BreakIndicator";
 import TeamScoreSection from "@/components/TeamScoreSection";
 import GameControls from "@/components/GameControls";
 import GameMetadata from "@/components/GameMetadata";
-import LiveIndicator from "@/components/LiveIndicator";
 import GameTimer from "@/components/GameTimer";
 import { useScoreboardState } from "@/hooks/useScoreboardState";
 import ScoreboardMainDisplay from "@/components/ScoreboardMainDisplay";
@@ -23,6 +22,9 @@ interface ScoreBoardProps {
   teamAHasBreak?: boolean;
   isAdmin?: boolean;
   isAgent?: boolean;
+  adminLocked?: boolean;
+  setAdminLocked?: (locked: boolean) => void;
+  adminModalRef?: React.RefObject<{ openModal: () => void }>;
   gameLabel?: string;
   currentGameNumber?: number;
   onTeamANameChange?: (name: string) => void;
@@ -89,6 +91,9 @@ const ScoreBoard = (props: ScoreBoardProps) => {
   
   const showControls = props.isAdmin || props.isAgent;
   
+  // Disable controls if admin mode is locked
+  const controlsDisabled = props.adminLocked === true;
+  
   // Process game wins
   const processTeamAWin = () => {
     handleTeamAWin();
@@ -100,8 +105,6 @@ const ScoreBoard = (props: ScoreBoardProps) => {
   
   return (
     <>
-      <LiveIndicator isLive={isTimerRunning} />
-      
       <ScoreboardMainDisplay 
         {...props}
         displayBreak={displayBreak}
@@ -109,7 +112,11 @@ const ScoreBoard = (props: ScoreBoardProps) => {
         displayTeamAGames={displayTeamAGames}
         displayTeamBGames={displayTeamBGames}
         isMatchStarted={isMatchStarted}
-        showControls={showControls}
+        showControls={showControls && !controlsDisabled}
+        controlsDisabled={controlsDisabled}
+        adminLocked={props.adminLocked}
+        setAdminLocked={props.setAdminLocked}
+        adminModalRef={props.adminModalRef}
         timer={timerSeconds}
         isTimerRunning={isTimerRunning}
         onStart={onTimerStart}

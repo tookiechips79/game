@@ -139,10 +139,15 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     if (storedLocalAdminState) {
       try {
         const parsedState = JSON.parse(storedLocalAdminState);
-        setLocalAdminState(parsedState);
+        // IMPORTANT: Always reset isAdminMode to false on page load to require password entry
+        // But preserve isAgentMode if it was previously set
+        setLocalAdminState({
+          ...parsedState,
+          isAdminMode: false  // Always require password on page reload
+        });
       } catch (error) {
         console.error('Error parsing stored local admin state:', error);
-      setLocalAdminState(defaultLocalAdminState);
+        setLocalAdminState(defaultLocalAdminState);
       }
     }
   }, []);
@@ -154,7 +159,12 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   // Save local admin state to localStorage whenever it changes (separate from game state)
   useEffect(() => {
-    localStorage.setItem(LOCAL_ADMIN_STORAGE_KEY, JSON.stringify(localAdminState));
+    // Only persist isAgentMode, NOT isAdminMode (admin mode requires password every time)
+    const stateToSave = {
+      isAdminMode: false,  // Never save admin mode - must re-authenticate
+      isAgentMode: localAdminState.isAgentMode  // Keep agent mode preference
+    };
+    localStorage.setItem(LOCAL_ADMIN_STORAGE_KEY, JSON.stringify(stateToSave));
   }, [localAdminState]);
 
   // Listen for storage changes from other tabs/windows

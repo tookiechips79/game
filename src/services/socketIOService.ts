@@ -479,6 +479,84 @@ class SocketIOService {
       });
     }
   }
+
+  // Peer-to-Peer Game History Sharing Methods
+  public requestGameHistoryFromClients() {
+    if (this.socket && this.isSocketConnected()) {
+      console.log('📤 [P2P] Requesting game history from other clients');
+      this.socket.emit('request-game-history-from-clients');
+    }
+  }
+
+  public onClientRequestsGameHistory(callback: (data: { clientId: string; requestedAt: number }) => void) {
+    if (this.socket) {
+      this.socket.off('client-requesting-game-history');
+      this.socket.on('client-requesting-game-history', (data) => {
+        console.log('📨 [P2P] Another client requesting game history');
+        callback(data);
+      });
+    }
+  }
+
+  public sendGameHistoryToClient(gameHistory: any[]) {
+    if (this.socket && this.isSocketConnected()) {
+      console.log('📤 [P2P] Sending game history to peers:', gameHistory.length, 'records');
+      this.socket.emit('provide-game-history-to-client', { gameHistory });
+    }
+  }
+
+  public onReceiveGameHistoryFromClients(callback: (data: { gameHistory: any[]; providedBy: string; providedAt: number }) => void) {
+    if (this.socket) {
+      this.socket.off('receive-game-history-from-clients');
+      this.socket.on('receive-game-history-from-clients', (data) => {
+        console.log('📥 [P2P] Received game history from peers:', data.gameHistory?.length, 'records');
+        callback(data);
+      });
+    }
+  }
+
+  // Cleanup methods for proper listener removal
+  public offGameHistoryUpdate() {
+    if (this.socket) {
+      this.socket.off('game-history-update');
+    }
+  }
+
+  public offBetReceiptsUpdate() {
+    if (this.socket) {
+      this.socket.off('bet-receipts-update');
+    }
+  }
+
+  public offClearAllData() {
+    if (this.socket) {
+      this.socket.off('clear-all-data');
+    }
+  }
+
+  public offPauseListeners() {
+    if (this.socket) {
+      this.socket.off('pause-listeners');
+    }
+  }
+
+  public offResumeListeners() {
+    if (this.socket) {
+      this.socket.off('resume-listeners');
+    }
+  }
+
+  public offClientRequestsGameHistory() {
+    if (this.socket) {
+      this.socket.off('client-requesting-game-history');
+    }
+  }
+
+  public offReceiveGameHistoryFromClients() {
+    if (this.socket) {
+      this.socket.off('receive-game-history-from-clients');
+    }
+  }
 }
 
 // Create singleton instance

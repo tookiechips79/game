@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -72,6 +72,12 @@ const Index = () => {
   
   const [betId, setBetId] = useState<string>("");
   
+  // Track admin lock state - when true, scoreboard and controls are disabled
+  const [adminLocked, setAdminLocked] = useState<boolean>(true);
+  
+  // Ref to access CompactAdminWidget's openModal method
+  const adminModalRef = useRef<{ openModal: () => void }>(null);
+  
   const betColors = ["#00FF00", "#00FFFF", "#FF00FF", "#FFFF00", "#1EAEDB"];
   
   const [confirmation, setConfirmation] = useState<ConfirmationState>({
@@ -96,13 +102,8 @@ const Index = () => {
   };
 
   const toggleAdminMode = () => {
+    // Password is now handled in AdminWidget, so we just toggle the state
     updateLocalAdminState({ isAdminMode: !isAdminMode });
-    if (!isAdminMode) {
-      toast.success("Admin Mode Activated", {
-        description: "You now have access to admin controls",
-        className: "custom-toast-success",
-      });
-    }
   };
 
   const toggleAgentMode = () => {
@@ -1010,6 +1011,9 @@ const Index = () => {
           teamAHasBreak={teamAHasBreak}
           isAdmin={isAdminMode}
           isAgent={isAgentMode}
+          adminLocked={adminLocked}
+          setAdminLocked={setAdminLocked}
+          adminModalRef={adminModalRef}
           gameLabel={gameLabel}
           currentGameNumber={currentGameNumber}
           onTeamANameChange={(name) => updateGameState({ teamAName: name })}
@@ -1043,8 +1047,18 @@ const Index = () => {
         </div>
 
         <div className="mb-8">
-          <Card className="glass-card backdrop-blur-sm shadow-lg rounded-2xl transition-all duration-300 mb-4 hover:shadow-[0_0_15px_rgba(250,21,147,0.3)]" style={{ borderColor: '#fa1593', backgroundColor: '#004b6b' }}>
-            <CardContent className="p-6 flex flex-col md:flex-row justify-between items-center">
+          <Card className="glass-card backdrop-blur-sm shadow-lg rounded-2xl transition-all duration-300 mb-4 hover:shadow-[0_0_15px_rgba(250,21,147,0.3)] relative" style={{ borderColor: '#fa1593', backgroundColor: '#004b6b' }}>
+            <video 
+              autoPlay 
+              loop 
+              muted 
+              className="absolute inset-0 w-full h-full object-cover rounded-2xl"
+              style={{ zIndex: 0 }}
+            >
+              <source src="/vid.mp4" type="video/mp4" />
+            </video>
+            <div className="absolute inset-0 bg-black/30 rounded-2xl" style={{ zIndex: 1 }}></div>
+            <CardContent className="p-6 flex flex-col md:flex-row justify-between items-center relative" style={{ zIndex: 2 }}>
               <div className="flex items-center mb-4 md:mb-0">
                 <div className="p-3 rounded-2xl mr-4" style={{ backgroundColor: '#fa1593' }}>
                   <Zap className="h-8 w-8 text-white" />
@@ -1086,11 +1100,11 @@ const Index = () => {
           </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <Card className="glass-card overflow-hidden shadow-lg transform transition-all rounded-2xl" style={{ borderColor: '#95deff', backgroundColor: '#004b6b' }}>
+            <Card className="glass-card overflow-hidden shadow-lg transform transition-all rounded-2xl" style={{ backgroundColor: '#052240', boxShadow: '0 0 30px rgba(149, 222, 255, 0.8)' }}>
               <CardHeader className="p-4 rounded-t-2xl" style={{ background: 'linear-gradient(to right, #95deff, #004b6b)' }}>
-                <CardTitle className="text-center text-2xl" style={{ color: 'black', textShadow: '0 0 15px rgba(250, 21, 147, 0.8)' }}>{teamAName}</CardTitle>
+                <CardTitle className="text-center text-2xl text-white">{teamAName}</CardTitle>
               </CardHeader>
-              <CardContent className="p-4" style={{ backgroundColor: '#004b6b' }}>
+              <CardContent className="p-4" style={{ backgroundColor: '#052240' }}>
                 <div className="grid grid-cols-3 gap-3 mb-5">
                   <BirdButton 
                     variant="pink" 
@@ -1187,11 +1201,11 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            <Card className="glass-card overflow-hidden shadow-lg transform transition-all rounded-2xl" style={{ borderColor: '#fa1593', backgroundColor: '#750037' }}>
-              <CardHeader className="p-4 rounded-t-2xl" style={{ background: 'linear-gradient(to right, #fa1593, #750037)' }}>
-                <CardTitle className="text-center text-2xl" style={{ color: 'black', textShadow: '0 0 15px rgba(250, 21, 147, 0.8)' }}>{teamBName}</CardTitle>
+            <Card className="glass-card overflow-hidden shadow-lg transform transition-all rounded-2xl" style={{ backgroundColor: '#052240', boxShadow: '0 0 30px rgba(250, 21, 147, 0.8)' }}>
+              <CardHeader className="p-4 rounded-t-2xl" style={{ background: 'linear-gradient(to right, #fa1593, #004b6b)' }}>
+                <CardTitle className="text-center text-2xl text-white">{teamBName}</CardTitle>
               </CardHeader>
-              <CardContent className="p-4" style={{ backgroundColor: '#750037' }}>
+              <CardContent className="p-4" style={{ backgroundColor: '#052240' }}>
                 <div className="grid grid-cols-3 gap-3 mb-5">
                   <BirdButton 
                     variant="pink" 
@@ -1348,11 +1362,11 @@ const Index = () => {
           </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <Card className="glass-card overflow-hidden shadow-lg transform transition-all rounded-2xl" style={{ borderColor: '#95deff', backgroundColor: '#004b6b' }}>
+            <Card className="glass-card overflow-hidden shadow-lg transform transition-all rounded-2xl" style={{ backgroundColor: '#052240', boxShadow: '0 0 30px rgba(149, 222, 255, 0.8)' }}>
               <CardHeader className="p-4 rounded-t-2xl" style={{ background: 'linear-gradient(to right, #95deff, #004b6b)' }}>
-                <CardTitle className="text-center text-2xl" style={{ color: 'black', textShadow: '0 0 15px rgba(250, 21, 147, 0.8)' }}>{teamAName} (Next Game)</CardTitle>
+                <CardTitle className="text-center text-2xl text-white">{teamAName} (Next Game)</CardTitle>
               </CardHeader>
-              <CardContent className="p-4" style={{ backgroundColor: '#004b6b' }}>
+              <CardContent className="p-4" style={{ backgroundColor: '#052240' }}>
                 <div className="grid grid-cols-3 gap-3 mb-5">
                   <BirdButton 
                     variant="pink" 
@@ -1449,11 +1463,11 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            <Card className="glass-card overflow-hidden shadow-lg transform transition-all rounded-2xl" style={{ borderColor: '#fa1593', backgroundColor: '#750037' }}>
-              <CardHeader className="p-4 rounded-t-2xl" style={{ background: 'linear-gradient(to right, #fa1593, #750037)' }}>
-                <CardTitle className="text-center text-2xl" style={{ color: 'black', textShadow: '0 0 15px rgba(250, 21, 147, 0.8)' }}>{teamBName} (Next Game)</CardTitle>
+            <Card className="glass-card overflow-hidden shadow-lg transform transition-all rounded-2xl" style={{ backgroundColor: '#052240', boxShadow: '0 0 30px rgba(250, 21, 147, 0.8)' }}>
+              <CardHeader className="p-4 rounded-t-2xl" style={{ background: 'linear-gradient(to right, #fa1593, #004b6b)' }}>
+                <CardTitle className="text-center text-2xl text-white">{teamBName} (Next Game)</CardTitle>
               </CardHeader>
-              <CardContent className="p-4" style={{ backgroundColor: '#750037' }}>
+              <CardContent className="p-4" style={{ backgroundColor: '#052240' }}>
                 <div className="grid grid-cols-3 gap-3 mb-5">
                   <BirdButton 
                     variant="pink" 

@@ -109,7 +109,7 @@ const GameDescription: React.FC<GameDescriptionProps> = ({
   }, [description, isEditing]);
   
   return (
-    <Card className="glass-card border-2 border-[#fa1593] overflow-hidden shadow-xl mb-6 hover:shadow-[#fa1593]/30 rounded-2xl transition-all" style={{ borderColor: '#fa1593', backgroundColor: '#004b6b' }}>
+    <Card className="glass-card border-2 overflow-hidden rounded-3xl transition-all mb-6" style={{ borderColor: '#fa1593', backgroundColor: '#052240', boxShadow: '0 0 30px rgba(250, 21, 147, 0.8)' }}>
       <CardContent className="p-4">
         {isAdmin && isEditing ? (
           <div className="flex flex-col gap-3">
@@ -206,10 +206,10 @@ const GameDescription: React.FC<GameDescriptionProps> = ({
                   <span className="font-extrabold text-xl md:text-2xl uppercase tracking-wider animate-pulse" style={{ color: '#fa1593' }}>
                     {description.toUpperCase()}
                   </span>
-                  <span className="font-extrabold text-xl md:text-2xl uppercase tracking-wider bg-gradient-to-r from-[#a3e635] via-white to-[#a3e635] text-transparent bg-clip-text animate-pulse ml-16">
+                  <span className="font-extrabold text-xl md:text-2xl uppercase tracking-wider animate-pulse ml-16" style={{ color: '#fa1593' }}>
                     {description.toUpperCase()}
                   </span>
-                  <span className="font-extrabold text-xl md:text-2xl uppercase tracking-wider bg-gradient-to-r from-[#a3e635] via-white to-[#a3e635] text-transparent bg-clip-text animate-pulse ml-16">
+                  <span className="font-extrabold text-xl md:text-2xl uppercase tracking-wider animate-pulse ml-16" style={{ color: '#fa1593' }}>
                     {description.toUpperCase()}
                   </span>
                 </div>
