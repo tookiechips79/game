@@ -251,26 +251,22 @@ const FeaturesPage = () => {
               <CardHeader>
                 <CardTitle className="text-xl flex items-center gap-2" style={{ color: '#fa1593' }}>
                   <Users className="h-5 w-5" />
-                  User Management
+                  Bet Tracking & Transparency
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3">
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-white">Multiple user accounts support</span>
+                    <span className="text-white">Complete bet receipts for every transaction</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-white">Admin user with special privileges</span>
+                    <span className="text-white">Immutable bet ledger ensuring full transparency</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-white">Credit management and reloading</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-white">Membership status tracking</span>
+                    <span className="text-white">Complete game/transaction history for record keeping</span>
                   </li>
                 </ul>
               </CardContent>
@@ -292,7 +288,7 @@ const FeaturesPage = () => {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-white">Real coins winnings and cashouts</span>
+                    <span className="text-white">Real Sweep Coins winnings and cashouts</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
@@ -300,7 +296,7 @@ const FeaturesPage = () => {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-white">Admin credit management tools</span>
+                    <span className="text-white">Secure payment processing</span>
                   </li>
                 </ul>
               </CardContent>
@@ -416,10 +412,9 @@ const FeaturesPage = () => {
                       Choose from 10, 50, or 100 Sweep Coins. Each denomination has its own betting button with hover tooltips showing the exact amount.
                     </p>
                     <div className="flex gap-2">
-                      <Badge variant="outline" style={{ borderColor: '#fa1593', color: '#fa1593' }}>10 Coins</Badge>
-                      <Badge variant="outline" style={{ borderColor: '#fa1593', color: '#fa1593' }}>20 Coins</Badge>
-                      <Badge variant="outline" style={{ borderColor: '#fa1593', color: '#fa1593' }}>50 Coins</Badge>
-                      <Badge variant="outline" style={{ borderColor: '#fa1593', color: '#fa1593' }}>100 Coins</Badge>
+                      <Badge variant="outline" style={{ borderColor: '#fa1593', color: '#fa1593' }}>10 Sweep Coins</Badge>
+                      <Badge variant="outline" style={{ borderColor: '#fa1593', color: '#fa1593' }}>50 Sweep Coins</Badge>
+                      <Badge variant="outline" style={{ borderColor: '#fa1593', color: '#fa1593' }}>100 Sweep Coins</Badge>
                     </div>
                   </div>
                 </div>
@@ -498,62 +493,6 @@ const FeaturesPage = () => {
               </CardContent>
             </Card>
           </div>
-        </div>
-
-        {/* Admin Features */}
-        <div className="mb-16">
-          <h3 className="text-3xl font-bold mb-8 text-center" style={{ color: '#fa1593' }}>Admin Features</h3>
-          <Card className="border" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
-            <CardHeader>
-              <CardTitle className="text-xl flex items-center gap-2" style={{ color: '#fa1593' }}>
-                <Settings className="h-5 w-5" />
-                Administrative Tools
-              </CardTitle>
-              <CardDescription style={{ color: '#95deff' }}>
-                Special features available to admin users for platform management
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="space-y-3">
-                  <h4 className="font-semibold flex items-center gap-2" style={{ color: '#fa1593' }}>
-                    <Users className="h-4 w-4" />
-                    User Management
-                  </h4>
-                  <ul className="space-y-2 text-sm text-white">
-                    <li>• Create and manage user accounts</li>
-                    <li>• View all user betting history</li>
-                    <li>• Monitor user credit balances</li>
-                    <li>• Reset user statistics</li>
-                  </ul>
-                </div>
-                <div className="space-y-3">
-                  <h4 className="font-semibold flex items-center gap-2" style={{ color: '#fa1593' }}>
-                    <CreditCard className="h-4 w-4" />
-                    Credit Management
-                  </h4>
-                  <ul className="space-y-2 text-sm text-white">
-                    <li>• Reload credits for any user</li>
-                    <li>• Deduct credits when needed</li>
-                    <li>• View all credit transactions</li>
-                    <li>• Monitor platform revenue</li>
-                  </ul>
-                </div>
-                <div className="space-y-3">
-                  <h4 className="font-semibold flex items-center gap-2" style={{ color: '#fa1593' }}>
-                    <BarChart3 className="h-4 w-4" />
-                    Platform Control
-                  </h4>
-                  <ul className="space-y-2 text-sm text-white">
-                    <li>• Start and stop games</li>
-                    <li>• Reset betting queues</li>
-                    <li>• View platform statistics</li>
-                    <li>• Manage game settings</li>
-                  </ul>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Call to Action */}
