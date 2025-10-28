@@ -10,6 +10,7 @@ interface GameTimerProps {
   onStart: () => void;
   onPause: () => void;
   onReset: () => void;
+  adminLocked?: boolean;
 }
 
 const GameTimer = ({ 
@@ -18,7 +19,8 @@ const GameTimer = ({
   showControls, 
   onStart,
   onPause,
-  onReset
+  onReset,
+  adminLocked
 }: GameTimerProps) => {
   const [milliseconds, setMilliseconds] = useState(0);
   
@@ -71,7 +73,7 @@ const GameTimer = ({
       >
         {formatTime(timer)}
       </div>
-      {showControls && (
+      {showControls && !adminLocked && (
         <div className="flex items-center space-x-1">
           <Button 
             onClick={isTimerRunning ? handlePauseClick : handleStartClick}

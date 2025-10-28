@@ -56,6 +56,7 @@ const GameHeader = ({
           onStart={onStart}
           onPause={onPause}
           onReset={onReset}
+          adminLocked={adminLocked}
         />
       </div>
       
