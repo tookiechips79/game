@@ -45,6 +45,7 @@ const TeamScoreSection = ({
   // Force re-render for Chrome compatibility
   const [renderKey, setRenderKey] = useState(0);
   const { play: playPoolSound } = useSound('/pool.mp3', { volume: 0.8 });
+  const { play: playBooSound } = useSound('/boo.mp3', { volume: 0.8 });
   
   useEffect(() => {
     // Force re-render when balls or games change to fix Chrome glitching
@@ -57,7 +58,7 @@ const TeamScoreSection = ({
   };
 
   const handleBallDecrement = () => {
-    playPoolSound();
+    playBooSound();
     onBallDecrement();
   };
   
