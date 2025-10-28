@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import FlipCounter from "@/components/FlipCounter";
 import { Award } from "lucide-react";
 import PlayerAvatar from "@/components/PlayerAvatar";
+import { useSound } from "@/hooks/use-sound";
 
 interface TeamScoreSectionProps {
   teamName: string;
@@ -43,11 +44,22 @@ const TeamScoreSection = ({
 }: TeamScoreSectionProps) => {  
   // Force re-render for Chrome compatibility
   const [renderKey, setRenderKey] = useState(0);
+  const { play: playPoolSound } = useSound('/pool.mp3', { volume: 0.8 });
   
   useEffect(() => {
     // Force re-render when balls or games change to fix Chrome glitching
     setRenderKey(prev => prev + 1);
   }, [balls, games]);
+
+  const handleBallIncrement = () => {
+    playPoolSound();
+    onBallIncrement();
+  };
+
+  const handleBallDecrement = () => {
+    playPoolSound();
+    onBallDecrement();
+  };
   
   return (
     <div key={renderKey} className={`col-span-1 p-4 pt-24 bg-gradient-to-r from-[${color}]/30 to-[${color}]/20 relative rounded-l-2xl`}>
@@ -102,7 +114,7 @@ const TeamScoreSection = ({
         <div className="bg-[#1EAEDB] rounded-2xl p-3 flex items-center justify-center gap-2 transition-all hover:bg-[#1EAEDB]/90 shadow-[0_0_15px_rgba(30,174,219,0.5)]">
           {showControls && !adminLocked && (
             <Button
-              onClick={onBallDecrement}
+              onClick={handleBallDecrement}
               variant="outline"
               size="icon"
               className="h-6 w-6 bg-gray-800/80 border-gray-700 hover:bg-gray-700 text-[#1EAEDB]"
@@ -121,7 +133,7 @@ const TeamScoreSection = ({
           </div>
           {showControls && !adminLocked && (
             <Button
-              onClick={onBallIncrement}
+              onClick={handleBallIncrement}
               variant="outline"
               size="icon"
               className="h-6 w-6 bg-gray-800/80 border-gray-700 hover:bg-gray-700 text-[#1EAEDB]"
