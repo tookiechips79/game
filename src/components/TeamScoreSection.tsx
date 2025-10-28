@@ -84,7 +84,7 @@ const TeamScoreSection = ({
               <span className="text-xs font-medium text-gray-900">GAMES</span>
             </div>
             <div className="flex justify-center">
-              <FlipCounter value={games} color="white" />
+              <FlipCounter value={games} color="white" className="scale-150" />
             </div>
           </div>
           {showControls && !adminLocked && (
@@ -116,7 +116,7 @@ const TeamScoreSection = ({
               <span className="text-xs font-medium text-gray-900">BALLS</span>
             </div>
             <div className="flex justify-center">
-              <FlipCounter value={balls} color="white" />
+              <FlipCounter value={balls} color="white" className="scale-150" />
             </div>
           </div>
           {showControls && !adminLocked && (
