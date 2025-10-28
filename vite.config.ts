@@ -28,4 +28,7 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
+  ssr: {
+    noExternal: ['@rollup/rollup-linux-x64-gnu'],
+  },
 }));
