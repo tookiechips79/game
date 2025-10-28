@@ -11,6 +11,7 @@ interface GameControlsProps extends TimerProps {
   onStart?: () => void;
   onPause?: () => void;
   onReset?: () => void;
+  adminLocked?: boolean;
 }
 
 const GameControls: React.FC<GameControlsProps> = ({
@@ -23,7 +24,8 @@ const GameControls: React.FC<GameControlsProps> = ({
   onStart,
   onPause,
   onReset,
-  resetTimer
+  resetTimer,
+  adminLocked = false
 }) => {
   // Show START MATCH button when match hasn't started
   if (!isMatchStarted) {
@@ -37,8 +39,8 @@ const GameControls: React.FC<GameControlsProps> = ({
             START MATCH
           </Button>
           
-          {/* Timer and controls */}
-          {showControls && (
+          {/* Timer and controls - only show when not locked */}
+          {showControls && !adminLocked && (
             <div className="flex flex-col items-center gap-4">
               <div className="text-4xl font-bold text-[#fa1593] font-mono">
                 {String(Math.floor(timer / 60)).padStart(2, '0')}:

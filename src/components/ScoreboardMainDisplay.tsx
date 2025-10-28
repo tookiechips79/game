@@ -131,6 +131,7 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
                   onStart={onStart}
                   onPause={onPause}
                   onReset={onReset}
+                  adminLocked={adminLocked}
                 />
               </div>
             )}
