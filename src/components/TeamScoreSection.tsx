@@ -76,7 +76,7 @@ const TeamScoreSection = ({
             <FlipCounter value={games} color="white" />
           </div>
           
-          {showControls && (
+          {showControls && !adminLocked && (
             <div className="flex space-x-2 mt-2">
               <Button
                 onClick={onGameDecrement}
