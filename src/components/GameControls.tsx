@@ -27,8 +27,12 @@ const GameControls: React.FC<GameControlsProps> = ({
   resetTimer,
   adminLocked
 }) => {
+  // Debug: Log what we receive
+  console.log('🎮 [GameControls] Rendered with:', { adminLocked, isMatchStarted, showControls });
+  
   // If admin is locked, don't show any controls at all
   if (adminLocked === true) {
+    console.log('🎮 [GameControls] Admin is LOCKED, returning null');
     return null;
   }
 

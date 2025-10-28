@@ -120,6 +120,7 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
       }}>
         <CardContent className="p-0 relative">
           <div className="grid grid-cols-2 divide-x" style={{ borderColor: '#750037' }}>
+            {console.log('🎯 [ScoreboardMainDisplay] Checking GameControls render:', { showControls, isMatchStarted, adminLocked })}
             {showControls && !isMatchStarted && !adminLocked && (
               <div className="absolute inset-0 flex items-center justify-center z-10 bg-black">
                 <GameControls
