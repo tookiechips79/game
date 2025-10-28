@@ -37,7 +37,7 @@ const CompactAdminWidget = React.forwardRef<
   // CRITICAL: Track admin lock separately from isAdmin prop
   // adminLocked = true means user hasn't entered password yet (password form shows)
   // adminLocked = false means user has entered correct password (admin controls show)
-  const [adminLocked, setAdminLockedState] = useState<boolean>(true);
+  const [adminLocked, setAdminLockedState] = useState<boolean>(false);
   const [adminModePassword, setAdminModePassword] = useState<string>("");
   const [storedPassword, setStoredPassword] = useState<string>(DEFAULT_PASSWORD);
   
@@ -133,8 +133,7 @@ const CompactAdminWidget = React.forwardRef<
         localStorage.setItem(ADMIN_PASSWORD_KEY, DEFAULT_PASSWORD);
         setStoredPassword(DEFAULT_PASSWORD);
       }
-      // Start with adminLocked = true (password required)
-      setAdminLockedState(true);
+      // Don't auto-lock on mount - only lock when admin button is clicked
     } catch (error) {
       console.error("Error loading admin password:", error);
     }
