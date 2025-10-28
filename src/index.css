@@ -2,41 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom toast styles for better contrast */
+/* Custom toast styles for Game Bird color scheme */
 .custom-toast-success {
-  color: #000000 !important;
-  background-color: #10b981 !important;
+  background: linear-gradient(135deg, #052240 0%, #004b6b 100%) !important;
+  border: 2px solid #95deff !important;
+  box-shadow: 0 0 20px rgba(149, 222, 255, 0.6) !important;
+  color: #95deff !important;
 }
 
 .custom-toast-success * {
-  color: #000000 !important;
+  color: #95deff !important;
 }
 
 .custom-toast-success [data-sonner-toast] {
-  color: #000000 !important;
-  background-color: #10b981 !important;
+  background: linear-gradient(135deg, #052240 0%, #004b6b 100%) !important;
+  border: 2px solid #95deff !important;
+  box-shadow: 0 0 20px rgba(149, 222, 255, 0.6) !important;
+  color: #95deff !important;
 }
 
 .custom-toast-success [data-sonner-toast] * {
-  color: #000000 !important;
+  color: #95deff !important;
 }
 
 .custom-toast-error {
-  color: #000000 !important;
-  background-color: #ef4444 !important;
+  background: linear-gradient(135deg, #052240 0%, #004b6b 100%) !important;
+  border: 2px solid #fa1593 !important;
+  box-shadow: 0 0 20px rgba(250, 21, 147, 0.6) !important;
+  color: #fa1593 !important;
 }
 
 .custom-toast-error * {
-  color: #000000 !important;
+  color: #fa1593 !important;
 }
 
 .custom-toast-error [data-sonner-toast] {
-  color: #000000 !important;
-  background-color: #ef4444 !important;
+  background: linear-gradient(135deg, #052240 0%, #004b6b 100%) !important;
+  border: 2px solid #fa1593 !important;
+  box-shadow: 0 0 20px rgba(250, 21, 147, 0.6) !important;
+  color: #fa1593 !important;
 }
 
 .custom-toast-error [data-sonner-toast] * {
-  color: #000000 !important;
+  color: #fa1593 !important;
 }
 
 @layer base {

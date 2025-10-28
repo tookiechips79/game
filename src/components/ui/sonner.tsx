@@ -21,15 +21,15 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast:
-            "group toast group-[.toaster]:bg-gradient-to-r group-[.toaster]:from-gray-900/80 group-[.toaster]:to-gray-800/80 group-[.toaster]:backdrop-blur-lg group-[.toaster]:text-foreground group-[.toaster]:border-2 group-[.toaster]:border-[#00FFFF]/50 group-[.toaster]:shadow-xl group-[.toaster]:shadow-[#00FFFF]/20 font-bold text-lg scale-100",
+            "group toast group-[.toaster]:bg-gradient-to-r group-[.toaster]:from-[#052240] group-[.toaster]:to-[#004b6b] group-[.toaster]:backdrop-blur-lg group-[.toaster]:text-foreground group-[.toaster]:border-2 group-[.toaster]:shadow-xl font-bold text-lg scale-100",
           description: "group-[.toast]:text-white group-[.toast]:font-medium group-[.toast]:text-base",
           actionButton:
             "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
           cancelButton:
             "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
-          title: "text-lg font-bold text-[#00FFFF]",
-          success: "group-[.toaster]:border-green-500/30 group-[.toaster]:shadow-green-500/20",
-          error: "group-[.toaster]:border-red-500/30 group-[.toaster]:shadow-red-500/20",
+          title: "text-lg font-bold text-white",
+          success: "group-[.toaster]:border-[#95deff] group-[.toaster]:shadow-[0_0_20px_rgba(149,222,255,0.6)]",
+          error: "group-[.toaster]:border-[#fa1593] group-[.toaster]:shadow-[0_0_20px_rgba(250,21,147,0.6)]",
         },
       }}
       {...props}
