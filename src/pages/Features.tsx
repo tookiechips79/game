@@ -96,10 +96,10 @@ const FeaturesPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center">
                   <div className="p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }}>
-                    <Users className="h-8 w-8" style={{ color: '#fa1593' }} />
+                    <BarChart3 className="h-8 w-8" style={{ color: '#fa1593' }} />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2 text-white">User Management</h3>
-                  <p style={{ color: '#95deff' }}>Create accounts, manage credits, and track betting history</p>
+                  <h3 className="text-lg font-semibold mb-2 text-white">Real-time Scoreboard</h3>
+                  <p style={{ color: '#95deff' }}>Live game scores, team statistics, and game status updates in real-time</p>
                 </div>
                 <div className="text-center">
                   <div className="p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }}>
