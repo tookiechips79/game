@@ -46,6 +46,7 @@ const TeamScoreSection = ({
   const [renderKey, setRenderKey] = useState(0);
   const { play: playPoolSound } = useSound('/pool.mp3', { volume: 0.8 });
   const { play: playBooSound } = useSound('/boo.mp3', { volume: 0.8 });
+  const { play: playCheerSound } = useSound('/cheer.mp3', { volume: 0.8 });
   
   useEffect(() => {
     // Force re-render when balls or games change to fix Chrome glitching
@@ -60,6 +61,11 @@ const TeamScoreSection = ({
   const handleBallDecrement = () => {
     playBooSound();
     onBallDecrement();
+  };
+
+  const handleWinGame = () => {
+    playCheerSound();
+    onWinConfirmOpen();
   };
   
   return (
@@ -156,7 +162,7 @@ const TeamScoreSection = ({
           </button>
           
           <Button 
-            onClick={onWinConfirmOpen}
+            onClick={handleWinGame}
             className="px-3 py-1 text-sm rounded-xl text-white transition-all duration-300"
             style={{ backgroundColor: '#fa1593' }}
           >
