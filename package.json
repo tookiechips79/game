@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "npm ci --force --legacy-peer-deps && npm rebuild rollup --build-from-source",
-    "build": "vite build",
+    "prebuild": "npm ci --legacy-peer-deps",
+    "build": "ROLLUP_SKIP_SOURCEMAP_WARNING=true vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
