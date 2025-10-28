@@ -72,16 +72,18 @@ const GameHeader = ({
             console.log('🔐 [GameHeader] Admin button clicked, isAdmin:', isAdmin, 'adminLocked:', adminLocked);
             if (isAdmin) {
               // If admin is active, lock it (disable admin mode)
-              console.log('🔐 [GameHeader] Admin is active, locking it now');
+              console.log('🔐 [GameHeader] Admin is active, LOCKING admin mode');
+              // First, lock the admin
               if (setAdminLocked) {
                 setAdminLocked(true);
               }
+              // Then toggle admin mode OFF
               if (onToggleAdmin) {
-                onToggleAdmin(); // Toggle off admin mode
+                onToggleAdmin();
               }
             } else {
               // If admin is not active, open password modal to unlock
-              console.log('🔐 [GameHeader] Admin is not active, opening password modal');
+              console.log('🔐 [GameHeader] Admin is not active, opening password modal to UNLOCK');
               if (adminModalRef?.current) {
                 adminModalRef.current.openModal();
               }

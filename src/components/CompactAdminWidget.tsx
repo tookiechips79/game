@@ -142,15 +142,15 @@ const CompactAdminWidget = React.forwardRef<
   // Watch for changes in the adminLockedProp from parent (when admin button is clicked)
   useEffect(() => {
     console.log('🔐 [CompactAdminWidget] adminLockedProp changed:', adminLockedProp);
-    // When adminLockedProp is true (admin button was clicked), open the modal
+    // When adminLockedProp is true (admin button was clicked to lock), close modal and lock controls
     if (adminLockedProp === true) {
-      console.log('🔐 [CompactAdminWidget] Admin button was clicked, opening password modal NOW');
-      setShowPasswordModal(true);
-      setAdminModePassword(""); // Clear password input when modal opens
-      setAdminLockedState(true);
+      console.log('🔐 [CompactAdminWidget] Admin is being locked from parent, closing modal and hiding controls');
+      setShowPasswordModal(false);
+      setAdminModePassword(""); // Clear password input
+      setAdminLockedState(true); // Lock admin controls
     } else if (adminLockedProp === false) {
-      // When admin button is clicked while unlocked, it locks (adminLockedProp = false doesn't mean close modal)
-      console.log('🔐 [CompactAdminWidget] Admin is now unlocked, closing modal');
+      // When admin is unlocked from password entry
+      console.log('🔐 [CompactAdminWidget] Admin is unlocked, showing controls');
       setShowPasswordModal(false);
       setAdminLockedState(false);
     }
