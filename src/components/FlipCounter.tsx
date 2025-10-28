@@ -39,7 +39,7 @@ const FlipCounter: React.FC<FlipCounterProps> = ({
   
   return (
     <div className={`flip-counter relative ${className}`}>
-      <div className="relative h-14 w-14 bg-black/50 backdrop-blur-sm rounded-lg overflow-hidden shadow-lg border border-gray-800">
+      <div className="relative h-20 w-20 bg-black/50 backdrop-blur-sm rounded-lg overflow-hidden shadow-lg border border-gray-800">
         {/* Static display when not animating */}
         {!isAnimating && (
           <div 
