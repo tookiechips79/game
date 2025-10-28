@@ -73,7 +73,7 @@ const Index = () => {
   const [betId, setBetId] = useState<string>("");
   
   // Track admin lock state - when true, scoreboard and controls are disabled
-  const [adminLocked, setAdminLocked] = useState<boolean>(true);
+  const [adminLocked, setAdminLocked] = useState<boolean>(false);
   
   // Ref to access CompactAdminWidget's openModal method
   const adminModalRef = useRef<{ openModal: () => void }>(null);
