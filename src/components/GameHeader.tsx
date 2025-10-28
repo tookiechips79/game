@@ -69,35 +69,34 @@ const GameHeader = ({
           }`}
           style={isAdmin ? { backgroundColor: '#fa1593', borderColor: '#fa1593' } : { borderColor: '#fa1593', color: '#95deff' }}
           onClick={() => {
-            console.log('🔐 [GameHeader] Admin button clicked, adminLocked:', adminLocked);
-            if (adminLocked) {
-              // If locked, we just need to keep admin locked which will trigger the modal in CompactAdminWidget
-              // The modal should already be opening because adminLocked = true
-              console.log('🔐 [GameHeader] Admin is locked, modal should be opening');
-              if (adminModalRef?.current) {
-                adminModalRef.current.openModal();
-              }
-            } else {
-              // If unlocked, lock admin mode
-              console.log('🔐 [GameHeader] Admin is unlocked, locking it now');
+            console.log('🔐 [GameHeader] Admin button clicked, isAdmin:', isAdmin, 'adminLocked:', adminLocked);
+            if (isAdmin) {
+              // If admin is active, lock it (disable admin mode)
+              console.log('🔐 [GameHeader] Admin is active, locking it now');
               if (setAdminLocked) {
                 setAdminLocked(true);
               }
               if (onToggleAdmin) {
-                onToggleAdmin();
+                onToggleAdmin(); // Toggle off admin mode
+              }
+            } else {
+              // If admin is not active, open password modal to unlock
+              console.log('🔐 [GameHeader] Admin is not active, opening password modal');
+              if (adminModalRef?.current) {
+                adminModalRef.current.openModal();
               }
             }
           }}
         >
-          {adminLocked ? (
+          {isAdmin ? (
             <>
               <Lock className="h-4 w-4 mr-1" />
-              Unlock
+              Lock
             </>
           ) : (
             <>
               <Unlock className="h-4 w-4 mr-1" />
-              Lock
+              Unlock
             </>
           )}
         </Button>
