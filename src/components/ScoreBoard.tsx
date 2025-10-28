@@ -140,7 +140,7 @@ const ScoreBoard = (props: ScoreBoardProps) => {
         onToggleAgent={props.onToggleAgent}
       />
       
-      {showControls && isMatchStarted && (
+      {showControls && isMatchStarted && !props.adminLocked && (
         <GameControls
           showControls={showControls}
           isMatchStarted={isMatchStarted}
