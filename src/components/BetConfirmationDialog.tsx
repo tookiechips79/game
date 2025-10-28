@@ -68,17 +68,17 @@ const BetConfirmationDialog: React.FC<BetConfirmationDialogProps> = ({
         onClose();
       }
     }}>
-      <DialogContent className="bg-gradient-to-r from-gray-900/95 via-gray-800/95 to-gray-900/95 border-2 border-[#a3e635]/50 shadow-xl shadow-[#a3e635]/20 rounded-xl">
+      <DialogContent className="bg-gradient-to-r from-[#052240] to-[#004b6b] border-2 border-[#fa1593] shadow-[0_0_30px_rgba(250,21,147,0.6)] rounded-xl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-[#a3e635]">Confirm Your Bet</DialogTitle>
+          <DialogTitle className="text-xl font-bold text-white">Confirm Your Bet</DialogTitle>
           <DialogDescription asChild>
             <div>
-              <div className="text-base font-medium text-white">
-                Are you sure you want to place a bet of {amount} COINS on {team}?
+              <div className="text-base font-medium text-[#95deff]">
+                Are you sure you want to place a bet of {amount} Sweep Coins on {team}?
               </div>
               
               {isNextGame && (
-                <div className="mt-2 p-2 bg-[#a3e635]/20 rounded-lg border border-[#a3e635]/50 flex items-center text-[#a3e635]">
+                <div className="mt-2 p-2 bg-[#95deff]/20 rounded-lg border border-[#95deff]/50 flex items-center text-[#95deff]">
                   Note: This bet is for the next game, not the current one.
                 </div>
               )}
@@ -103,15 +103,15 @@ const BetConfirmationDialog: React.FC<BetConfirmationDialogProps> = ({
           <Button
             onClick={onClose}
             variant="outline"
-            className="bg-gray-700 hover:bg-gray-600 text-white border-gray-600 rounded-xl"
+            className="bg-[#004b6b] text-[#95deff] hover:bg-[#004b6b]/80 border-[#95deff] rounded-xl"
           >
-            <XCircle className="mr-2 h-4 w-4 text-red-500" />
+            <XCircle className="mr-2 h-4 w-4 text-red-400" />
             Cancel
           </Button>
           <Button
             onClick={handleConfirm}
             variant="confirm"
-            className="rounded-xl bg-[#a3e635] hover:bg-[#a3e635]/80 text-black"
+            className="rounded-xl bg-gradient-to-r from-[#fa1593] to-[#fa1593]/80 hover:from-[#fa1593]/90 hover:to-[#fa1593]/70 text-white shadow-[0_0_15px_rgba(250,21,147,0.6)]"
             disabled={currentUser?.credits ? currentUser.credits < amount : true}
           >
             <CheckCircle className="mr-2 h-4 w-4" />

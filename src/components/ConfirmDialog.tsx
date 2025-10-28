@@ -36,10 +36,10 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-gray-900 border-[#F97316]/30 rounded-2xl shadow-[0_0_15px_rgba(249,115,22,0.3)]">
+      <DialogContent className="bg-gradient-to-r from-[#052240] to-[#004b6b] border-2 border-[#fa1593] rounded-2xl shadow-[0_0_30px_rgba(250,21,147,0.6)]">
         <DialogHeader>
-          <DialogTitle className="text-white">{title}</DialogTitle>
-          <DialogDescription className="text-gray-300">
+          <DialogTitle className="text-xl font-bold text-white">{title}</DialogTitle>
+          <DialogDescription className="text-[#95deff]">
             {description}
           </DialogDescription>
         </DialogHeader>
@@ -47,14 +47,14 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           <Button
             variant="outline"
             onClick={onClose}
-            className="bg-gray-800 text-white hover:bg-gray-700 border-gray-700 rounded-xl"
+            className="bg-[#004b6b] text-[#95deff] hover:bg-[#004b6b]/80 border-[#95deff] rounded-xl"
           >
             {cancelText}
           </Button>
           <Button
-            variant="orange"
+            variant="pink"
             onClick={handleConfirm}
-            className="bg-gradient-to-r from-[#F97316] to-[#F97316]/80 text-black rounded-xl hover:from-[#F97316]/90 hover:to-[#F97316]/70 shadow-[0_0_10px_rgba(249,115,22,0.5)] transition-all duration-300"
+            className="bg-gradient-to-r from-[#fa1593] to-[#fa1593]/80 text-white rounded-xl hover:from-[#fa1593]/90 hover:to-[#fa1593]/70 shadow-[0_0_15px_rgba(250,21,147,0.6)] transition-all duration-300"
           >
             {confirmText}
           </Button>
