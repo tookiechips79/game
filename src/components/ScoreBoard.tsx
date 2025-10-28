@@ -89,7 +89,7 @@ const ScoreBoard = (props: ScoreBoardProps) => {
     resetTimerOnMatchStart: props.onTimerReset
   });
   
-  const showControls = props.isAdmin || props.isAgent;
+  const showControls = true; // Always show controls (START MATCH button should always be visible)
   
   // Disable controls if admin mode is locked
   const controlsDisabled = props.adminLocked === true;
