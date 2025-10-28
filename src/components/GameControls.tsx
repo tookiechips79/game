@@ -27,10 +27,13 @@ const GameControls: React.FC<GameControlsProps> = ({
   resetTimer,
   adminLocked
 }) => {
+  // If admin is locked, don't show any controls at all
+  if (adminLocked === true) {
+    return null;
+  }
+
   // Show START MATCH button when match hasn't started
   if (!isMatchStarted) {
-    // Determine if controls should be hidden (only when adminLocked is explicitly true)
-    const shouldHideControls = adminLocked === true;
     return (
       <div className="absolute inset-0 flex items-center justify-center z-10" style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}>
         <div className="flex flex-col items-center gap-6 backdrop-blur-sm bg-black/40 p-8 rounded-2xl">
@@ -41,8 +44,8 @@ const GameControls: React.FC<GameControlsProps> = ({
             START MATCH
           </Button>
           
-          {/* Timer and controls - only show when NOT locked */}
-          {showControls && !shouldHideControls && (
+          {/* Timer and controls */}
+          {showControls && (
             <div className="flex flex-col items-center gap-4">
               <div className="text-4xl font-bold text-[#fa1593] font-mono">
                 {String(Math.floor(timer / 60)).padStart(2, '0')}:

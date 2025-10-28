@@ -150,6 +150,7 @@ const ScoreBoard = (props: ScoreBoardProps) => {
           onStart={onTimerStart}
           onPause={onTimerPause}
           onReset={onTimerReset}
+          adminLocked={props.adminLocked}
         />
       )}
       
