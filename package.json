@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "rm -f package-lock.json && npm cache clean --force && npm install --legacy-peer-deps",
+    "prebuild": "npm ci --force --legacy-peer-deps && npm rebuild rollup --build-from-source",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
