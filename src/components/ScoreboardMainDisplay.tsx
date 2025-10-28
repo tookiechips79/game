@@ -169,6 +169,7 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
                 onGameIncrement={handleTeamAGameIncrement}
                 onGameDecrement={handleTeamAGameDecrement}
                 onNameChange={onTeamANameChange}
+                adminLocked={adminLocked}
               />
             </div>
             
@@ -190,6 +191,7 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
                 onGameIncrement={handleTeamBGameIncrement}
                 onGameDecrement={handleTeamBGameDecrement}
                 onNameChange={onTeamBNameChange}
+                adminLocked={adminLocked}
               />
             </div>
           </div>

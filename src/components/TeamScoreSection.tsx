@@ -21,6 +21,7 @@ interface TeamScoreSectionProps {
   onGameIncrement: () => void;
   onGameDecrement: () => void;
   onNameChange?: (name: string) => void;
+  adminLocked?: boolean;
 }
 
 const TeamScoreSection = ({
@@ -37,7 +38,8 @@ const TeamScoreSection = ({
   onBallDecrement,
   onGameIncrement,
   onGameDecrement,
-  onNameChange
+  onNameChange,
+  adminLocked
 }: TeamScoreSectionProps) => {  
   // Force re-render for Chrome compatibility
   const [renderKey, setRenderKey] = useState(0);
@@ -105,7 +107,7 @@ const TeamScoreSection = ({
             <FlipCounter value={balls} color="white" />
           </div>
           
-          {showControls && (
+          {showControls && !adminLocked && (
             <div className="flex space-x-2 mt-2">
               <Button
                 onClick={onBallDecrement}
@@ -128,7 +130,7 @@ const TeamScoreSection = ({
         </div>
       </div>
       
-      {showControls && isMatchStarted && (
+      {showControls && !adminLocked && isMatchStarted && (
         <div className="mt-4 flex justify-center space-x-2">
           <button 
             onClick={onBreakChange}
