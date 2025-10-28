@@ -18,11 +18,10 @@ const GameControls: React.FC<GameControlsProps> = ({
   toggleTimer,
   resetTimer
 }) => {
-  if (!showControls) return null;
-  
+  // Always show START MATCH button when not in a match
   if (!isMatchStarted) {
     return (
-      <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/50">
+      <div className="absolute inset-0 flex items-center justify-center z-10 bg-black">
         <Button 
           onClick={startMatch}
           className="bg-[#a3e635] hover:bg-[#a3e635]/80 text-black font-bold px-8 py-6 text-lg rounded-xl"
