@@ -228,7 +228,7 @@ const FeaturesPage = () => {
                 <ul className="space-y-3">
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
-                    <span className="text-white">Multiple bet denominations (10, 20, 50, 100 coins)</span>
+                    <span className="text-white">Multiple bet denominations (10, 50, 100 Sweep Coins)</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
@@ -413,7 +413,7 @@ const FeaturesPage = () => {
                   <div>
                     <h4 className="text-xl font-semibold mb-2" style={{ color: '#fa1593' }}>Select Your Bet Amount</h4>
                     <p className="mb-3" style={{ color: '#95deff' }}>
-                      Choose from 10, 20, 50, or 100 coins. Each denomination has its own betting button with hover tooltips showing the exact amount.
+                      Choose from 10, 50, or 100 Sweep Coins. Each denomination has its own betting button with hover tooltips showing the exact amount.
                     </p>
                     <div className="flex gap-2">
                       <Badge variant="outline" style={{ borderColor: '#fa1593', color: '#fa1593' }}>10 Coins</Badge>
