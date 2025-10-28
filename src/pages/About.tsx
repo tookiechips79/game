@@ -187,7 +187,7 @@ const AboutPage: React.FC = () => {
                 <div>
                   <h3 className="text-xl font-semibold text-white mb-2">Digital Currency System</h3>
                   <p className="text-white" style={{ color: '#95deff' }}>
-                    Use our secure digital coin system for all transactions. 
+                    Use our secure digital Sweep Coins system for all transactions. 
                     Easy to manage, track, and transfer between users.
                   </p>
                 </div>
@@ -277,7 +277,7 @@ const AboutPage: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <p style={{ color: '#95deff' }}>
-                  Load your account with digital coins. Admin can reload credits for any user.
+                  Load your account with Sweep Coins. Admin can reload credits for any user.
                 </p>
               </CardContent>
             </Card>
