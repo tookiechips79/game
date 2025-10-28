@@ -112,7 +112,7 @@ const ScoreBoard = (props: ScoreBoardProps) => {
         displayTeamAGames={displayTeamAGames}
         displayTeamBGames={displayTeamBGames}
         isMatchStarted={isMatchStarted}
-        showControls={showControls && !controlsDisabled}
+        showControls={showControls}
         controlsDisabled={controlsDisabled}
         adminLocked={props.adminLocked}
         setAdminLocked={props.setAdminLocked}
