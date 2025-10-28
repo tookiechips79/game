@@ -5,12 +5,14 @@ interface FlipCounterProps {
   value: number;
   color?: string;
   className?: string;
+  fontClassName?: string;
 }
 
 const FlipCounter: React.FC<FlipCounterProps> = ({ 
   value, 
   color = 'white',
-  className = '' 
+  className = '',
+  fontClassName = ''
 }) => {
   const [prevValue, setPrevValue] = useState(value);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -41,7 +43,7 @@ const FlipCounter: React.FC<FlipCounterProps> = ({
         {/* Static display when not animating */}
         {!isAnimating && (
           <div 
-            className={`absolute inset-0 flex items-center justify-center text-4xl font-bold text-${color} drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]`}
+            className={`absolute inset-0 flex items-center justify-center ${fontClassName || 'text-3xl font-bold font-mono'} text-${color} drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]`}
           >
             {value}
           </div>
@@ -52,14 +54,14 @@ const FlipCounter: React.FC<FlipCounterProps> = ({
           <>
             {/* Old number (sliding up and out) */}
             <div className="absolute inset-0 slide-up-out flex items-center justify-center">
-              <span className={`text-4xl font-bold text-${color} drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]`}>
+              <span className={`${fontClassName || 'text-3xl font-bold font-mono'} text-${color} drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]`}>
                 {prevValue}
               </span>
             </div>
             
             {/* New number (sliding down and in) */}
             <div className="absolute inset-0 slide-down-in flex items-center justify-center">
-              <span className={`text-4xl font-bold text-${color} drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]`}>
+              <span className={`${fontClassName || 'text-3xl font-bold font-mono'} text-${color} drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]`}>
                 {value}
               </span>
             </div>
