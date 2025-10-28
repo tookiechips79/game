@@ -67,8 +67,8 @@ const TeamScoreSection = ({
       </div>
       
       <div className="grid grid-cols-2 gap-4 mt-3">
-        <div className="bg-[#1EAEDB] rounded-2xl p-3 flex items-center justify-between transition-all hover:bg-[#1EAEDB]/90 shadow-[0_0_15px_rgba(30,174,219,0.5)]">
-          <div className="flex flex-col items-center">
+        <div className="bg-[#1EAEDB] rounded-2xl p-3 flex items-center gap-3 transition-all hover:bg-[#1EAEDB]/90 shadow-[0_0_15px_rgba(30,174,219,0.5)]">
+          <div className="flex flex-col items-center flex-1">
             <div className="flex items-center justify-center mb-1">
               <Trophy className="h-5 w-5 text-gray-900 mr-1" />
               <span className="text-xs font-medium text-gray-900">GAMES</span>
@@ -100,8 +100,8 @@ const TeamScoreSection = ({
           )}
         </div>
         
-        <div className="bg-[#1EAEDB] rounded-2xl p-3 flex items-center justify-between transition-all hover:bg-[#1EAEDB]/90 shadow-[0_0_15px_rgba(30,174,219,0.5)]">
-          <div className="flex flex-col items-center">
+        <div className="bg-[#1EAEDB] rounded-2xl p-3 flex items-center gap-3 transition-all hover:bg-[#1EAEDB]/90 shadow-[0_0_15px_rgba(30,174,219,0.5)]">
+          <div className="flex flex-col items-center flex-1">
             <div className="flex items-center justify-center mb-1">
               <Circle className="h-5 w-5 text-gray-900 mr-1 fill-gray-900" />
               <span className="text-xs font-medium text-gray-900">BALLS</span>
