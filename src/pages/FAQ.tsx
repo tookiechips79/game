@@ -253,6 +253,25 @@ const FAQ = () => {
             <p className="mb-6" style={{ color: '#95deff' }}>
               Can't find the answer you're looking for? Check out our other resources or contact support.
             </p>
+            <div className="flex gap-4 justify-center flex-wrap">
+              <Link to="/about">
+                <Button 
+                  className="px-6 py-2 text-white font-semibold"
+                  style={{ backgroundColor: '#fa1593' }}
+                >
+                  Learn More About Us
+                </Button>
+              </Link>
+              <Link to="/">
+                <Button 
+                  variant="outline" 
+                  className="px-6 py-2"
+                  style={{ borderColor: '#95deff', color: '#95deff' }}
+                >
+                  Back to Home
+                </Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>
