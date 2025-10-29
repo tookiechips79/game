@@ -986,12 +986,6 @@ const Index = () => {
 
         <UserCreditSystem isAdmin={isAdminMode} />
 
-        <GameDescription 
-          isAdmin={isAdminMode || isAgentMode} 
-          initialDescription={gameDescription} 
-          onDescriptionChange={(desc) => updateGameState({ gameDescription: desc })} 
-        />
-
         {/* Game Info Window */}
         <GameInfoWindow 
           teamAQueue={teamAQueue}
@@ -1006,6 +1000,12 @@ const Index = () => {
             REALTIME SCOREBOARD
           </h2>
         </div>
+
+        <GameDescription 
+          isAdmin={isAdminMode || isAgentMode} 
+          initialDescription={gameDescription} 
+          onDescriptionChange={(desc) => updateGameState({ gameDescription: desc })} 
+        />
 
         <ScoreBoard 
           teamAName={teamAName}
