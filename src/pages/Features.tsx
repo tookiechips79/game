@@ -452,10 +452,22 @@ const FeaturesPage = () => {
                     3
                   </div>
                   <div>
-                    <h4 className="text-xl font-semibold mb-2" style={{ color: '#fa1593' }}>Automatic Matching</h4>
+                    <h4 className="text-xl font-semibold mb-2" style={{ color: '#fa1593' }}>Priority-Based Automatic Matching</h4>
                     <p className="mb-3" style={{ color: '#95deff' }}>
-                      Your bet is automatically matched with other users' bets on the opposing team. The system ensures fair matching and real-time updates.
+                      Your bet enters a queue and is automatically matched using a fair, priority-based system that respects the order bets were placed. The system instantly matches your bet with the first available bet of the same amount on the opposing team.
                     </p>
+                    <div className="space-y-2 mb-3 p-3 rounded-lg" style={{ backgroundColor: 'rgba(5, 34, 64, 0.5)' }}>
+                      <p className="text-sm" style={{ color: '#95deff' }}>
+                        <strong>How It Works:</strong>
+                      </p>
+                      <ul className="text-sm space-y-1" style={{ color: '#95deff' }}>
+                        <li>✓ Bets are matched in FIRST-IN, FIRST-OUT (FIFO) order</li>
+                        <li>✓ Your bet matches with the first open bet of the same amount on the opposing team</li>
+                        <li>✓ If no matching bet exists, your bet waits in the queue</li>
+                        <li>✓ Once matched, both bets are locked in and marked as "Booked"</li>
+                        <li>✓ Matching respects both time priority AND bet amount for fairness</li>
+                      </ul>
+                    </div>
                     <div className="flex gap-2">
                       <Badge className="bg-green-500/20 text-green-400">Matched</Badge>
                       <Badge className="bg-yellow-500/20 text-yellow-400">Pending</Badge>
