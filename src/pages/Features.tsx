@@ -34,40 +34,41 @@ import {
 const FeaturesPage = () => {
   return (
     <div className="min-h-screen text-white" style={{ backgroundColor: '#052240' }}>
-      {/* Header */}
-      <div className="border-b py-4" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Link to="/">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  style={{ color: '#fa1593' }}
-                  className="hover:bg-transparent"
-                >
-                  <Home className="h-4 w-4 mr-2" style={{ color: '#fa1593' }} />
-                  Home
-                </Button>
-              </Link>
-              <div className="h-6 w-px" style={{ backgroundColor: '#95deff' }} />
-              <div className="flex items-center space-x-2">
-                <Trophy className="h-6 w-6" style={{ color: '#fa1593' }} />
-                <h1 className="text-2xl font-bold text-white">Platform Features</h1>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              <Link to="/member-signup">
-                <Button style={{ backgroundColor: '#fa1593', color: 'white' }} className="font-bold hover:opacity-90">
-                  <LogIn className="h-4 w-4 mr-2" />
-                  Get Started
-                </Button>
-              </Link>
-            </div>
+      {/* Sticky Navigation Bar */}
+      <nav className="sticky top-0 z-50 border-b" style={{ backgroundColor: '#004b6b', borderColor: '#95deff', backdropFilter: 'blur(10px)' }}>
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <img 
+              src="/lovable-uploads/4dfcf9c9-cbb9-4a75-94ab-bcdb38a8091e.png" 
+              alt="Game Bird Logo" 
+              className="w-12 h-12 object-contain drop-shadow-[0_0_10px_rgba(149,222,255,0.3)]"
+            />
+            <span className="text-xl font-bold" style={{ color: '#95deff', textShadow: '0 0 10px rgba(149, 222, 255, 0.5)' }}>Game Bird</span>
+          </div>
+          <div className="flex gap-4 items-center">
+            <Link to="/">
+              <Button variant="ghost" style={{ color: '#95deff' }} className="hover:bg-[#004b6b]/70">
+                Home
+              </Button>
+            </Link>
+            <Link to="/about">
+              <Button variant="ghost" style={{ color: '#95deff' }} className="hover:bg-[#004b6b]/70">
+                About
+              </Button>
+            </Link>
+            <Link to="/faq">
+              <Button variant="ghost" style={{ color: '#95deff' }} className="hover:bg-[#004b6b]/70">
+                FAQ
+              </Button>
+            </Link>
+            <Link to="/betting-queue">
+              <Button className="font-bold flex items-center gap-2" style={{ backgroundColor: '#fa1593', color: 'white' }}>
+                Betting
+              </Button>
+            </Link>
           </div>
         </div>
-      </div>
+      </nav>
 
       <div className="container mx-auto px-4 py-12">
         {/* Hero Section */}

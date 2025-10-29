@@ -40,23 +40,41 @@ const AboutPage: React.FC = () => {
       }}
     >
       <div className="fixed inset-0 pointer-events-none" style={{ backgroundColor: 'rgba(5, 34, 64, 0.5)', zIndex: 1 }}></div>
-      {/* Header */}
-      <div className="border-b py-4 relative z-10" style={{ backgroundColor: '#004b6b', borderColor: '#95deff' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="rounded-lg p-2" style={{ backgroundColor: '#95deff' }}>
-              <Trophy className="h-6 w-6" style={{ color: '#052240' }} />
-            </div>
-            <h1 className="text-2xl font-bold" style={{ color: '#fa1593' }}>About Our Platform</h1>
+      {/* Sticky Navigation Bar */}
+      <nav className="sticky top-0 z-50 border-b" style={{ backgroundColor: '#004b6b', borderColor: '#95deff', backdropFilter: 'blur(10px)' }}>
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <img 
+              src="/lovable-uploads/4dfcf9c9-cbb9-4a75-94ab-bcdb38a8091e.png" 
+              alt="Game Bird Logo" 
+              className="w-12 h-12 object-contain drop-shadow-[0_0_10px_rgba(149,222,255,0.3)]"
+            />
+            <span className="text-xl font-bold" style={{ color: '#95deff', textShadow: '0 0 10px rgba(149, 222, 255, 0.5)' }}>Game Bird</span>
           </div>
-          <Link to="/">
-            <Button variant="ghost" className="hover:bg-transparent" style={{ color: '#fa1593' }}>
-              <Home className="h-4 w-4 mr-2" style={{ color: '#fa1593' }} />
-              Home
-            </Button>
-          </Link>
+          <div className="flex gap-4 items-center">
+            <Link to="/">
+              <Button variant="ghost" style={{ color: '#95deff' }} className="hover:bg-[#004b6b]/70">
+                Home
+              </Button>
+            </Link>
+            <Link to="/features">
+              <Button variant="ghost" style={{ color: '#95deff' }} className="hover:bg-[#004b6b]/70">
+                Features
+              </Button>
+            </Link>
+            <Link to="/faq">
+              <Button variant="ghost" style={{ color: '#95deff' }} className="hover:bg-[#004b6b]/70">
+                FAQ
+              </Button>
+            </Link>
+            <Link to="/betting-queue">
+              <Button className="font-bold flex items-center gap-2" style={{ backgroundColor: '#fa1593', color: 'white' }}>
+                Betting
+              </Button>
+            </Link>
+          </div>
         </div>
-      </div>
+      </nav>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         {/* Hero Section */}
