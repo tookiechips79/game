@@ -486,12 +486,12 @@ const FeaturesPage = () => {
                       When the game ends, winning bets automatically receive their winnings. Losing bets are deducted from your account.
                     </p>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-green-500/10 p-3 rounded-lg border border-green-500/30">
-                        <h5 className="font-semibold text-green-400 mb-1">Win</h5>
+                      <div className="p-3 rounded-lg border" style={{ backgroundColor: 'rgba(149, 222, 255, 0.1)', borderColor: '#95deff' }}>
+                        <h5 className="font-semibold mb-1" style={{ color: '#95deff' }}>Win</h5>
                         <p className="text-sm text-white">Receive your bet amount + winnings</p>
                       </div>
-                      <div className="bg-red-500/10 p-3 rounded-lg border border-red-500/30">
-                        <h5 className="font-semibold text-red-400 mb-1">Lose</h5>
+                      <div className="p-3 rounded-lg border" style={{ backgroundColor: 'rgba(250, 21, 147, 0.1)', borderColor: '#fa1593' }}>
+                        <h5 className="font-semibold mb-1" style={{ color: '#fa1593' }}>Lose</h5>
                         <p className="text-sm text-white">Bet amount deducted from account</p>
                       </div>
                     </div>
