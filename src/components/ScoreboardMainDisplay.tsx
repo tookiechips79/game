@@ -103,14 +103,16 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
   return (
     <>
       {/* CompactAdminWidget Portal - render at root to allow modals to display properly */}
-      <CompactAdminWidget
-        ref={adminModalRef}
-        isAdmin={isAdmin}
-        isAgent={isAgent}
-        onToggleAdmin={onToggleAdmin}
-        setAdminLocked={setAdminLocked}
-        adminLocked={adminLocked}
-      />
+      {!adminLocked && (
+        <CompactAdminWidget
+          ref={adminModalRef}
+          isAdmin={isAdmin}
+          isAgent={isAgent}
+          onToggleAdmin={onToggleAdmin}
+          setAdminLocked={setAdminLocked}
+          adminLocked={adminLocked}
+        />
+      )}
       
       <div className="relative">
         
