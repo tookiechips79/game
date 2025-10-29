@@ -60,6 +60,11 @@ const Landing = () => {
                 Features
               </Button>
             </Link>
+            <Link to="/faq">
+              <Button variant="ghost" style={{ color: '#95deff' }} className="hover:bg-[#004b6b]/70">
+                FAQ
+              </Button>
+            </Link>
             
             {currentUser ? (
               <>
