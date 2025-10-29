@@ -76,7 +76,7 @@ const FeaturesPage = () => {
             How Game Bird Platform Works
           </h2>
           <p className="text-xl max-w-3xl mx-auto" style={{ color: '#95deff' }}>
-            A comprehensive guide to understanding our betting platform, from account creation to winning real coins
+            A comprehensive guide to understanding our betting platform, from account creation to winning sweep coins
           </p>
         </div>
 
@@ -89,7 +89,7 @@ const FeaturesPage = () => {
                 Platform Overview
               </CardTitle>
               <CardDescription style={{ color: '#95deff' }}>
-                Game Bird is a real-time betting platform where users can place bets on live games and win real coins
+                Game Bird is a real-time betting platform where users can place bets on live games and win sweep coins
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -143,7 +143,7 @@ const FeaturesPage = () => {
                 <div className="p-3 rounded-full w-12 h-12 mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: 'rgba(250, 21, 147, 0.2)' }}>
                   <Eye className="h-6 w-6" style={{ color: '#fa1593' }} />
                 </div>
-                <CardTitle className="text-lg text-white">2. View Platform</CardTitle>
+                <CardTitle className="text-lg text-white">1. Access the Betting Queue </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm" style={{ color: '#95deff' }}>
@@ -175,7 +175,7 @@ const FeaturesPage = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-sm" style={{ color: '#95deff' }}>
-                  Place bets on current and next games. Win real coins and cash out your winnings.
+                  Place bets on current and next games. Win sweep coins and cash out your winnings.
                 </p>
               </CardContent>
             </Card>
@@ -429,9 +429,9 @@ const FeaturesPage = () => {
                     2
                   </div>
                   <div>
-                    <h4 className="text-xl font-semibold mb-2" style={{ color: '#fa1593' }}>Choose Your Team</h4>
+                    <h4 className="text-xl font-semibold mb-2" style={{ color: '#fa1593' }}>Choose Your Player</h4>
                     <p className="mb-3" style={{ color: '#95deff' }}>
-                      Click on the betting button for either Team A or Team B. You can bet on the current game or the next upcoming game.
+                      Click on the betting button for either Player A or Player B. You can bet on the current game or the next upcoming game in the queue.
                     </p>
                     <div className="p-3 rounded-lg" style={{ backgroundColor: 'rgba(5, 34, 64, 0.5)' }}>
                       <p className="text-sm" style={{ color: '#95deff' }}>
