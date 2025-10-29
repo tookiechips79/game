@@ -30,7 +30,19 @@ const FAQ = () => {
       id: "booked",
       category: "Betting System",
       question: "What does 'Booked Bets' mean?",
-      answer: "Booked Bets are bets that have been confirmed and are ready to be matched. When you place a bet on Team A or Team B, it enters the betting queue. Once a matching bet appears on the opposite team, both bets are highlighted to show they've been matched (booked). This creates a balanced betting pair for that round."
+      answer: "Booked Bets are bets that have been confirmed and matched with opposing bets. When you place a bet on Team A or Team B, it enters the betting queue. Once a matching bet of the same amount appears on the opposite team, both bets are automatically highlighted (booked) to show they've been paired together. This creates a balanced betting pair, and both bets are now locked in for that game round."
+    },
+    {
+      id: "matching",
+      category: "Betting System",
+      question: "How does automatic bet matching work?",
+      answer: "The betting system uses priority-based automatic matching. When you place a bet, it enters the betting queue and waits for a matching bet from the opposite team. The system matches bets in order: your bet will match with the FIRST available bet in line on the other team that has the same amount. For example, if Team A Queue has: [100, 50, 100] and you place a 100 on Team B, your bet matches with the first 100 from Team A. Bets are matched immediately as soon as both conditions are met: (1) same bet amount, and (2) opposite teams. Once matched, both bets are highlighted and booked."
+    },
+    {
+      id: "queue-order",
+      category: "Betting System",
+      question: "What determines the order in the betting queue?",
+      answer: "Bets are placed in the queue in the exact order they are submitted. When you click the bet button and confirm, your bet is added to the END of the queue. The system then checks if there's a matching bet at the FRONT of the opposite team's queue. This means first-in-first-out (FIFO) priority - earlier bets get matched before later ones. If you place a 50 Sweep Coin bet and there's already a 50 Sweep Coin bet waiting on the opposite team, your bet will match immediately. If not, you'll wait in line until someone places a matching bet."
     },
     {
       id: "coins",
