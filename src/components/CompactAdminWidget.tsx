@@ -274,11 +274,10 @@ const CompactAdminWidget = React.forwardRef<
   };
 
   // Hide admin panel UI when locked from parent, but keep ref functional
-  if (adminLockedProp === true) {
-    return null;
-  }
+  // Don't return null - we need the component mounted for the ref to work
+  const shouldHideAdminPanel = adminLockedProp === true;
 
-  if (isHidden) {
+  if (isHidden && !shouldHideAdminPanel) {
     return (
       <Button
         variant="outline"
@@ -291,6 +290,11 @@ const CompactAdminWidget = React.forwardRef<
         Show Admin Panel
       </Button>
     );
+  }
+
+  // If admin is locked from parent and hidden, don't render - component stays mounted for ref
+  if (shouldHideAdminPanel) {
+    return <></>;
   }
 
   return (
