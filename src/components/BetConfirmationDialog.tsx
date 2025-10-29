@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Wallet } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
+import { useSound } from "@/hooks/use-sound";
 
 interface BetConfirmationDialogProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ const BetConfirmationDialog: React.FC<BetConfirmationDialogProps> = ({
   isNextGame = false
 }) => {
   const { currentUser } = useUser();
+  const { play: playSilverSound } = useSound('/silver.mp3', { volume: 0.8 });
   
   const handleConfirm = () => {
     if (!currentUser) {
@@ -56,6 +58,9 @@ const BetConfirmationDialog: React.FC<BetConfirmationDialogProps> = ({
       onClose();
       return;
     }
+    
+    // Play the silver sound when bet is confirmed
+    playSilverSound();
     
     // Call onConfirm and close the dialog immediately
     onConfirm();
