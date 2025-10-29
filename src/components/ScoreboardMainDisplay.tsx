@@ -175,6 +175,7 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
                 onNameChange={onTeamANameChange}
                 adminLocked={adminLocked}
                 playerImageUrl={teamAPlayerImageUrl}
+                position="40% center"
               />
             </div>
             
@@ -198,6 +199,7 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
                 onNameChange={onTeamBNameChange}
                 adminLocked={adminLocked}
                 playerImageUrl={teamBPlayerImageUrl}
+                position="70% center"
               />
             </div>
           </div>
