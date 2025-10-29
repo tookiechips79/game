@@ -67,7 +67,8 @@ const AboutPage: React.FC = () => {
           </h1>
           <p className="text-xl text-white max-w-3xl mx-auto mb-8" style={{ color: '#95deff' }}>
             Experience the most advanced, secure, and user-friendly pool betting platform. 
-            Bet on matches in person or from anywhere, with guaranteed payouts and real-time updates.
+            Bet on Tournament and Action matches from your venue or from anywhere on your device. 
+            Enjoy guaranteed payouts, real-time updates, and a gamified experience that elevates the excitement of competitive pool.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Badge variant="outline" className="px-4 py-2" style={{ borderColor: '#fa1593', color: '#fa1593' }}>
