@@ -54,7 +54,7 @@ const FAQ = () => {
       id: "bet-queue-example",
       category: "Betting System",
       question: "Can you explain a betting queue example?",
-      answer: "Sure! Let's say Team A queue has: [100 coins, 50 coins, 10 coins] and Team B queue has: [50 coins, 100 coins]. When you place a new 100-coin bet on Team B: (1) The system finds the first open 100-coin bet on Team A (the first one), (2) Those two bets instantly match and are marked 'Booked', (3) Your bet is now locked in as matched. If you placed a 25-coin bet instead, it wouldn't match anything because no 25-coin bet exists on the opposite team - it would sit in the queue waiting."
+      answer: "Sure! Let's say Team A queue has: [100 coins, 50 coins, 10 coins] and Team B queue has: [50 coins, 100 coins]. When you place a new 100-coin bet on Team B: (1) The system finds the first open 100-coin bet on Team A (the first one), (2) Those two bets instantly match and are marked 'Booked', (3) Your bet is now locked in as matched. If you placed a 25-coin bet instead, it wouldn't match anything because no 25-coin bet exists on the opposite team - it would sit in the queue waiting(open)."
     },
     {
       id: "coins",
@@ -253,25 +253,6 @@ const FAQ = () => {
             <p className="mb-6" style={{ color: '#95deff' }}>
               Can't find the answer you're looking for? Check out our other resources or contact support.
             </p>
-            <div className="flex gap-4 justify-center flex-wrap">
-              <Link to="/about">
-                <Button 
-                  className="px-6 py-2 text-white font-semibold"
-                  style={{ backgroundColor: '#fa1593' }}
-                >
-                  Learn More About Us
-                </Button>
-              </Link>
-              <Link to="/">
-                <Button 
-                  variant="outline" 
-                  className="px-6 py-2"
-                  style={{ borderColor: '#95deff', color: '#95deff' }}
-                >
-                  Back to Home
-                </Button>
-              </Link>
-            </div>
           </CardContent>
         </Card>
       </div>
