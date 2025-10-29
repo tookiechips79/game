@@ -277,6 +277,61 @@ const CompactAdminWidget = React.forwardRef<
   // Don't return null - we need the component mounted for the ref to work
   const shouldHideAdminPanel = adminLockedProp === true;
 
+  // Render password modal even when admin panel is hidden
+  const passwordModalContent = showPasswordModal && (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 backdrop-blur-sm">
+      <Card className="w-96 rounded-2xl shadow-2xl" style={{
+        borderColor: '#fa1593',
+        backgroundColor: '#052240',
+        background: 'linear-gradient(135deg, #052240 0%, #004b6b 100%)',
+        border: '2px solid #fa1593',
+        boxShadow: '0 0 30px rgba(250, 21, 147, 0.5)'
+      }}>
+        <CardContent className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Lock className="h-5 w-5" style={{ color: '#fa1593' }} />
+            <h2 className="text-lg font-bold text-white">🔒 Admin Access</h2>
+          </div>
+          <p className="text-sm text-[#95deff] mb-4">
+            Enter the admin password to unlock scoreboard controls.
+          </p>
+          <Input
+            type="password"
+            placeholder="Admin Password"
+            value={adminModePassword}
+            onChange={(e) => setAdminModePassword(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleConfirmEnter();
+              }
+            }}
+            autoFocus
+            className="mb-4 bg-[#004b6b] border-2 border-[#95deff] text-white placeholder-gray-400 focus:border-[#fa1593]"
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowPasswordModal(false);
+                setAdminModePassword("");
+              }}
+              className="bg-[#004b6b] text-[#95deff] hover:bg-[#004b6b]/80 border-[#95deff]"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="pink"
+              onClick={handleConfirmEnter}
+              className="bg-[#fa1593] hover:bg-[#fa1593]/80 text-white"
+            >
+              Unlock
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   if (isHidden && !shouldHideAdminPanel) {
     return (
       <Button
@@ -294,7 +349,7 @@ const CompactAdminWidget = React.forwardRef<
 
   // If admin is locked from parent and hidden, don't render - component stays mounted for ref
   if (shouldHideAdminPanel) {
-    return <></>;
+    return <>{passwordModalContent}</>;
   }
 
   return (
@@ -531,59 +586,7 @@ const CompactAdminWidget = React.forwardRef<
       </CardContent>
 
       {/* PASSWORD MODAL POPUP */}
-      {showPasswordModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 backdrop-blur-sm">
-          <Card className="w-96 rounded-2xl shadow-2xl" style={{
-            borderColor: '#fa1593',
-            backgroundColor: '#052240',
-            background: 'linear-gradient(135deg, #052240 0%, #004b6b 100%)',
-            border: '2px solid #fa1593',
-            boxShadow: '0 0 30px rgba(250, 21, 147, 0.5)'
-          }}>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Lock className="h-5 w-5" style={{ color: '#fa1593' }} />
-                <h2 className="text-lg font-bold text-white">🔒 Admin Access</h2>
-              </div>
-              
-              <p className="text-sm text-[#95deff] mb-4">Enter the admin password to unlock scoreboard controls.</p>
-              
-              <Input
-                type="password"
-                placeholder="Admin Password"
-                value={adminModePassword}
-                onChange={(e) => setAdminModePassword(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    handleConfirmEnter();
-                  }
-                }}
-                autoFocus
-                className="h-10 text-sm bg-[#004b6b] border-2 border-[#95deff] text-white placeholder-gray-400 focus:border-[#fa1593] mb-6"
-              />
-              
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleConfirmEnter}
-                  className="flex-1 bg-[#fa1593] hover:bg-[#fa1593]/80 text-white font-semibold rounded-lg shadow-[0_0_15px_rgba(250,21,147,0.4)]"
-                >
-                  🔓 Unlock
-                </Button>
-                <Button
-                  onClick={() => {
-                    setShowPasswordModal(false);
-                    setAdminModePassword("");
-                  }}
-                  variant="outline"
-                  className="flex-1 bg-[#004b6b] text-[#95deff] hover:bg-[#004b6b]/80 border-[#95deff] rounded-lg"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {passwordModalContent}
     </Card>
   );
 });
