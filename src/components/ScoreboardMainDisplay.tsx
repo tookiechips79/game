@@ -52,6 +52,8 @@ interface ScoreboardMainDisplayProps {
   adminLocked?: boolean;
   setAdminLocked?: (locked: boolean) => void;
   adminModalRef?: React.RefObject<HTMLDivElement>;
+  teamAPlayerImageUrl?: string;
+  teamBPlayerImageUrl?: string;
 }
 
 const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
@@ -90,7 +92,9 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
   onToggleAgent,
   adminLocked,
   setAdminLocked,
-  adminModalRef
+  adminModalRef,
+  teamAPlayerImageUrl,
+  teamBPlayerImageUrl
 }) => {
   // Force re-render for Chrome compatibility when scoreboard data changes
   const [renderKey, setRenderKey] = useState(0);
@@ -170,6 +174,7 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
                 onGameDecrement={handleTeamAGameDecrement}
                 onNameChange={onTeamANameChange}
                 adminLocked={adminLocked}
+                playerImageUrl={teamAPlayerImageUrl}
               />
             </div>
             
@@ -192,6 +197,7 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
                 onGameDecrement={handleTeamBGameDecrement}
                 onNameChange={onTeamBNameChange}
                 adminLocked={adminLocked}
+                playerImageUrl={teamBPlayerImageUrl}
               />
             </div>
           </div>

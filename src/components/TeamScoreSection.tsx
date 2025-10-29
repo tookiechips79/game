@@ -23,6 +23,7 @@ interface TeamScoreSectionProps {
   onGameDecrement: () => void;
   onNameChange?: (name: string) => void;
   adminLocked?: boolean;
+  playerImageUrl?: string;
 }
 
 const TeamScoreSection = ({
@@ -40,7 +41,8 @@ const TeamScoreSection = ({
   onGameIncrement,
   onGameDecrement,
   onNameChange,
-  adminLocked
+  adminLocked,
+  playerImageUrl
 }: TeamScoreSectionProps) => {  
   // Force re-render for Chrome compatibility
   const [renderKey, setRenderKey] = useState(0);
@@ -71,7 +73,7 @@ const TeamScoreSection = ({
   return (
     <div key={renderKey} className={`col-span-1 p-4 pt-24 bg-gradient-to-r from-[${color}]/30 to-[${color}]/20 relative rounded-l-2xl`}>
       <div className="flex flex-col items-center justify-center mb-2 mt-8">
-        <PlayerAvatar playerName={teamName} />
+        <PlayerAvatar playerName={teamName} playerImageUrl={playerImageUrl} />
         
         {showControls && onNameChange ? (
           <input
