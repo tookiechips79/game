@@ -137,9 +137,11 @@ const Landing = () => {
                   </Button>
                 </div>
               )}
-              <Button variant="outline" className="px-6 py-6 text-lg w-full sm:w-auto" style={{ borderColor: '#95deff', color: '#95deff' }}>
-                Learn More
-              </Button>
+              <Link to="/features">
+                <Button variant="outline" className="px-6 py-6 text-lg w-full sm:w-auto" style={{ borderColor: '#95deff', color: '#95deff' }}>
+                  Learn More
+                </Button>
+              </Link>
             </div>
             
             {!currentUser && (
