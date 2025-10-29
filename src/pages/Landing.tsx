@@ -37,17 +37,16 @@ const Landing = () => {
       {/* Overlay for readability */}
       <div className="fixed inset-0 pointer-events-none" style={{ backgroundColor: 'rgba(5, 34, 64, 0.5)', zIndex: 1 }}></div>
       
-      {/* Hero Section */}
-      <div className="container mx-auto pt-8 pb-12 px-4 relative z-10">
-        {/* Navigation */}
-        <nav className="flex justify-between items-center mb-12">
+      {/* Sticky Navigation Bar */}
+      <nav className="sticky top-0 z-50 border-b" style={{ backgroundColor: '#004b6b', borderColor: '#95deff', backdropFilter: 'blur(10px)' }}>
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <img 
               src="/lovable-uploads/4dfcf9c9-cbb9-4a75-94ab-bcdb38a8091e.png" 
               alt="Game Bird Logo" 
-              className="w-16 h-16 object-contain drop-shadow-[0_0_10px_rgba(149,222,255,0.3)]"
+              className="w-12 h-12 object-contain drop-shadow-[0_0_10px_rgba(149,222,255,0.3)]"
             />
-            <span className="text-2xl font-bold" style={{ color: '#95deff', textShadow: '0 0 10px rgba(149, 222, 255, 0.5)' }}>Game Bird</span>
+            <span className="text-xl font-bold" style={{ color: '#95deff', textShadow: '0 0 10px rgba(149, 222, 255, 0.5)' }}>Game Bird</span>
           </div>
           <div className="flex gap-4 items-center">
             <Link to="/about">
@@ -100,8 +99,11 @@ const Landing = () => {
               </Button>
             </Link>
           </div>
-        </nav>
-
+        </div>
+      </nav>
+      
+      {/* Hero Section */}
+      <div className="container mx-auto pt-8 pb-12 px-4 relative z-10">
         {/* Hero Content */}
         <div className="flex flex-col md:flex-row items-center gap-12 mb-20">
           <div className="flex-1">
