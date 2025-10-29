@@ -23,6 +23,7 @@ import { useUser } from "@/contexts/UserContext";
 import { useGameState } from "@/contexts/GameStateContext";
 import { Bet, BookedBet, ConfirmationState } from "@/types/user";
 import { socketIOService } from "@/services/socketIOService";
+import { useSound } from "@/hooks/use-sound";
 
 const Index = () => {
   const { 
@@ -39,6 +40,9 @@ const Index = () => {
   } = useUser();
   
   const { gameState, updateGameState, isAdmin, localAdminState, updateLocalAdminState, startTimer, pauseTimer, resetTimer, setTimer, resetTimerOnMatchStart, resetTimerOnGameWin } = useGameState();
+  
+  // Sound effect for bet placement
+  const { play: playSilverSound } = useSound('/silver.mp3', { volume: 0.8 });
   
   // Extract state from gameState context
   const {
@@ -98,7 +102,9 @@ const Index = () => {
   };
 
   const playSound = (soundType: string) => {
-    console.log(`Playing sound: ${soundType}`);
+    if (soundType === "placeBet") {
+      playSilverSound();
+    }
   };
 
   const toggleAdminMode = () => {
