@@ -10,7 +10,7 @@ interface PlayerAvatarProps {
 
 const PlayerAvatar = ({ playerName, className, imageUrl }: PlayerAvatarProps) => {
   return (
-    <Avatar className={`w-20 h-20 mb-3 border-2 border-[#fa1593] shadow-[0_0_15px_rgba(250,21,147,0.5)] ${className || ""}`}>
+    <Avatar className={`w-32 h-32 mb-3 border-2 border-[#fa1593] shadow-[0_0_15px_rgba(250,21,147,0.5)] ${className || ""}`}>
       <AvatarImage 
         src={imageUrl || "/lovable-uploads/default-profile.png"} 
         alt={playerName}
