@@ -197,19 +197,19 @@ const FeaturesPage = () => {
               <CardContent>
                 <ul className="space-y-3">
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">Live game scores and statistics</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">Current and next game information</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">Team names and game status</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">Accessible to all users (free and premium)</span>
                   </li>
                 </ul>
@@ -227,19 +227,19 @@ const FeaturesPage = () => {
               <CardContent>
                 <ul className="space-y-3">
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">Multiple bet denominations (10, 50, 100 Sweep Coins)</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">Current game and next game betting queues</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">Automatic bet matching and booking</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">Real-time bet status updates</span>
                   </li>
                 </ul>
@@ -257,15 +257,15 @@ const FeaturesPage = () => {
               <CardContent>
                 <ul className="space-y-3">
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">Complete bet receipts for every transaction</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">Immutable bet ledger ensuring full transparency</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">Complete game/transaction history for record keeping</span>
                   </li>
                 </ul>
@@ -283,19 +283,19 @@ const FeaturesPage = () => {
               <CardContent>
                 <ul className="space-y-3">
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">Credit-based betting system</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">Real Sweep Coins winnings and cashouts</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">Transaction history tracking</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">Secure payment processing</span>
                   </li>
                 </ul>
@@ -322,23 +322,23 @@ const FeaturesPage = () => {
               <CardContent>
                 <ul className="space-y-3 mb-6">
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">View real-time scoreboard</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">Browse betting queues</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">View game information</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <Lock className="h-4 w-4 text-red-400 mt-1 flex-shrink-0" />
+                    <Lock className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#fa1593' }} />
                     <span style={{ color: '#95deff' }}>Cannot place bets</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <Lock className="h-4 w-4 text-red-400 mt-1 flex-shrink-0" />
+                    <Lock className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#fa1593' }} />
                     <span style={{ color: '#95deff' }}>Cannot win coins</span>
                   </li>
                 </ul>
@@ -367,23 +367,23 @@ const FeaturesPage = () => {
               <CardContent>
                 <ul className="space-y-3 mb-6">
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">Everything in Free Access</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">Place unlimited bets</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">Win real coins</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">Cash out winnings</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400 mt-1 flex-shrink-0" />
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: '#95deff' }} />
                     <span className="text-white">Full transaction history</span>
                   </li>
                 </ul>
