@@ -16,6 +16,7 @@ import SignupPage from "./pages/Signup";
 import MemberSignupPage from "./pages/MemberSignup";
 import FeaturesPage from "./pages/Features";
 import AboutPage from "./pages/About";
+import FAQ from "./pages/FAQ";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
               <Route path="/subscription" element={<PaymentPage />} />
               <Route path="/user-settings" element={<UserSettings />} />
               <Route path="/reload-coins" element={<ReloadCoinsPage />} />
+              <Route path="/faq" element={<FAQ />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
