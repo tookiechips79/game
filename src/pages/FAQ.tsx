@@ -245,7 +245,7 @@ const FAQ = () => {
                     }}
                     onClick={() => toggleItem(item.id)}
                   >
-                    <CardHeader className="pb-3" style={{ background: 'linear-gradient(to right, #95deff, #004b6b)' }}>
+                    <CardHeader className="pb-3" style={{ background: 'linear-gradient(to right, #fa1593, #004b6b)' }}>
                       <div className="flex items-center justify-between">
                         <CardTitle 
                           className="text-lg font-semibold text-white"
