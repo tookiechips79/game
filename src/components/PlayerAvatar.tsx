@@ -14,7 +14,8 @@ const PlayerAvatar = ({ playerName, className, imageUrl }: PlayerAvatarProps) =>
       <img 
         src={imageUrl || "/lovable-uploads/default-profile.png"} 
         alt={playerName}
-        className="object-cover object-right w-full h-full"
+        className="object-cover w-full h-full"
+        style={{ objectPosition: '70% center' }}
       />
     </div>
   );
