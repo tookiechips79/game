@@ -468,11 +468,6 @@ const FeaturesPage = () => {
                         <li>✓ Matching respects both time priority AND bet amount for fairness</li>
                       </ul>
                     </div>
-                    <div className="flex gap-2">
-                      <Badge className="bg-green-500/20 text-green-400">Matched</Badge>
-                      <Badge className="bg-yellow-500/20 text-yellow-400">Pending</Badge>
-                      <Badge className="bg-blue-500/20 text-blue-400">Booked</Badge>
-                    </div>
                   </div>
                 </div>
               </CardContent>
