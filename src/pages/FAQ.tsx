@@ -30,19 +30,31 @@ const FAQ = () => {
       id: "booked",
       category: "Betting System",
       question: "What does 'Booked Bets' mean?",
-      answer: "Booked Bets are bets that have been confirmed and matched with opposing bets. When you place a bet on Team A or Team B, it enters the betting queue. Once a matching bet of the same amount appears on the opposite team, both bets are automatically highlighted (booked) to show they've been paired together. This creates a balanced betting pair, and both bets are now locked in for that game round."
+      answer: "Booked Bets are bets that have been confirmed and are ready to be matched. When you place a bet on Team A or Team B, it enters the betting queue. Once a matching bet appears on the opposite team, both bets are highlighted to show they've been matched (booked). This creates a balanced betting pair for that round."
     },
     {
-      id: "matching",
+      id: "queue-priority",
+      category: "Betting System",
+      question: "How does the betting queue work with priority?",
+      answer: "The betting queue operates on a strict FIRST-IN, FIRST-OUT (FIFO) priority system. When you place a bet, it's added to the back of your team's queue. The first bet placed is the first one in line to be matched. This ensures complete fairness - all bets are processed in the exact order they were placed, creating a transparent and predictable betting environment."
+    },
+    {
+      id: "auto-matching",
       category: "Betting System",
       question: "How does automatic bet matching work?",
-      answer: "The betting system uses priority-based automatic matching. When you place a bet, it enters the betting queue and waits for a matching bet from the opposite team. The system matches bets in order: your bet will match with the FIRST available bet in line on the other team that has the same amount. For example, if Team A Queue has: [100, 50, 100] and you place a 100 on Team B, your bet matches with the first 100 from Team A. Bets are matched immediately as soon as both conditions are met: (1) same bet amount, and (2) opposite teams. Once matched, both bets are highlighted and booked."
+      answer: "Automatic matching happens instantly when there's a compatible bet on the opposite team. Here's how it works: When you place a bet on Team A, the system checks Team B's queue for the first available matching bet (same amount). If one exists, both bets are immediately matched and marked as 'Booked'. If no matching bet exists on Team B, your bet waits in the Team A queue for someone to place the same amount on Team B."
     },
     {
-      id: "queue-order",
+      id: "matching-order",
       category: "Betting System",
-      question: "What determines the order in the betting queue?",
-      answer: "Bets are placed in the queue in the exact order they are submitted. When you click the bet button and confirm, your bet is added to the END of the queue. The system then checks if there's a matching bet at the FRONT of the opposite team's queue. This means first-in-first-out (FIFO) priority - earlier bets get matched before later ones. If you place a 50 Sweep Coin bet and there's already a 50 Sweep Coin bet waiting on the opposite team, your bet will match immediately. If not, you'll wait in line until someone places a matching bet."
+      question: "Which bets get matched first?",
+      answer: "Bets are matched in strict order-based priority. Your bet will match with the FIRST OPEN BET in the opposite team's queue. For example: If Team B has three pending bets (10 coins, 50 coins, 100 coins placed in that order), and you place a 50-coin bet on Team A, it will match with the first 50-coin bet in Team B's queue - not the first bet overall. The matching respects both team priority AND bet amount to ensure fairness."
+    },
+    {
+      id: "bet-queue-example",
+      category: "Betting System",
+      question: "Can you explain a betting queue example?",
+      answer: "Sure! Let's say Team A queue has: [100 coins, 50 coins, 10 coins] and Team B queue has: [50 coins, 100 coins]. When you place a new 100-coin bet on Team B: (1) The system finds the first open 100-coin bet on Team A (the first one), (2) Those two bets instantly match and are marked 'Booked', (3) Your bet is now locked in as matched. If you placed a 25-coin bet instead, it wouldn't match anything because no 25-coin bet exists on the opposite team - it would sit in the queue waiting."
     },
     {
       id: "coins",
