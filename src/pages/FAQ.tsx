@@ -264,7 +264,7 @@ const FAQ = () => {
 
                     {expandedItems.includes(item.id) && (
                       <CardContent className="pt-4 pb-4" style={{ backgroundColor: '#004b6b' }}>
-                        <p className="text-base leading-relaxed" style={{ color: '#fa1593' }}>
+                        <p className="text-base leading-relaxed" style={{ color: 'white' }}>
                           {item.answer}
                         </p>
                       </CardContent>
@@ -286,7 +286,7 @@ const FAQ = () => {
         >
           <CardContent className="p-8 text-center">
             <h3 className="text-2xl font-bold mb-4 text-white">Still Have Questions?</h3>
-            <p className="mb-6" style={{ color: '#fa1593' }}>
+            <p className="mb-6" style={{ color: 'white' }}>
               Can't find the answer you're looking for? Check out our other resources or contact support.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
