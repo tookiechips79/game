@@ -51,6 +51,36 @@ const FAQ = () => {
       answer: "Yes, you can cancel your membership at any time from your account settings. When you cancel, your membership will remain active until the end of your current billing period. After that, your account will return to standard status."
     },
     {
+      id: "what-are-sweep-coins",
+      category: "Account & Credits",
+      question: "What are Sweep Coins?",
+      answer: "Sweep Coins are the virtual currency used in Game Bird for placing bets. They represent your betting value and are used exclusively for wagering on games. Sweep Coins are independent from real money and are managed within the app for gaming purposes only. You can earn or reload Sweep Coins to participate in the betting system."
+    },
+    {
+      id: "earn-sweep-coins",
+      category: "Account & Credits",
+      question: "How can I earn Sweep Coins?",
+      answer: "You can earn Sweep Coins through several ways: by winning matched bets (when your team wins), by receiving promotional bonuses, through membership rewards, or by reloading them in the app. Your account starts with a certain amount of Sweep Coins, and winning bets increases your balance. Check your user dashboard to see all your Sweep Coin transactions and earnings."
+    },
+    {
+      id: "sweep-coins-balance",
+      category: "Account & Credits",
+      question: "Where can I see my Sweep Coins balance?",
+      answer: "Your current Sweep Coins balance is displayed prominently in your user profile/dashboard at the top right of the screen. It updates in real-time as you place bets or complete transactions. You can click on the balance to view detailed transaction history and see how your coins have changed over time."
+    },
+    {
+      id: "reload-amounts",
+      category: "Account & Credits",
+      question: "What reload amounts are available for Sweep Coins?",
+      answer: "Game Bird offers flexible reload options to suit different needs. You can reload in various amounts including 100, 200, 500, and higher denominations. Visit the 'Reload Coins' page to see all current reload options and choose the amount that works best for you. Your balance updates immediately upon completing a reload transaction."
+    },
+    {
+      id: "sweep-coins-reset",
+      category: "Account & Credits",
+      question: "Do Sweep Coins expire or reset?",
+      answer: "Sweep Coins do not expire - they remain in your account indefinitely until you use them for betting. Your balance persists across gaming sessions, so you can accumulate and use your Sweep Coins whenever you want. However, check the game rules for any specific session-based reset policies that may apply."
+    },
+    {
       id: "scoreboard",
       category: "Game Features",
       question: "What information does the Scoreboard show?",
