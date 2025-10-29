@@ -1040,6 +1040,7 @@ const Index = () => {
           onTimerReset={resetTimer}
           onToggleAdmin={toggleAdminMode}
           onToggleAgent={toggleAgentMode}
+          teamAPlayerImageUrl="/lovable-uploads/alex.png"
         />
 
         {/* Game History Window */}
