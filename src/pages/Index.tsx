@@ -1041,6 +1041,7 @@ const Index = () => {
           onToggleAdmin={toggleAdminMode}
           onToggleAgent={toggleAgentMode}
           teamAPlayerImageUrl="/lovable-uploads/alex.png"
+          teamBPlayerImageUrl="/lovable-uploads/tony.jpg"
         />
 
         {/* Game History Window */}
