@@ -273,6 +273,11 @@ const CompactAdminWidget = React.forwardRef<
     }
   };
 
+  // Hide admin panel UI when locked from parent, but keep ref functional
+  if (adminLockedProp === true) {
+    return null;
+  }
+
   if (isHidden) {
     return (
       <Button
