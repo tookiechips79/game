@@ -233,8 +233,8 @@ const BetLedger: React.FC<BetLedgerProps> = ({
                               <div className="flex items-center">
                                 <span className="text-sm mr-2 text-white">{bet.amount}</span>
                                 {bet.won ? (
-                                  <div style={{ backgroundColor: '#00AA0020', padding: '4px', borderRadius: '9999px' }}>
-                                    <Coins className="h-3 w-3" style={{ color: '#00AA00' }} />
+                                  <div style={{ backgroundColor: '#00FF0020', padding: '4px', borderRadius: '9999px' }}>
+                                    <Coins className="h-3 w-3" style={{ color: '#00FF00' }} />
                                   </div>
                                 ) : (
                                   <div style={{ backgroundColor: '#FF000020', padding: '4px', borderRadius: '9999px' }}>
@@ -271,8 +271,8 @@ const BetLedger: React.FC<BetLedgerProps> = ({
                               <div className="flex items-center">
                                 <span className="text-sm mr-2 text-white">{bet.amount}</span>
                                 {bet.won ? (
-                                  <div style={{ backgroundColor: '#00AA0020', padding: '4px', borderRadius: '9999px' }}>
-                                    <Coins className="h-3 w-3" style={{ color: '#00AA00' }} />
+                                  <div style={{ backgroundColor: '#00FF0020', padding: '4px', borderRadius: '9999px' }}>
+                                    <Coins className="h-3 w-3" style={{ color: '#00FF00' }} />
                                   </div>
                                 ) : (
                                   <div style={{ backgroundColor: '#FF000020', padding: '4px', borderRadius: '9999px' }}>
