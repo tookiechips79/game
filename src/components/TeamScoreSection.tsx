@@ -73,7 +73,7 @@ const TeamScoreSection = ({
   };
   
   return (
-    <div key={renderKey} className={`col-span-1 p-4 pt-24 bg-gradient-to-r from-[${color}]/30 to-[${color}]/20 relative rounded-l-2xl`}>
+    <div className={`col-span-1 p-4 pt-24 bg-gradient-to-r from-[${color}]/30 to-[${color}]/20 relative rounded-l-2xl`}>
       <div className="flex flex-col items-center justify-center mb-2 mt-8">
         <PlayerAvatar playerName={teamName} imageUrl={playerImageUrl} position={position} />
         
@@ -89,7 +89,7 @@ const TeamScoreSection = ({
         )}
       </div>
       
-      <div className="grid grid-cols-2 gap-4 mt-3">
+      <div key={renderKey} className="grid grid-cols-2 gap-4 mt-3">
         <div className="bg-[#1EAEDB] rounded-2xl p-3 flex items-center justify-center gap-2 transition-all hover:bg-[#1EAEDB]/90 shadow-[0_0_15px_rgba(30,174,219,0.5)]">
           {showControls && !adminLocked && (
             <Button
