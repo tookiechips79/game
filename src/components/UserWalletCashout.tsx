@@ -57,10 +57,10 @@ const UserWalletCashout: React.FC<{ userId: string }> = ({ userId }) => {
               
               <div className="mt-8 pt-4 border-t flex justify-between items-center" style={{ borderColor: '#750037' }}>
                 <div className="text-sm" style={{ color: '#95deff' }}>Win/Loss Record</div>
-                <div className="text-sm">
-                  <span style={{ color: '#95deff' }}>{currentUser.wins} W</span>
+                <div className="text-sm font-bold">
+                  <span style={{ color: '#00FF00' }}>{currentUser.wins} W</span>
                   {" / "}
-                  <span style={{ color: '#fa1593' }}>{currentUser.losses} L</span>
+                  <span style={{ color: '#FF0000' }}>{currentUser.losses} L</span>
                   {" — "}
                   <span className="text-white">
                     {currentUser.wins + currentUser.losses > 0 
