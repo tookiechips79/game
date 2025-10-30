@@ -39,7 +39,7 @@ const FlipCounter: React.FC<FlipCounterProps> = ({
   
   return (
     <div className={`flip-counter relative ${className}`}>
-      <div className="relative h-20 w-20 bg-black/50 backdrop-blur-sm rounded-lg overflow-hidden shadow-lg border border-gray-800" style={{ perspective: '800px' }}>
+      <div className="relative h-20 w-20 bg-black/50 backdrop-blur-sm rounded-lg overflow-hidden shadow-lg border border-gray-800" style={{ perspective: '1200px' }}>
         {/* Static display when not animating */}
         {!isAnimating && (
           <div 
@@ -53,15 +53,15 @@ const FlipCounter: React.FC<FlipCounterProps> = ({
         {/* Animating state */}
         {isAnimating && (
           <>
-            {/* Old number (flipping down) */}
-            <div className="flip-down-panel absolute inset-0 flex items-center justify-center">
+            {/* Old number (sliding up and out) */}
+            <div className="absolute inset-0 slide-up-out flex items-center justify-center">
               <span className={`${fontClassName || 'text-5xl font-bold font-mono'}`} style={{ color: color }}>
                 {prevValue}
               </span>
             </div>
             
-            {/* New number (flipping up) */}
-            <div className="flip-up-panel absolute inset-0 flex items-center justify-center">
+            {/* New number (sliding down and in) */}
+            <div className="absolute inset-0 slide-down-in flex items-center justify-center">
               <span className={`${fontClassName || 'text-5xl font-bold font-mono'}`} style={{ color: color }}>
                 {value}
               </span>
