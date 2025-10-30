@@ -106,7 +106,7 @@ const UserBetHistoryWidget: React.FC<UserBetHistoryWidgetProps> = ({
           
           <div className="flex items-center justify-between bg-[#a3e635]/20 p-2 rounded-md">
             <div className="flex items-center">
-              <span className="text-green-700 font-semibold">{wins} wins</span>
+              <span className="font-semibold" style={{ color: '#00FF00' }}>{wins} wins</span>
             </div>
             <div className="text-black font-semibold">
               {winRate}%
@@ -135,8 +135,9 @@ const UserBetHistoryWidget: React.FC<UserBetHistoryWidgetProps> = ({
                         className={`p-2 ${
                           receipt.teamSide === 'A' 
                             ? 'bg-[#1EAEDB]/50 border border-[#1EAEDB]/50' 
-                            : 'bg-green-600/50 border border-green-600/50'
+                            : 'border' 
                         } rounded-md`}
+                        style={receipt.teamSide === 'B' ? { backgroundColor: 'rgba(0, 255, 0, 0.2)', borderColor: '#00FF00' } : {}}
                       >
                         <div className="flex justify-between items-center mb-1">
                           <Badge 
@@ -144,16 +145,18 @@ const UserBetHistoryWidget: React.FC<UserBetHistoryWidgetProps> = ({
                             className={`${
                               receipt.teamSide === 'A' 
                                 ? 'bg-[#1EAEDB]/70 text-black border-[#1EAEDB]/70' 
-                                : 'bg-green-600/70 text-black border-green-600/70'
+                                : 'text-black border'
                             }`}
+                            style={receipt.teamSide === 'B' ? { backgroundColor: 'rgba(0, 255, 0, 0.3)', borderColor: '#00FF00', color: '#00FF00' } : {}}
                           >
                             {receipt.teamSide === 'A' ? teamAName : teamBName}
                           </Badge>
                           <Badge 
                             className={receipt.won 
-                              ? 'bg-green-700 text-green-100' 
+                              ? 'text-white border' 
                               : 'bg-red-700 text-red-100'
                             }
+                            style={receipt.won ? { backgroundColor: 'rgba(0, 255, 0, 0.3)', borderColor: '#00FF00', color: '#00FF00' } : {}}
                           >
                             {receipt.won ? 'Won' : 'Lost'} {receipt.amount}
                           </Badge>

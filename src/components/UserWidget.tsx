@@ -153,7 +153,7 @@ const UserWidget: React.FC<UserWidgetProps> = ({
         {/* Actions */}
         <div className="flex items-center space-x-2 md:ml-auto">
           <Link to="/subscription">
-            <Button variant="lime" size="sm" className="text-xs font-semibold">
+            <Button size="sm" className="text-xs font-semibold text-white" style={{ backgroundColor: '#00FF00' }} onMouseEnter={(e) => e.target.style.backgroundColor = '#00DD00'} onMouseLeave={(e) => e.target.style.backgroundColor = '#00FF00'}>
                           Get Coins
                         </Button>
                       </Link>

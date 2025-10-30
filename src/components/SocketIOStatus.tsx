@@ -51,7 +51,7 @@ const SocketIOStatus: React.FC = () => {
   const getStatusIcon = () => {
     switch (connectionStatus) {
       case 'Connected':
-        return <Wifi className="h-3 w-3 text-green-500" />;
+        return <Wifi className="h-3 w-3" style={{ color: '#00FF00' }} />;
       case 'Connecting...':
         return <Loader2 className="h-3 w-3 text-yellow-500 animate-spin" />;
       default:
@@ -62,7 +62,7 @@ const SocketIOStatus: React.FC = () => {
   const getStatusColor = () => {
     switch (connectionStatus) {
       case 'Connected':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'border text-white';
       case 'Connecting...':
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       default:
@@ -72,7 +72,11 @@ const SocketIOStatus: React.FC = () => {
 
   return (
     <div className="flex items-center gap-2">
-      <Badge variant="outline" className={`${getStatusColor()} text-xs`}>
+      <Badge 
+        variant="outline" 
+        className={`${getStatusColor()} text-xs`}
+        style={connectionStatus === 'Connected' ? { backgroundColor: 'rgba(0, 255, 0, 0.2)', borderColor: '#00FF00', color: '#00FF00' } : {}}
+      >
         {getStatusIcon()}
         <span className="ml-1">{connectionStatus}</span>
       </Badge>
