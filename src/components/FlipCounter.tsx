@@ -44,7 +44,7 @@ const FlipCounter: React.FC<FlipCounterProps> = ({
         {!isAnimating && (
           <div 
             className={`absolute inset-0 flex items-center justify-center ${fontClassName || 'text-5xl font-bold font-mono'} text-${color} drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]`}
-            style={value < 0 ? { fontVariant: 'tabular-nums', letterSpacing: '-0.1em' } : {}}
+            style={value < 0 ? { fontVariant: 'tabular-nums', letterSpacing: '-0.25em' } : {}}
           >
             {value}
           </div>
@@ -57,7 +57,7 @@ const FlipCounter: React.FC<FlipCounterProps> = ({
             <div className="absolute inset-0 slide-up-out flex items-center justify-center">
               <span 
                 className={`${fontClassName || 'text-5xl font-bold font-mono'} text-${color} drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]`}
-                style={prevValue < 0 ? { fontVariant: 'tabular-nums', letterSpacing: '-0.1em' } : {}}
+                style={prevValue < 0 ? { fontVariant: 'tabular-nums', letterSpacing: '-0.25em' } : {}}
               >
                 {prevValue}
               </span>
@@ -67,7 +67,7 @@ const FlipCounter: React.FC<FlipCounterProps> = ({
             <div className="absolute inset-0 slide-down-in flex items-center justify-center">
               <span 
                 className={`${fontClassName || 'text-5xl font-bold font-mono'} text-${color} drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]`}
-                style={value < 0 ? { fontVariant: 'tabular-nums', letterSpacing: '-0.1em' } : {}}
+                style={value < 0 ? { fontVariant: 'tabular-nums', letterSpacing: '-0.25em' } : {}}
               >
                 {value}
               </span>
