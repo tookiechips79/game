@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import BreakIndicator from "@/components/BreakIndicator";
@@ -96,14 +96,6 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
   teamAPlayerImageUrl,
   teamBPlayerImageUrl
 }) => {
-  // Force re-render for Chrome compatibility when scoreboard data changes
-  const [renderKey, setRenderKey] = useState(0);
-  
-  useEffect(() => {
-    // Force re-render when critical scoreboard data changes to fix Chrome glitching
-    setRenderKey(prev => prev + 1);
-  }, [teamABalls, teamBBalls, displayTeamAGames, displayTeamBGames, displayBreak]);
-  
   return (
     <>
       {/* CompactAdminWidget Portal - render at root to allow modals to display properly */}
@@ -118,7 +110,7 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
       
       <div className="relative">
         
-      <Card key={renderKey} className="glass-card overflow-hidden rounded-3xl relative mb-8" style={{ 
+      <Card className="glass-card overflow-hidden rounded-3xl relative mb-8" style={{ 
         backgroundColor: '#052240',
         boxShadow: isTimerRunning ? '0 0 40px rgba(149, 222, 255, 1), 0 0 60px rgba(149, 222, 255, 0.6)' : 'none'
       }}>

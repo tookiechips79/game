@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Trophy, Circle, PlusCircle, MinusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FlipCounter from "@/components/FlipCounter";
@@ -46,17 +46,10 @@ const TeamScoreSection = ({
   playerImageUrl,
   position
 }: TeamScoreSectionProps) => {  
-  // Force re-render for Chrome compatibility
-  const [renderKey, setRenderKey] = useState(0);
   const { play: playPoolSound } = useSound('/pool.mp3', { volume: 0.8 });
   const { play: playBooSound } = useSound('/boo.mp3', { volume: 0.8 });
   const { play: playCheerSound } = useSound('/cheer.mp3', { volume: 0.8 });
   
-  useEffect(() => {
-    // Force re-render when balls or games change to fix Chrome glitching
-    setRenderKey(prev => prev + 1);
-  }, [balls, games]);
-
   const handleBallIncrement = () => {
     playPoolSound();
     onBallIncrement();
@@ -89,7 +82,7 @@ const TeamScoreSection = ({
         )}
       </div>
       
-      <div key={renderKey} className="grid grid-cols-2 gap-4 mt-3">
+      <div className="grid grid-cols-2 gap-4 mt-3">
         <div className="bg-[#1EAEDB] rounded-2xl p-3 flex items-center justify-center gap-2 transition-all hover:bg-[#1EAEDB]/90 shadow-[0_0_15px_rgba(30,174,219,0.5)]">
           {showControls && !adminLocked && (
             <Button
