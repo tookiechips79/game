@@ -177,49 +177,49 @@ const UserTransactionHistory: React.FC<UserTransactionHistoryProps> = ({
   };
   
   const getTransactionIcon = (type: string) => {
-    switch (type) {
-      case 'win':
-        return <BadgeCheck className="h-5 w-5 text-green-500" />;
-      case 'loss':
-        return <BadgeMinus className="h-5 w-5 text-red-500" />;
-      case 'deposit':
-        return <ArrowDown className="h-5 w-5" style={{ color: '#fa1593' }} />;
-      case 'withdrawal':
-        return <ArrowUp className="h-5 w-5 text-orange-500" />;
-      case 'cashout':
-        return <Wallet className="h-5 w-5" style={{ color: '#fa1593' }} />;
-      case 'subscription':
-        return <CreditCard className="h-5 w-5 text-blue-500" />;
-      case 'admin_add':
-        return <ShieldAlert className="h-5 w-5" style={{ color: '#95deff' }} />;
-      case 'admin_deduct':
-        return <ShieldAlert className="h-5 w-5 text-red-500" />;
-      default:
-        return <Receipt className="h-5 w-5" style={{ color: '#95deff' }} />;
+    if (type === 'win') {
+      return <BadgeCheck className="h-5 w-5" style={{ color: '#00FF00' }} />;
     }
+    if (type === 'loss') {
+      return <BadgeMinus className="h-5 w-5" style={{ color: '#FF0000' }} />;
+    }
+    
+    if (type === 'cashout') {
+      return <CreditCard className="h-5 w-5 text-blue-500" />;
+    }
+    if (type === 'admin_deduct') {
+      return <ShieldAlert className="h-5 w-5" style={{ color: '#FF0000' }} />;
+    }
+    if (type === 'admin_add') {
+      return <ShieldAlert className="h-5 w-5" style={{ color: '#00FF00' }} />;
+    }
+    return <Receipt className="h-5 w-5" style={{ color: '#95deff' }} />;
   };
   
   const getTransactionColor = (type: string) => {
-    switch (type) {
-      case 'win':
-        return "text-green-500";
-      case 'loss':
-        return "text-red-500";
-      case 'deposit':
-        return "text-[#fa1593]";
-      case 'withdrawal':
-        return "text-orange-500";
-      case 'cashout':
-        return "text-[#fa1593]";
-      case 'subscription':
-        return "text-blue-500";
-      case 'admin_add':
-        return "text-[#95deff]";
-      case 'admin_deduct':
-        return "text-red-500";
-      default:
-        return "text-white";
+    if (type === 'win') {
+      return "font-bold";
     }
+    if (type === 'loss') {
+      return "font-bold";
+    }
+    if (type === 'admin_deduct') {
+      return "text-red-500";
+    }
+    if (type === 'admin_add') {
+      return "text-green-500";
+    }
+    return "text-gray-400";
+  };
+  
+  const getAmountColor = (type: string) => {
+    if (type === 'win') {
+      return '#00FF00';
+    }
+    if (type === 'loss') {
+      return '#FF0000';
+    }
+    return undefined;
   };
   
   const getTransactionName = (type: string) => {
@@ -288,7 +288,7 @@ const UserTransactionHistory: React.FC<UserTransactionHistoryProps> = ({
                       </TableCell>
                     )}
                     <TableCell className="text-white">{transaction.details}</TableCell>
-                    <TableCell className={`text-right ${getTransactionColor(transaction.type)}`}>
+                    <TableCell className={`text-right font-bold`} style={{ color: getAmountColor(transaction.type) || 'white' }}>
                       {['deposit', 'win', 'admin_add'].includes(transaction.type) ? '+' : ''}
                       {['withdrawal', 'loss', 'subscription', 'admin_deduct', 'cashout'].includes(transaction.type) ? '-' : ''}
                       {transaction.amount} 
