@@ -76,15 +76,13 @@ const UserBetReceipts: React.FC<UserBetReceiptsProps> = ({
                         >
                           {receipt.teamSide === 'A' ? teamAName : teamBName}
                         </Badge>
-                        <Badge 
-                          variant="outline" 
-                          className={receipt.won 
-                            ? 'bg-green-500/20 text-green-400 border-green-500/50' 
-                            : 'bg-red-500/20 text-red-400 border-red-500/50'
-                          }
-                        >
-                          {receipt.won ? 'Won' : 'Lost'} {receipt.amount} credits
-                        </Badge>
+                        <div className={`text-2xl font-bold px-3 py-1 rounded-lg ${
+                          receipt.won 
+                            ? 'bg-green-500/20 text-green-400' 
+                            : 'bg-red-500/20 text-red-400'
+                        }`}>
+                          {receipt.won ? '+' : '-'}{receipt.amount} coins
+                        </div>
                       </div>
                       
                       <div className="flex items-center gap-1 mb-2">
