@@ -250,7 +250,7 @@
     filter: drop-shadow(0 0 0px rgba(149, 222, 255, 0));
   }
   50% {
-    transform: scale(1.3) rotateZ(5deg);
+    transform: scale(1.6) rotateZ(5deg);
     opacity: 0.8;
     filter: drop-shadow(0 0 15px rgba(149, 222, 255, 0.8));
   }
@@ -268,7 +268,7 @@
     filter: drop-shadow(0 0 20px rgba(250, 21, 147, 0.9));
   }
   50% {
-    transform: scale(1.3) rotateZ(-5deg);
+    transform: scale(1.6) rotateZ(-5deg);
     opacity: 0.8;
     filter: drop-shadow(0 0 15px rgba(149, 222, 255, 0.8));
   }
