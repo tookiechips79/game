@@ -386,7 +386,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
               </>
             ) : registered ? (
               <div className="flex flex-col items-center py-8 space-y-4">
-                <CheckCircle className="h-12 w-12 text-green-500" />
+                <CheckCircle className="h-12 w-12" style={{ color: '#00FF00' }} />
                 <p className="text-center">
                   Account created successfully! Logging you in...
                 </p>

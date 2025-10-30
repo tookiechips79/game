@@ -163,7 +163,7 @@ const AdminWidget: React.FC<AdminWidgetProps> = ({
             <div className="bg-gray-800 p-3 rounded-lg border border-gray-700">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-semibold text-gray-300">Admin Mode</span>
-                <span className={`text-xs font-bold px-2 py-1 rounded ${isAdmin ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-300'}`}>
+                <span className={`text-xs font-bold px-2 py-1 rounded ${isAdmin ? 'text-white' : 'bg-gray-700 text-gray-300'}`} style={isAdmin ? { backgroundColor: '#00FF00' } : {}}>
                   {isAdmin ? '🟢 ACTIVE' : '🔴 INACTIVE'}
                 </span>
               </div>
@@ -194,7 +194,10 @@ const AdminWidget: React.FC<AdminWidgetProps> = ({
                         <Button
                           onClick={handleEnterAdminMode}
                           size="sm"
-                          className="flex-1 h-7 text-xs bg-green-600 hover:bg-green-700 text-white"
+                          className="flex-1 h-7 text-xs text-white"
+                          style={{ backgroundColor: '#00FF00' }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = '#00DD00'}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = '#00FF00'}
                         >
                           Enter
                         </Button>
@@ -292,7 +295,10 @@ const AdminWidget: React.FC<AdminWidgetProps> = ({
                         <Button
                           onClick={handleChangePassword}
                           size="sm"
-                          className="flex-1 h-7 text-xs bg-green-600 hover:bg-green-700 text-white"
+                          className="flex-1 h-7 text-xs text-white"
+                          style={{ backgroundColor: '#00FF00' }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = '#00DD00'}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = '#00FF00'}
                         >
                           Update
                         </Button>

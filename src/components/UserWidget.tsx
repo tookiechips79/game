@@ -139,7 +139,7 @@ const UserWidget: React.FC<UserWidgetProps> = ({
               <div className="flex items-center space-x-2">
                 <div>
                   <div className="flex items-center space-x-1">
-                    <span className="text-lg font-bold text-green-400">{wins}</span>
+                    <span className="text-lg font-bold" style={{ color: '#00FF00' }}>{wins}</span>
                     <span className="text-white">•</span>
                     <span className="text-lg font-bold text-red-400">{losses}</span>
                   </div>
@@ -181,7 +181,7 @@ const UserWidget: React.FC<UserWidgetProps> = ({
                   <span className="text-white">Bets</span>
                     </div>
                 <div className="flex items-center space-x-1">
-                  <span className="text-green-400 font-semibold">{wins}W</span>
+                  <span className="font-semibold" style={{ color: '#00FF00' }}>{wins}W</span>
                   <span className="text-white">•</span>
                   <span className="text-red-400 font-semibold">{losses}L</span>
                 </div>

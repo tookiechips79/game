@@ -82,7 +82,7 @@ const UserMembershipStatus: React.FC<UserMembershipStatusProps> = ({ userId }) =
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-bold" style={{ color: '#fa1593' }}>Membership Status</h3>
             {membership.isActive ? (
-              <Badge variant="outline" className="bg-green-900/50 text-green-400 border-green-600">
+              <Badge variant="outline" className="border-2" style={{ backgroundColor: 'rgba(0, 255, 0, 0.2)', color: '#00FF00', borderColor: '#00FF00' }}>
                 <BadgeCheck className="h-3 w-3 mr-1" />
                 Active
               </Badge>
