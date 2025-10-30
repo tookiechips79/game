@@ -80,7 +80,11 @@ const UserBetReceipts: React.FC<UserBetReceiptsProps> = ({
                           receipt.won 
                             ? 'bg-green-500/20 text-green-400' 
                             : 'bg-red-500/20 text-red-400'
-                        }`}>
+                        }`}
+                        style={{
+                          color: receipt.won ? '#00FF00' : '#FF0000',
+                          backgroundColor: receipt.won ? 'rgba(0, 255, 0, 0.1)' : 'rgba(255, 0, 0, 0.1)'
+                        }}>
                           {receipt.won ? '+' : '-'}{receipt.amount} coins
                         </div>
                       </div>
