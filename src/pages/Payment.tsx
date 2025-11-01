@@ -484,6 +484,26 @@ const PaymentPage = () => {
               A valid subscription is required to place bets on our platform.
             </p>
           </div>
+          
+          {/* Venmo QR Code Section */}
+          <div className="mt-12 bg-gray-900 border border-gray-800 rounded-lg p-8">
+            <h3 className="text-2xl font-bold mb-6 text-center" style={{ color: '#95deff' }}>Alternative Payment Method</h3>
+            <div className="flex flex-col items-center justify-center">
+              <p className="text-gray-300 mb-6 text-center max-w-2xl">
+                Scan the QR code below to pay via Venmo for faster transactions
+              </p>
+              <div className="bg-white p-4 rounded-lg mb-4">
+                <img 
+                  src="/qr-code.png" 
+                  alt="Venmo QR Code"
+                  className="w-64 h-64 object-contain"
+                />
+              </div>
+              <p className="text-sm text-gray-400 text-center">
+                Scan with your phone to open Venmo payment
+              </p>
+            </div>
+          </div>
         </div>
       </main>
     </div>
