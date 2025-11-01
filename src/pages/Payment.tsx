@@ -489,6 +489,25 @@ const PaymentPage = () => {
           <div className="mt-12">
             <h3 className="text-2xl font-bold mb-6 text-center" style={{ color: '#95deff' }}>Alternative Payment Methods</h3>
             
+            {/* Instructions */}
+            <div className="bg-gray-900 border border-gray-700 rounded-lg p-6 mb-8">
+              <h4 className="text-lg font-semibold mb-3" style={{ color: '#95deff' }}>📝 Payment Instructions</h4>
+              <p className="text-gray-300 mb-3">
+                When paying via QR code, please include a note with your payment specifying:
+              </p>
+              <div className="bg-black/50 p-4 rounded-lg mb-3">
+                <p className="text-sm font-mono" style={{ color: '#95deff' }}>
+                  <strong>Format:</strong> username-amount
+                </p>
+                <p className="text-sm font-mono mt-2" style={{ color: '#95deff' }}>
+                  <strong>Example:</strong> john_doe-1000
+                </p>
+              </div>
+              <p className="text-sm text-gray-400">
+                This helps us verify your payment and instantly credit your Sweep Coins!
+              </p>
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Venmo Card */}
               <div className="bg-gray-900 border border-gray-800 rounded-lg p-8">
