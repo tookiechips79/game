@@ -516,7 +516,8 @@ const PaymentPage = () => {
                     className="w-48 h-48 object-contain"
                   />
                 </div>
-                <p className="text-sm text-gray-400 text-center">Zelle Payment</p>
+                <p className="text-sm text-gray-400 text-center">Zelle Tag: gamebird</p>
+                <p className="text-sm text-gray-400 text-center">Email: gamebird2025@gmail.com</p>
               </div>
             </div>
           </div>
