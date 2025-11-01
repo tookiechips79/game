@@ -494,7 +494,7 @@ const PaymentPage = () => {
               </p>
               <div className="bg-white p-4 rounded-lg mb-4">
                 <img 
-                  src="/qr-code.png" 
+                  src="/venmo.png" 
                   alt="Venmo QR Code"
                   className="w-64 h-64 object-contain"
                 />
