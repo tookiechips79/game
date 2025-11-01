@@ -488,20 +488,36 @@ const PaymentPage = () => {
           {/* Venmo QR Code Section */}
           <div className="mt-12 bg-gray-900 border border-gray-800 rounded-lg p-8">
             <h3 className="text-2xl font-bold mb-6 text-center" style={{ color: '#95deff' }}>Alternative Payment Method</h3>
-            <div className="flex flex-col items-center justify-center">
-              <p className="text-gray-300 mb-6 text-center max-w-2xl">
-                Scan the QR code below to pay via Venmo for faster transactions
-              </p>
-              <div className="bg-white p-4 rounded-lg mb-4">
-                <img 
-                  src="/venmo.png" 
-                  alt="Venmo QR Code"
-                  className="w-64 h-64 object-contain"
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Venmo */}
+              <div className="flex flex-col items-center justify-center">
+                <p className="text-gray-300 mb-6 text-center">
+                  Scan to pay via Venmo for faster transactions
+                </p>
+                <div className="bg-white p-4 rounded-lg mb-4">
+                  <img 
+                    src="/venmo.png" 
+                    alt="Venmo QR Code"
+                    className="w-48 h-48 object-contain"
+                  />
+                </div>
+                <p className="text-sm text-gray-400 text-center">Venmo Payment</p>
               </div>
-              <p className="text-sm text-gray-400 text-center">
-                Scan with your phone to open Venmo payment
-              </p>
+              
+              {/* Zelle */}
+              <div className="flex flex-col items-center justify-center">
+                <p className="text-gray-300 mb-6 text-center">
+                  Scan to pay via Zelle for faster transactions
+                </p>
+                <div className="bg-white p-4 rounded-lg mb-4">
+                  <img 
+                    src="/zelle.png" 
+                    alt="Zelle QR Code"
+                    className="w-48 h-48 object-contain"
+                  />
+                </div>
+                <p className="text-sm text-gray-400 text-center">Zelle Payment</p>
+              </div>
             </div>
           </div>
         </div>
