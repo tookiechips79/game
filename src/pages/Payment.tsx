@@ -501,7 +501,7 @@ const PaymentPage = () => {
                     className="w-48 h-48 object-contain"
                   />
                 </div>
-                <p className="text-sm text-gray-400 text-center">Venmo Payment</p>
+                <p className="text-sm text-gray-400 text-center">@gamebird2025</p>
               </div>
               
               {/* Zelle */}
