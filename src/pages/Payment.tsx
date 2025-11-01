@@ -544,7 +544,6 @@ const PaymentPage = () => {
               <div className="bg-gray-900 border border-gray-800 rounded-lg p-8 md:col-span-2">
                 <h4 className="text-xl font-bold mb-4 text-center" style={{ color: '#95deff' }}>Apple Pay</h4>
                 <div className="flex flex-col items-center justify-center">
-                  <p className="text-lg font-semibold text-white mb-2">📱 Call to Pay</p>
                   <p className="text-2xl font-bold mb-4" style={{ color: '#00FF00' }}>858-200-5391</p>
                   <p className="text-sm text-gray-400 text-center max-w-xs">
                     Call this number to complete your Apple Pay payment. Please mention your username and desired Sweep Coins amount.
