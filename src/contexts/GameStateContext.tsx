@@ -487,6 +487,8 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   useEffect(() => {
     let rafId: number | null = null;
     let lastSecond: number = -1;
+    let lastSyncTime: number = Date.now();
+    const SYNC_INTERVAL = 5000; // Sync with server every 5 seconds for accuracy
     
     // Only run if timer is running
     if (getCurrentGameState().isTimerRunning) {
@@ -507,12 +509,22 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
           }));
         }
         
+        // Periodically sync with server to correct any drift
+        // This ensures accuracy even if the browser is closed and reopened
+        if (currentTime - lastSyncTime > SYNC_INTERVAL) {
+          lastSyncTime = currentTime;
+          // Request server's current timer value to verify accuracy
+          socketIOService.emitTimerHeartbeat();
+          console.log('⏱️ [Timer Sync] Requesting server sync to verify accuracy');
+        }
+        
         rafId = requestAnimationFrame(updateTimer);
       };
       
       rafId = requestAnimationFrame(updateTimer);
     } else {
       lastSecond = -1;
+      lastSyncTime = Date.now();
     }
     
     return () => {
