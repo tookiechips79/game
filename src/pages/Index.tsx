@@ -97,6 +97,12 @@ const Index = () => {
     isNextGame: false
   });
 
+  // Log betting queue changes for debugging
+  useEffect(() => {
+    console.log(`💰 [BET QUEUE] Team A Queue: ${teamAQueue.length} bets`, teamAQueue);
+    console.log(`💰 [BET QUEUE] Team B Queue: ${teamBQueue.length} bets`, teamBQueue);
+  }, [teamAQueue, teamBQueue]);
+
   const generateBetId = () => {
     // Generate a 7-digit unique ID using counter + random number
     const random = Math.floor(Math.random() * 1000);
