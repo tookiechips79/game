@@ -419,23 +419,16 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
         // Set flag to prevent local timer conflicts
         isReceivingServerUpdate.current = true;
         
-        // Update server start time for accurate elapsed time calculation
-        // This is crucial when browser reconnects after being closed
-        if (timerData.isTimerRunning && timerData.serverStartTime !== null && timerData.serverStartTime !== undefined) {
-          serverTimerStartRef.current = timerData.serverStartTime;
-          serverAccumulatedTimeRef.current = timerData.accumulatedTime || 0;
-          console.log(`⏱️ [Timer Sync] Updated server start time from server: ${new Date(timerData.serverStartTime).toISOString()}`);
-          console.log(`⏱️ [Timer Sync] Accumulated time: ${timerData.accumulatedTime}s, Timer should show: ${timerData.timerSeconds}s`);
-        } else if (!timerData.isTimerRunning) {
-          // Timer is paused, keep the accumulated time but stop the timer
-          serverTimerStartRef.current = null;
-          serverAccumulatedTimeRef.current = timerData.timerSeconds;  // Preserve the paused timer value
-          console.log('⏱️ [Timer Sync] Timer paused, clearing server start time');
-        } else if (timerData.isTimerRunning && serverTimerStartRef.current === null) {
-          // Timer is running but we don't have a start time yet - calculate it from timerSeconds
-          serverTimerStartRef.current = Date.now() - (timerData.timerSeconds * 1000);
-          serverAccumulatedTimeRef.current = 0;  // Reset accumulated time for new calculation
-          console.log(`⏱️ [Timer Sync] Timer running but no startTime from server, calculated: ${new Date(serverTimerStartRef.current).toISOString()}`);
+        // Capture the server's authoritative timer seconds
+        serverTimerSecondsRef.current = timerData.timerSeconds;
+        console.log(`⏱️ [Timer Sync] Server reports ${timerData.timerSeconds}s, resetting local timer`);
+        
+        // Reset local timer start on every update so we continue from the server's baseline
+        // This ensures accuracy even after browser closure/reconnection
+        if (timerData.isTimerRunning) {
+          localTimerStartRef.current = Date.now();
+        } else {
+          localTimerStartRef.current = null;
         }
         
         setCurrentGameState(prevState => ({
@@ -444,10 +437,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
           timerSeconds: timerData.timerSeconds
         }));
         
-        // Reset flag after a short delay
-        setTimeout(() => {
-          isReceivingServerUpdate.current = false;
-        }, 100);
+        isReceivingServerUpdate.current = false;
       });
     });
 
@@ -499,40 +489,33 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     };
   }, [currentArenaId]);
 
-  // Timer state - track server's start time for accurate server-authoritative timing
-  const serverTimerStartRef = useRef<number | null>(null);
-  const serverAccumulatedTimeRef = useRef<number>(0);
+  // Timer state - track server's authoritative time
+  const serverTimerSecondsRef = useRef<number>(0);
+  const localTimerStartRef = useRef<number | null>(null);
   
-  // Server-authoritative timer effect - uses server's start time as source of truth
+  // Server-authoritative timer effect - uses server's reported seconds as baseline
   useEffect(() => {
     let rafId: number | null = null;
     let lastSecond: number = -1;
-    let localStartTime: number | null = null;
     
     // Only run if timer is running
     if (getCurrentGameState().isTimerRunning) {
       const updateTimer = () => {
-        const currentTime = Date.now();
-        
-        // Initialize local start time on first run
-        if (localStartTime === null) {
-          if (serverTimerStartRef.current !== null) {
-            // Use server start time if available
-            localStartTime = serverTimerStartRef.current;
-          } else {
-            // Start counting from now, using accumulated time as base
-            localStartTime = currentTime - (serverAccumulatedTimeRef.current * 1000);
-          }
+        // On first run, initialize local start time
+        if (localTimerStartRef.current === null) {
+          localTimerStartRef.current = Date.now();
         }
         
-        const elapsed = Math.floor((currentTime - localStartTime) / 1000);
-        const newSeconds = serverAccumulatedTimeRef.current + elapsed;
+        const currentTime = Date.now();
+        const elapsed = Math.floor((currentTime - localTimerStartRef.current) / 1000);
+        // Add server's baseline to elapsed time since reconnect
+        const newSeconds = serverTimerSecondsRef.current + elapsed;
         
         // Only update state when second changes (reduces re-renders)
         if (newSeconds !== lastSecond) {
           lastSecond = newSeconds;
-          setCurrentGameState(prevState => ({
-            ...prevState,
+          setCurrentGameState(prev => ({
+            ...prev,
             timerSeconds: newSeconds
           }));
         }
@@ -541,16 +524,14 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       };
       
       rafId = requestAnimationFrame(updateTimer);
+      
+      return () => {
+        if (rafId) cancelAnimationFrame(rafId);
+      };
     } else {
-      lastSecond = -1;
-      localStartTime = null;
+      // Timer not running - reset local tracking
+      localTimerStartRef.current = null;
     }
-    
-    return () => {
-      if (rafId !== null) {
-        cancelAnimationFrame(rafId);
-      }
-    };
   }, [getCurrentGameState().isTimerRunning]);
 
   // Handle visibility changes to ensure timer accuracy when tab becomes active again (mobile-friendly)
