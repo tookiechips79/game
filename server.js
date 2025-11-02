@@ -404,21 +404,18 @@ io.on('connection', (socket) => {
     }
   });
   
-  // Handle bet updates
+  // Handle bet updates from clients
   socket.on('bet-update', (betData) => {
     const { arenaId = 'default', ...actualBetData } = betData;
     console.log(`📥 Received bet update for arena '${arenaId}':`, actualBetData);
     
-    // SKIP if listeners are paused (during clear)
     if (isListenersPaused) {
       console.log('⏸️ SERVER: Skipping bet-update broadcast - listeners paused');
       return;
     }
     
-    // Get arena-specific state
     const arenaState = getGameState(arenaId);
     
-    // Update arena-specific state
     if (actualBetData.teamAQueue) arenaState.teamAQueue = actualBetData.teamAQueue;
     if (actualBetData.teamBQueue) arenaState.teamBQueue = actualBetData.teamBQueue;
     if (actualBetData.bookedBets) arenaState.bookedBets = actualBetData.bookedBets;
@@ -428,7 +425,7 @@ io.on('connection', (socket) => {
     if (actualBetData.totalBookedAmount !== undefined) arenaState.totalBookedAmount = actualBetData.totalBookedAmount;
     if (actualBetData.nextTotalBookedAmount !== undefined) arenaState.nextTotalBookedAmount = actualBetData.nextTotalBookedAmount;
     
-    // Broadcast only to clients in the same arena room
+    // Broadcast ONLY to the specific arena's room
     io.to(`arena:${arenaId}`).emit('bet-update', actualBetData);
     console.log(`📤 Broadcasted bet-update to arena '${arenaId}'`);
   });
@@ -474,13 +471,10 @@ io.on('connection', (socket) => {
     const { arenaId = 'default', ...actualGameState } = gameStateData;
     console.log(`📥 Received game state update for arena '${arenaId}':`, actualGameState);
     
-    // Get arena-specific state
     const arenaState = getGameState(arenaId);
-    
-    // Update arena-specific state
     Object.assign(arenaState, actualGameState);
     
-    // Broadcast only to clients in the same arena room
+    // Broadcast ONLY to the specific arena's room
     io.to(`arena:${arenaId}`).emit('game-state-update', actualGameState);
     console.log(`📤 Broadcasted game-state-update to arena '${arenaId}'`);
   });
@@ -490,26 +484,11 @@ io.on('connection', (socket) => {
     const { arenaId = 'default', ...actualTimerData } = timerData;
     console.log(`📥 Received timer update for arena '${arenaId}':`, actualTimerData);
     
-    // Get arena-specific state
     const arenaState = getGameState(arenaId);
-    
-    // Use server-side timer management for accuracy
-    if (actualTimerData.isTimerRunning && !arenaState.isTimerRunning) {
-      // Sync accumulated time with current timer value when starting
-      const timer = getArenaTimer(arenaId);
-      timer.accumulatedTime = actualTimerData.timerSeconds || 0;
-      startServerTimer(arenaId);
-    } else if (!actualTimerData.isTimerRunning && arenaState.isTimerRunning) {
-      stopServerTimer(arenaId);
-    } else if (actualTimerData.timerSeconds === 0 && !actualTimerData.isTimerRunning) {
-      resetServerTimer(arenaId);
-    }
-    
-    // Update arena-specific state
     arenaState.isTimerRunning = actualTimerData.isTimerRunning;
     arenaState.timerSeconds = actualTimerData.timerSeconds;
     
-    // Broadcast only to clients in the same arena room
+    // Broadcast ONLY to the specific arena's room
     io.to(`arena:${arenaId}`).emit('timer-update', actualTimerData);
     console.log(`📤 Broadcasted timer-update to arena '${arenaId}'`);
   });
@@ -556,37 +535,12 @@ io.on('connection', (socket) => {
 
   // Handle user wallet updates
   socket.on('user-wallet-update', (data) => {
-    console.log('Received user wallet update:', data.users.length, 'users');
-    serverGameState.users = data.users;
-    serverGameState.lastUpdated = Date.now();
-    
-    // Update connected users' credits if they're in the wallet data
-    const connectedUser = connectedUsers.get(socket.id);
-    if (connectedUser) {
-      const updatedUser = data.users.find(user => user.id === connectedUser.userId);
-      if (updatedUser) {
-        const oldCredits = connectedUser.credits;
-        connectedUser.credits = updatedUser.credits;
-        connectedUsers.set(socket.id, connectedUser);
-        
-        console.log(`💰 Updated credits for ${connectedUser.name}: ${oldCredits} → ${updatedUser.credits}`);
-        
-        // Broadcast updated connected users coins to all clients
-        const coinsData = calculateConnectedUsersCoins();
-        io.emit('connected-users-coins-update', coinsData);
-        console.log(`📊 Updated connected users coins: ${coinsData.totalCoins} coins from ${coinsData.connectedUserCount} users`);
-      } else {
-        console.log(`⚠️ User ${connectedUser.name} not found in wallet update, removing from connected users`);
-        connectedUsers.delete(socket.id);
-        const coinsData = calculateConnectedUsersCoins();
-        io.emit('connected-users-coins-update', coinsData);
-      }
-    }
-    
-    // Broadcast to ALL clients including the sender for real-time sync
-    io.emit('user-wallet-update', data);
+    const arenaId = data?.arenaId || 'default';
+    console.log(`💰 User wallet update for arena '${arenaId}':`, data);
+    // Broadcast ONLY to the specific arena
+    io.to(`arena:${arenaId}`).emit('user-wallet-update', data);
   });
-
+  
   // Handle wallet data requests
   socket.on('request-wallet-data', () => {
     console.log('Received wallet data request');
@@ -610,39 +564,31 @@ io.on('connection', (socket) => {
     console.log(`📊 Sent connected users data: ${coinsData.totalCoins} coins from ${coinsData.connectedUserCount} users`);
   });
 
-  // Handle clear all data command from admin
+  // Handle clear all data
   socket.on('clear-all-data', (data) => {
-    console.log('🧹 Received clear all data command from admin');
-    
-    // Broadcast to ALL clients (including sender) to clear everything
-    io.emit('clear-all-data', data);
-    console.log('📤 Broadcasted clear all data command to all clients');
-  });
-
-  // Handle pause listeners command
-  socket.on('pause-listeners', (data) => {
-    console.log('⏸️ Received pause listeners command');
-    
-    // SET SERVER-SIDE PAUSE FLAG
+    const arenaId = data?.arenaId || 'default';
+    console.log(`🗑️ Clear all data for arena '${arenaId}'`);
     isListenersPaused = true;
-    console.log('🛑 SERVER: Pausing all broadcasts');
-    
-    // Broadcast to ALL clients to pause
-    io.emit('pause-listeners', data);
-    console.log('📤 Broadcasted pause listeners command to all clients');
+    // Broadcast ONLY to the specific arena
+    io.to(`arena:${arenaId}`).emit('clear-all-data', data);
   });
-
-  // Handle resume listeners command
+  
+  // Handle pause listeners
+  socket.on('pause-listeners', (data) => {
+    const arenaId = data?.arenaId || 'default';
+    console.log(`⏸️ Pause listeners for arena '${arenaId}'`);
+    isListenersPaused = true;
+    // Broadcast ONLY to the specific arena
+    io.to(`arena:${arenaId}`).emit('pause-listeners', data);
+  });
+  
+  // Handle resume listeners
   socket.on('resume-listeners', (data) => {
-    console.log('▶️ Received resume listeners command');
-    
-    // RESET SERVER-SIDE PAUSE FLAG
+    const arenaId = data?.arenaId || 'default';
+    console.log(`▶️ Resume listeners for arena '${arenaId}'`);
     isListenersPaused = false;
-    console.log('✅ SERVER: Resuming all broadcasts');
-    
-    // Broadcast to ALL clients to resume
-    io.emit('resume-listeners', data);
-    console.log('📤 Broadcasted resume listeners command to all clients');
+    // Broadcast ONLY to the specific arena
+    io.to(`arena:${arenaId}`).emit('resume-listeners', data);
   });
   
   // Handle score updates
@@ -650,14 +596,11 @@ io.on('connection', (socket) => {
     const { arenaId = 'default', ...actualScoreData } = scoreData;
     console.log(`📥 Received score update for arena '${arenaId}':`, actualScoreData);
     
-    // Get arena-specific state
     const arenaState = getGameState(arenaId);
-    
-    // Update arena-specific state
     arenaState.teamAScore = actualScoreData.teamAScore;
     arenaState.teamBScore = actualScoreData.teamBScore;
     
-    // Broadcast only to clients in the same arena room
+    // Broadcast ONLY to the specific arena's room
     io.to(`arena:${arenaId}`).emit('score-update', actualScoreData);
     console.log(`📤 Broadcasted score-update to arena '${arenaId}'`);
   });
@@ -674,24 +617,22 @@ io.on('connection', (socket) => {
   });
 
   // Handle peer-to-peer game history requests
-  socket.on('request-game-history-from-clients', () => {
-    console.log('📨 [P2P] Client requesting game history from peers');
-    // Broadcast to ALL other connected clients asking them to share their game history
-    socket.broadcast.emit('client-requesting-game-history', {
-      clientId: socket.id,
-      requestedAt: Date.now()
+  socket.on('request-game-history-from-clients', (data) => {
+    const arenaId = data?.arenaId || 'default';
+    console.log(`📨 [P2P] Server requesting game history for arena '${arenaId}'`);
+    // Broadcast ONLY to the specific arena
+    io.to(`arena:${arenaId}`).emit('receive-game-history-from-clients', {
+      from: 'server',
+      requestId: data.requestId,
+      arenaId: arenaId
     });
   });
-
-  // Handle clients providing game history to the requesting client
-  socket.on('provide-game-history-to-client', (data) => {
-    console.log('📥 [P2P] Client providing game history:', data.gameHistory?.length || 0, 'records');
-    // Broadcast to ALL clients (the requesting client will receive peer data)
-    io.emit('receive-game-history-from-clients', {
-      gameHistory: data.gameHistory || [],
-      providedBy: socket.id,
-      providedAt: Date.now()
-    });
+  
+  // Handle game history responses from clients
+  socket.on('provide-game-history', (data) => {
+    const arenaId = data?.arenaId || 'default';
+    console.log(`📥 [P2P] Client providing game history for arena '${arenaId}': ${data.history.length} records`);
+    // This is handled by individual clients, no broadcast needed
   });
 
   // Handle disconnect
