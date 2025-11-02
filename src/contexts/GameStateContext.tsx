@@ -267,14 +267,20 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     socketIOService.connect();
 
     // Helper to validate arena before processing update
-    const validateArenaAndUpdate = (updateProcessor: () => void) => {
-      console.log(`🎯 [ARENA VALIDATION] Current arena: ${currentArenaId}`);
-      updateProcessor();
+    const validateArenaAndUpdate = (incomingArenaId: string, updateProcessor: () => void) => {
+      console.log(`🎯 [ARENA VALIDATION] Current arena: ${currentArenaId}, Incoming arena: ${incomingArenaId}`);
+      // Only process if the incoming data is for the current arena
+      if (incomingArenaId === currentArenaId) {
+        console.log(`✅ [ARENA VALIDATION] Arena matches! Processing update...`);
+        updateProcessor();
+      } else {
+        console.log(`❌ [ARENA VALIDATION] Arena mismatch! Ignoring update for ${incomingArenaId}`);
+      }
     };
 
     // Listen for bet updates from other clients
     socketIOService.onBetUpdate((betData: BetSyncData) => {
-      validateArenaAndUpdate(() => {
+      validateArenaAndUpdate(betData.arenaId, () => {
         try {
           console.log('📥 Received bet update from server:', betData);
           console.log('📥 Current state before update:', {
@@ -353,7 +359,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     // Listen for game state updates from other clients
     socketIOService.onGameStateUpdate((gameStateData: GameStateSyncData) => {
-      validateArenaAndUpdate(() => {
+      validateArenaAndUpdate(gameStateData.arenaId, () => {
         console.log('📥 Received game state update from server:', gameStateData);
         
         setCurrentGameState(prevState => {
@@ -407,7 +413,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     // Listen for timer updates from other clients
     socketIOService.onTimerUpdate((timerData: TimerSyncData) => {
-      validateArenaAndUpdate(() => {
+      validateArenaAndUpdate(timerData.arenaId, () => {
         console.log('📥 Received timer update from server:', timerData);
         
         // Set flag to prevent local timer conflicts
@@ -434,7 +440,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     // Listen for dedicated break status updates
     socketIOService.onBreakStatusUpdate((data: { teamAHasBreak: boolean }) => {
-      validateArenaAndUpdate(() => {
+      validateArenaAndUpdate(data.arenaId, () => {
         console.log('📥 Received dedicated break status update:', data);
         setCurrentGameState(prevState => ({
           ...prevState,
@@ -445,7 +451,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     // Listen for total booked coins updates
     socketIOService.onTotalBookedCoinsUpdate((data: { totalBookedAmount: number, nextTotalBookedAmount: number }) => {
-      validateArenaAndUpdate(() => {
+      validateArenaAndUpdate(data.arenaId, () => {
         console.log('📥 Received total booked coins update:', data);
         setCurrentGameState(prevState => ({
           ...prevState,
@@ -457,7 +463,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     // Listen for score updates from other clients
     socketIOService.onScoreUpdate((scoreData: ScoreSyncData) => {
-      validateArenaAndUpdate(() => {
+      validateArenaAndUpdate(scoreData.arenaId, () => {
         console.log('📥 Received score update from server:', scoreData);
         
         setCurrentGameState(prevState => ({
