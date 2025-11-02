@@ -47,6 +47,7 @@ class SocketIOService {
   private maxReconnectAttempts: number = 5;
   private reconnectDelay: number = 1000;
   private arenaId: string = 'default';
+  private lastIdentifiedArena: string = 'default';
 
   constructor() {
     console.log('🚀 SocketIOService constructor called');
@@ -72,6 +73,16 @@ class SocketIOService {
       return 'one_pocket';
     }
     return 'default';
+  }
+
+  // Check if we need to re-identify with a different arena
+  private checkAndReidentifyArena() {
+    const currentArena = this.getArenaId();
+    if (currentArena !== this.lastIdentifiedArena && this.socket?.connected) {
+      console.log(`🔄 Arena change detected: ${this.lastIdentifiedArena} → ${currentArena}. Re-identifying...`);
+      this.socket?.emit('set-arena', { arenaId: currentArena });
+      this.lastIdentifiedArena = currentArena;
+    }
   }
 
   private initializeSocket() {
@@ -198,6 +209,7 @@ class SocketIOService {
 
   // Public methods for emitting events
   public emitBetUpdate(betData: BetSyncData) {
+    this.checkAndReidentifyArena();
     if (this.isSocketConnected()) {
       const arenaId = this.getArenaId();
       console.log(`📤 Emitting bet update for arena '${arenaId}':`, betData);
@@ -208,6 +220,7 @@ class SocketIOService {
   }
 
   public emitGameStateUpdate(gameStateData: GameStateSyncData) {
+    this.checkAndReidentifyArena();
     if (this.isSocketConnected()) {
       const arenaId = this.getArenaId();
       console.log(`📤 Emitting game state update for arena '${arenaId}':`, gameStateData);
@@ -218,6 +231,7 @@ class SocketIOService {
   }
 
   public emitTimerUpdate(timerData: TimerSyncData) {
+    this.checkAndReidentifyArena();
     if (this.isSocketConnected()) {
       const arenaId = this.getArenaId();
       console.log(`📤 Emitting timer update for arena '${arenaId}':`, timerData);
@@ -228,6 +242,7 @@ class SocketIOService {
   }
 
   public emitScoreUpdate(scoreData: ScoreSyncData) {
+    this.checkAndReidentifyArena();
     if (this.isSocketConnected()) {
       const arenaId = this.getArenaId();
       console.log(`📤 Emitting score update for arena '${arenaId}':`, scoreData);
@@ -324,6 +339,7 @@ class SocketIOService {
 
   // User Wallet Synchronization Methods
   public emitUserWalletUpdate(users: any[]) {
+    this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
       console.log('📤 Emitting user wallet update:', users.length, 'users');
       this.socket.emit('user-wallet-update', { users });
@@ -341,6 +357,7 @@ class SocketIOService {
 
   // Request wallet data from server
   public requestWalletData() {
+    this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
       console.log('📤 Requesting wallet data from server');
       this.socket.emit('request-wallet-data');
@@ -358,6 +375,7 @@ class SocketIOService {
 
   // User login tracking for connected users coins calculation
   public emitUserLogin(userData: { id: string; name: string; credits: number }) {
+    this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
       console.log('📤 Emitting user login:', userData.name, 'with', userData.credits, 'coins');
       this.socket.emit('user-login', userData);
@@ -366,6 +384,7 @@ class SocketIOService {
 
   // User logout tracking for connected users coins calculation
   public emitUserLogout(userData: { id: string; name: string; credits: number }) {
+    this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
       console.log('📤 Emitting user logout:', userData.name, 'with', userData.credits, 'coins');
       this.socket.emit('user-logout', userData);
