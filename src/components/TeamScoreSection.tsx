@@ -115,7 +115,7 @@ const TeamScoreSection = ({
           )}
         </div>
         
-        <div className="bg-[#1EAEDB] rounded-2xl p-3 flex items-center justify-center gap-2 transition-all hover:bg-[#1EAEDB]/90 shadow-[0_0_15px_rgba(30,174,219,0.5)]">
+        <div className="bg-[#1EAEDB] rounded-2xl p-3 flex items-center justify-center gap-2 transition-all hover:bg-[#1EAEDB]/90 shadow-[0_0_15px_rgba(30,174,219,0.5)]" style={{ display: 'none' }}>
           {showControls && !adminLocked && (
             <Button
               onClick={handleBallDecrement}
