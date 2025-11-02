@@ -52,6 +52,9 @@ class SocketIOService {
   constructor() {
     console.log('🚀 SocketIOService constructor called');
     this.updateArenaId();
+    // Initialize lastIdentifiedArena from the current hash to ensure correct arena on first emit
+    this.lastIdentifiedArena = this.getArenaId();
+    console.log(`📍 Initialized lastIdentifiedArena to: ${this.lastIdentifiedArena}`);
     this.initializeSocket();
   }
 
