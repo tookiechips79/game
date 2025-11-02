@@ -184,6 +184,7 @@ const Index = () => {
   };
 
   const handleTeamAWin = (duration: number) => {
+    console.log('🏆 [handleTeamAWin] WIN BUTTON CLICKED FOR TEAM A!');
     // Reset timer immediately
     resetTimerOnGameWin();
     
@@ -217,6 +218,7 @@ const Index = () => {
   };
 
   const handleTeamBWin = (duration: number) => {
+    console.log('🏆 [handleTeamBWin] WIN BUTTON CLICKED FOR TEAM B!');
     // Reset timer immediately
     resetTimerOnGameWin();
     
