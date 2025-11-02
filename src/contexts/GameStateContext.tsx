@@ -117,28 +117,55 @@ const defaultLocalAdminState: LocalAdminState = {
 
 export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const location = useLocation();
+  const { betHistory, userBetReceipts } = useUser();
   
-  // Determine arena ID based on current route (using hash routing)
+  // Separate state for each arena
+  const [gameStateDefault, setGameStateDefault] = useState<GameState>(defaultGameState);
+  const [gameStateOnePocket, setGameStateOnePocket] = useState<GameState>(defaultGameState);
+  const [localAdminStateDefault, setLocalAdminStateDefault] = useState<LocalAdminState>({ isAdminMode: false, isAgentMode: false });
+  const [localAdminStateOnePocket, setLocalAdminStateOnePocket] = useState<LocalAdminState>({ isAdminMode: false, isAgentMode: false });
+
+  // Get the current arena ID from the location hash
   const getArenaIdFromRoute = () => {
     if (window.location.hash.includes('/one-pocket-arena')) {
       return 'one_pocket';
     }
     return 'default';
   };
-  
-  // Override getArenaId to use route-based detection
+
   const currentArenaId = getArenaIdFromRoute();
+
+  // Helper function to get the correct state object for the current arena
+  const getCurrentGameState = () => {
+    return currentArenaId === 'one_pocket' ? gameStateOnePocket : gameStateDefault;
+  };
+
+  const getCurrentLocalAdminState = () => {
+    return currentArenaId === 'one_pocket' ? localAdminStateOnePocket : localAdminStateDefault;
+  };
+
+  // Helper function to set state for the current arena
+  const setCurrentGameState = (state: GameState) => {
+    if (currentArenaId === 'one_pocket') {
+      setGameStateOnePocket(state);
+    } else {
+      setGameStateDefault(state);
+    }
+  };
+
+  const setCurrentLocalAdminState = (state: LocalAdminState) => {
+    if (currentArenaId === 'one_pocket') {
+      setLocalAdminStateOnePocket(state);
+    } else {
+      setLocalAdminStateDefault(state);
+    }
+  };
   
-  const [gameState, setGameState] = useState<GameState>(defaultGameState);
-  const [localAdminState, setLocalAdminState] = useState<LocalAdminState>(defaultLocalAdminState);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   // Ref to track if we're receiving server updates to prevent local timer conflicts
   const isReceivingServerUpdate = useRef(false);
   
-  // Get UserContext functions for game history sync
-  const { } = useUser();
-
   // Load game state from localStorage on mount
   useEffect(() => {
     const storageKey = `betting_app_game_state_${currentArenaId}`;
@@ -147,10 +174,10 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     if (storedGameState) {
       try {
         const parsedState = JSON.parse(storedGameState);
-        setGameState(parsedState);
+        setCurrentGameState(parsedState);
       } catch (error) {
         console.error('Error parsing stored game state:', error);
-      setGameState(defaultGameState);
+      setCurrentGameState(defaultGameState);
       }
     }
   }, [currentArenaId]);
@@ -164,13 +191,13 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
         const parsedState = JSON.parse(storedLocalAdminState);
         // IMPORTANT: Always reset isAdminMode to false on page load to require password entry
         // But preserve isAgentMode if it was previously set
-        setLocalAdminState({
+        setCurrentLocalAdminState({
           ...parsedState,
           isAdminMode: false  // Always require password on page reload
         });
       } catch (error) {
         console.error('Error parsing stored local admin state:', error);
-        setLocalAdminState(defaultLocalAdminState);
+        setCurrentLocalAdminState(defaultLocalAdminState);
       }
     }
   }, [currentArenaId]);
@@ -178,8 +205,8 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   // Save game state to localStorage whenever it changes
   useEffect(() => {
     const storageKey = `betting_app_game_state_${currentArenaId}`;
-    localStorage.setItem(storageKey, JSON.stringify(gameState));
-  }, [gameState, currentArenaId]);
+    localStorage.setItem(storageKey, JSON.stringify(getCurrentGameState()));
+  }, [getCurrentGameState(), currentArenaId]);
 
   // Save local admin state to localStorage whenever it changes (separate from game state)
   useEffect(() => {
@@ -187,10 +214,10 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     // Only persist isAgentMode, NOT isAdminMode (admin mode requires password every time)
     const stateToSave = {
       isAdminMode: false,  // Never save admin mode - must re-authenticate
-      isAgentMode: localAdminState.isAgentMode  // Keep agent mode preference
+      isAgentMode: getCurrentLocalAdminState().isAgentMode  // Keep agent mode preference
     };
     localStorage.setItem(storageKey, JSON.stringify(stateToSave));
-  }, [localAdminState, currentArenaId]);
+  }, [getCurrentLocalAdminState(), currentArenaId]);
 
   // Listen for storage changes from other tabs/windows
   useEffect(() => {
@@ -198,7 +225,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       if (e.key === getGameStateStorageKey() && e.newValue) {
         try {
           const newState = JSON.parse(e.newValue);
-          setGameState(newState);
+          setCurrentGameState(newState);
         } catch (error) {
           console.error('Error parsing updated game state:', error);
         }
@@ -251,12 +278,12 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
         try {
           console.log('📥 Received bet update from server:', betData);
           console.log('📥 Current state before update:', {
-            teamAQueueLength: gameState.teamAQueue.length,
-            teamBQueueLength: gameState.teamBQueue.length,
-            bookedBetsLength: gameState.bookedBets.length
+            teamAQueueLength: getCurrentGameState().teamAQueue.length,
+            teamBQueueLength: getCurrentGameState().teamBQueue.length,
+            bookedBetsLength: getCurrentGameState().bookedBets.length
           });
           
-          setGameState(prevState => {
+          setCurrentGameState(prevState => {
             const newState = { ...prevState };
             let hasUpdates = false;
             
@@ -329,7 +356,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       validateArenaAndUpdate(() => {
         console.log('📥 Received game state update from server:', gameStateData);
         
-        setGameState(prevState => {
+        setCurrentGameState(prevState => {
           const newState = { ...prevState };
           let hasUpdates = false;
           
@@ -392,7 +419,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
           timerIntervalRef.current = null;
         }
         
-        setGameState(prevState => ({
+        setCurrentGameState(prevState => ({
           ...prevState,
           isTimerRunning: timerData.isTimerRunning,
           timerSeconds: timerData.timerSeconds
@@ -409,7 +436,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     socketIOService.onBreakStatusUpdate((data: { teamAHasBreak: boolean }) => {
       validateArenaAndUpdate(() => {
         console.log('📥 Received dedicated break status update:', data);
-        setGameState(prevState => ({
+        setCurrentGameState(prevState => ({
           ...prevState,
           teamAHasBreak: data.teamAHasBreak
         }));
@@ -420,7 +447,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     socketIOService.onTotalBookedCoinsUpdate((data: { totalBookedAmount: number, nextTotalBookedAmount: number }) => {
       validateArenaAndUpdate(() => {
         console.log('📥 Received total booked coins update:', data);
-        setGameState(prevState => ({
+        setCurrentGameState(prevState => ({
           ...prevState,
           totalBookedAmount: data.totalBookedAmount,
           nextTotalBookedAmount: data.nextTotalBookedAmount
@@ -433,7 +460,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       validateArenaAndUpdate(() => {
         console.log('📥 Received score update from server:', scoreData);
         
-        setGameState(prevState => ({
+        setCurrentGameState(prevState => ({
           ...prevState,
           teamAGames: scoreData.teamAScore,
           teamBGames: scoreData.teamBScore
@@ -452,7 +479,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     let intervalId: NodeJS.Timeout | null = null;
     
     // Only run local timer if we're not receiving server updates
-    if (gameState.isTimerRunning && !isReceivingServerUpdate.current) {
+    if (getCurrentGameState().isTimerRunning && !isReceivingServerUpdate.current) {
       // Request server time every second to stay synchronized
       intervalId = setInterval(() => {
         // Emit timer heartbeat to get server's current time
@@ -477,12 +504,12 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
         timerIntervalRef.current = null;
       }
     };
-  }, [gameState.isTimerRunning]);
+  }, [getCurrentGameState().isTimerRunning]);
 
   // Handle visibility changes to ensure timer accuracy when tab becomes active again (mobile-friendly)
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (gameState.isTimerRunning && !document.hidden && !isReceivingServerUpdate.current) {
+      if (getCurrentGameState().isTimerRunning && !document.hidden && !isReceivingServerUpdate.current) {
         // Tab became visible again, restart timer to ensure accuracy
         console.log('📱 App became visible, restarting timer for accuracy');
         
@@ -494,14 +521,14 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
         
         // Restart timer with current state
         const startTime = Date.now();
-        const startSeconds = gameState.timerSeconds;
+        const startSeconds = getCurrentGameState().timerSeconds;
         
         const intervalId = setInterval(() => {
             const currentTime = Date.now();
             const elapsed = Math.floor((currentTime - startTime) / 1000);
             const newSeconds = startSeconds + elapsed;
             
-          setGameState(prev => {
+          setCurrentGameState(prev => {
             if (prev.timerSeconds !== newSeconds) {
               return {
                 ...prev,
@@ -532,10 +559,10 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       window.removeEventListener('focus', handleVisibilityChange);
       window.removeEventListener('blur', () => {});
     };
-  }, [gameState.isTimerRunning, gameState.timerSeconds]);
+  }, [getCurrentGameState().isTimerRunning, getCurrentGameState().timerSeconds]);
 
   const updateGameState = useCallback((updates: Partial<GameState>) => {
-    setGameState(prevState => {
+    setCurrentGameState(prevState => {
       const newState = { ...prevState, ...updates };
       
       // Update game label when game number changes
@@ -631,11 +658,11 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   }, []);
 
   const updateLocalAdminState = (updates: Partial<LocalAdminState>) => {
-    setLocalAdminState(prevState => ({ ...prevState, ...updates }));
+    setCurrentLocalAdminState(prevState => ({ ...prevState, ...updates }));
   };
 
   const resetGameState = () => {
-    setGameState(defaultGameState);
+    setCurrentGameState(defaultGameState);
   };
 
   // Timer control functions (admin only)
@@ -721,11 +748,11 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   const value: GameStateContextType = {
-    gameState,
+    gameState: getCurrentGameState(),
     updateGameState,
     resetGameState,
     isAdmin,
-    localAdminState,
+    localAdminState: getCurrentLocalAdminState(),
     updateLocalAdminState,
     startTimer,
     pauseTimer,
