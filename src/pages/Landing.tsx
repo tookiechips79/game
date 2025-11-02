@@ -98,6 +98,12 @@ const Landing = () => {
                 <span className="hidden sm:inline">Betting</span>
               </Button>
             </Link>
+            <Link to="/one-pocket-arena">
+              <Button className="font-bold flex items-center gap-2" style={{ backgroundColor: '#95deff', color: '#052240' }}>
+                <Trophy size={18} />
+                <span className="hidden sm:inline">One Pocket</span>
+              </Button>
+            </Link>
           </div>
         </div>
       </nav>
