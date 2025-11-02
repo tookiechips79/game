@@ -305,8 +305,9 @@ class SocketIOService {
   public emitBreakStatusUpdate(teamAHasBreak: boolean) {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
+      const arenaId = this.getArenaId();
       console.log('📤 Emitting dedicated break status update:', teamAHasBreak);
-      this.socket.emit('break-status-update', { teamAHasBreak });
+      this.socket.emit('break-status-update', { teamAHasBreak, arenaId });
     }
   }
 
@@ -319,14 +320,13 @@ class SocketIOService {
     }
   }
 
-  // REMOVED: Game history update functions - bet history is now completely local and immutable
-  // No external updates can modify bet history
-
+  // Total Booked Coins - Emit separately to update wallet
   public emitTotalBookedCoinsUpdate(totalBookedAmount: number, nextTotalBookedAmount: number) {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
-      console.log('📤 Emitting total booked coins update:', { totalBookedAmount, nextTotalBookedAmount });
-      this.socket.emit('total-booked-coins-update', { totalBookedAmount, nextTotalBookedAmount });
+      const arenaId = this.getArenaId();
+      console.log('📤 Emitting total booked coins update');
+      this.socket.emit('total-booked-coins-update', { totalBookedAmount, nextTotalBookedAmount, arenaId });
     }
   }
 
@@ -445,8 +445,9 @@ class SocketIOService {
   public emitGameHistoryUpdate(gameHistory: any[]) {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
+      const arenaId = this.getArenaId();
       console.log('📤 Emitting game history update:', gameHistory.length, 'records');
-      this.socket.emit('game-history-update', { gameHistory });
+      this.socket.emit('game-history-update', { gameHistory, arenaId });
     }
   }
 
@@ -467,8 +468,9 @@ class SocketIOService {
   public emitBetReceiptsUpdate(betReceipts: any[]) {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
+      const arenaId = this.getArenaId();
       console.log('📤 Emitting bet receipts update:', betReceipts.length, 'receipts');
-      this.socket.emit('bet-receipts-update', { betReceipts });
+      this.socket.emit('bet-receipts-update', { betReceipts, arenaId });
     }
   }
 

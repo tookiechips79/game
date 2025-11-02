@@ -440,12 +440,14 @@ io.on('connection', (socket) => {
       return;
     }
     
-    serverGameState.gameHistory = data.gameHistory || [];
-    serverGameState.lastUpdated = Date.now();
+    const arenaId = data.arenaId || 'default';
+    const arenaState = getGameState(arenaId);
+    arenaState.gameHistory = data.gameHistory || [];
+    arenaState.lastUpdated = Date.now();
     
-    // Broadcast to all OTHER clients (matches bet-update pattern)
-    socket.broadcast.emit('game-history-update', data);
-    console.log('📤 Broadcasted game history to all OTHER clients');
+    // Broadcast to all OTHER clients in the SAME ARENA
+    socket.to(`arena:${arenaId}`).emit('game-history-update', data);
+    console.log(`📤 Broadcasted game history to arena '${arenaId}'`);
   });
 
   // Handle bet receipts updates - sync across all clients
@@ -458,12 +460,14 @@ io.on('connection', (socket) => {
       return;
     }
     
-    serverGameState.betReceipts = data.betReceipts || [];
-    serverGameState.lastUpdated = Date.now();
+    const arenaId = data.arenaId || 'default';
+    const arenaState = getGameState(arenaId);
+    arenaState.betReceipts = data.betReceipts || [];
+    arenaState.lastUpdated = Date.now();
     
-    // Broadcast to all OTHER clients (matches bet-update pattern)
-    socket.broadcast.emit('bet-receipts-update', data);
-    console.log('📤 Broadcasted bet receipts to all OTHER clients');
+    // Broadcast to all OTHER clients in the SAME ARENA
+    socket.to(`arena:${arenaId}`).emit('bet-receipts-update', data);
+    console.log(`📤 Broadcasted bet receipts to arena '${arenaId}'`);
   });
   
   // Handle game state updates
@@ -507,11 +511,13 @@ io.on('connection', (socket) => {
   // Handle dedicated break status updates
   socket.on('break-status-update', (data) => {
     console.log('Received dedicated break status update:', data);
-    serverGameState.teamAHasBreak = data.teamAHasBreak;
-    serverGameState.lastUpdated = Date.now();
+    const arenaId = data.arenaId || 'default';
+    const arenaState = getGameState(arenaId);
+    arenaState.teamAHasBreak = data.teamAHasBreak;
+    arenaState.lastUpdated = Date.now();
     
-    // Broadcast to all other clients
-    socket.broadcast.emit('break-status-update', data);
+    // Broadcast to all other clients in the SAME ARENA
+    socket.to(`arena:${arenaId}`).emit('break-status-update', data);
   });
 
   // BET HISTORY IS NOW COMPLETELY LOCAL - NO SERVER SYNC
@@ -521,12 +527,14 @@ io.on('connection', (socket) => {
   // Handle total booked coins updates
   socket.on('total-booked-coins-update', (data) => {
     console.log('Received total booked coins update:', data);
-    serverGameState.totalBookedAmount = data.totalBookedAmount;
-    serverGameState.nextTotalBookedAmount = data.nextTotalBookedAmount;
-    serverGameState.lastUpdated = Date.now();
+    const arenaId = data.arenaId || 'default';
+    const arenaState = getGameState(arenaId);
+    arenaState.totalBookedAmount = data.totalBookedAmount;
+    arenaState.nextTotalBookedAmount = data.nextTotalBookedAmount;
+    arenaState.lastUpdated = Date.now();
     
-    // Broadcast to all other clients
-    socket.broadcast.emit('total-booked-coins-update', data);
+    // Broadcast to all other clients in the SAME ARENA
+    socket.to(`arena:${arenaId}`).emit('total-booked-coins-update', data);
   });
 
   // BET RECEIPTS ARE NOW COMPLETELY LOCAL - NO SERVER SYNC
