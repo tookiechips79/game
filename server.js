@@ -463,29 +463,34 @@ io.on('connection', (socket) => {
     }
   });
   
-  // Handle bet updates from clients
-  socket.on('bet-update', (betData) => {
-    const { arenaId = 'default', ...actualBetData } = betData;
-    console.log(`📥 Received bet update for arena '${arenaId}':`, actualBetData);
-    
-    if (isListenersPaused) {
-      console.log('⏸️ SERVER: Skipping bet-update broadcast - listeners paused');
-      return;
-    }
-    
+  // Handle bet updates - sync betting queues across all clients
+  socket.on('bet-update', (data) => {
+    const arenaId = data?.arenaId || 'default';
     const arenaState = getGameState(arenaId);
     
-    if (actualBetData.teamAQueue) arenaState.teamAQueue = actualBetData.teamAQueue;
-    if (actualBetData.teamBQueue) arenaState.teamBQueue = actualBetData.teamBQueue;
-    if (actualBetData.bookedBets) arenaState.bookedBets = actualBetData.bookedBets;
-    if (actualBetData.nextGameBets) arenaState.nextGameBets = actualBetData.nextGameBets;
-    if (actualBetData.nextTeamAQueue) arenaState.nextTeamAQueue = actualBetData.nextTeamAQueue;
-    if (actualBetData.nextTeamBQueue) arenaState.nextTeamBQueue = actualBetData.nextTeamBQueue;
-    if (actualBetData.totalBookedAmount !== undefined) arenaState.totalBookedAmount = actualBetData.totalBookedAmount;
-    if (actualBetData.nextTotalBookedAmount !== undefined) arenaState.nextTotalBookedAmount = actualBetData.nextTotalBookedAmount;
+    console.log(`📥 Received bet update for arena '${arenaId}':`, {
+      teamAQueue: data.teamAQueue?.length,
+      teamBQueue: data.teamBQueue?.length,
+      bookedBets: data.bookedBets?.length,
+      nextTeamAQueue: data.nextTeamAQueue?.length,
+      nextTeamBQueue: data.nextTeamBQueue?.length,
+      nextGameBets: data.nextGameBets?.length
+    });
     
-    // Broadcast ONLY to the specific arena's room
-    io.to(`arena:${arenaId}`).emit('bet-update', actualBetData);
+    // Update the arena's game state with the new bet data
+    if (data.teamAQueue !== undefined) arenaState.teamAQueue = data.teamAQueue;
+    if (data.teamBQueue !== undefined) arenaState.teamBQueue = data.teamBQueue;
+    if (data.bookedBets !== undefined) arenaState.bookedBets = data.bookedBets;
+    if (data.nextTeamAQueue !== undefined) arenaState.nextTeamAQueue = data.nextTeamAQueue;
+    if (data.nextTeamBQueue !== undefined) arenaState.nextTeamBQueue = data.nextTeamBQueue;
+    if (data.nextGameBets !== undefined) arenaState.nextGameBets = data.nextGameBets;
+    if (data.totalBookedAmount !== undefined) arenaState.totalBookedAmount = data.totalBookedAmount;
+    if (data.nextTotalBookedAmount !== undefined) arenaState.nextTotalBookedAmount = data.nextTotalBookedAmount;
+    
+    arenaState.lastUpdated = Date.now();
+    
+    // Broadcast the bet update to all other clients in the SAME ARENA ONLY
+    socket.to(`arena:${arenaId}`).emit('bet-update', data);
     console.log(`📤 Broadcasted bet-update to arena '${arenaId}'`);
   });
   
