@@ -260,7 +260,10 @@ io.on('connection', (socket) => {
     const newArenaId = data.arenaId || 'default';
     socketArenaMap.set(socket.id, newArenaId);
     currentArenaId = newArenaId;
-    console.log(`🎯 [ARENA] Socket ${socket.id} assigned to arena: ${currentArenaId}`);
+    
+    // Join the arena-specific room
+    socket.join(`arena:${newArenaId}`);
+    console.log(`🎯 [ARENA] Socket ${socket.id} assigned to arena: ${currentArenaId} and joined room arena:${currentArenaId}`);
   });
   
   // Send current game state to newly connected client
@@ -381,8 +384,8 @@ io.on('connection', (socket) => {
     if (actualBetData.totalBookedAmount !== undefined) arenaState.totalBookedAmount = actualBetData.totalBookedAmount;
     if (actualBetData.nextTotalBookedAmount !== undefined) arenaState.nextTotalBookedAmount = actualBetData.nextTotalBookedAmount;
     
-    // Broadcast only to clients in the same arena
-    io.emit('bet-update', actualBetData);
+    // Broadcast only to clients in the same arena room
+    io.to(`arena:${arenaId}`).emit('bet-update', actualBetData);
     console.log(`📤 Broadcasted bet-update to arena '${arenaId}'`);
   });
   
@@ -433,8 +436,8 @@ io.on('connection', (socket) => {
     // Update arena-specific state
     Object.assign(arenaState, actualGameState);
     
-    // Broadcast to all clients
-    io.emit('game-state-update', actualGameState);
+    // Broadcast only to clients in the same arena room
+    io.to(`arena:${arenaId}`).emit('game-state-update', actualGameState);
     console.log(`📤 Broadcasted game-state-update to arena '${arenaId}'`);
   });
   
@@ -461,8 +464,8 @@ io.on('connection', (socket) => {
     arenaState.isTimerRunning = actualTimerData.isTimerRunning;
     arenaState.timerSeconds = actualTimerData.timerSeconds;
     
-    // Broadcast to all clients
-    io.emit('timer-update', actualTimerData);
+    // Broadcast only to clients in the same arena room
+    io.to(`arena:${arenaId}`).emit('timer-update', actualTimerData);
     console.log(`📤 Broadcasted timer-update to arena '${arenaId}'`);
   });
   
@@ -607,8 +610,8 @@ io.on('connection', (socket) => {
     arenaState.teamAScore = actualScoreData.teamAScore;
     arenaState.teamBScore = actualScoreData.teamBScore;
     
-    // Broadcast to all clients
-    io.emit('score-update', actualScoreData);
+    // Broadcast only to clients in the same arena room
+    io.to(`arena:${arenaId}`).emit('score-update', actualScoreData);
     console.log(`📤 Broadcasted score-update to arena '${arenaId}'`);
   });
   
