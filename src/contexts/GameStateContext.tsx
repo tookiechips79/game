@@ -764,7 +764,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     });
   };
 
-  const value: GameStateContextType = {
+  const value: GameStateContextType = useMemo(() => ({
     gameState: getCurrentGameState(),
     updateGameState,
     resetGameState,
@@ -777,7 +777,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     setTimer,
     resetTimerOnMatchStart,
     resetTimerOnGameWin,
-  };
+  }), [gameStateDefault, gameStateOnePocket, localAdminStateDefault, localAdminStateOnePocket, isAdmin, currentArenaId]);
 
   return (
     <GameStateContext.Provider value={value}>
