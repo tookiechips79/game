@@ -221,8 +221,9 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   // Listen for storage changes from other tabs/windows
   useEffect(() => {
+    const expectedKey = `betting_app_game_state_${currentArenaId}`;
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === getGameStateStorageKey() && e.newValue) {
+      if (e.key === expectedKey && e.newValue) {
         try {
           const newState = JSON.parse(e.newValue);
           setCurrentGameState(newState);
@@ -234,7 +235,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [currentArenaId]);
 
   // Check if current user is admin
   useEffect(() => {
