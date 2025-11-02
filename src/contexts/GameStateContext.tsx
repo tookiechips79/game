@@ -236,6 +236,18 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [currentArenaId]);
 
+  // Request latest game state from server when arena changes
+  useEffect(() => {
+    const requestGameState = () => {
+      console.log(`📤 [ARENA SWITCH] Requesting game state for arena: "${currentArenaId}"`);
+      socketIOService.requestGameState();
+    };
+
+    // Wait a small delay to ensure socket has identified the new arena
+    const timer = setTimeout(requestGameState, 100);
+    return () => clearTimeout(timer);
+  }, [currentArenaId]);
+
   // Check if current user is admin
   useEffect(() => {
     const checkAdminStatus = () => {

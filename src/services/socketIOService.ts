@@ -308,6 +308,18 @@ class SocketIOService {
     }
   }
 
+  // Request latest game state from server (used when switching arenas)
+  public requestGameState() {
+    this.checkAndReidentifyArena();
+    if (this.isSocketConnected()) {
+      const arenaId = this.getArenaId();
+      console.log(`📤 Requesting game state for arena '${arenaId}'`);
+      this.socket?.emit('request-game-state', { arenaId });
+    } else {
+      console.warn('⚠️ Socket not connected, cannot request game state');
+    }
+  }
+
   public emitBreakStatusUpdate(teamAHasBreak: boolean) {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
