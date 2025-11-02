@@ -118,9 +118,9 @@ const defaultLocalAdminState: LocalAdminState = {
 export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const location = useLocation();
   
-  // Determine arena ID based on current route
+  // Determine arena ID based on current route (using hash routing)
   const getArenaIdFromRoute = () => {
-    if (location.pathname.includes('/one-pocket-arena')) {
+    if (window.location.hash.includes('/one-pocket-arena')) {
       return 'one_pocket';
     }
     return 'default';

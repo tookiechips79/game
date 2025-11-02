@@ -55,20 +55,20 @@ class SocketIOService {
   }
 
   private updateArenaId() {
-    // Detect arena from URL path
-    const path = window.location.pathname;
-    if (path.includes('/one-pocket-arena')) {
+    // Detect arena from URL hash (using hash routing)
+    const hash = window.location.hash;
+    if (hash.includes('/one-pocket-arena')) {
       this.arenaId = 'one_pocket';
     } else {
       this.arenaId = 'default';
     }
-    console.log(`📍 Arena ID set to: ${this.arenaId} (from path: ${path})`);
+    console.log(`📍 Arena ID set to: ${this.arenaId} (from hash: ${hash})`);
   }
 
   private getArenaId(): string {
-    // Detect arena from URL path at runtime
-    const path = window.location.pathname;
-    if (path.includes('/one-pocket-arena')) {
+    // Detect arena from URL hash at runtime (using hash routing)
+    const hash = window.location.hash;
+    if (hash.includes('/one-pocket-arena')) {
       return 'one_pocket';
     }
     return 'default';
