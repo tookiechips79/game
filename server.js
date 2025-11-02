@@ -405,6 +405,19 @@ io.on('connection', (socket) => {
     socket.emit('game-state-update', { ...arenaState, arenaId });
     const coinsData = calculateConnectedUsersCoins();
     socket.emit('connected-users-coins-update', { ...coinsData, arenaId });
+    
+    // Also send current bets for the arena
+    const arenaGameState = getGameState(arenaId);
+    socket.emit('bet-update', {
+      teamAQueue: arenaGameState.teamAQueue || [],
+      teamBQueue: arenaGameState.teamBQueue || [],
+      bookedBets: arenaGameState.bookedBets || [],
+      nextGameBets: arenaGameState.nextBookedBets || [],
+      nextTeamAQueue: arenaGameState.nextTeamAQueue || [],
+      nextTeamBQueue: arenaGameState.nextTeamBQueue || [],
+      arenaId
+    });
+    
     console.log(`📤 [RESPONSE] Game state sent to ${socket.id}`);
   });
   
