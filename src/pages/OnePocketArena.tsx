@@ -956,7 +956,7 @@ const OnePocketArena = () => {
 
 
   return (
-    <div className="min-h-screen bg-black p-4 md:p-8 pt-32 relative">
+    <div className="min-h-screen bg-purple-950 p-4 md:p-8 pt-32 relative">
       
       <div className="max-w-6xl mx-auto relative z-10">
         <UserWidgetsContainer 
@@ -989,7 +989,7 @@ const OnePocketArena = () => {
           />
         </div>
 
-        <h1 className="text-4xl md:text-5xl font-bold text-center mb-6" style={{ color: '#95deff', textShadow: '0 0 15px rgba(149, 222, 255, 0.8)' }}>GameBird</h1>
+        <h1 className="text-4xl md:text-5xl font-bold text-center mb-6" style={{ color: '#95deff', textShadow: '0 0 15px rgba(149, 222, 255, 0.8)' }}>One Pocket Arena</h1>
 
         <UserCreditSystem isAdmin={isAdminMode} />
 
