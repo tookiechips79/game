@@ -48,6 +48,8 @@ interface ScoreBoardProps {
   onToggleAdmin?: () => void;
   onToggleAgent?: () => void;
   showBallCount?: boolean;
+  teamAPlayerImageUrl?: string;
+  teamBPlayerImageUrl?: string;
 }
 
 const ScoreBoard = (props: ScoreBoardProps) => {

@@ -185,8 +185,8 @@ const Index = () => {
 
   const handleTeamAWin = (duration: number) => {
     console.log('🏆 [handleTeamAWin] WIN BUTTON CLICKED FOR TEAM A!');
-    // Reset timer immediately
-    resetTimerOnGameWin();
+    // Pause timer when game is won (don't reset it)
+    pauseTimer();
     
     toast.success(`${teamAName} Wins!`, {
       description: `${teamAName} has won a game`,
@@ -212,15 +212,15 @@ const Index = () => {
       console.log(`   Updated: teamAGames=${teamAGames + 1}, currentGameNumber=${currentGameNumber + 1}`);
     }, 500);
     
-    // Timer will be automatically started for the next game by useScoreboardState
+    // Timer will be controlled by admin (pause/resume/reset)
     
     playSound("win");
   };
 
   const handleTeamBWin = (duration: number) => {
     console.log('🏆 [handleTeamBWin] WIN BUTTON CLICKED FOR TEAM B!');
-    // Reset timer immediately
-    resetTimerOnGameWin();
+    // Pause timer when game is won (don't reset it)
+    pauseTimer();
     
     toast.success(`${teamBName} Wins!`, {
       description: `${teamBName} has won a game`,
@@ -246,7 +246,7 @@ const Index = () => {
       console.log(`   Updated: teamBGames=${teamBGames + 1}, currentGameNumber=${currentGameNumber + 1}`);
     }, 500);
     
-    // Timer will be automatically started for the next game by useScoreboardState
+    // Timer will be controlled by admin (pause/resume/reset)
     
     playSound("win");
   };
@@ -287,7 +287,7 @@ const Index = () => {
       winningTeam,
       teamABalls,
       teamBBalls,
-      breakingTeam: teamAHasBreak ? 'A' : 'B',
+      breakingTeam: (teamAHasBreak ? 'A' : 'B') as 'A' | 'B',
       duration,
       bets: {
         teamA: teamABets,

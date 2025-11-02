@@ -184,8 +184,9 @@ const OnePocketArena = () => {
   };
 
   const handleTeamAWin = (duration: number) => {
-    // Reset timer immediately
-    resetTimerOnGameWin();
+    console.log('🏆 [handleTeamAWin] WIN BUTTON CLICKED FOR TEAM A!');
+    // Pause timer when game is won (don't reset it)
+    pauseTimer();
     
     toast.success(`${teamAName} Wins!`, {
       description: `${teamAName} has won a game`,
@@ -200,6 +201,7 @@ const OnePocketArena = () => {
     setTimeout(() => {
       console.log('🏆 [handleTeamAWin] Incrementing game counter after bet processing');
       console.log(`   Previous: teamAGames=${teamAGames}, currentGameNumber=${currentGameNumber}`);
+      console.log(`   About to call updateGameState with: { teamAGames: ${teamAGames + 1}, currentGameNumber: ${currentGameNumber + 1} }`);
       updateGameState({
         teamAGames: teamAGames + 1,
         teamABalls: 0,
@@ -210,14 +212,15 @@ const OnePocketArena = () => {
       console.log(`   Updated: teamAGames=${teamAGames + 1}, currentGameNumber=${currentGameNumber + 1}`);
     }, 500);
     
-    // Timer will be automatically started for the next game by useScoreboardState
+    // Timer will be controlled by admin (pause/resume/reset)
     
     playSound("win");
   };
 
   const handleTeamBWin = (duration: number) => {
-    // Reset timer immediately
-    resetTimerOnGameWin();
+    console.log('🏆 [handleTeamBWin] WIN BUTTON CLICKED FOR TEAM B!');
+    // Pause timer when game is won (don't reset it)
+    pauseTimer();
     
     toast.success(`${teamBName} Wins!`, {
       description: `${teamBName} has won a game`,
@@ -232,6 +235,7 @@ const OnePocketArena = () => {
     setTimeout(() => {
       console.log('🏆 [handleTeamBWin] Incrementing game counter after bet processing');
       console.log(`   Previous: teamBGames=${teamBGames}, currentGameNumber=${currentGameNumber}`);
+      console.log(`   About to call updateGameState with: { teamBGames: ${teamBGames + 1}, currentGameNumber: ${currentGameNumber + 1} }`);
       updateGameState({
         teamBGames: teamBGames + 1,
         teamABalls: 0,
@@ -242,7 +246,7 @@ const OnePocketArena = () => {
       console.log(`   Updated: teamBGames=${teamBGames + 1}, currentGameNumber=${currentGameNumber + 1}`);
     }, 500);
     
-    // Timer will be automatically started for the next game by useScoreboardState
+    // Timer will be controlled by admin (pause/resume/reset)
     
     playSound("win");
   };

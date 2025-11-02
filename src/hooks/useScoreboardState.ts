@@ -112,12 +112,7 @@ export const useScoreboardState = ({
     const initialGameNumber = onCurrentGameNumberChange ? currentGameNumber : 1;
     setLocalGameNumber(initialGameNumber);
     
-    // Use synchronized timer reset if available, otherwise use local reset
-    if (resetTimerOnMatchStart) {
-      resetTimerOnMatchStart();
-    } else {
-      resetTimer();
-    }
+    // Don't auto-reset timer - let admin control it
     
     const newGameLabel = `GAME ${initialGameNumber}`;
     if (onGameLabelChange) {
