@@ -976,7 +976,7 @@ const OnePocketArena = () => {
         />
         
         <div className="mb-4 flex justify-between items-center">
-          <Link to="/" className="inline-flex items-center transition-colors" style={{ color: '#95deff' }}>
+          <Link to="/" className="inline-flex items-center transition-colors" style={{ color: '#000000' }}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
           </Link>
         </div>
@@ -989,7 +989,7 @@ const OnePocketArena = () => {
           />
         </div>
 
-        <h1 className="text-4xl md:text-5xl font-bold text-center mb-6" style={{ color: '#95deff', textShadow: '0 0 15px rgba(149, 222, 255, 0.8)' }}>One Pocket Arena</h1>
+        <h1 className="text-4xl md:text-5xl font-bold text-center mb-6" style={{ color: '#000000', textShadow: 'none' }}>One Pocket Arena</h1>
 
         <UserCreditSystem isAdmin={isAdminMode} />
 
@@ -1003,7 +1003,7 @@ const OnePocketArena = () => {
 
         {/* Realtime Scoreboard Header */}
         <div className="text-center mb-6">
-          <h2 className="font-bold text-2xl uppercase tracking-wider" style={{ color: '#95deff' }}>
+          <h2 className="font-bold text-2xl uppercase tracking-wider" style={{ color: '#000000' }}>
             REALTIME SCOREBOARD
           </h2>
         </div>
@@ -1056,7 +1056,7 @@ const OnePocketArena = () => {
 
         {/* Betting Queue Header */}
         <div className="text-center mb-6">
-          <h2 className="font-bold text-2xl uppercase tracking-wider" style={{ color: '#95deff' }}>
+          <h2 className="font-bold text-2xl uppercase tracking-wider" style={{ color: '#000000' }}>
             BETTING QUEUE
           </h2>
         </div>
