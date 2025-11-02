@@ -305,36 +305,51 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
             const newState = { ...prevState };
             let hasUpdates = false;
             
-            // Always update queues when received to ensure highlighting syncs
-            if (betData.teamAQueue) {
-              console.log('📥 Updating teamAQueue:', betData.teamAQueue);
-              newState.teamAQueue = betData.teamAQueue;
-              hasUpdates = true;
+            // Smart merging: only update if the incoming data is different or newer
+            if (betData.teamAQueue !== undefined) {
+              console.log('📥 Updating teamAQueue:', betData.teamAQueue.length, 'items');
+              // Only replace if the server has more/different bets, to preserve local additions
+              if (betData.teamAQueue.length > prevState.teamAQueue.length || 
+                  JSON.stringify(betData.teamAQueue) !== JSON.stringify(prevState.teamAQueue)) {
+                newState.teamAQueue = betData.teamAQueue;
+                hasUpdates = true;
+              }
             }
-            if (betData.teamBQueue) {
-              console.log('📥 Updating teamBQueue:', betData.teamBQueue);
-              newState.teamBQueue = betData.teamBQueue;
-              hasUpdates = true;
+            if (betData.teamBQueue !== undefined) {
+              console.log('📥 Updating teamBQueue:', betData.teamBQueue.length, 'items');
+              if (betData.teamBQueue.length > prevState.teamBQueue.length || 
+                  JSON.stringify(betData.teamBQueue) !== JSON.stringify(prevState.teamBQueue)) {
+                newState.teamBQueue = betData.teamBQueue;
+                hasUpdates = true;
+              }
             }
-            if (betData.bookedBets) {
-              console.log('📥 Updating bookedBets:', betData.bookedBets);
-              newState.bookedBets = betData.bookedBets;
-              hasUpdates = true;
+            if (betData.bookedBets !== undefined) {
+              console.log('📥 Updating bookedBets:', betData.bookedBets.length, 'items');
+              if (JSON.stringify(betData.bookedBets) !== JSON.stringify(prevState.bookedBets)) {
+                newState.bookedBets = betData.bookedBets;
+                hasUpdates = true;
+              }
             }
-            if (betData.nextGameBets) {
-              console.log('📥 Updating nextBookedBets:', betData.nextGameBets);
-              newState.nextBookedBets = betData.nextGameBets;
-              hasUpdates = true;
+            if (betData.nextGameBets !== undefined) {
+              console.log('📥 Updating nextBookedBets:', betData.nextGameBets.length, 'items');
+              if (JSON.stringify(betData.nextGameBets) !== JSON.stringify(prevState.nextBookedBets)) {
+                newState.nextBookedBets = betData.nextGameBets;
+                hasUpdates = true;
+              }
             }
-            if (betData.nextTeamAQueue) {
-              console.log('📥 Updating nextTeamAQueue:', betData.nextTeamAQueue);
-              newState.nextTeamAQueue = betData.nextTeamAQueue;
-              hasUpdates = true;
+            if (betData.nextTeamAQueue !== undefined) {
+              console.log('📥 Updating nextTeamAQueue:', betData.nextTeamAQueue.length, 'items');
+              if (JSON.stringify(betData.nextTeamAQueue) !== JSON.stringify(prevState.nextTeamAQueue)) {
+                newState.nextTeamAQueue = betData.nextTeamAQueue;
+                hasUpdates = true;
+              }
             }
-            if (betData.nextTeamBQueue) {
-              console.log('📥 Updating nextTeamBQueue:', betData.nextTeamBQueue);
-              newState.nextTeamBQueue = betData.nextTeamBQueue;
-              hasUpdates = true;
+            if (betData.nextTeamBQueue !== undefined) {
+              console.log('📥 Updating nextTeamBQueue:', betData.nextTeamBQueue.length, 'items');
+              if (JSON.stringify(betData.nextTeamBQueue) !== JSON.stringify(prevState.nextTeamBQueue)) {
+                newState.nextTeamBQueue = betData.nextTeamBQueue;
+                hasUpdates = true;
+              }
             }
             
             if (betData.totalBookedAmount !== undefined) {

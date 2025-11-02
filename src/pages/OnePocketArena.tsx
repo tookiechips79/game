@@ -516,10 +516,14 @@ const OnePocketArena = () => {
     } else {
       if (confirmation.teamSide === 'A') {
         const updatedAQueue = [...teamAQueue, bet];
+        console.log('🎲 [placeBet - ONE POCKET] Placing bet on Team A:', bet);
+        console.log('🎲 [placeBet - ONE POCKET] New Team A Queue length:', updatedAQueue.length);
         updateGameState({ teamAQueue: updatedAQueue });
         bookBets(updatedAQueue, teamBQueue);
       } else {
         const updatedBQueue = [...teamBQueue, bet];
+        console.log('🎲 [placeBet - ONE POCKET] Placing bet on Team B:', bet);
+        console.log('🎲 [placeBet - ONE POCKET] New Team B Queue length:', updatedBQueue.length);
         updateGameState({ teamBQueue: updatedBQueue });
         bookBets(teamAQueue, updatedBQueue);
       }
