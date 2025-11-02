@@ -25,11 +25,11 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <UserProvider>
-      <GameStateProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <HashRouter>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <HashRouter>
+          <GameStateProvider>
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/signup" element={<SignupPage />} />
@@ -45,9 +45,9 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </HashRouter>
-        </TooltipProvider>
-      </GameStateProvider>
+          </GameStateProvider>
+        </HashRouter>
+      </TooltipProvider>
     </UserProvider>
   </QueryClientProvider>
 );
