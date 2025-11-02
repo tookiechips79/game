@@ -989,7 +989,7 @@ const Index = () => {
           />
         </div>
 
-        <h1 className="text-4xl md:text-5xl font-bold text-center mb-6" style={{ color: '#95deff', textShadow: '0 0 15px rgba(149, 222, 255, 0.8)' }}>GameBird</h1>
+        <h1 className="text-4xl md:text-5xl font-bold text-center mb-6" style={{ color: '#95deff', textShadow: '0 0 15px rgba(149, 222, 255, 0.8)' }}>Rotation Arena</h1>
 
         <UserCreditSystem isAdmin={isAdminMode} />
 
