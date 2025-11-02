@@ -265,12 +265,12 @@ const Landing = () => {
         <div className="container mx-auto py-20 px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-4">Choose Your Access Level</h2>
-            <p className="text-xl max-w-3xl mx-auto" style={{ color: '#95deff' }}>
+            <p className="text-xl max-w-full mx-auto" style={{ color: '#95deff' }}>
               Start with a free account to explore, then upgrade to place bets and win real coins
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-full mx-auto">
             {/* Free Access */}
             <Card className="text-white shadow-xl transition-all duration-300" style={{ backgroundColor: 'rgba(0, 75, 107, 0.7)', borderColor: '#95deff' }}>
               <CardContent className="p-8">
