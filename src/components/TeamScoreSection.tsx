@@ -115,44 +115,44 @@ const TeamScoreSection = ({
               <PlusCircle className="h-3 w-3" />
             </Button>
           )}
+          
+          {showBallCount && (
+            <>
+              <div className="border-l-2 border-gray-600 mx-2 h-12"></div>
+              
+              {showControls && !adminLocked && (
+                <Button
+                  onClick={onBallDecrement}
+                  variant="outline"
+                  size="icon"
+                  className="h-6 w-6 bg-gray-800/80 border-gray-700 hover:bg-gray-700 text-[#1EAEDB]"
+                >
+                  <MinusCircle className="h-3 w-3" />
+                </Button>
+              )}
+              <div className="flex flex-col items-center">
+                <div className="flex items-center justify-center mb-1">
+                  <Circle className="h-5 w-5 text-gray-900 mr-1" />
+                  <span className="text-xs font-medium text-gray-900">BALLS</span>
+                </div>
+                <div className="flex justify-center">
+                  <FlipCounter value={balls} color="white" />
+                </div>
+              </div>
+              {showControls && !adminLocked && (
+                <Button
+                  onClick={handleBallIncrement}
+                  variant="outline"
+                  size="icon"
+                  className="h-6 w-6 bg-gray-800/80 border-gray-700 hover:bg-gray-700 text-[#1EAEDB]"
+                >
+                  <PlusCircle className="h-3 w-3" />
+                </Button>
+              )}
+            </>
+          )}
         </div>
       </div>
-      
-      {showBallCount && (
-        <div className="mt-3 flex justify-center">
-          <div className="bg-[#1EAEDB] rounded-2xl p-3 flex items-center justify-center gap-2 transition-all hover:bg-[#1EAEDB]/90 shadow-[0_0_15px_rgba(30,174,219,0.5)]">
-            {showControls && !adminLocked && (
-              <Button
-                onClick={onBallDecrement}
-                variant="outline"
-                size="icon"
-                className="h-6 w-6 bg-gray-800/80 border-gray-700 hover:bg-gray-700 text-[#1EAEDB]"
-              >
-                <MinusCircle className="h-3 w-3" />
-              </Button>
-            )}
-            <div className="flex flex-col items-center">
-              <div className="flex items-center justify-center mb-1">
-                <Circle className="h-5 w-5 text-gray-900 mr-1" />
-                <span className="text-xs font-medium text-gray-900">BALLS</span>
-              </div>
-              <div className="flex justify-center">
-                <FlipCounter value={balls} color="white" />
-              </div>
-            </div>
-            {showControls && !adminLocked && (
-              <Button
-                onClick={handleBallIncrement}
-                variant="outline"
-                size="icon"
-                className="h-6 w-6 bg-gray-800/80 border-gray-700 hover:bg-gray-700 text-[#1EAEDB]"
-              >
-                <PlusCircle className="h-3 w-3" />
-              </Button>
-            )}
-          </div>
-        </div>
-      )}
       
       {showControls && !adminLocked && isMatchStarted && (
         <div className="mt-4 flex justify-center space-x-2">
