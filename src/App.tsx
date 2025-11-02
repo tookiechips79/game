@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, HashRouter } from "react-router-dom";
 import { UserProvider } from "@/contexts/UserContext";
 import { GameStateProvider } from "@/contexts/GameStateContext";
-import Index from "./pages/Index";
+import BettingArenas from "./pages/BettingArenas";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import PaymentPage from "./pages/Payment";
@@ -34,7 +34,7 @@ const App = () => (
               <Route path="/member-signup" element={<MemberSignupPage />} />
               <Route path="/features" element={<FeaturesPage />} />
               <Route path="/about" element={<AboutPage />} />
-              <Route path="/betting-queue" element={<Index />} />
+              <Route path="/betting-queue" element={<BettingArenas />} />
               <Route path="/subscription" element={<PaymentPage />} />
               <Route path="/user-settings" element={<UserSettings />} />
               <Route path="/reload-coins" element={<ReloadCoinsPage />} />
