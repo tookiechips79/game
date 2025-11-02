@@ -314,17 +314,18 @@ io.on('connection', (socket) => {
     try {
       const arenaState = getGameState(currentArenaId);
       console.log(`📤 [EMIT 1] About to emit game-state-update for arena '${currentArenaId}'`);
-      socket.emit('game-state-update', arenaState);
+      // Emit initial game state with arena ID
+      socket.emit('game-state-update', { ...arenaState, arenaId: currentArenaId });
       console.log(`✅ [EMIT 1] game-state-update emitted`);
       
-      console.log(`📤 [EMIT 2] About to emit connected-users-coins-update`);
+      // Emit connected users coins
       const coinsData = calculateConnectedUsersCoins();
-      socket.emit('connected-users-coins-update', coinsData);
+      socket.emit('connected-users-coins-update', { ...coinsData, arenaId: currentArenaId });
       console.log(`✅ [EMIT 2] connected-users-coins-update emitted`);
       
-      // Also send bet data immediately after arena switch
-      console.log(`📤 [EMIT 3] About to emit bet-update with current queues for arena '${currentArenaId}'`);
+      // Emit initial bet data with arena ID
       const betData = {
+        arenaId: currentArenaId,
         teamAQueue: arenaState.teamAQueue,
         teamBQueue: arenaState.teamBQueue,
         bookedBets: arenaState.bookedBets,
@@ -356,9 +357,9 @@ io.on('connection', (socket) => {
     const arenaId = data?.arenaId || currentArenaId;
     const arenaState = getGameState(arenaId);
     console.log(`📥 [REQUEST] Game state requested by ${socket.id} for arena '${arenaId}'`);
-    socket.emit('game-state-update', arenaState);
+    socket.emit('game-state-update', { ...arenaState, arenaId });
     const coinsData = calculateConnectedUsersCoins();
-    socket.emit('connected-users-coins-update', coinsData);
+    socket.emit('connected-users-coins-update', { ...coinsData, arenaId });
     console.log(`📤 [RESPONSE] Game state sent to ${socket.id}`);
   });
   
