@@ -30,9 +30,6 @@ import { useSound } from "@/hooks/use-sound";
 // This arena syncs only with itself, not with the 9 Ball Arena
 // ============================================================================
 
-// Set the arena ID so GameStateContext uses separate storage keys
-(window as any).__ARENA_ID = 'one_pocket';
-
 const OnePocketArena = () => {
   const { 
     currentUser, 

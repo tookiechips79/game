@@ -30,9 +30,6 @@ import { useSound } from "@/hooks/use-sound";
 // This arena syncs only with itself, not with the One Pocket Arena
 // ============================================================================
 
-// Set the arena ID so GameStateContext uses separate storage keys
-(window as any).__ARENA_ID = 'default';
-
 const Index = () => {
   const { 
     currentUser, 

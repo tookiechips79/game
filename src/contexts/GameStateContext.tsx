@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useRef, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Bet, BookedBet } from '@/types/user';
 import { socketIOService, BetSyncData, GameStateSyncData, TimerSyncData, ScoreSyncData } from '@/services/socketIOService';
 import { useUser } from './UserContext';
@@ -115,6 +116,19 @@ const defaultLocalAdminState: LocalAdminState = {
 };
 
 export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const location = useLocation();
+  
+  // Determine arena ID based on current route
+  const getArenaIdFromRoute = () => {
+    if (location.pathname.includes('/one-pocket-arena')) {
+      return 'one_pocket';
+    }
+    return 'default';
+  };
+  
+  // Override getArenaId to use route-based detection
+  const currentArenaId = getArenaIdFromRoute();
+  
   const [gameState, setGameState] = useState<GameState>(defaultGameState);
   const [localAdminState, setLocalAdminState] = useState<LocalAdminState>(defaultLocalAdminState);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
@@ -127,7 +141,8 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   // Load game state from localStorage on mount
   useEffect(() => {
-    const storedGameState = localStorage.getItem(getGameStateStorageKey());
+    const storageKey = `betting_app_game_state_${currentArenaId}`;
+    const storedGameState = localStorage.getItem(storageKey);
     if (storedGameState) {
       try {
         const parsedState = JSON.parse(storedGameState);
@@ -137,11 +152,12 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       setGameState(defaultGameState);
       }
     }
-  }, []);
+  }, [currentArenaId]);
 
   // Load local admin state from localStorage on mount (separate from game state)
   useEffect(() => {
-    const storedLocalAdminState = localStorage.getItem(getLocalAdminStorageKey());
+    const storageKey = `betting_app_local_admin_state_${currentArenaId}`;
+    const storedLocalAdminState = localStorage.getItem(storageKey);
     if (storedLocalAdminState) {
       try {
         const parsedState = JSON.parse(storedLocalAdminState);
@@ -156,22 +172,24 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
         setLocalAdminState(defaultLocalAdminState);
       }
     }
-  }, []);
+  }, [currentArenaId]);
 
   // Save game state to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem(getGameStateStorageKey(), JSON.stringify(gameState));
-  }, [gameState]);
+    const storageKey = `betting_app_game_state_${currentArenaId}`;
+    localStorage.setItem(storageKey, JSON.stringify(gameState));
+  }, [gameState, currentArenaId]);
 
   // Save local admin state to localStorage whenever it changes (separate from game state)
   useEffect(() => {
+    const storageKey = `betting_app_local_admin_state_${currentArenaId}`;
     // Only persist isAgentMode, NOT isAdminMode (admin mode requires password every time)
     const stateToSave = {
       isAdminMode: false,  // Never save admin mode - must re-authenticate
       isAgentMode: localAdminState.isAgentMode  // Keep agent mode preference
     };
-    localStorage.setItem(getLocalAdminStorageKey(), JSON.stringify(stateToSave));
-  }, [localAdminState]);
+    localStorage.setItem(storageKey, JSON.stringify(stateToSave));
+  }, [localAdminState, currentArenaId]);
 
   // Listen for storage changes from other tabs/windows
   useEffect(() => {
@@ -222,8 +240,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     // Helper to validate arena before processing update
     const validateArenaAndUpdate = (updateProcessor: () => void) => {
-      const currentArena = getArenaId();
-      console.log(`🎯 [ARENA VALIDATION] Current arena: ${currentArena}`);
+      console.log(`🎯 [ARENA VALIDATION] Current arena: ${currentArenaId}`);
       updateProcessor();
     };
 
@@ -427,7 +444,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       // Cleanup: disconnect when component unmounts
       socketIOService.disconnect();
     };
-  }, []);
+  }, [currentArenaId]);
 
   // Server-authoritative timer effect for perfect synchronization
   useEffect(() => {
