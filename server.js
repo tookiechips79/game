@@ -520,7 +520,18 @@ io.on('connection', (socket) => {
     console.log(`📥 Received game state update for arena '${arenaId}':`, actualGameState);
     
     const arenaState = getGameState(arenaId);
+    
+    // Detect if a game was won (currentGameNumber increased)
+    const gameWonDetected = actualGameState.currentGameNumber && 
+                           actualGameState.currentGameNumber > arenaState.currentGameNumber;
+    
     Object.assign(arenaState, actualGameState);
+    
+    // If a game was won, reset the timer
+    if (gameWonDetected) {
+      console.log(`🏆 [GAME WON] Game ${actualGameState.currentGameNumber} started - resetting timer for arena '${arenaId}'`);
+      resetServerTimer(arenaId);
+    }
     
     // Broadcast ONLY to the specific arena's room - INCLUDE arenaId
     io.to(`arena:${arenaId}`).emit('game-state-update', { ...actualGameState, arenaId });
