@@ -292,7 +292,7 @@ io.on('connection', (socket) => {
   // Join the default arena room immediately on connection
   socket.join(`arena:${currentArenaId}`);
   
-  // Handle arena identification from client
+  // Handle arena identification from client - THIS SHOULD HAPPEN FIRST
   socket.on('set-arena', (data) => {
     const newArenaId = data.arenaId || 'default';
     
@@ -307,38 +307,37 @@ io.on('connection', (socket) => {
     // Join the new arena-specific room
     socket.join(`arena:${newArenaId}`);
     console.log(`🎯 [ARENA] Socket ${socket.id} switched to arena: ${currentArenaId} and joined room arena:${currentArenaId}`);
+    
+    // SEND INITIAL DATA ONLY AFTER ARENA IS IDENTIFIED
+    try {
+      const arenaState = getGameState(currentArenaId);
+      console.log(`📤 [EMIT 1] About to emit game-state-update for arena '${currentArenaId}'`);
+      socket.emit('game-state-update', arenaState);
+      console.log(`✅ [EMIT 1] game-state-update emitted`);
+      
+      console.log(`📤 [EMIT 2] About to emit connected-users-coins-update`);
+      const coinsData = calculateConnectedUsersCoins();
+      socket.emit('connected-users-coins-update', coinsData);
+      console.log(`✅ [EMIT 2] connected-users-coins-update emitted`);
+      
+      // Also send bet data immediately after arena switch
+      console.log(`📤 [EMIT 3] About to emit bet-update with current queues for arena '${currentArenaId}'`);
+      const betData = {
+        teamAQueue: arenaState.teamAQueue,
+        teamBQueue: arenaState.teamBQueue,
+        bookedBets: arenaState.bookedBets,
+        nextGameBets: arenaState.nextGameBets,
+        nextTeamAQueue: arenaState.nextTeamAQueue,
+        nextTeamBQueue: arenaState.nextTeamBQueue
+      };
+      socket.emit('bet-update', betData);
+      console.log(`✅ [EMIT 3] bet-update emitted with queues`);
+      
+      console.log(`📤 [ARENA] Initial data sent to ${socket.id} for arena '${currentArenaId}'`);
+    } catch (error) {
+      console.error(`❌ [ARENA] Error sending initial data to ${socket.id}:`, error.message);
+    }
   });
-  
-  // Send current game state to newly connected client
-  try {
-    const arenaState = getGameState(currentArenaId);
-    console.log(`📤 [EMIT 1] About to emit game-state-update for arena '${currentArenaId}'`);
-    socket.emit('game-state-update', arenaState);
-    console.log(`✅ [EMIT 1] game-state-update emitted`);
-    
-    console.log(`📤 [EMIT 2] About to emit connected-users-coins-update`);
-    const coinsData = calculateConnectedUsersCoins();
-    socket.emit('connected-users-coins-update', coinsData);
-    console.log(`✅ [EMIT 2] connected-users-coins-update emitted`);
-    
-    // Also send bet data immediately on connection
-    console.log(`📤 [EMIT 3] About to emit bet-update with current queues for arena '${currentArenaId}'`);
-    const betData = {
-      teamAQueue: arenaState.teamAQueue,
-      teamBQueue: arenaState.teamBQueue,
-      bookedBets: arenaState.bookedBets,
-      nextGameBets: arenaState.nextGameBets,
-      nextTeamAQueue: arenaState.nextTeamAQueue,
-      nextTeamBQueue: arenaState.nextTeamBQueue
-    };
-    socket.emit('bet-update', betData);
-    console.log(`✅ [EMIT 3] bet-update emitted with queues`);
-    
-    console.log(`📤 [CONNECTION] Initial data sent to ${socket.id}`);
-  } catch (error) {
-    console.error(`❌ [CONNECTION] Error sending initial data to ${socket.id}:`, error.message);
-    console.error(`❌ [CONNECTION] Stack:`, error.stack);
-  }
   
   // Handle any socket errors
   socket.on('error', (error) => {
