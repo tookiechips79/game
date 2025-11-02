@@ -585,14 +585,14 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
         console.log('📤 Socket.IO connected, emitting updates:', updates);
         
         // Emit bet-related updates
-        if (updates.teamAQueue || updates.teamBQueue || updates.bookedBets || updates.nextBookedBets || updates.nextTeamAQueue || updates.nextTeamBQueue) {
+        if (updates.teamAQueue !== undefined || updates.teamBQueue !== undefined || updates.bookedBets !== undefined || updates.nextBookedBets !== undefined || updates.nextTeamAQueue !== undefined || updates.nextTeamBQueue !== undefined) {
           const betData: BetSyncData = {};
-          if (updates.teamAQueue) betData.teamAQueue = updates.teamAQueue;
-          if (updates.teamBQueue) betData.teamBQueue = updates.teamBQueue;
-          if (updates.bookedBets) betData.bookedBets = updates.bookedBets;
-          if (updates.nextBookedBets) betData.nextGameBets = updates.nextBookedBets;
-          if (updates.nextTeamAQueue) betData.nextTeamAQueue = updates.nextTeamAQueue;
-          if (updates.nextTeamBQueue) betData.nextTeamBQueue = updates.nextTeamBQueue;
+          if (updates.teamAQueue !== undefined) betData.teamAQueue = updates.teamAQueue;
+          if (updates.teamBQueue !== undefined) betData.teamBQueue = updates.teamBQueue;
+          if (updates.bookedBets !== undefined) betData.bookedBets = updates.bookedBets;
+          if (updates.nextBookedBets !== undefined) betData.nextGameBets = updates.nextBookedBets;
+          if (updates.nextTeamAQueue !== undefined) betData.nextTeamAQueue = updates.nextTeamAQueue;
+          if (updates.nextTeamBQueue !== undefined) betData.nextTeamBQueue = updates.nextTeamBQueue;
           
           console.log('📤 Emitting bet update:', betData);
           console.log('📤 Sample bet with userName:', betData.teamAQueue?.[0] || betData.teamBQueue?.[0]);
