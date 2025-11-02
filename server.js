@@ -267,13 +267,15 @@ function resetServerTimer(arenaId = 'default') {
   arenaState.isTimerRunning = false;
   arenaState.timerSeconds = 0;
   
-  // Broadcast timer reset only to this arena's room
+  // Broadcast timer reset to clients for this arena
   io.to(`arena:${arenaId}`).emit('timer-update', {
     isTimerRunning: false,
     timerSeconds: 0,
     serverStartTime: null,
-    accumulatedTime: 0
+    accumulatedTime: 0,
+    arenaId: arenaId
   });
+  console.log(`📤 [TIMER RESET] timer-update emitted with timerSeconds: 0 for arena '${arenaId}'`);
 }
 
 // Socket.IO middleware to log and accept all connections
