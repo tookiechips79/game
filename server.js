@@ -345,14 +345,18 @@ io.on('connection', (socket) => {
       console.log(`✅ [EMIT 1] game-state-update emitted`);
       
       // Emit initial timer state with server's authoritative start time
+      const currentElapsed = timer.continuousStartTime 
+        ? Math.floor((Date.now() - timer.continuousStartTime) / 1000)
+        : 0;
+      
       socket.emit('timer-update', {
-        isTimerRunning: arenaState.isTimerRunning,
-        timerSeconds: arenaState.timerSeconds,
+        isTimerRunning: timer.isRunning,
+        timerSeconds: currentElapsed,
         serverStartTime: timer.startTime,  // Milliseconds when timer started
-        accumulatedTime: timer.accumulatedTime,
+        accumulatedTime: currentElapsed,
         arenaId: currentArenaId
       });
-      console.log(`✅ [EMIT TIMER] timer-update emitted with serverStartTime: ${timer.startTime}`);
+      console.log(`✅ [EMIT TIMER] timer-update emitted with elapsed time: ${currentElapsed}s`);
       
       // Emit connected users coins
       const coinsData = calculateConnectedUsersCoins();
@@ -529,12 +533,17 @@ io.on('connection', (socket) => {
     console.log(`📥 Received timer update for arena '${arenaId}':`, actualTimerData);
     
     const arenaState = getGameState(arenaId);
-    arenaState.isTimerRunning = actualTimerData.isTimerRunning;
-    arenaState.timerSeconds = actualTimerData.timerSeconds;
+    const timer = getArenaTimer(arenaId);
     
-    // Broadcast ONLY to the specific arena's room - INCLUDE arenaId
-    io.to(`arena:${arenaId}`).emit('timer-update', { ...actualTimerData, arenaId });
-    console.log(`📤 Broadcasted timer-update to arena '${arenaId}'`);
+    // If timer is being started, ensure continuousStartTime is set
+    if (actualTimerData.isTimerRunning && !timer.isRunning) {
+      startServerTimer(arenaId);
+    }
+    // If timer is being paused, ensure it stops but keeps accumulated time
+    else if (!actualTimerData.isTimerRunning && timer.isRunning) {
+      stopServerTimer(arenaId);
+    }
+    // If timer was already running, nothing to do - server maintains its own time
   });
   
   // Handle timer heartbeat requests
@@ -543,11 +552,17 @@ io.on('connection', (socket) => {
     const arenaId = socketArenaMap.get(socket.id) || 'default';
     const arenaState = getGameState(arenaId);
     const timer = getArenaTimer(arenaId);
+    
+    // Calculate current elapsed time from continuous start
+    const currentElapsed = timer.continuousStartTime 
+      ? Math.floor((Date.now() - timer.continuousStartTime) / 1000)
+      : 0;
+    
     socket.emit('timer-update', {
-      isTimerRunning: arenaState.isTimerRunning,
-      timerSeconds: arenaState.timerSeconds,
-      serverStartTime: timer.startTime,  // Server's start time (null if paused)
-      accumulatedTime: timer.accumulatedTime,
+      isTimerRunning: timer.isRunning,
+      timerSeconds: currentElapsed,
+      serverStartTime: timer.startTime,
+      accumulatedTime: currentElapsed,
       arenaId: arenaId
     });
   });
