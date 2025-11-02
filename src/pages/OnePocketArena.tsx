@@ -184,15 +184,7 @@ const OnePocketArena = () => {
   };
 
   const handleTeamAWin = (duration: number) => {
-    updateGameState({
-      teamAGames: teamAGames + 1,
-      teamABalls: 0,
-      teamBBalls: 0,
-      teamAHasBreak: !teamAHasBreak,
-      currentGameNumber: currentGameNumber + 1
-    });
-    
-    // Reset timer to zero when game is won
+    // Reset timer immediately
     resetTimerOnGameWin();
     
     toast.success(`${teamAName} Wins!`, {
@@ -200,7 +192,19 @@ const OnePocketArena = () => {
       className: "custom-toast-success",
     });
 
+    // Process bets FIRST before incrementing game counter
     processBetsForGameWin('A', duration);
+    
+    // Increment game counter and game number AFTER bets are processed
+    setTimeout(() => {
+      updateGameState({
+        teamAGames: teamAGames + 1,
+        teamABalls: 0,
+        teamBBalls: 0,
+        teamAHasBreak: !teamAHasBreak,
+        currentGameNumber: currentGameNumber + 1
+      });
+    }, 200);
     
     // Timer will be automatically started for the next game by useScoreboardState
     
@@ -208,15 +212,7 @@ const OnePocketArena = () => {
   };
 
   const handleTeamBWin = (duration: number) => {
-    updateGameState({
-      teamBGames: teamBGames + 1,
-      teamABalls: 0,
-      teamBBalls: 0,
-      teamAHasBreak: !teamAHasBreak,
-      currentGameNumber: currentGameNumber + 1
-    });
-    
-    // Reset timer to zero when game is won
+    // Reset timer immediately
     resetTimerOnGameWin();
     
     toast.success(`${teamBName} Wins!`, {
@@ -224,7 +220,19 @@ const OnePocketArena = () => {
       className: "custom-toast-success",
     });
 
+    // Process bets FIRST before incrementing game counter
     processBetsForGameWin('B', duration);
+    
+    // Increment game counter and game number AFTER bets are processed
+    setTimeout(() => {
+      updateGameState({
+        teamBGames: teamBGames + 1,
+        teamABalls: 0,
+        teamBBalls: 0,
+        teamAHasBreak: !teamAHasBreak,
+        currentGameNumber: currentGameNumber + 1
+      });
+    }, 200);
     
     // Timer will be automatically started for the next game by useScoreboardState
     
