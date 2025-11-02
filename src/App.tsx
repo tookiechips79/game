@@ -34,11 +34,11 @@ const ArenaSelector = () => {
   if (!isArenasPage) return null;
 
   const handleRotationArena = () => {
-    navigate("/#/");
+    navigate("/");
   };
 
   const handleOnePocketArena = () => {
-    navigate("/#/one-pocket-arena");
+    navigate("/one-pocket-arena");
   };
 
   const isRotation = currentPath === "/" || currentPath === "/betting-queue";
