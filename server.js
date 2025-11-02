@@ -206,9 +206,12 @@ function startServerTimer(arenaId = 'default') {
     arenaState.timerSeconds = timer.accumulatedTime + elapsed;
     
     // Broadcast timer update only to this arena's room
+    // Include serverStartTime so clients can calculate accurate elapsed time
     io.to(`arena:${arenaId}`).emit('timer-update', {
       isTimerRunning: arenaState.isTimerRunning,
-      timerSeconds: arenaState.timerSeconds
+      timerSeconds: arenaState.timerSeconds,
+      serverStartTime: timer.startTime,  // Server's start time in milliseconds
+      accumulatedTime: timer.accumulatedTime  // Time accumulated before this session
     });
   }, 1000);
 }
@@ -235,7 +238,9 @@ function stopServerTimer(arenaId = 'default') {
   // Broadcast timer stop only to this arena's room
   io.to(`arena:${arenaId}`).emit('timer-update', {
     isTimerRunning: false,
-    timerSeconds: arenaState.timerSeconds
+    timerSeconds: arenaState.timerSeconds,
+    serverStartTime: null,
+    accumulatedTime: timer.accumulatedTime
   });
 }
 
@@ -250,7 +255,9 @@ function resetServerTimer(arenaId = 'default') {
   // Broadcast timer reset only to this arena's room
   io.to(`arena:${arenaId}`).emit('timer-update', {
     isTimerRunning: false,
-    timerSeconds: 0
+    timerSeconds: 0,
+    serverStartTime: null,
+    accumulatedTime: 0
   });
 }
 
@@ -508,9 +515,12 @@ io.on('connection', (socket) => {
     // Send current server timer state to requesting client
     const arenaId = socketArenaMap.get(socket.id) || 'default';
     const arenaState = getGameState(arenaId);
+    const timer = getArenaTimer(arenaId);
     socket.emit('timer-update', {
       isTimerRunning: arenaState.isTimerRunning,
       timerSeconds: arenaState.timerSeconds,
+      serverStartTime: timer.startTime,  // Server's start time (null if paused)
+      accumulatedTime: timer.accumulatedTime,
       arenaId: arenaId
     });
   });

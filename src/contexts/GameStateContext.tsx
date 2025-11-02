@@ -419,8 +419,19 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
         // Set flag to prevent local timer conflicts
         isReceivingServerUpdate.current = true;
         
-        // Stop local timer when receiving server update to prevent drift
-        // The timer is now managed by requestAnimationFrame in the useEffect hook
+        // Update server start time for accurate elapsed time calculation
+        // This is crucial when browser reconnects after being closed
+        if (timerData.serverStartTime !== null && timerData.serverStartTime !== undefined) {
+          serverTimerStartRef.current = timerData.serverStartTime;
+          console.log(`⏱️ [Timer Sync] Updated server start time from server: ${new Date(timerData.serverStartTime).toISOString()}`);
+        } else {
+          // Timer is paused, reset start time
+          serverTimerStartRef.current = null;
+          console.log('⏱️ [Timer Sync] Timer paused, clearing server start time');
+        }
+        
+        // Store the latest received timer seconds for fallback calculation
+        lastReceivedTimerSecondsRef.current = timerData.timerSeconds;
         
         setCurrentGameState(prevState => ({
           ...prevState,
@@ -483,39 +494,41 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     };
   }, [currentArenaId]);
 
-  // Server-authoritative timer effect for perfect synchronization
+  // Timer state - track server's start time for accurate server-authoritative timing
+  const serverTimerStartRef = useRef<number | null>(null);
+  const lastReceivedTimerSecondsRef = useRef<number>(0);
+  
+  // Server-authoritative timer effect - uses server's start time as source of truth
   useEffect(() => {
     let rafId: number | null = null;
     let lastSecond: number = -1;
-    let lastSyncTime: number = Date.now();
-    const SYNC_INTERVAL = 5000; // Sync with server every 5 seconds for accuracy
     
     // Only run if timer is running
     if (getCurrentGameState().isTimerRunning) {
-      const startTime = Date.now();
-      const startSeconds = getCurrentGameState().timerSeconds;
+      // If we don't have a server start time, we'll get it from the next timer-update
+      // For now, calculate based on current timerSeconds value
+      if (serverTimerStartRef.current === null) {
+        serverTimerStartRef.current = Date.now() - (getCurrentGameState().timerSeconds * 1000);
+        console.log(`⏱️ [Timer Init] Setting server start time based on current timerSeconds: ${getCurrentGameState().timerSeconds}s`);
+      }
+      
+      const calculateElapsedSeconds = () => {
+        if (serverTimerStartRef.current === null) return lastReceivedTimerSecondsRef.current;
+        
+        const elapsed = Math.floor((Date.now() - serverTimerStartRef.current) / 1000);
+        return elapsed;
+      };
       
       const updateTimer = () => {
-        const currentTime = Date.now();
-        const elapsed = Math.floor((currentTime - startTime) / 1000);
-        const newSeconds = startSeconds + elapsed;
+        const elapsedSeconds = calculateElapsedSeconds();
         
         // Only update state when second changes (reduces re-renders)
-        if (newSeconds !== lastSecond) {
-          lastSecond = newSeconds;
+        if (elapsedSeconds !== lastSecond) {
+          lastSecond = elapsedSeconds;
           setCurrentGameState(prev => ({
             ...prev,
-            timerSeconds: newSeconds
+            timerSeconds: elapsedSeconds
           }));
-        }
-        
-        // Periodically sync with server to correct any drift
-        // This ensures accuracy even if the browser is closed and reopened
-        if (currentTime - lastSyncTime > SYNC_INTERVAL) {
-          lastSyncTime = currentTime;
-          // Request server's current timer value to verify accuracy
-          socketIOService.emitTimerHeartbeat();
-          console.log('⏱️ [Timer Sync] Requesting server sync to verify accuracy');
         }
         
         rafId = requestAnimationFrame(updateTimer);
@@ -524,7 +537,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       rafId = requestAnimationFrame(updateTimer);
     } else {
       lastSecond = -1;
-      lastSyncTime = Date.now();
+      serverTimerStartRef.current = null;
     }
     
     return () => {
@@ -532,7 +545,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
         cancelAnimationFrame(rafId);
       }
     };
-  }, [getCurrentGameState().isTimerRunning, getCurrentGameState().timerSeconds]);
+  }, [getCurrentGameState().isTimerRunning]);
 
   // Handle visibility changes to ensure timer accuracy when tab becomes active again (mobile-friendly)
   useEffect(() => {
