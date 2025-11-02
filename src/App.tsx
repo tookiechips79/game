@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, HashRouter } from "react-router-dom";
+import { BrowserRouter, Routes, Route, HashRouter, useLocation, useNavigate } from "react-router-dom";
 import { UserProvider } from "@/contexts/UserContext";
 import { GameStateProvider } from "@/contexts/GameStateContext";
 import Index from "./pages/Index";
@@ -21,6 +21,59 @@ import FAQPage from "./pages/FAQ";
 import "./App.css";
 
 const queryClient = new QueryClient();
+
+// Quick access arena selector component
+const ArenaSelector = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const currentPath = location.pathname;
+  
+  // Don't show on landing or other non-arena pages
+  const isArenasPage = currentPath === "/" || currentPath === "/betting-queue" || currentPath === "/one-pocket-arena";
+  
+  if (!isArenasPage) return null;
+
+  const handleRotationArena = () => {
+    navigate("/#/");
+  };
+
+  const handleOnePocketArena = () => {
+    navigate("/#/one-pocket-arena");
+  };
+
+  const isRotation = currentPath === "/" || currentPath === "/betting-queue";
+  const isOnePocket = currentPath === "/one-pocket-arena";
+
+  return (
+    <div className="fixed bottom-6 left-6 flex flex-col gap-3 z-50">
+      {/* Rotation Arena Button */}
+      <button
+        onClick={handleRotationArena}
+        className={`w-16 h-16 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl ${
+          isRotation
+            ? "bg-gradient-to-br from-[#00FF00] to-[#00FFCC] text-black ring-2 ring-[#00FF00]"
+            : "bg-gray-700 text-white hover:bg-gray-600"
+        }`}
+        title="Rotation Arena (9 Ball)"
+      >
+        <span className="text-2xl">9</span>
+      </button>
+
+      {/* One Pocket Arena Button */}
+      <button
+        onClick={handleOnePocketArena}
+        className={`w-16 h-16 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl ${
+          isOnePocket
+            ? "bg-gradient-to-br from-[#ADD8E6] to-[#87CEEB] text-black ring-2 ring-[#ADD8E6]"
+            : "bg-gray-700 text-white hover:bg-gray-600"
+        }`}
+        title="One Pocket Arena"
+      >
+        <span className="text-sm">1P</span>
+      </button>
+    </div>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -45,6 +98,7 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <ArenaSelector />
           </GameStateProvider>
         </HashRouter>
       </TooltipProvider>
