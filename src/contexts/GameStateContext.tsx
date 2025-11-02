@@ -308,48 +308,39 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
             // Smart merging: only update if the incoming data is different or newer
             if (betData.teamAQueue !== undefined) {
               console.log('📥 Updating teamAQueue:', betData.teamAQueue.length, 'items');
-              // Only replace if the server has more/different bets, to preserve local additions
-              if (betData.teamAQueue.length > prevState.teamAQueue.length || 
-                  JSON.stringify(betData.teamAQueue) !== JSON.stringify(prevState.teamAQueue)) {
-                newState.teamAQueue = betData.teamAQueue;
-                hasUpdates = true;
-              }
+              // Always update teamAQueue - server is authoritative
+              newState.teamAQueue = betData.teamAQueue;
+              hasUpdates = true;
             }
             if (betData.teamBQueue !== undefined) {
               console.log('📥 Updating teamBQueue:', betData.teamBQueue.length, 'items');
-              if (betData.teamBQueue.length > prevState.teamBQueue.length || 
-                  JSON.stringify(betData.teamBQueue) !== JSON.stringify(prevState.teamBQueue)) {
-                newState.teamBQueue = betData.teamBQueue;
-                hasUpdates = true;
-              }
+              // Always update teamBQueue - server is authoritative
+              newState.teamBQueue = betData.teamBQueue;
+              hasUpdates = true;
             }
             if (betData.bookedBets !== undefined) {
               console.log('📥 Updating bookedBets:', betData.bookedBets.length, 'items');
-              if (JSON.stringify(betData.bookedBets) !== JSON.stringify(prevState.bookedBets)) {
-                newState.bookedBets = betData.bookedBets;
-                hasUpdates = true;
-              }
+              // Always update bookedBets - server is authoritative
+              newState.bookedBets = betData.bookedBets;
+              hasUpdates = true;
             }
             if (betData.nextGameBets !== undefined) {
               console.log('📥 Updating nextBookedBets:', betData.nextGameBets.length, 'items');
-              if (JSON.stringify(betData.nextGameBets) !== JSON.stringify(prevState.nextBookedBets)) {
-                newState.nextBookedBets = betData.nextGameBets;
-                hasUpdates = true;
-              }
+              // Always update nextBookedBets - server is authoritative
+              newState.nextBookedBets = betData.nextGameBets;
+              hasUpdates = true;
             }
             if (betData.nextTeamAQueue !== undefined) {
               console.log('📥 Updating nextTeamAQueue:', betData.nextTeamAQueue.length, 'items');
-              if (JSON.stringify(betData.nextTeamAQueue) !== JSON.stringify(prevState.nextTeamAQueue)) {
-                newState.nextTeamAQueue = betData.nextTeamAQueue;
-                hasUpdates = true;
-              }
+              // Always update - server is authoritative
+              newState.nextTeamAQueue = betData.nextTeamAQueue;
+              hasUpdates = true;
             }
             if (betData.nextTeamBQueue !== undefined) {
               console.log('📥 Updating nextTeamBQueue:', betData.nextTeamBQueue.length, 'items');
-              if (JSON.stringify(betData.nextTeamBQueue) !== JSON.stringify(prevState.nextTeamBQueue)) {
-                newState.nextTeamBQueue = betData.nextTeamBQueue;
-                hasUpdates = true;
-              }
+              // Always update - server is authoritative
+              newState.nextTeamBQueue = betData.nextTeamBQueue;
+              hasUpdates = true;
             }
             
             if (betData.totalBookedAmount !== undefined) {
@@ -587,17 +578,33 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
         // Emit bet-related updates
         if (updates.teamAQueue !== undefined || updates.teamBQueue !== undefined || updates.bookedBets !== undefined || updates.nextBookedBets !== undefined || updates.nextTeamAQueue !== undefined || updates.nextTeamBQueue !== undefined) {
           const betData: BetSyncData = {};
-          if (updates.teamAQueue !== undefined) betData.teamAQueue = updates.teamAQueue;
-          if (updates.teamBQueue !== undefined) betData.teamBQueue = updates.teamBQueue;
-          if (updates.bookedBets !== undefined) betData.bookedBets = updates.bookedBets;
+          if (updates.teamAQueue !== undefined) {
+            console.log('📤 [DETAIL] teamAQueue type:', typeof updates.teamAQueue, 'isArray:', Array.isArray(updates.teamAQueue));
+            console.log('📤 [DETAIL] teamAQueue value:', updates.teamAQueue);
+            betData.teamAQueue = updates.teamAQueue;
+          }
+          if (updates.teamBQueue !== undefined) {
+            console.log('📤 [DETAIL] teamBQueue type:', typeof updates.teamBQueue, 'isArray:', Array.isArray(updates.teamBQueue));
+            console.log('📤 [DETAIL] teamBQueue value:', updates.teamBQueue);
+            betData.teamBQueue = updates.teamBQueue;
+          }
+          if (updates.bookedBets !== undefined) {
+            console.log('📤 [DETAIL] bookedBets type:', typeof updates.bookedBets, 'isArray:', Array.isArray(updates.bookedBets));
+            console.log('📤 [DETAIL] bookedBets value:', updates.bookedBets);
+            betData.bookedBets = updates.bookedBets;
+          }
           if (updates.nextBookedBets !== undefined) betData.nextGameBets = updates.nextBookedBets;
           if (updates.nextTeamAQueue !== undefined) betData.nextTeamAQueue = updates.nextTeamAQueue;
           if (updates.nextTeamBQueue !== undefined) betData.nextTeamBQueue = updates.nextTeamBQueue;
           
           console.log('📤 Emitting bet update:', betData);
           console.log('📤 Sample bet with userName:', betData.teamAQueue?.[0] || betData.teamBQueue?.[0]);
+          console.log('📤 [FINAL CHECK] betData.teamAQueue is array?:', Array.isArray(betData.teamAQueue));
           // Use microtask to ensure React state update is processed before sending to server
-          Promise.resolve().then(() => socketIOService.emitBetUpdate(betData));
+          Promise.resolve().then(() => {
+            console.log('📤 [BEFORE EMIT] betData.teamAQueue type:', typeof betData.teamAQueue, 'value:', betData.teamAQueue);
+            socketIOService.emitBetUpdate(betData);
+          });
         }
         
         // Emit total booked coins updates

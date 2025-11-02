@@ -222,7 +222,12 @@ class SocketIOService {
     if (this.isSocketConnected()) {
       const arenaId = this.getArenaId();
       console.log(`📤 Emitting bet update for arena '${arenaId}':`, betData);
-      this.socket?.emit('bet-update', { ...betData, arenaId });
+      console.log(`📤 [EMIT CHECK] teamAQueue - type: ${typeof betData.teamAQueue}, isArray: ${Array.isArray(betData.teamAQueue)}, value:`, betData.teamAQueue);
+      console.log(`📤 [EMIT CHECK] teamBQueue - type: ${typeof betData.teamBQueue}, isArray: ${Array.isArray(betData.teamBQueue)}, value:`, betData.teamBQueue);
+      console.log(`📤 [EMIT CHECK] bookedBets - type: ${typeof betData.bookedBets}, isArray: ${Array.isArray(betData.bookedBets)}, value:`, betData.bookedBets);
+      const dataToSend = { ...betData, arenaId };
+      console.log(`📤 [FINAL DATA] About to emit:`, dataToSend);
+      this.socket?.emit('bet-update', dataToSend);
     } else {
       console.warn('⚠️ Socket not connected, cannot emit bet update');
     }
