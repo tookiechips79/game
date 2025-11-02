@@ -506,12 +506,25 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   useEffect(() => {
     let rafId: number | null = null;
     let lastSecond: number = -1;
+    let localStartTime: number | null = null;
     
     // Only run if timer is running
-    if (getCurrentGameState().isTimerRunning && serverTimerStartRef.current !== null) {
+    if (getCurrentGameState().isTimerRunning) {
       const updateTimer = () => {
         const currentTime = Date.now();
-        const elapsed = Math.floor((currentTime - serverTimerStartRef.current!) / 1000);
+        
+        // Initialize local start time on first run
+        if (localStartTime === null) {
+          if (serverTimerStartRef.current !== null) {
+            // Use server start time if available
+            localStartTime = serverTimerStartRef.current;
+          } else {
+            // Start counting from now, using accumulated time as base
+            localStartTime = currentTime - (serverAccumulatedTimeRef.current * 1000);
+          }
+        }
+        
+        const elapsed = Math.floor((currentTime - localStartTime) / 1000);
         const newSeconds = serverAccumulatedTimeRef.current + elapsed;
         
         // Only update state when second changes (reduces re-renders)
@@ -529,6 +542,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       rafId = requestAnimationFrame(updateTimer);
     } else {
       lastSecond = -1;
+      localStartTime = null;
     }
     
     return () => {
