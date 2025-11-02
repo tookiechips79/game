@@ -69,8 +69,9 @@ const getArenaId = () => {
   return (window as any).__ARENA_ID || 'default';
 };
 
-const GAME_STATE_STORAGE_KEY = `betting_app_game_state_${getArenaId()}`;
-const LOCAL_ADMIN_STORAGE_KEY = `betting_app_local_admin_state_${getArenaId()}`;
+// Use functions to get storage keys dynamically
+const getGameStateStorageKey = () => `betting_app_game_state_${getArenaId()}`;
+const getLocalAdminStorageKey = () => `betting_app_local_admin_state_${getArenaId()}`;
 
 const defaultGameState: GameState = {
   // Team Information
@@ -126,7 +127,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   // Load game state from localStorage on mount
   useEffect(() => {
-    const storedGameState = localStorage.getItem(GAME_STATE_STORAGE_KEY);
+    const storedGameState = localStorage.getItem(getGameStateStorageKey());
     if (storedGameState) {
       try {
         const parsedState = JSON.parse(storedGameState);
@@ -140,7 +141,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   // Load local admin state from localStorage on mount (separate from game state)
   useEffect(() => {
-    const storedLocalAdminState = localStorage.getItem(LOCAL_ADMIN_STORAGE_KEY);
+    const storedLocalAdminState = localStorage.getItem(getLocalAdminStorageKey());
     if (storedLocalAdminState) {
       try {
         const parsedState = JSON.parse(storedLocalAdminState);
@@ -159,7 +160,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   // Save game state to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem(GAME_STATE_STORAGE_KEY, JSON.stringify(gameState));
+    localStorage.setItem(getGameStateStorageKey(), JSON.stringify(gameState));
   }, [gameState]);
 
   // Save local admin state to localStorage whenever it changes (separate from game state)
@@ -169,13 +170,13 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       isAdminMode: false,  // Never save admin mode - must re-authenticate
       isAgentMode: localAdminState.isAgentMode  // Keep agent mode preference
     };
-    localStorage.setItem(LOCAL_ADMIN_STORAGE_KEY, JSON.stringify(stateToSave));
+    localStorage.setItem(getLocalAdminStorageKey(), JSON.stringify(stateToSave));
   }, [localAdminState]);
 
   // Listen for storage changes from other tabs/windows
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === GAME_STATE_STORAGE_KEY && e.newValue) {
+      if (e.key === getGameStateStorageKey() && e.newValue) {
         try {
           const newState = JSON.parse(e.newValue);
           setGameState(newState);
