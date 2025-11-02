@@ -82,7 +82,7 @@ const TeamScoreSection = ({
         )}
       </div>
       
-      <div className="grid grid-cols-2 gap-4 mt-3">
+      <div className="flex justify-center mt-3">
         <div className="bg-[#1EAEDB] rounded-2xl p-3 flex items-center justify-center gap-2 transition-all hover:bg-[#1EAEDB]/90 shadow-[0_0_15px_rgba(30,174,219,0.5)]">
           {showControls && !adminLocked && (
             <Button
@@ -106,38 +106,6 @@ const TeamScoreSection = ({
           {showControls && !adminLocked && (
             <Button
               onClick={onGameIncrement}
-              variant="outline"
-              size="icon"
-              className="h-6 w-6 bg-gray-800/80 border-gray-700 hover:bg-gray-700 text-[#1EAEDB]"
-            >
-              <PlusCircle className="h-3 w-3" />
-            </Button>
-          )}
-        </div>
-        
-        <div className="bg-[#1EAEDB] rounded-2xl p-3 flex items-center justify-center gap-2 transition-all hover:bg-[#1EAEDB]/90 shadow-[0_0_15px_rgba(30,174,219,0.5)]" style={{ display: 'none' }}>
-          {showControls && !adminLocked && (
-            <Button
-              onClick={handleBallDecrement}
-              variant="outline"
-              size="icon"
-              className="h-6 w-6 bg-gray-800/80 border-gray-700 hover:bg-gray-700 text-[#1EAEDB]"
-            >
-              <MinusCircle className="h-3 w-3" />
-            </Button>
-          )}
-          <div className="flex flex-col items-center">
-            <div className="flex items-center justify-center mb-1">
-              <Circle className="h-5 w-5 text-gray-900 mr-1 fill-gray-900" />
-              <span className="text-xs font-medium text-gray-900">BALLS</span>
-            </div>
-            <div className="flex justify-center">
-              <FlipCounter value={balls} color="white" />
-            </div>
-          </div>
-          {showControls && !adminLocked && (
-            <Button
-              onClick={handleBallIncrement}
               variant="outline"
               size="icon"
               className="h-6 w-6 bg-gray-800/80 border-gray-700 hover:bg-gray-700 text-[#1EAEDB]"
