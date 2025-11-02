@@ -1048,8 +1048,8 @@ const OnePocketArena = () => {
           onTeamANameChange={(name) => updateGameState({ teamAName: name })}
           onTeamBNameChange={(name) => updateGameState({ teamBName: name })}
           onBreakChange={(hasBreak) => updateGameState({ teamAHasBreak: hasBreak })}
-          onTeamAWin={handleTeamAWin}
-          onTeamBWin={handleTeamBWin}
+          onTeamAGameWin={handleTeamAWin}
+          onTeamBGameWin={handleTeamBWin}
           onGameLabelChange={(label) => updateGameState({ gameLabel: label })}
           onCurrentGameNumberChange={(num) => updateGameState({ currentGameNumber: num })}
           onTeamABallsChange={handleTeamABallsChange}
