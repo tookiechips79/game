@@ -605,8 +605,9 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
           socketIOService.emitTotalBookedCoinsUpdate(totalBookedAmount, nextTotalBookedAmount);
         }
         
-        // Emit game state updates
-        if (updates.teamAGames !== undefined || updates.teamBGames !== undefined || 
+        // Emit game state updates (scores, balls, etc.)
+        if (updates.teamAGames !== undefined ||
+            updates.teamBGames !== undefined ||
             updates.teamABalls !== undefined || updates.teamBBalls !== undefined ||
             updates.isGameActive !== undefined || updates.winner !== undefined ||
             updates.currentGameNumber !== undefined || // Added game number to condition
