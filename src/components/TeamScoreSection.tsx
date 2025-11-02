@@ -122,7 +122,7 @@ const TeamScoreSection = ({
               
               {showControls && !adminLocked && (
                 <Button
-                  onClick={onBallDecrement}
+                  onClick={handleBallDecrement}
                   variant="outline"
                   size="icon"
                   className="h-6 w-6 bg-gray-800/80 border-gray-700 hover:bg-gray-700 text-[#1EAEDB]"
