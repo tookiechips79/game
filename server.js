@@ -161,60 +161,94 @@ setInterval(() => {
   }
 }, 30000); // Every 30 seconds
 
-// Server-side timer management for perfect synchronization
-let serverTimerStartTime = null;
-let serverTimerInterval = null;
-let serverTimerAccumulatedTime = 0; // Track accumulated time for pause/resume
+// Server timer management - now per-arena
+let arenaTimers = {
+  'default': {
+    interval: null,
+    startTime: null,
+    accumulatedTime: 0,
+    isRunning: false
+  },
+  'one_pocket': {
+    interval: null,
+    startTime: null,
+    accumulatedTime: 0,
+    isRunning: false
+  }
+};
 
-function startServerTimer() {
-  if (serverTimerInterval) {
-    clearInterval(serverTimerInterval);
+function getArenaTimer(arenaId = 'default') {
+  if (!arenaTimers[arenaId]) {
+    arenaTimers[arenaId] = {
+      interval: null,
+      startTime: null,
+      accumulatedTime: 0,
+      isRunning: false
+    };
+  }
+  return arenaTimers[arenaId];
+}
+
+function startServerTimer(arenaId = 'default') {
+  const timer = getArenaTimer(arenaId);
+  const arenaState = getGameState(arenaId);
+  
+  if (timer.interval) {
+    clearInterval(timer.interval);
   }
   
-  serverTimerStartTime = Date.now();
-  serverGameState.isTimerRunning = true;
+  timer.startTime = Date.now();
+  timer.isRunning = true;
+  arenaState.isTimerRunning = true;
   
-  serverTimerInterval = setInterval(() => {
-    const elapsed = Math.floor((Date.now() - serverTimerStartTime) / 1000);
-    serverGameState.timerSeconds = serverTimerAccumulatedTime + elapsed;
+  timer.interval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - timer.startTime) / 1000);
+    arenaState.timerSeconds = timer.accumulatedTime + elapsed;
     
-    // Broadcast timer update to all clients
-    io.emit('timer-update', {
-      isTimerRunning: serverGameState.isTimerRunning,
-      timerSeconds: serverGameState.timerSeconds
+    // Broadcast timer update only to this arena's room
+    io.to(`arena:${arenaId}`).emit('timer-update', {
+      isTimerRunning: arenaState.isTimerRunning,
+      timerSeconds: arenaState.timerSeconds
     });
   }, 1000);
 }
 
-function stopServerTimer() {
-  if (serverTimerInterval) {
-    clearInterval(serverTimerInterval);
-    serverTimerInterval = null;
+function stopServerTimer(arenaId = 'default') {
+  const timer = getArenaTimer(arenaId);
+  const arenaState = getGameState(arenaId);
+  
+  if (timer.interval) {
+    clearInterval(timer.interval);
+    timer.interval = null;
   }
   
   // Accumulate the elapsed time when pausing
-  if (serverTimerStartTime !== null) {
-    const elapsed = Math.floor((Date.now() - serverTimerStartTime) / 1000);
-    serverTimerAccumulatedTime += elapsed;
-    serverTimerStartTime = null;
+  if (timer.startTime !== null) {
+    const elapsed = Math.floor((Date.now() - timer.startTime) / 1000);
+    timer.accumulatedTime += elapsed;
+    timer.startTime = null;
   }
   
-  serverGameState.isTimerRunning = false;
+  timer.isRunning = false;
+  arenaState.isTimerRunning = false;
   
-  // Broadcast timer stop to all clients
-  io.emit('timer-update', {
+  // Broadcast timer stop only to this arena's room
+  io.to(`arena:${arenaId}`).emit('timer-update', {
     isTimerRunning: false,
-    timerSeconds: serverGameState.timerSeconds
+    timerSeconds: arenaState.timerSeconds
   });
 }
 
-function resetServerTimer() {
-  stopServerTimer();
-  serverTimerAccumulatedTime = 0; // Reset accumulated time
-  serverGameState.timerSeconds = 0;
+function resetServerTimer(arenaId = 'default') {
+  stopServerTimer(arenaId);
+  const timer = getArenaTimer(arenaId);
+  const arenaState = getGameState(arenaId);
   
-  // Broadcast timer reset to all clients
-  io.emit('timer-update', {
+  timer.accumulatedTime = 0;
+  arenaState.timerSeconds = 0;
+  
+  // Broadcast timer reset only to this arena's room
+  io.to(`arena:${arenaId}`).emit('timer-update', {
     isTimerRunning: false,
     timerSeconds: 0
   });
@@ -461,12 +495,13 @@ io.on('connection', (socket) => {
     // Use server-side timer management for accuracy
     if (actualTimerData.isTimerRunning && !arenaState.isTimerRunning) {
       // Sync accumulated time with current timer value when starting
-      serverTimerAccumulatedTime = actualTimerData.timerSeconds || 0;
-      startServerTimer();
+      const timer = getArenaTimer(arenaId);
+      timer.accumulatedTime = actualTimerData.timerSeconds || 0;
+      startServerTimer(arenaId);
     } else if (!actualTimerData.isTimerRunning && arenaState.isTimerRunning) {
-      stopServerTimer();
+      stopServerTimer(arenaId);
     } else if (actualTimerData.timerSeconds === 0 && !actualTimerData.isTimerRunning) {
-      resetServerTimer();
+      resetServerTimer(arenaId);
     }
     
     // Update arena-specific state
@@ -481,9 +516,11 @@ io.on('connection', (socket) => {
   // Handle timer heartbeat requests
   socket.on('timer-heartbeat', () => {
     // Send current server timer state to requesting client
+    const arenaId = socketArenaMap.get(socket.id) || 'default';
+    const arenaState = getGameState(arenaId);
     socket.emit('timer-update', {
-      isTimerRunning: serverGameState.isTimerRunning,
-      timerSeconds: serverGameState.timerSeconds
+      isTimerRunning: arenaState.isTimerRunning,
+      timerSeconds: arenaState.timerSeconds
     });
   });
 
