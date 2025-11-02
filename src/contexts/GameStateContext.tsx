@@ -689,33 +689,69 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   // Timer control functions (admin only)
   const startTimer = () => {
-    console.log('🕐 Starting timer');
-    // Clear any existing interval first
-    // The timer is now managed by requestAnimationFrame in the useEffect hook
+    console.log('🕐 [TIMER START] Starting timer - BEGIN');
+    console.log('🕐 [TIMER START] Current state:', {
+      isTimerRunning: getCurrentGameState().isTimerRunning,
+      timerSeconds: getCurrentGameState().timerSeconds
+    });
     
+    // Update local state
     updateGameState({
       isTimerRunning: true
+    });
+    
+    console.log('🕐 [TIMER START] Updated game state, emitting to server');
+    // Explicitly emit to server to start timer immediately
+    Promise.resolve().then(() => {
+      socketIOService.emitTimerUpdate({
+        isTimerRunning: true,
+        timerSeconds: getCurrentGameState().timerSeconds
+      });
     });
   };
 
   const pauseTimer = () => {
-    console.log('⏸️ Pausing timer');
-    // Clear interval
-    // The timer is now managed by requestAnimationFrame in the useEffect hook
+    console.log('⏸️ [TIMER PAUSE] Pausing timer - BEGIN');
+    console.log('⏸️ [TIMER PAUSE] Current state:', {
+      isTimerRunning: getCurrentGameState().isTimerRunning,
+      timerSeconds: getCurrentGameState().timerSeconds
+    });
     
+    // Update local state
     updateGameState({
       isTimerRunning: false
+    });
+    
+    console.log('⏸️ [TIMER PAUSE] Updated game state, emitting to server');
+    // Explicitly emit to server to pause timer immediately
+    Promise.resolve().then(() => {
+      socketIOService.emitTimerUpdate({
+        isTimerRunning: false,
+        timerSeconds: getCurrentGameState().timerSeconds
+      });
     });
   };
 
   const resetTimer = () => {
-    console.log('🔄 Resetting timer');
-    // Clear interval
-    // The timer is now managed by requestAnimationFrame in the useEffect hook
+    console.log('🔄 [TIMER RESET] Resetting timer - BEGIN');
+    console.log('🔄 [TIMER RESET] Current state:', {
+      isTimerRunning: getCurrentGameState().isTimerRunning,
+      timerSeconds: getCurrentGameState().timerSeconds
+    });
     
+    // Update local state
     updateGameState({
       timerSeconds: 0,
       isTimerRunning: false
+    });
+    
+    console.log('🔄 [TIMER RESET] Updated game state, emitting to server');
+    // Explicitly emit to server to reset timer immediately
+    Promise.resolve().then(() => {
+      socketIOService.emitTimerUpdate({
+        isTimerRunning: false,
+        timerSeconds: 0
+      });
     });
   };
 

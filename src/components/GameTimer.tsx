@@ -54,15 +54,24 @@ const GameTimer = ({
   };
 
   const handleStartClick = () => {
+    console.log('🔘 [BUTTON CLICK] PLAY button clicked!');
+    console.log('🔘 [BUTTON CLICK] Calling onStart()...');
     onStart();
+    console.log('🔘 [BUTTON CLICK] onStart() completed');
   };
 
   const handlePauseClick = () => {
+    console.log('🔘 [BUTTON CLICK] PAUSE button clicked!');
+    console.log('🔘 [BUTTON CLICK] Calling onPause()...');
     onPause();
+    console.log('🔘 [BUTTON CLICK] onPause() completed');
   };
 
   const handleResetClick = () => {
+    console.log('🔘 [BUTTON CLICK] RESET button clicked!');
+    console.log('🔘 [BUTTON CLICK] Calling onReset()...');
     onReset();
+    console.log('🔘 [BUTTON CLICK] onReset() completed');
   };
 
   return (
