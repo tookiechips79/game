@@ -910,6 +910,9 @@ const OnePocketArena = () => {
   const [userBetAmounts, setUserBetAmounts] = useState<Map<string, number>>(new Map());
 
   useEffect(() => {
+    // Set page title to identify this as One Pocket Arena
+    document.title = 'One Pocket Arena - Betting Queue';
+    
     const newUserBetAmounts = new Map<string, number>();
     
     teamAQueue.forEach(bet => {

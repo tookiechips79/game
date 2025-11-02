@@ -910,6 +910,9 @@ const Index = () => {
   const [userBetAmounts, setUserBetAmounts] = useState<Map<string, number>>(new Map());
 
   useEffect(() => {
+    // Set page title to identify this as 9 Ball Arena
+    document.title = '9 Ball Arena - Betting Queue';
+    
     const newUserBetAmounts = new Map<string, number>();
     
     teamAQueue.forEach(bet => {
