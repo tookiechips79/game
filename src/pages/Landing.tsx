@@ -95,7 +95,7 @@ const Landing = () => {
             <Link to="/betting-queue">
               <Button className="font-bold flex items-center gap-2" style={{ backgroundColor: '#fa1593', color: 'white' }}>
                 <Ticket size={18} />
-                <span className="hidden sm:inline">Betting</span>
+                <span className="hidden sm:inline">Rotation</span>
               </Button>
             </Link>
             <Link to="/one-pocket-arena">
