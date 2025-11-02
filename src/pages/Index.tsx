@@ -25,6 +25,14 @@ import { Bet, BookedBet, ConfirmationState } from "@/types/user";
 import { socketIOService } from "@/services/socketIOService";
 import { useSound } from "@/hooks/use-sound";
 
+// ============================================================================
+// 9 BALL ARENA - DEFAULT BETTING QUEUE
+// This arena syncs only with itself, not with the One Pocket Arena
+// ============================================================================
+
+// Set the arena ID so GameStateContext uses separate storage keys
+(window as any).__ARENA_ID = 'default';
+
 const Index = () => {
   const { 
     currentUser, 
