@@ -510,7 +510,8 @@ io.on('connection', (socket) => {
     const arenaState = getGameState(arenaId);
     socket.emit('timer-update', {
       isTimerRunning: arenaState.isTimerRunning,
-      timerSeconds: arenaState.timerSeconds
+      timerSeconds: arenaState.timerSeconds,
+      arenaId: arenaId
     });
   });
 
