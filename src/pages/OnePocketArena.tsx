@@ -981,7 +981,7 @@ const OnePocketArena = () => {
           </Link>
         </div>
         
-        <div className="w-full max-w-md mx-auto mb-8">
+        <div className="w-full max-w-full mx-auto mb-8">
           <img 
             src="/lovable-uploads/4dfcf9c9-cbb9-4a75-94ab-bcdb38a8091e.png" 
             alt="Game Bird Logo" 
