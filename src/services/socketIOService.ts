@@ -293,12 +293,14 @@ class SocketIOService {
   }
 
   public emitTimerHeartbeat() {
+    this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
       this.socket.emit('timer-heartbeat');
     }
   }
 
   public emitBreakStatusUpdate(teamAHasBreak: boolean) {
+    this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
       console.log('📤 Emitting dedicated break status update:', teamAHasBreak);
       this.socket.emit('break-status-update', { teamAHasBreak });
@@ -318,6 +320,7 @@ class SocketIOService {
   // No external updates can modify bet history
 
   public emitTotalBookedCoinsUpdate(totalBookedAmount: number, nextTotalBookedAmount: number) {
+    this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
       console.log('📤 Emitting total booked coins update:', { totalBookedAmount, nextTotalBookedAmount });
       this.socket.emit('total-booked-coins-update', { totalBookedAmount, nextTotalBookedAmount });
@@ -403,6 +406,7 @@ class SocketIOService {
 
   // Request connected users data refresh
   public requestConnectedUsersData() {
+    this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
       console.log('📤 Requesting connected users data refresh');
       this.socket.emit('request-connected-users-data');
@@ -436,6 +440,7 @@ class SocketIOService {
 
   // Game History Synchronization
   public emitGameHistoryUpdate(gameHistory: any[]) {
+    this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
       console.log('📤 Emitting game history update:', gameHistory.length, 'records');
       this.socket.emit('game-history-update', { gameHistory });
@@ -457,6 +462,7 @@ class SocketIOService {
 
   // Bet Receipts Synchronization
   public emitBetReceiptsUpdate(betReceipts: any[]) {
+    this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
       console.log('📤 Emitting bet receipts update:', betReceipts.length, 'receipts');
       this.socket.emit('bet-receipts-update', { betReceipts });
@@ -478,6 +484,7 @@ class SocketIOService {
 
   // Clear All Data - Admin command to clear everything on all clients
   public emitClearAllData() {
+    this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
       console.log('📤 Emitting clear all data command');
       this.socket.emit('clear-all-data', { timestamp: Date.now() });
@@ -496,6 +503,7 @@ class SocketIOService {
 
   // Pause listeners during clear - broadcast to all clients
   public emitPauseListeners() {
+    this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
       console.log('📤 Emitting pause listeners command to ALL clients');
       this.socket.emit('pause-listeners', { timestamp: Date.now() });
@@ -514,6 +522,7 @@ class SocketIOService {
 
   // Resume listeners after clear - broadcast to all clients
   public emitResumeListeners() {
+    this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
       console.log('📤 Emitting resume listeners command to ALL clients');
       this.socket.emit('resume-listeners', { timestamp: Date.now() });
@@ -532,6 +541,7 @@ class SocketIOService {
 
   // Peer-to-Peer Game History Sharing Methods
   public requestGameHistoryFromClients() {
+    this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
       console.log('📤 [P2P] Requesting game history from other clients');
       this.socket.emit('request-game-history-from-clients');
