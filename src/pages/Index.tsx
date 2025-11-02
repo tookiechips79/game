@@ -981,26 +981,6 @@ const Index = () => {
           </Link>
         </div>
         
-        {/* Arena Navigation */}
-        <div className="flex gap-4 mb-6 justify-center">
-          <Button 
-            variant="default"
-            className="px-6 py-2"
-            style={{ backgroundColor: '#95deff', color: '#000' }}
-          >
-            🎱 9 Ball Arena
-          </Button>
-          <Link to="/one-pocket-arena">
-            <Button 
-              variant="outline"
-              className="px-6 py-2"
-              style={{ borderColor: '#fa1593', color: '#fa1593' }}
-            >
-              🎯 One Pocket Arena
-            </Button>
-          </Link>
-        </div>
-
         <div className="w-full max-w-md mx-auto mb-8">
           <img 
             src="/lovable-uploads/4dfcf9c9-cbb9-4a75-94ab-bcdb38a8091e.png" 
