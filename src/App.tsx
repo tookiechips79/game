@@ -56,7 +56,7 @@ const ArenaSelector = () => {
         }`}
         title="Rotation Arena (9 Ball)"
       >
-        <span className="text-lg">9</span>
+        <span className="text-sm">9</span>
       </button>
 
       {/* One Pocket Arena Button */}
