@@ -582,20 +582,24 @@ const OnePocketArena = () => {
     if (isNextGame) {
       if (team === 'A') {
         const updatedAQueue = [...nextTeamAQueue, bet];
+        console.log('🎲 [placeBet - ONE POCKET] Adding bet to nextTeamAQueue:', bet, 'New queue length:', updatedAQueue.length);
         updateGameState({ nextTeamAQueue: updatedAQueue });
         bookNextGameBets(updatedAQueue, nextTeamBQueue);
       } else {
         const updatedBQueue = [...nextTeamBQueue, bet];
+        console.log('🎲 [placeBet - ONE POCKET] Adding bet to nextTeamBQueue:', bet, 'New queue length:', updatedBQueue.length);
         updateGameState({ nextTeamBQueue: updatedBQueue });
         bookNextGameBets(nextTeamAQueue, updatedBQueue);
       }
     } else {
       if (team === 'A') {
         const updatedAQueue = [...teamAQueue, bet];
+        console.log('🎲 [placeBet - ONE POCKET] Adding bet to teamAQueue:', bet, 'New queue length:', updatedAQueue.length);
         updateGameState({ teamAQueue: updatedAQueue });
         bookBets(updatedAQueue, teamBQueue);
       } else {
         const updatedBQueue = [...teamBQueue, bet];
+        console.log('🎲 [placeBet - ONE POCKET] Adding bet to teamBQueue:', bet, 'New queue length:', updatedBQueue.length);
         updateGameState({ teamBQueue: updatedBQueue });
         bookBets(teamAQueue, updatedBQueue);
       }

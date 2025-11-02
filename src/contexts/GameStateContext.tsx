@@ -339,6 +339,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
             
             if (hasUpdates) {
               console.log('📥 State updated successfully with bet data');
+              console.log('📥 Queue sizes - A:', newState.teamAQueue.length, 'B:', newState.teamBQueue.length, 'NextA:', newState.nextTeamAQueue.length, 'NextB:', newState.nextTeamBQueue.length);
             } else {
               console.log('📥 No updates applied from bet data');
             }
@@ -568,7 +569,8 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
           
           console.log('📤 Emitting bet update:', betData);
           console.log('📤 Sample bet with userName:', betData.teamAQueue?.[0] || betData.teamBQueue?.[0]);
-          socketIOService.emitBetUpdate(betData);
+          // Use microtask to ensure React state update is processed before sending to server
+          Promise.resolve().then(() => socketIOService.emitBetUpdate(betData));
         }
         
         // Emit total booked coins updates
