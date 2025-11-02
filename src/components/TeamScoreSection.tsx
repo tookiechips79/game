@@ -70,6 +70,11 @@ const TeamScoreSection = ({
   // Log when games prop changes
   console.log(`🎮 [TeamScoreSection] ${teamName}: games=${games} (received from parent)`);
   
+  const handleWinGameClick = () => {
+    console.log(`🎮 [TeamScoreSection] WIN GAME BUTTON CLICKED FOR ${teamName}!`);
+    handleWinGame();
+  };
+  
   return (
     <div className={`col-span-1 p-4 pt-24 bg-gradient-to-r from-[${color}]/30 to-[${color}]/20 relative rounded-l-2xl`}>
       <div className="flex flex-col items-center justify-center mb-2 mt-8">
@@ -168,7 +173,7 @@ const TeamScoreSection = ({
           </button>
           
           <Button 
-            onClick={handleWinGame}
+            onClick={handleWinGameClick}
             className="px-3 py-1 text-sm rounded-xl text-white transition-all duration-300"
             style={{ backgroundColor: '#fa1593' }}
           >
