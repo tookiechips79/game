@@ -777,7 +777,18 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     setTimer,
     resetTimerOnMatchStart,
     resetTimerOnGameWin,
-  }), [gameStateDefault, gameStateOnePocket, localAdminStateDefault, localAdminStateOnePocket, isAdmin, currentArenaId]);
+  }), [
+    gameStateDefault.teamAGames, 
+    gameStateDefault.teamBGames,
+    gameStateOnePocket.teamAGames, 
+    gameStateOnePocket.teamBGames,
+    gameStateDefault, 
+    gameStateOnePocket, 
+    localAdminStateDefault, 
+    localAdminStateOnePocket, 
+    isAdmin, 
+    currentArenaId
+  ]);
 
   return (
     <GameStateContext.Provider value={value}>
