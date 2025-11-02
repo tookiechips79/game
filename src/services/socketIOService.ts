@@ -46,10 +46,22 @@ class SocketIOService {
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 5;
   private reconnectDelay: number = 1000;
+  private arenaId: string = 'default';
 
   constructor() {
     console.log('🚀 SocketIOService constructor called');
+    this.updateArenaId();
     this.initializeSocket();
+  }
+
+  private updateArenaId() {
+    this.arenaId = (window as any).__ARENA_ID || 'default';
+    console.log(`📍 Arena ID set to: ${this.arenaId}`);
+  }
+
+  private getArenaId(): string {
+    // Always check for the latest arena ID in case it changed
+    return (window as any).__ARENA_ID || 'default';
   }
 
   private initializeSocket() {
@@ -117,9 +129,14 @@ class SocketIOService {
       this.isConnected = true;
       this.reconnectAttempts = 0;
       
+      // Send arena ID to server
+      const currentArenaId = this.getArenaId();
+      console.log(`📤 Sending arena ID to server: ${currentArenaId}`);
+      this.socket?.emit('set-arena', { arenaId: currentArenaId });
+      
       // Request current game state immediately on connection
       console.log('📤 Requesting current game state from server');
-      this.socket?.emit('request-game-state');
+      this.socket?.emit('request-game-state', { arenaId: currentArenaId });
     });
 
     this.socket.on('disconnect', (reason) => {
@@ -172,8 +189,9 @@ class SocketIOService {
   // Public methods for emitting events
   public emitBetUpdate(betData: BetSyncData) {
     if (this.isSocketConnected()) {
-      console.log('📤 Emitting bet update:', betData);
-      this.socket?.emit('bet-update', betData);
+      const arenaId = this.getArenaId();
+      console.log(`📤 Emitting bet update for arena '${arenaId}':`, betData);
+      this.socket?.emit('bet-update', { ...betData, arenaId });
     } else {
       console.warn('⚠️ Socket not connected, cannot emit bet update');
     }
@@ -181,8 +199,9 @@ class SocketIOService {
 
   public emitGameStateUpdate(gameStateData: GameStateSyncData) {
     if (this.isSocketConnected()) {
-      console.log('📤 Emitting game state update:', gameStateData);
-      this.socket?.emit('game-state-update', gameStateData);
+      const arenaId = this.getArenaId();
+      console.log(`📤 Emitting game state update for arena '${arenaId}':`, gameStateData);
+      this.socket?.emit('game-state-update', { ...gameStateData, arenaId });
     } else {
       console.warn('⚠️ Socket not connected, cannot emit game state update');
     }
@@ -190,8 +209,9 @@ class SocketIOService {
 
   public emitTimerUpdate(timerData: TimerSyncData) {
     if (this.isSocketConnected()) {
-      console.log('📤 Emitting timer update:', timerData);
-      this.socket?.emit('timer-update', timerData);
+      const arenaId = this.getArenaId();
+      console.log(`📤 Emitting timer update for arena '${arenaId}':`, timerData);
+      this.socket?.emit('timer-update', { ...timerData, arenaId });
     } else {
       console.warn('⚠️ Socket not connected, cannot emit timer update');
     }
@@ -199,8 +219,9 @@ class SocketIOService {
 
   public emitScoreUpdate(scoreData: ScoreSyncData) {
     if (this.isSocketConnected()) {
-      console.log('📤 Emitting score update:', scoreData);
-      this.socket?.emit('score-update', scoreData);
+      const arenaId = this.getArenaId();
+      console.log(`📤 Emitting score update for arena '${arenaId}':`, scoreData);
+      this.socket?.emit('score-update', { ...scoreData, arenaId });
     } else {
       console.warn('⚠️ Socket not connected, cannot emit score update');
     }

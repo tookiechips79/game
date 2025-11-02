@@ -70,8 +70,8 @@ app.use(express.static(path.join(__dirname, 'dist')));
 // Serve static files from public directory (for test pages)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Store game state on server
-let serverGameState = {
+// Store game state on server - now with arena separation
+const createDefaultGameState = () => ({
   teamAQueue: [],
   teamBQueue: [],
   bookedBets: [],
@@ -84,13 +84,11 @@ let serverGameState = {
   teamBBalls: 0,
   isTimerRunning: false,
   timerSeconds: 0,
-  currentGameNumber: 1, // Added for game number synchronization
-  teamAHasBreak: true, // Added for break status synchronization
-  // REMOVED: gameHistory - bet history is now completely local and immutable
-  totalBookedAmount: 0, // Added for total booked coins synchronization
-  nextTotalBookedAmount: 0, // Added for next game total booked coins synchronization
-  // REMOVED: betReceipts - bet receipts are now completely local and immutable
-  users: [], // Added for user wallet synchronization
+  currentGameNumber: 1,
+  teamAHasBreak: true,
+  totalBookedAmount: 0,
+  nextTotalBookedAmount: 0,
+  users: [],
   gameInfo: {
     teamAName: "Team A",
     teamBName: "Team B",
@@ -98,9 +96,27 @@ let serverGameState = {
     gameDescription: "Place your bets!"
   },
   isGameActive: false,
-  winner: null,
-  lastUpdated: Date.now()
+  winner: null
+});
+
+// Map to store game state for each arena
+let arenaGameStates = {
+  'default': createDefaultGameState(),
+  'one_pocket': createDefaultGameState()
 };
+
+// Track which arena each socket belongs to
+const socketArenaMap = new Map();
+
+const getGameState = (arenaId = 'default') => {
+  if (!arenaGameStates[arenaId]) {
+    console.log(`🆕 Creating new arena state for: ${arenaId}`);
+    arenaGameStates[arenaId] = createDefaultGameState();
+  }
+  return arenaGameStates[arenaId];
+};
+
+let serverGameState = getGameState('default');
 
 // Track connected users and their credits
 let connectedUsers = new Map(); // socketId -> { userId, credits, name }
@@ -235,10 +251,23 @@ io.on('connection', (socket) => {
   console.log(`✅ [CONNECTION] Socket connected: ${socket.id}`);
   console.log(`📍 [CONNECTION] Handshake headers:`, JSON.stringify(socket.handshake.headers));
   
+  // Default arena is 'default' until client sends set-arena
+  let currentArenaId = 'default';
+  socketArenaMap.set(socket.id, currentArenaId);
+  
+  // Handle arena identification from client
+  socket.on('set-arena', (data) => {
+    const newArenaId = data.arenaId || 'default';
+    socketArenaMap.set(socket.id, newArenaId);
+    currentArenaId = newArenaId;
+    console.log(`🎯 [ARENA] Socket ${socket.id} assigned to arena: ${currentArenaId}`);
+  });
+  
   // Send current game state to newly connected client
   try {
-    console.log(`📤 [EMIT 1] About to emit game-state-update`);
-  socket.emit('game-state-update', serverGameState);
+    const arenaState = getGameState(currentArenaId);
+    console.log(`📤 [EMIT 1] About to emit game-state-update for arena '${currentArenaId}'`);
+    socket.emit('game-state-update', arenaState);
     console.log(`✅ [EMIT 1] game-state-update emitted`);
     
     console.log(`📤 [EMIT 2] About to emit connected-users-coins-update`);
@@ -247,14 +276,14 @@ io.on('connection', (socket) => {
     console.log(`✅ [EMIT 2] connected-users-coins-update emitted`);
     
     // Also send bet data immediately on connection
-    console.log(`📤 [EMIT 3] About to emit bet-update with current queues`);
+    console.log(`📤 [EMIT 3] About to emit bet-update with current queues for arena '${currentArenaId}'`);
     const betData = {
-      teamAQueue: serverGameState.teamAQueue,
-      teamBQueue: serverGameState.teamBQueue,
-      bookedBets: serverGameState.bookedBets,
-      nextGameBets: serverGameState.nextGameBets,
-      nextTeamAQueue: serverGameState.nextTeamAQueue,
-      nextTeamBQueue: serverGameState.nextTeamBQueue
+      teamAQueue: arenaState.teamAQueue,
+      teamBQueue: arenaState.teamBQueue,
+      bookedBets: arenaState.bookedBets,
+      nextGameBets: arenaState.nextGameBets,
+      nextTeamAQueue: arenaState.nextTeamAQueue,
+      nextTeamBQueue: arenaState.nextTeamBQueue
     };
     socket.emit('bet-update', betData);
     console.log(`✅ [EMIT 3] bet-update emitted with queues`);
@@ -272,14 +301,17 @@ io.on('connection', (socket) => {
   
   socket.on('disconnect', () => {
     console.log(`🔌 [DISCONNECT] Socket disconnected: ${socket.id}`);
+    socketArenaMap.delete(socket.id);
   });
 
   // Handle game state requests from new clients
-  socket.on('request-game-state', () => {
-    console.log(`📥 [REQUEST] Game state requested by ${socket.id}`);
-    socket.emit('game-state-update', serverGameState);
-  const coinsData = calculateConnectedUsersCoins();
-  socket.emit('connected-users-coins-update', coinsData);
+  socket.on('request-game-state', (data) => {
+    const arenaId = data?.arenaId || currentArenaId;
+    const arenaState = getGameState(arenaId);
+    console.log(`📥 [REQUEST] Game state requested by ${socket.id} for arena '${arenaId}'`);
+    socket.emit('game-state-update', arenaState);
+    const coinsData = calculateConnectedUsersCoins();
+    socket.emit('connected-users-coins-update', coinsData);
     console.log(`📤 [RESPONSE] Game state sent to ${socket.id}`);
   });
   
@@ -327,7 +359,8 @@ io.on('connection', (socket) => {
   
   // Handle bet updates
   socket.on('bet-update', (betData) => {
-    console.log('Received bet update:', betData);
+    const { arenaId = 'default', ...actualBetData } = betData;
+    console.log(`📥 Received bet update for arena '${arenaId}':`, actualBetData);
     
     // SKIP if listeners are paused (during clear)
     if (isListenersPaused) {
@@ -335,20 +368,22 @@ io.on('connection', (socket) => {
       return;
     }
     
-    // Update server state
-    if (betData.teamAQueue) serverGameState.teamAQueue = betData.teamAQueue;
-    if (betData.teamBQueue) serverGameState.teamBQueue = betData.teamBQueue;
-    if (betData.bookedBets) serverGameState.bookedBets = betData.bookedBets;
-    if (betData.nextGameBets) serverGameState.nextGameBets = betData.nextGameBets;
-    if (betData.nextTeamAQueue) serverGameState.nextTeamAQueue = betData.nextTeamAQueue;
-    if (betData.nextTeamBQueue) serverGameState.nextTeamBQueue = betData.nextTeamBQueue;
-    if (betData.totalBookedAmount !== undefined) serverGameState.totalBookedAmount = betData.totalBookedAmount;
-    if (betData.nextTotalBookedAmount !== undefined) serverGameState.nextTotalBookedAmount = betData.nextTotalBookedAmount;
+    // Get arena-specific state
+    const arenaState = getGameState(arenaId);
     
-    serverGameState.lastUpdated = Date.now();
+    // Update arena-specific state
+    if (actualBetData.teamAQueue) arenaState.teamAQueue = actualBetData.teamAQueue;
+    if (actualBetData.teamBQueue) arenaState.teamBQueue = actualBetData.teamBQueue;
+    if (actualBetData.bookedBets) arenaState.bookedBets = actualBetData.bookedBets;
+    if (actualBetData.nextGameBets) arenaState.nextGameBets = actualBetData.nextGameBets;
+    if (actualBetData.nextTeamAQueue) arenaState.nextTeamAQueue = actualBetData.nextTeamAQueue;
+    if (actualBetData.nextTeamBQueue) arenaState.nextTeamBQueue = actualBetData.nextTeamBQueue;
+    if (actualBetData.totalBookedAmount !== undefined) arenaState.totalBookedAmount = actualBetData.totalBookedAmount;
+    if (actualBetData.nextTotalBookedAmount !== undefined) arenaState.nextTotalBookedAmount = actualBetData.nextTotalBookedAmount;
     
-    // Broadcast to all other clients
-    socket.broadcast.emit('bet-update', betData);
+    // Broadcast only to clients in the same arena
+    io.emit('bet-update', actualBetData);
+    console.log(`📤 Broadcasted bet-update to arena '${arenaId}'`);
   });
   
   // Handle game history updates - sync across all clients
@@ -389,38 +424,46 @@ io.on('connection', (socket) => {
   
   // Handle game state updates
   socket.on('game-state-update', (gameStateData) => {
-    console.log('Received game state update:', gameStateData);
+    const { arenaId = 'default', ...actualGameState } = gameStateData;
+    console.log(`📥 Received game state update for arena '${arenaId}':`, actualGameState);
     
-    // Update server state
-    Object.assign(serverGameState, gameStateData);
-    serverGameState.lastUpdated = Date.now();
+    // Get arena-specific state
+    const arenaState = getGameState(arenaId);
     
-    // Broadcast to all other clients
-    socket.broadcast.emit('game-state-update', gameStateData);
+    // Update arena-specific state
+    Object.assign(arenaState, actualGameState);
+    
+    // Broadcast to all clients
+    io.emit('game-state-update', actualGameState);
+    console.log(`📤 Broadcasted game-state-update to arena '${arenaId}'`);
   });
   
   // Handle timer updates
   socket.on('timer-update', (timerData) => {
-    console.log('Received timer update:', timerData);
+    const { arenaId = 'default', ...actualTimerData } = timerData;
+    console.log(`📥 Received timer update for arena '${arenaId}':`, actualTimerData);
+    
+    // Get arena-specific state
+    const arenaState = getGameState(arenaId);
     
     // Use server-side timer management for accuracy
-    if (timerData.isTimerRunning && !serverGameState.isTimerRunning) {
+    if (actualTimerData.isTimerRunning && !arenaState.isTimerRunning) {
       // Sync accumulated time with current timer value when starting
-      serverTimerAccumulatedTime = timerData.timerSeconds || 0;
+      serverTimerAccumulatedTime = actualTimerData.timerSeconds || 0;
       startServerTimer();
-    } else if (!timerData.isTimerRunning && serverGameState.isTimerRunning) {
+    } else if (!actualTimerData.isTimerRunning && arenaState.isTimerRunning) {
       stopServerTimer();
-    } else if (timerData.timerSeconds === 0 && !timerData.isTimerRunning) {
+    } else if (actualTimerData.timerSeconds === 0 && !actualTimerData.isTimerRunning) {
       resetServerTimer();
     }
     
-    // Update server state
-    serverGameState.isTimerRunning = timerData.isTimerRunning;
-    serverGameState.timerSeconds = timerData.timerSeconds;
-    serverGameState.lastUpdated = Date.now();
+    // Update arena-specific state
+    arenaState.isTimerRunning = actualTimerData.isTimerRunning;
+    arenaState.timerSeconds = actualTimerData.timerSeconds;
     
-    // Broadcast to all other clients
-    socket.broadcast.emit('timer-update', timerData);
+    // Broadcast to all clients
+    io.emit('timer-update', actualTimerData);
+    console.log(`📤 Broadcasted timer-update to arena '${arenaId}'`);
   });
   
   // Handle timer heartbeat requests
@@ -554,14 +597,19 @@ io.on('connection', (socket) => {
   
   // Handle score updates
   socket.on('score-update', (scoreData) => {
-    console.log('Received score update:', scoreData);
+    const { arenaId = 'default', ...actualScoreData } = scoreData;
+    console.log(`📥 Received score update for arena '${arenaId}':`, actualScoreData);
     
-    serverGameState.teamAScore = scoreData.teamAScore;
-    serverGameState.teamBScore = scoreData.teamBScore;
-    serverGameState.lastUpdated = Date.now();
+    // Get arena-specific state
+    const arenaState = getGameState(arenaId);
     
-    // Broadcast to all other clients
-    socket.broadcast.emit('score-update', scoreData);
+    // Update arena-specific state
+    arenaState.teamAScore = actualScoreData.teamAScore;
+    arenaState.teamBScore = actualScoreData.teamBScore;
+    
+    // Broadcast to all clients
+    io.emit('score-update', actualScoreData);
+    console.log(`📤 Broadcasted score-update to arena '${arenaId}'`);
   });
   
   // Handle test messages
