@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, HashRouter } from "react-router-dom";
 import { UserProvider } from "@/contexts/UserContext";
 import { GameStateProvider } from "@/contexts/GameStateContext";
 import Index from "./pages/Index";
+import OnePocketArena from "./pages/OnePocketArena";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import PaymentPage from "./pages/Payment";
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/features" element={<FeaturesPage />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/betting-queue" element={<Index />} />
+              <Route path="/one-pocket-arena" element={<OnePocketArena />} />
               <Route path="/subscription" element={<PaymentPage />} />
               <Route path="/user-settings" element={<UserSettings />} />
               <Route path="/reload-coins" element={<ReloadCoinsPage />} />
