@@ -1,7 +1,17 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState, createContext, useContext } from "react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Index from "./Index";
+
+// Create Arena Context
+export const ArenaContext = createContext<string | undefined>(undefined);
+
+export const useArena = () => {
+  const arena = useContext(ArenaContext);
+  if (!arena) {
+    throw new Error("useArena must be used within ArenaProvider");
+  }
+  return arena;
+};
 
 const BettingArenas = () => {
   const [activeArena, setActiveArena] = useState("9-ball");
@@ -45,11 +55,23 @@ const BettingArenas = () => {
         </div>
       </div>
 
-      {/* Arena Content */}
+      {/* Arena Content - Each arena is mounted separately to maintain its own state */}
       <div className="w-full">
-        {activeArena === "9-ball" && <Index arenaName="9 Ball" />}
-        {activeArena === "one-pocket" && <Index arenaName="One Pocket" />}
-        {activeArena === "8-ball" && <Index arenaName="8 Ball" />}
+        {activeArena === "9-ball" && (
+          <ArenaContext.Provider value="9-ball">
+            <Index arenaName="9 Ball" key="9-ball" />
+          </ArenaContext.Provider>
+        )}
+        {activeArena === "one-pocket" && (
+          <ArenaContext.Provider value="one-pocket">
+            <Index arenaName="One Pocket" key="one-pocket" />
+          </ArenaContext.Provider>
+        )}
+        {activeArena === "8-ball" && (
+          <ArenaContext.Provider value="8-ball">
+            <Index arenaName="8 Ball" key="8-ball" />
+          </ArenaContext.Provider>
+        )}
       </div>
     </div>
   );
