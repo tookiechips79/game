@@ -255,15 +255,24 @@ io.on('connection', (socket) => {
   let currentArenaId = 'default';
   socketArenaMap.set(socket.id, currentArenaId);
   
+  // Join the default arena room immediately on connection
+  socket.join(`arena:${currentArenaId}`);
+  
   // Handle arena identification from client
   socket.on('set-arena', (data) => {
     const newArenaId = data.arenaId || 'default';
+    
+    // Leave the old arena room if switching
+    if (currentArenaId !== newArenaId) {
+      socket.leave(`arena:${currentArenaId}`);
+    }
+    
     socketArenaMap.set(socket.id, newArenaId);
     currentArenaId = newArenaId;
     
-    // Join the arena-specific room
+    // Join the new arena-specific room
     socket.join(`arena:${newArenaId}`);
-    console.log(`🎯 [ARENA] Socket ${socket.id} assigned to arena: ${currentArenaId} and joined room arena:${currentArenaId}`);
+    console.log(`🎯 [ARENA] Socket ${socket.id} switched to arena: ${currentArenaId} and joined room arena:${currentArenaId}`);
   });
   
   // Send current game state to newly connected client
