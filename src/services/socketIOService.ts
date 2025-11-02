@@ -269,7 +269,11 @@ class SocketIOService {
   // Public methods for listening to events
   public onBetUpdate(callback: (data: BetSyncData) => void) {
     if (this.socket) {
-      this.socket.on('bet-update', callback);
+      console.log('📥 [LISTENER] Setting up bet-update listener');
+      this.socket.on('bet-update', (data: BetSyncData) => {
+        console.log('📥 [CALLBACK] bet-update callback triggered with data:', data);
+        callback(data);
+      });
     }
   }
 
