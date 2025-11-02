@@ -956,7 +956,7 @@ const OnePocketArena = () => {
 
 
   return (
-    <div className="min-h-screen bg-purple-950 p-4 md:p-8 pt-32 relative">
+    <div className="min-h-screen p-4 md:p-8 pt-32 relative" style={{ backgroundColor: '#e0f7ff' }}>
       
       <div className="max-w-6xl mx-auto relative z-10">
         <UserWidgetsContainer 
