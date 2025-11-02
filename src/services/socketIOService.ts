@@ -33,6 +33,9 @@ export interface GameStateSyncData {
 export interface TimerSyncData {
   isTimerRunning: boolean;
   timerSeconds: number;
+  serverStartTime?: number | null;  // Server's start time in milliseconds (null if paused)
+  accumulatedTime?: number;  // Time accumulated before this session started
+  arenaId?: string;  // Arena identifier
 }
 
 export interface ScoreSyncData {

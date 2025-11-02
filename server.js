@@ -320,12 +320,24 @@ io.on('connection', (socket) => {
     // SEND INITIAL DATA ONLY AFTER ARENA IS IDENTIFIED AND ROOM IS JOINED
     try {
       const arenaState = getGameState(currentArenaId);
+      const timer = getArenaTimer(currentArenaId);
+      
       console.log(`📤 [EMIT 1] About to emit game-state-update for arena '${currentArenaId}'`);
       // Emit initial game state with arena ID
       const gameStateData = { ...arenaState, arenaId: currentArenaId };
       console.log(`📤 [DEBUG] Game state data arenaId: ${gameStateData.arenaId}`);
       socket.emit('game-state-update', gameStateData);
       console.log(`✅ [EMIT 1] game-state-update emitted`);
+      
+      // Emit initial timer state with server's authoritative start time
+      socket.emit('timer-update', {
+        isTimerRunning: arenaState.isTimerRunning,
+        timerSeconds: arenaState.timerSeconds,
+        serverStartTime: timer.startTime,  // Milliseconds when timer started
+        accumulatedTime: timer.accumulatedTime,
+        arenaId: currentArenaId
+      });
+      console.log(`✅ [EMIT TIMER] timer-update emitted with serverStartTime: ${timer.startTime}`);
       
       // Emit connected users coins
       const coinsData = calculateConnectedUsersCoins();
