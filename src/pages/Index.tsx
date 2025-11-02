@@ -951,26 +951,6 @@ const Index = () => {
     <div className="min-h-screen bg-black p-4 md:p-8 pt-32 relative">
       
       <div className="max-w-6xl mx-auto relative z-10">
-        {/* Arena Navigation */}
-        <div className="flex gap-4 mb-6">
-          <Button 
-            variant="default"
-            className="px-6 py-2"
-            style={{ backgroundColor: '#95deff', color: '#000' }}
-          >
-            🎱 9 Ball Arena
-          </Button>
-          <Link to="/one-pocket-arena">
-            <Button 
-              variant="outline"
-              className="px-6 py-2"
-              style={{ borderColor: '#fa1593', color: '#fa1593' }}
-            >
-              🎯 One Pocket Arena
-            </Button>
-          </Link>
-        </div>
-        
         <UserWidgetsContainer 
           userBetAmounts={userBetAmounts} 
           bookedBets={bookedBets}
@@ -993,6 +973,25 @@ const Index = () => {
           </Link>
         </div>
         
+        {/* Arena Navigation */}
+        <div className="flex gap-4 mb-6 justify-center">
+          <Button 
+            variant="default"
+            className="px-6 py-2"
+            style={{ backgroundColor: '#95deff', color: '#000' }}
+          >
+            🎱 9 Ball Arena
+          </Button>
+          <Link to="/one-pocket-arena">
+            <Button 
+              variant="outline"
+              className="px-6 py-2"
+              style={{ borderColor: '#fa1593', color: '#fa1593' }}
+            >
+              🎯 One Pocket Arena
+            </Button>
+          </Link>
+        </div>
 
         <div className="w-full max-w-md mx-auto mb-8">
           <img 
@@ -1524,4 +1523,95 @@ const Index = () => {
                             <div 
                               key={bet.id} 
                               style={{ 
-                                backgroundColor: bet.booked ? bet.color : (bet.color ? `${bet.color}DD`
+                                backgroundColor: bet.booked ? bet.color : (bet.color ? `${bet.color}DD` : 'rgba(31, 41, 55, 0.7)'),
+                                transition: 'all 0.3s ease',
+                                borderLeft: bet.booked ? `4px solid ${bet.color}` : 'none'
+                              }}
+                              className="grid grid-cols-3 py-2 mb-1 rounded-xl hover:brightness-110"
+                            >
+                              <div className={`text-center font-medium ${bet.booked ? 'text-black' : 'text-white'}`}>
+                                #{bet.id}
+                              </div>
+                              <div className={`text-center font-medium ${bet.booked ? 'text-black' : 'text-white'} truncate`}>
+                                {bet.userName || betUser?.name || 'User'}
+                              </div>
+                              <div className={`text-center flex justify-between items-center px-2 ${bet.booked ? 'text-black font-bold' : 'text-white'}`}>
+                                {bet.amount} COINS
+                                <div className="flex items-center gap-2">
+                                  {!bet.booked ? (
+                                    <>
+                                      <span className="px-2 py-0.5 text-xs rounded-xl text-white" style={{ backgroundColor: '#fa1593' }}>OPEN</span>
+                                      {currentUser && bet.userId === currentUser.id && (
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-6 w-6 p-0 transition-colors"
+                                          style={{ color: '#fa1593' }}
+                                          onMouseEnter={(e) => {
+                                            e.currentTarget.style.color = '#fa1593';
+                                            e.currentTarget.style.backgroundColor = 'rgba(250, 21, 147, 0.2)';
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            e.currentTarget.style.color = '#fa1593';
+                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                          }}
+                                          onClick={() => deleteOpenBet(bet.id, true)}
+                                          title="Delete your open bet"
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <span className="px-2 py-0.5 bg-black/30 text-xs rounded-xl flex items-center text-white">
+                                      <CheckSquare className="w-3 h-3 mr-1" /> BOOKED
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center text-gray-400 py-8">No active bets</div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Betting Queue Information */}
+        <div className="text-center mb-6">
+          <p className="font-medium text-lg" style={{ color: '#95deff' }}>
+            *** BETS ARE HIGHLIGHTED ONCE MATCHED ***
+          </p>
+        </div>
+
+        <BookedBetsReceipt 
+          bookedBets={bookedBets} 
+          teamAName={teamAName} 
+          teamBName={teamBName} 
+          title="BOOKED BETS"
+          nextGameBets={nextBookedBets}
+        />
+        
+        <BetReceiptsLedger 
+          isAdmin={isAdminMode}
+          teamAName={teamAName}
+          teamBName={teamBName}
+        />
+        
+        <BetLedger 
+          isAdmin={isAdminMode}
+          teamAName={teamAName}
+          teamBName={teamBName}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default Index;
