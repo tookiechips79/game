@@ -34,7 +34,7 @@ const ArenaSelector = () => {
   if (!isArenasPage) return null;
 
   const handleRotationArena = () => {
-    navigate("/");
+    navigate("/betting-queue");
   };
 
   const handleOnePocketArena = () => {
