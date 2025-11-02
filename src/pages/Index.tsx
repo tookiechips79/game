@@ -958,7 +958,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-black p-4 md:p-8 pt-32 relative">
       
-      <div className="max-w-6xl mx-auto relative z-10">
+      <div className="max-w-full mx-auto relative z-10">
         <UserWidgetsContainer 
           userBetAmounts={userBetAmounts} 
           bookedBets={bookedBets}
