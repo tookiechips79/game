@@ -167,13 +167,15 @@ let arenaTimers = {
     interval: null,
     startTime: null,
     accumulatedTime: 0,
-    isRunning: false
+    isRunning: false,
+    continuousStartTime: null  // Track when timer started continuously (never reset)
   },
   'one_pocket': {
     interval: null,
     startTime: null,
     accumulatedTime: 0,
-    isRunning: false
+    isRunning: false,
+    continuousStartTime: null  // Track when timer started continuously (never reset)
   }
 };
 
@@ -183,7 +185,8 @@ function getArenaTimer(arenaId = 'default') {
       interval: null,
       startTime: null,
       accumulatedTime: 0,
-      isRunning: false
+      isRunning: false,
+      continuousStartTime: null
     };
   }
   return arenaTimers[arenaId];
@@ -197,21 +200,25 @@ function startServerTimer(arenaId = 'default') {
     clearInterval(timer.interval);
   }
   
+  // If this is the first time starting, record the continuous start time
+  if (!timer.continuousStartTime) {
+    timer.continuousStartTime = Date.now();
+  }
+  
   timer.startTime = Date.now();
   timer.isRunning = true;
   arenaState.isTimerRunning = true;
   
   timer.interval = setInterval(() => {
-    const elapsed = Math.floor((Date.now() - timer.startTime) / 1000);
-    arenaState.timerSeconds = timer.accumulatedTime + elapsed;
+    // Calculate total elapsed time from when the timer first started
+    const totalElapsed = Math.floor((Date.now() - timer.continuousStartTime) / 1000);
     
     // Broadcast timer update only to this arena's room
-    // Include serverStartTime so clients can calculate accurate elapsed time
     io.to(`arena:${arenaId}`).emit('timer-update', {
       isTimerRunning: arenaState.isTimerRunning,
-      timerSeconds: arenaState.timerSeconds,
-      serverStartTime: timer.startTime,  // Server's start time in milliseconds
-      accumulatedTime: timer.accumulatedTime  // Time accumulated before this session
+      timerSeconds: totalElapsed,
+      serverStartTime: timer.startTime,
+      accumulatedTime: totalElapsed
     });
   }, 1000);
 }
@@ -225,12 +232,10 @@ function stopServerTimer(arenaId = 'default') {
     timer.interval = null;
   }
   
-  // Accumulate the elapsed time when pausing
-  if (timer.startTime !== null) {
-    const elapsed = Math.floor((Date.now() - timer.startTime) / 1000);
-    timer.accumulatedTime += elapsed;
-    timer.startTime = null;
-  }
+  // Calculate current total time but don't reset anything
+  const totalElapsed = timer.continuousStartTime 
+    ? Math.floor((Date.now() - timer.continuousStartTime) / 1000)
+    : timer.accumulatedTime;
   
   timer.isRunning = false;
   arenaState.isTimerRunning = false;
@@ -238,18 +243,28 @@ function stopServerTimer(arenaId = 'default') {
   // Broadcast timer stop only to this arena's room
   io.to(`arena:${arenaId}`).emit('timer-update', {
     isTimerRunning: false,
-    timerSeconds: arenaState.timerSeconds,
+    timerSeconds: totalElapsed,
     serverStartTime: null,
-    accumulatedTime: timer.accumulatedTime
+    accumulatedTime: totalElapsed
   });
 }
 
 function resetServerTimer(arenaId = 'default') {
-  stopServerTimer(arenaId);
   const timer = getArenaTimer(arenaId);
   const arenaState = getGameState(arenaId);
   
+  // Only reset if admin explicitly calls this - NOT on game win
+  if (timer.interval) {
+    clearInterval(timer.interval);
+    timer.interval = null;
+  }
+  
+  // ONLY reset these three things - the timer should NEVER auto-reset
   timer.accumulatedTime = 0;
+  timer.continuousStartTime = null;  // Reset the continuous tracking
+  timer.startTime = null;
+  timer.isRunning = false;
+  arenaState.isTimerRunning = false;
   arenaState.timerSeconds = 0;
   
   // Broadcast timer reset only to this arena's room
