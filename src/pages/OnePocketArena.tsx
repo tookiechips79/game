@@ -30,6 +30,10 @@ import { useSound } from "@/hooks/use-sound";
 // This arena syncs only with itself, not with the 9 Ball Arena
 // ============================================================================
 
+// TEMPORARY: Disable sockets for troubleshooting
+const DISABLE_SOCKETS_FOR_ONE_POCKET = true;
+(window as any).__DISABLE_SOCKETS_FOR_ONE_POCKET = DISABLE_SOCKETS_FOR_ONE_POCKET;
+
 const OnePocketArena = () => {
   const { 
     currentUser, 
@@ -366,16 +370,18 @@ const OnePocketArena = () => {
     // Only emit the bet state clearing so other clients clear their queues
     console.log('📤 [processBetsForGameWin] Emitting cleared bet queues to all clients');
     try {
-      socketIOService.emitBetUpdate({
-        teamAQueue: [],
-        teamBQueue: [],
-        bookedBets: [],
-        totalBookedAmount: 0,
-        nextGameBets: [],
-        nextTeamAQueue: [],
-        nextTeamBQueue: [],
-        nextTotalBookedAmount: 0
-      });
+      if (!DISABLE_SOCKETS_FOR_ONE_POCKET) {
+        socketIOService.emitBetUpdate({
+          teamAQueue: [],
+          teamBQueue: [],
+          bookedBets: [],
+          totalBookedAmount: 0,
+          nextGameBets: [],
+          nextTeamAQueue: [],
+          nextTeamBQueue: [],
+          nextTotalBookedAmount: 0
+        });
+      }
     } catch (err) {
       console.error('❌ Error emitting bet update:', err);
     }

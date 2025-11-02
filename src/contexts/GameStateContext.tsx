@@ -235,6 +235,15 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   // Socket.IO real-time synchronization
   useEffect(() => {
+    // TEMPORARY: Disable sockets for One Pocket Arena troubleshooting
+    const isOnePocketArena = currentArenaId === 'one_pocket';
+    const shouldDisableSockets = isOnePocketArena && (window as any).__DISABLE_SOCKETS_FOR_ONE_POCKET;
+    
+    if (shouldDisableSockets) {
+      console.log('🔌 [DEBUG] Sockets DISABLED for One Pocket Arena');
+      return;
+    }
+
     // Connect to Socket.IO server
     socketIOService.connect();
 
