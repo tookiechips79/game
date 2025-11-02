@@ -627,11 +627,12 @@ io.on('connection', (socket) => {
   // Handle peer-to-peer game history requests
   socket.on('request-game-history-from-clients', (data) => {
     const arenaId = data?.arenaId || 'default';
-    console.log(`📨 [P2P] Server requesting game history for arena '${arenaId}'`);
+    const requestId = data?.requestId || `request-${Date.now()}`;
+    console.log(`📨 [P2P] Server requesting game history for arena '${arenaId}' (requestId: ${requestId})`);
     // Broadcast ONLY to the specific arena
     io.to(`arena:${arenaId}`).emit('receive-game-history-from-clients', {
       from: 'server',
-      requestId: data.requestId,
+      requestId: requestId,
       arenaId: arenaId
     });
   });

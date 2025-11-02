@@ -61,6 +61,8 @@ class SocketIOService {
   private updateArenaId() {
     // Detect arena from URL hash (using hash routing)
     const hash = window.location.hash;
+    console.log(`🔍 [DEBUG] Raw hash value: "${hash}"`);
+    console.log(`🔍 [DEBUG] Checking if hash includes "/one-pocket-arena":`, hash.includes('/one-pocket-arena'));
     if (hash.includes('/one-pocket-arena')) {
       this.arenaId = 'one_pocket';
     } else {
@@ -72,6 +74,7 @@ class SocketIOService {
   private getArenaId(): string {
     // Detect arena from URL hash at runtime (using hash routing)
     const hash = window.location.hash;
+    console.log(`🔍 [DEBUG-GET] Raw hash value: "${hash}"`);
     if (hash.includes('/one-pocket-arena')) {
       return 'one_pocket';
     }

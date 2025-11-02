@@ -142,6 +142,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   // Load game state from localStorage on mount
   useEffect(() => {
     const storageKey = `betting_app_game_state_${currentArenaId}`;
+    console.log(`🎯 [GameStateContext] Loading state for arena: "${currentArenaId}"`);
     const storedGameState = localStorage.getItem(storageKey);
     if (storedGameState) {
       try {
