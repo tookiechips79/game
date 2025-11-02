@@ -489,8 +489,8 @@ io.on('connection', (socket) => {
     
     arenaState.lastUpdated = Date.now();
     
-    // Broadcast the bet update to all other clients in the SAME ARENA ONLY
-    socket.to(`arena:${arenaId}`).emit('bet-update', data);
+    // Broadcast the bet update to ALL clients in the SAME ARENA (including sender)
+    io.to(`arena:${arenaId}`).emit('bet-update', data);
     console.log(`📤 Broadcasted bet-update to arena '${arenaId}'`);
   });
   
