@@ -196,7 +196,10 @@ const Index = () => {
     processBetsForGameWin('A', duration);
     
     // Increment game counter and game number AFTER bets are processed
+    // Using 500ms to ensure all bet processing is complete
     setTimeout(() => {
+      console.log('🏆 [handleTeamAWin] Incrementing game counter after bet processing');
+      console.log(`   Previous: teamAGames=${teamAGames}, currentGameNumber=${currentGameNumber}`);
       updateGameState({
         teamAGames: teamAGames + 1,
         teamABalls: 0,
@@ -204,7 +207,8 @@ const Index = () => {
         teamAHasBreak: !teamAHasBreak,
         currentGameNumber: currentGameNumber + 1
       });
-    }, 200);
+      console.log(`   Updated: teamAGames=${teamAGames + 1}, currentGameNumber=${currentGameNumber + 1}`);
+    }, 500);
     
     // Timer will be automatically started for the next game by useScoreboardState
     
@@ -224,7 +228,10 @@ const Index = () => {
     processBetsForGameWin('B', duration);
     
     // Increment game counter and game number AFTER bets are processed
+    // Using 500ms to ensure all bet processing is complete
     setTimeout(() => {
+      console.log('🏆 [handleTeamBWin] Incrementing game counter after bet processing');
+      console.log(`   Previous: teamBGames=${teamBGames}, currentGameNumber=${currentGameNumber}`);
       updateGameState({
         teamBGames: teamBGames + 1,
         teamABalls: 0,
@@ -232,7 +239,8 @@ const Index = () => {
         teamAHasBreak: !teamAHasBreak,
         currentGameNumber: currentGameNumber + 1
       });
-    }, 200);
+      console.log(`   Updated: teamBGames=${teamBGames + 1}, currentGameNumber=${currentGameNumber + 1}`);
+    }, 500);
     
     // Timer will be automatically started for the next game by useScoreboardState
     
