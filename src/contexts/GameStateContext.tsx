@@ -162,7 +162,6 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
   
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   // Ref to track if we're receiving server updates to prevent local timer conflicts
   const isReceivingServerUpdate = useRef(false);
   
@@ -421,10 +420,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
         isReceivingServerUpdate.current = true;
         
         // Stop local timer when receiving server update to prevent drift
-        if (timerIntervalRef.current) {
-          clearInterval(timerIntervalRef.current);
-          timerIntervalRef.current = null;
-        }
+        // The timer is now managed by requestAnimationFrame in the useEffect hook
         
         setCurrentGameState(prevState => ({
           ...prevState,
@@ -489,70 +485,49 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   // Server-authoritative timer effect for perfect synchronization
   useEffect(() => {
-    let intervalId: NodeJS.Timeout | null = null;
+    let rafId: number | null = null;
+    let lastSecond: number = -1;
     
-    // Only run local timer if we're not receiving server updates
-    if (getCurrentGameState().isTimerRunning && !isReceivingServerUpdate.current) {
-      // Request server time every second to stay synchronized
-      intervalId = setInterval(() => {
-        // Emit timer heartbeat to get server's current time
-        socketIOService.emitTimerHeartbeat();
-      }, 1000);
+    // Only run if timer is running
+    if (getCurrentGameState().isTimerRunning) {
+      const startTime = Date.now();
+      const startSeconds = getCurrentGameState().timerSeconds;
       
-      // Store interval for cleanup
-      timerIntervalRef.current = intervalId;
+      const updateTimer = () => {
+        const currentTime = Date.now();
+        const elapsed = Math.floor((currentTime - startTime) / 1000);
+        const newSeconds = startSeconds + elapsed;
+        
+        // Only update state when second changes (reduces re-renders)
+        if (newSeconds !== lastSecond) {
+          lastSecond = newSeconds;
+          setCurrentGameState(prev => ({
+            ...prev,
+            timerSeconds: newSeconds
+          }));
+        }
+        
+        rafId = requestAnimationFrame(updateTimer);
+      };
+      
+      rafId = requestAnimationFrame(updateTimer);
     } else {
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current);
-        timerIntervalRef.current = null;
-      }
+      lastSecond = -1;
     }
-
+    
     return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current);
-        timerIntervalRef.current = null;
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
       }
     };
-  }, [getCurrentGameState().isTimerRunning]);
+  }, [getCurrentGameState().isTimerRunning, getCurrentGameState().timerSeconds]);
 
   // Handle visibility changes to ensure timer accuracy when tab becomes active again (mobile-friendly)
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (getCurrentGameState().isTimerRunning && !document.hidden && !isReceivingServerUpdate.current) {
-        // Tab became visible again, restart timer to ensure accuracy
-        console.log('📱 App became visible, restarting timer for accuracy');
-        
-        // Clear existing timer
-        if (timerIntervalRef.current) {
-          clearInterval(timerIntervalRef.current);
-          timerIntervalRef.current = null;
-        }
-        
-        // Restart timer with current state
-        const startTime = Date.now();
-        const startSeconds = getCurrentGameState().timerSeconds;
-        
-        const intervalId = setInterval(() => {
-            const currentTime = Date.now();
-            const elapsed = Math.floor((currentTime - startTime) / 1000);
-            const newSeconds = startSeconds + elapsed;
-            
-          setCurrentGameState(prev => {
-            if (prev.timerSeconds !== newSeconds) {
-              return {
-                ...prev,
-                timerSeconds: newSeconds
-              };
-            }
-            return prev;
-          });
-        }, 1000);
-        
-        timerIntervalRef.current = intervalId;
+      if (getCurrentGameState().isTimerRunning && !document.hidden) {
+        // Tab became visible again - timer will automatically resume with requestAnimationFrame
+        console.log('📱 App became visible, timer continues with requestAnimationFrame');
       } else if (document.hidden) {
         console.log('📱 App went to background, timer will continue');
       }
@@ -686,10 +661,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   const startTimer = () => {
     console.log('🕐 Starting timer');
     // Clear any existing interval first
-    if (timerIntervalRef.current) {
-      clearInterval(timerIntervalRef.current);
-      timerIntervalRef.current = null;
-    }
+    // The timer is now managed by requestAnimationFrame in the useEffect hook
     
     updateGameState({
       isTimerRunning: true
@@ -699,10 +671,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   const pauseTimer = () => {
     console.log('⏸️ Pausing timer');
     // Clear interval
-    if (timerIntervalRef.current) {
-      clearInterval(timerIntervalRef.current);
-      timerIntervalRef.current = null;
-    }
+    // The timer is now managed by requestAnimationFrame in the useEffect hook
     
     updateGameState({
       isTimerRunning: false
@@ -712,10 +681,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   const resetTimer = () => {
     console.log('🔄 Resetting timer');
     // Clear interval
-    if (timerIntervalRef.current) {
-      clearInterval(timerIntervalRef.current);
-      timerIntervalRef.current = null;
-    }
+    // The timer is now managed by requestAnimationFrame in the useEffect hook
     
     updateGameState({
       timerSeconds: 0,
@@ -725,10 +691,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   const setTimer = (seconds: number) => {
     // Clear interval when setting new value
-    if (timerIntervalRef.current) {
-      clearInterval(timerIntervalRef.current);
-      timerIntervalRef.current = null;
-    }
+    // The timer is now managed by requestAnimationFrame in the useEffect hook
     
     updateGameState({
       timerSeconds: seconds,
@@ -739,10 +702,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   // Auto-reset timer when match starts or game is won
   const resetTimerOnMatchStart = () => {
     // Clear interval
-    if (timerIntervalRef.current) {
-      clearInterval(timerIntervalRef.current);
-      timerIntervalRef.current = null;
-    }
+    // The timer is now managed by requestAnimationFrame in the useEffect hook
     
     updateGameState({
       timerSeconds: 0,
@@ -753,10 +713,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   const resetTimerOnGameWin = () => {
     console.log('🏆 Resetting timer on game win');
     // Clear interval
-    if (timerIntervalRef.current) {
-      clearInterval(timerIntervalRef.current);
-      timerIntervalRef.current = null;
-    }
+    // The timer is now managed by requestAnimationFrame in the useEffect hook
     
     updateGameState({
       timerSeconds: 0,
