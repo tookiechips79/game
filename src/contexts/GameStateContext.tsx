@@ -429,11 +429,12 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
         } else if (!timerData.isTimerRunning) {
           // Timer is paused, keep the accumulated time but stop the timer
           serverTimerStartRef.current = null;
+          serverAccumulatedTimeRef.current = timerData.timerSeconds;  // Preserve the paused timer value
           console.log('⏱️ [Timer Sync] Timer paused, clearing server start time');
         } else if (timerData.isTimerRunning && serverTimerStartRef.current === null) {
           // Timer is running but we don't have a start time yet - calculate it from timerSeconds
           serverTimerStartRef.current = Date.now() - (timerData.timerSeconds * 1000);
-          serverAccumulatedTimeRef.current = timerData.timerSeconds;
+          serverAccumulatedTimeRef.current = 0;  // Reset accumulated time for new calculation
           console.log(`⏱️ [Timer Sync] Timer running but no startTime from server, calculated: ${new Date(serverTimerStartRef.current).toISOString()}`);
         }
         
