@@ -45,31 +45,31 @@ const ArenaSelector = () => {
   const isOnePocket = currentPath === "/one-pocket-arena";
 
   return (
-    <div className="fixed bottom-6 left-6 flex flex-col gap-3 z-50">
+    <div className="fixed bottom-6 left-6 flex gap-2 z-50">
       {/* Rotation Arena Button */}
       <button
         onClick={handleRotationArena}
-        className={`w-16 h-16 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl ${
+        className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl ${
           isRotation
             ? "bg-gradient-to-br from-[#00FF00] to-[#00FFCC] text-black ring-2 ring-[#00FF00]"
-            : "bg-gray-700 text-white hover:bg-gray-600"
+            : "bg-gradient-to-br from-[#00FF00] to-[#00FFCC] text-black"
         }`}
         title="Rotation Arena (9 Ball)"
       >
-        <span className="text-2xl">9</span>
+        <span className="text-lg">9</span>
       </button>
 
       {/* One Pocket Arena Button */}
       <button
         onClick={handleOnePocketArena}
-        className={`w-16 h-16 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl ${
+        className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl ${
           isOnePocket
-            ? "bg-gradient-to-br from-[#ADD8E6] to-[#87CEEB] text-black ring-2 ring-[#ADD8E6]"
-            : "bg-gray-700 text-white hover:bg-gray-600"
+            ? "bg-gradient-to-br from-[#00FF00] to-[#00FFCC] text-black ring-2 ring-[#00FF00]"
+            : "bg-gradient-to-br from-[#00FF00] to-[#00FFCC] text-black"
         }`}
         title="One Pocket Arena"
       >
-        <span className="text-sm">1P</span>
+        <span className="text-xs">1P</span>
       </button>
     </div>
   );
