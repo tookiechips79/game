@@ -421,17 +421,21 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
         
         // Update server start time for accurate elapsed time calculation
         // This is crucial when browser reconnects after being closed
-        if (timerData.serverStartTime !== null && timerData.serverStartTime !== undefined) {
+        if (timerData.isTimerRunning && timerData.serverStartTime !== null && timerData.serverStartTime !== undefined) {
           serverTimerStartRef.current = timerData.serverStartTime;
+          serverAccumulatedTimeRef.current = timerData.accumulatedTime || 0;
           console.log(`⏱️ [Timer Sync] Updated server start time from server: ${new Date(timerData.serverStartTime).toISOString()}`);
-        } else {
-          // Timer is paused, reset start time
+          console.log(`⏱️ [Timer Sync] Accumulated time: ${timerData.accumulatedTime}s, Timer should show: ${timerData.timerSeconds}s`);
+        } else if (!timerData.isTimerRunning) {
+          // Timer is paused, keep the accumulated time but stop the timer
           serverTimerStartRef.current = null;
           console.log('⏱️ [Timer Sync] Timer paused, clearing server start time');
+        } else if (timerData.isTimerRunning && serverTimerStartRef.current === null) {
+          // Timer is running but we don't have a start time yet - calculate it from timerSeconds
+          serverTimerStartRef.current = Date.now() - (timerData.timerSeconds * 1000);
+          serverAccumulatedTimeRef.current = timerData.timerSeconds;
+          console.log(`⏱️ [Timer Sync] Timer running but no startTime from server, calculated: ${new Date(serverTimerStartRef.current).toISOString()}`);
         }
-        
-        // Store the latest received timer seconds for fallback calculation
-        lastReceivedTimerSecondsRef.current = timerData.timerSeconds;
         
         setCurrentGameState(prevState => ({
           ...prevState,
@@ -496,7 +500,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   // Timer state - track server's start time for accurate server-authoritative timing
   const serverTimerStartRef = useRef<number | null>(null);
-  const lastReceivedTimerSecondsRef = useRef<number>(0);
+  const serverAccumulatedTimeRef = useRef<number>(0);
   
   // Server-authoritative timer effect - uses server's start time as source of truth
   useEffect(() => {
@@ -504,30 +508,18 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     let lastSecond: number = -1;
     
     // Only run if timer is running
-    if (getCurrentGameState().isTimerRunning) {
-      // If we don't have a server start time, we'll get it from the next timer-update
-      // For now, calculate based on current timerSeconds value
-      if (serverTimerStartRef.current === null) {
-        serverTimerStartRef.current = Date.now() - (getCurrentGameState().timerSeconds * 1000);
-        console.log(`⏱️ [Timer Init] Setting server start time based on current timerSeconds: ${getCurrentGameState().timerSeconds}s`);
-      }
-      
-      const calculateElapsedSeconds = () => {
-        if (serverTimerStartRef.current === null) return lastReceivedTimerSecondsRef.current;
-        
-        const elapsed = Math.floor((Date.now() - serverTimerStartRef.current) / 1000);
-        return elapsed;
-      };
-      
+    if (getCurrentGameState().isTimerRunning && serverTimerStartRef.current !== null) {
       const updateTimer = () => {
-        const elapsedSeconds = calculateElapsedSeconds();
+        const currentTime = Date.now();
+        const elapsed = Math.floor((currentTime - serverTimerStartRef.current!) / 1000);
+        const newSeconds = serverAccumulatedTimeRef.current + elapsed;
         
         // Only update state when second changes (reduces re-renders)
-        if (elapsedSeconds !== lastSecond) {
-          lastSecond = elapsedSeconds;
-          setCurrentGameState(prev => ({
-            ...prev,
-            timerSeconds: elapsedSeconds
+        if (newSeconds !== lastSecond) {
+          lastSecond = newSeconds;
+          setCurrentGameState(prevState => ({
+            ...prevState,
+            timerSeconds: newSeconds
           }));
         }
         
@@ -537,7 +529,6 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       rafId = requestAnimationFrame(updateTimer);
     } else {
       lastSecond = -1;
-      serverTimerStartRef.current = null;
     }
     
     return () => {
