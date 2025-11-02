@@ -64,8 +64,13 @@ interface GameStateContextType {
 
 const GameStateContext = createContext<GameStateContextType | undefined>(undefined);
 
-const GAME_STATE_STORAGE_KEY = `betting_app_game_state`;
-const LOCAL_ADMIN_STORAGE_KEY = `betting_app_local_admin_state`;
+// Get arena ID from window object (set by OnePocketArena.tsx)
+const getArenaId = () => {
+  return (window as any).__ARENA_ID || 'default';
+};
+
+const GAME_STATE_STORAGE_KEY = `betting_app_game_state_${getArenaId()}`;
+const LOCAL_ADMIN_STORAGE_KEY = `betting_app_local_admin_state_${getArenaId()}`;
 
 const defaultGameState: GameState = {
   // Team Information
