@@ -466,12 +466,18 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     socketIOService.onScoreUpdate((scoreData: ScoreSyncData) => {
       validateArenaAndUpdate(scoreData.arenaId, () => {
         console.log('📥 Received score update from server:', scoreData);
+        console.log(`   Will update teamAGames to ${scoreData.teamAScore}, teamBGames to ${scoreData.teamBScore}`);
         
-        setCurrentGameState(prevState => ({
-          ...prevState,
-          teamAGames: scoreData.teamAScore,
-          teamBGames: scoreData.teamBScore
-        }));
+        setCurrentGameState(prevState => {
+          console.log('   Current state before update - A: ', prevState.teamAGames, ', B: ', prevState.teamBGames);
+          const newState = {
+            ...prevState,
+            teamAGames: scoreData.teamAScore,
+            teamBGames: scoreData.teamBScore
+          };
+          console.log('   New state after update - A: ', newState.teamAGames, ', B: ', newState.teamBGames);
+          return newState;
+        });
       });
     });
 
@@ -657,6 +663,9 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
             teamBScore: updates.teamBGames !== undefined ? updates.teamBGames : prevState.teamBGames
           };
           
+          console.log('🏀 [updateGameState] Emitting score update:', scoreData);
+          console.log(`   Previous scores - A: ${prevState.teamAGames}, B: ${prevState.teamBGames}`);
+          console.log(`   New scores - A: ${scoreData.teamAScore}, B: ${scoreData.teamBScore}`);
           socketIOService.emitScoreUpdate(scoreData);
         }
       }
