@@ -285,30 +285,32 @@ io.on('connection', (socket) => {
   console.log(`✅ [CONNECTION] Socket connected: ${socket.id}`);
   console.log(`📍 [CONNECTION] Handshake headers:`, JSON.stringify(socket.handshake.headers));
   
-  // Default arena is 'default' until client sends set-arena
+  // Track arena but DON'T join any room yet - wait for set-arena
   let currentArenaId = 'default';
+  let arenaIdentified = false;
   socketArenaMap.set(socket.id, currentArenaId);
   
-  // Join the default arena room immediately on connection
-  socket.join(`arena:${currentArenaId}`);
+  // DO NOT join any room here - wait for set-arena to identify arena first
   
-  // Handle arena identification from client - THIS SHOULD HAPPEN FIRST
+  // Handle arena identification from client - THIS MUST HAPPEN FIRST
   socket.on('set-arena', (data) => {
     const newArenaId = data.arenaId || 'default';
     
-    // Leave the old arena room if switching
-    if (currentArenaId !== newArenaId) {
+    // If arena is being changed and we were previously in a room, leave it
+    if (arenaIdentified && currentArenaId !== newArenaId) {
       socket.leave(`arena:${currentArenaId}`);
+      console.log(`🔓 [ARENA] Socket ${socket.id} left arena: ${currentArenaId}`);
     }
     
     socketArenaMap.set(socket.id, newArenaId);
     currentArenaId = newArenaId;
     
-    // Join the new arena-specific room
+    // NOW join the arena-specific room
     socket.join(`arena:${newArenaId}`);
-    console.log(`🎯 [ARENA] Socket ${socket.id} switched to arena: ${currentArenaId} and joined room arena:${currentArenaId}`);
+    arenaIdentified = true;
+    console.log(`🎯 [ARENA] Socket ${socket.id} identified and joined arena: ${newArenaId} (room: arena:${newArenaId})`);
     
-    // SEND INITIAL DATA ONLY AFTER ARENA IS IDENTIFIED
+    // SEND INITIAL DATA ONLY AFTER ARENA IS IDENTIFIED AND ROOM IS JOINED
     try {
       const arenaState = getGameState(currentArenaId);
       console.log(`📤 [EMIT 1] About to emit game-state-update for arena '${currentArenaId}'`);
