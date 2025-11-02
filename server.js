@@ -484,8 +484,8 @@ io.on('connection', (socket) => {
     const arenaState = getGameState(arenaId);
     Object.assign(arenaState, actualGameState);
     
-    // Broadcast ONLY to the specific arena's room
-    io.to(`arena:${arenaId}`).emit('game-state-update', actualGameState);
+    // Broadcast ONLY to the specific arena's room - INCLUDE arenaId
+    io.to(`arena:${arenaId}`).emit('game-state-update', { ...actualGameState, arenaId });
     console.log(`📤 Broadcasted game-state-update to arena '${arenaId}'`);
   });
   
@@ -498,8 +498,8 @@ io.on('connection', (socket) => {
     arenaState.isTimerRunning = actualTimerData.isTimerRunning;
     arenaState.timerSeconds = actualTimerData.timerSeconds;
     
-    // Broadcast ONLY to the specific arena's room
-    io.to(`arena:${arenaId}`).emit('timer-update', actualTimerData);
+    // Broadcast ONLY to the specific arena's room - INCLUDE arenaId
+    io.to(`arena:${arenaId}`).emit('timer-update', { ...actualTimerData, arenaId });
     console.log(`📤 Broadcasted timer-update to arena '${arenaId}'`);
   });
   
