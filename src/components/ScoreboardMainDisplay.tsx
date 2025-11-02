@@ -54,6 +54,7 @@ interface ScoreboardMainDisplayProps {
   adminModalRef?: React.RefObject<HTMLDivElement>;
   teamAPlayerImageUrl?: string;
   teamBPlayerImageUrl?: string;
+  showBallCount?: boolean;
 }
 
 const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
@@ -94,7 +95,8 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
   setAdminLocked,
   adminModalRef,
   teamAPlayerImageUrl,
-  teamBPlayerImageUrl
+  teamBPlayerImageUrl,
+  showBallCount = true
 }) => {
   return (
     <>
@@ -168,6 +170,7 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
                 adminLocked={adminLocked}
                 playerImageUrl={teamAPlayerImageUrl}
                 position="40% center"
+                showBallCount={showBallCount}
               />
             </div>
             
@@ -192,6 +195,7 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
                 adminLocked={adminLocked}
                 playerImageUrl={teamBPlayerImageUrl}
                 position="50% center"
+                showBallCount={showBallCount}
               />
             </div>
           </div>

@@ -47,6 +47,7 @@ interface ScoreBoardProps {
   // Admin panel props
   onToggleAdmin?: () => void;
   onToggleAgent?: () => void;
+  showBallCount?: boolean;
 }
 
 const ScoreBoard = (props: ScoreBoardProps) => {

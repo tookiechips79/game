@@ -1032,8 +1032,8 @@ const Index = () => {
           onTeamANameChange={(name) => updateGameState({ teamAName: name })}
           onTeamBNameChange={(name) => updateGameState({ teamBName: name })}
           onBreakChange={(hasBreak) => updateGameState({ teamAHasBreak: hasBreak })}
-          onTeamAGameWin={handleTeamAWin}
-          onTeamBGameWin={handleTeamBWin}
+          onTeamAWin={handleTeamAWin}
+          onTeamBWin={handleTeamBWin}
           onGameLabelChange={(label) => updateGameState({ gameLabel: label })}
           onCurrentGameNumberChange={(num) => updateGameState({ currentGameNumber: num })}
           onTeamABallsChange={handleTeamABallsChange}
@@ -1049,6 +1049,7 @@ const Index = () => {
           onToggleAgent={toggleAgentMode}
           teamAPlayerImageUrl="/lovable-uploads/alex.png"
           teamBPlayerImageUrl="/lovable-uploads/shane.png"
+          showBallCount={false}
         />
 
         {/* Game History Window */}
