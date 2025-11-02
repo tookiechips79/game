@@ -1311,7 +1311,7 @@ const OnePocketArena = () => {
 
         {/* Current Game Betting Queue Information */}
         <div className="text-center mb-6">
-          <p className="font-medium text-lg" style={{ color: '#95deff' }}>
+          <p className="font-medium text-lg" style={{ color: '#000000' }}>
             *** BETS ARE HIGHLIGHTED ONCE MATCHED ***
           </p>
         </div>
@@ -1573,7 +1573,7 @@ const OnePocketArena = () => {
 
         {/* Betting Queue Information */}
         <div className="text-center mb-6">
-          <p className="font-medium text-lg" style={{ color: '#95deff' }}>
+          <p className="font-medium text-lg" style={{ color: '#000000' }}>
             *** BETS ARE HIGHLIGHTED ONCE MATCHED ***
           </p>
         </div>
