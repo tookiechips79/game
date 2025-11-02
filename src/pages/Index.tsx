@@ -25,7 +25,7 @@ import { Bet, BookedBet, ConfirmationState } from "@/types/user";
 import { socketIOService } from "@/services/socketIOService";
 import { useSound } from "@/hooks/use-sound";
 
-const Index = ({ arenaName = "Current" }: { arenaName?: string }) => {
+const Index = () => {
   const { 
     currentUser, 
     deductCredits, 

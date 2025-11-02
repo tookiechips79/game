@@ -238,7 +238,7 @@ io.on('connection', (socket) => {
   // Send current game state to newly connected client
   try {
     console.log(`📤 [EMIT 1] About to emit game-state-update`);
-    socket.emit('game-state-update', serverGameState);
+  socket.emit('game-state-update', serverGameState);
     console.log(`✅ [EMIT 1] game-state-update emitted`);
     
     console.log(`📤 [EMIT 2] About to emit connected-users-coins-update`);
@@ -278,11 +278,11 @@ io.on('connection', (socket) => {
   socket.on('request-game-state', () => {
     console.log(`📥 [REQUEST] Game state requested by ${socket.id}`);
     socket.emit('game-state-update', serverGameState);
-    const coinsData = calculateConnectedUsersCoins();
-    socket.emit('connected-users-coins-update', coinsData);
+  const coinsData = calculateConnectedUsersCoins();
+  socket.emit('connected-users-coins-update', coinsData);
     console.log(`📤 [RESPONSE] Game state sent to ${socket.id}`);
   });
-
+  
   // Handle user login/selection - track connected users
   socket.on('user-login', (userData) => {
     console.log(`User logged in: ${userData.name} (${userData.id}) with ${userData.credits} coins`);

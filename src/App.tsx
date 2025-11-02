@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, HashRouter } from "react-router-dom";
 import { UserProvider } from "@/contexts/UserContext";
 import { GameStateProvider } from "@/contexts/GameStateContext";
-import BettingArenas from "./pages/BettingArenas";
+import Index from "./pages/Index";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import PaymentPage from "./pages/Payment";
@@ -16,7 +16,8 @@ import SignupPage from "./pages/Signup";
 import MemberSignupPage from "./pages/MemberSignup";
 import FeaturesPage from "./pages/Features";
 import AboutPage from "./pages/About";
-import FAQ from "./pages/FAQ";
+import FAQPage from "./pages/FAQ";
+import "./App.css";
 
 const queryClient = new QueryClient();
 
@@ -34,11 +35,11 @@ const App = () => (
               <Route path="/member-signup" element={<MemberSignupPage />} />
               <Route path="/features" element={<FeaturesPage />} />
               <Route path="/about" element={<AboutPage />} />
-              <Route path="/betting-queue" element={<BettingArenas />} />
+              <Route path="/betting-queue" element={<Index />} />
               <Route path="/subscription" element={<PaymentPage />} />
               <Route path="/user-settings" element={<UserSettings />} />
               <Route path="/reload-coins" element={<ReloadCoinsPage />} />
-              <Route path="/faq" element={<FAQ />} />
+              <Route path="/faq" element={<FAQPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

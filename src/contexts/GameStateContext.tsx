@@ -3,22 +3,6 @@ import { Bet, BookedBet } from '@/types/user';
 import { socketIOService, BetSyncData, GameStateSyncData, TimerSyncData, ScoreSyncData } from '@/services/socketIOService';
 import { useUser } from './UserContext';
 
-// Get arena from URL or default to 'default'
-const getArena = (): string => {
-  try {
-    const url = new URL(window.location.href);
-    const hash = url.hash;
-    if (hash.includes('9-ball')) return '9-ball';
-    if (hash.includes('one-pocket')) return 'one-pocket';
-    if (hash.includes('8-ball')) return '8-ball';
-  } catch (e) {
-    // Fallback if URL parsing fails
-  }
-  return 'default';
-};
-
-const currentArena = getArena();
-
 interface GameState {
   // Team Information
   teamAName: string;
@@ -80,8 +64,8 @@ interface GameStateContextType {
 
 const GameStateContext = createContext<GameStateContextType | undefined>(undefined);
 
-const GAME_STATE_STORAGE_KEY = `betting_app_game_state_${currentArena}`;
-const LOCAL_ADMIN_STORAGE_KEY = `betting_app_local_admin_state_${currentArena}`;
+const GAME_STATE_STORAGE_KEY = `betting_app_game_state`;
+const LOCAL_ADMIN_STORAGE_KEY = `betting_app_local_admin_state`;
 
 const defaultGameState: GameState = {
   // Team Information

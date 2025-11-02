@@ -9,7 +9,7 @@ interface PlayerAvatarProps {
   position?: string;
 }
 
-const PlayerAvatar = React.memo(({ playerName, className, imageUrl, position = '70% center' }: PlayerAvatarProps) => {
+const PlayerAvatar = ({ playerName, className, imageUrl, position = '70% center' }: PlayerAvatarProps) => {
   return (
     <div className={`w-40 h-56 mb-3 border-2 border-[#fa1593] shadow-[0_0_15px_rgba(250,21,147,0.5)] flex-shrink-0 overflow-hidden ${className || ""}`}>
       <img 
@@ -20,8 +20,6 @@ const PlayerAvatar = React.memo(({ playerName, className, imageUrl, position = '
       />
     </div>
   );
-});
-
-PlayerAvatar.displayName = "PlayerAvatar";
+};
 
 export default PlayerAvatar;
