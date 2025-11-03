@@ -1,7 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 
 // DEBUG FLAG - Set to false in production
-const DEBUG = true;
+const DEBUG = false;
 const log = (label: string, data?: any) => {
   if (DEBUG) console.log(label, data);
 };
@@ -140,6 +140,8 @@ class SocketIOService {
         window.location.hostname.includes('render.com') || window.location.hostname.includes('onrender.com')
           ? 'Render Deployment'
           : window.location.hostname === 'localhost' ? 'Local Development' : 'Other');
+      console.log(`🌐 Server URL: ${serverUrl}`);
+      console.log(`⏱️ Connection attempts: ${this.reconnectAttempts + 1}`);
       
       // Start connection timing
       const connectionStartTime = Date.now();
