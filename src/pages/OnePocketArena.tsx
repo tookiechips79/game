@@ -146,7 +146,7 @@ const OnePocketArena = () => {
     
     if (newBookedCount > prevBookedCount) {
       console.log(`🔊 [MATCH SOUND - ONE POCKET] Bets matched! New booked count: ${newBookedCount}`);
-      playPoolSound();
+      // playPoolSound(); // DISABLED: Pool sound turned off for matched bets
     }
     
     prevStateRef.current.bookedCount = newBookedCount;
