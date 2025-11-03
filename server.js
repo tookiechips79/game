@@ -5,6 +5,9 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+// Deployment version: 3
+// Force Render to redeploy with fresh instance
+
 // Global error handlers
 process.on('uncaughtException', (error) => {
   console.error('❌ [GLOBAL] Uncaught Exception:', error);
