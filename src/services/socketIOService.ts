@@ -104,15 +104,14 @@ class SocketIOService {
       
       console.log('✅ Socket.IO client library loaded successfully');
       
-      // Simple approach: Connect to server on same host/port 3001
-      // This works for:
-      // - localhost:8080 → localhost:3001
-      // - 192.168.x.x:8080 → 192.168.x.x:3001
-      const serverUrl = `http://${window.location.hostname}:3001`;
+      // Detect protocol: use HTTPS on production, HTTP on localhost
+      const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+      const serverUrl = `${protocol}//${window.location.hostname}:3001`;
       
       console.log('🔌 Connecting to Socket.IO');
       console.log('🌐 Current page URL:', window.location.href);
       console.log('📍 Hostname:', window.location.hostname);
+      console.log('🔒 Protocol:', protocol);
       console.log('📌 Server URL:', serverUrl);
       
       // Start connection timing
@@ -120,13 +119,15 @@ class SocketIOService {
       console.log('⏱️ Connection attempt started at:', new Date().toISOString());
       
       const ioOptions = {
-        transports: ['polling'],
+        transports: ['polling', 'websocket'],
         timeout: 30000,
         forceNew: false,
         reconnection: true,
         reconnectionAttempts: 15,
         reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000
+        reconnectionDelayMax: 5000,
+        secure: window.location.protocol === 'https:',
+        rejectUnauthorized: false
       };
       
       this.socket = io(serverUrl, ioOptions);

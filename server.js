@@ -31,14 +31,16 @@ const io = new Server(server, {
     credentials: false,
     allowedHeaders: "*"
   },
-  transports: ['polling'],
+  transports: ['websocket', 'polling'],
   pingTimeout: 60000,
   pingInterval: 25000,
   allowEIO3: true,
   maxHttpBufferSize: 1e6,
   serveClient: false,
   connectTimeout: 60000,
-  perMessageDeflate: false
+  perMessageDeflate: false,
+  upgrade: true,
+  upgradeTimeout: 10000
 });
 
 // Middleware
