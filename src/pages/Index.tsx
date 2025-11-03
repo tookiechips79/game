@@ -58,6 +58,9 @@ const Index = () => {
   const { play: playPoolSound } = useSound('/pool.mp3', { volume: 0.8 });
   const { play: playBooSound } = useSound('/boo.mp3', { volume: 0.8 });
   
+  // Ref to track if this is initial load (prevents sounds on refresh)
+  const isInitialLoadRef = useRef(true);
+  
   // Ref to track previous state for detecting changes
   const prevStateRef = useRef({ 
     teamA: 0, 
@@ -122,8 +125,33 @@ const Index = () => {
     console.log(`💰 [BET QUEUE] Team B Queue: ${teamBQueue.length} bets`, teamBQueue);
   }, [teamAQueue, teamBQueue]);
 
+  // Initialize sound tracking on mount - MUST RUN FIRST
+  useEffect(() => {
+    if (isInitialLoadRef.current) {
+      console.log('🎵 [SOUND] Initializing sound tracking - skipping sounds on initial load');
+      
+      // Initialize refs with current values
+      prevQueueSizesRef.current = {
+        teamA: teamAQueue.length,
+        teamB: teamBQueue.length
+      };
+      
+      prevStateRef.current = {
+        teamA: teamAQueue.length,
+        teamB: teamBQueue.length,
+        bookedCount: bookedBets.length,
+        gameNumber: currentGameNumber,
+        teamABalls: teamABalls,
+        teamBBalls: teamBBalls
+      };
+      
+      isInitialLoadRef.current = false; // Mark initial load complete
+    }
+  }, []); // Only run once on mount
+
   // Detect new bets and play sound once per new bet
   useEffect(() => {
+    if (isInitialLoadRef.current) return;
     const teamANewBets = teamAQueue.length - prevQueueSizesRef.current.teamA;
     const teamBNewBets = teamBQueue.length - prevQueueSizesRef.current.teamB;
     
@@ -141,6 +169,7 @@ const Index = () => {
 
   // Detect booked bets and play pool/match sound
   useEffect(() => {
+    if (isInitialLoadRef.current) return;
     const newBookedCount = bookedBets.length;
     const prevBookedCount = prevStateRef.current.bookedCount;
     
@@ -154,6 +183,7 @@ const Index = () => {
 
   // Detect game wins and play cheer sound
   useEffect(() => {
+    if (isInitialLoadRef.current) return;
     const newGameNumber = currentGameNumber;
     const prevGameNumber = prevStateRef.current.gameNumber;
     
@@ -167,6 +197,7 @@ const Index = () => {
 
   // Detect ball count increases and decreases and play sounds
   useEffect(() => {
+    if (isInitialLoadRef.current) return;
     const teamABallsIncreased = teamABalls > prevStateRef.current.teamABalls;
     const teamBBallsIncreased = teamBBalls > prevStateRef.current.teamBBalls;
     const teamABallsDecreased = teamABalls < prevStateRef.current.teamABalls;
