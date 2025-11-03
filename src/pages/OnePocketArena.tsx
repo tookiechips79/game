@@ -61,6 +61,9 @@ const OnePocketArena = () => {
   // Ref to track if this is initial load (prevents sounds on refresh)
   const isInitialLoadRef = useRef(true);
   
+  // Ref to track arena to prevent sounds during arena switches
+  const currentArenaRef = useRef('one_pocket');
+  
   // Ref to track previous state for detecting changes
   const prevStateRef = useRef({ 
     teamA: 0, 
@@ -140,8 +143,31 @@ const OnePocketArena = () => {
       };
       
       isInitialLoadRef.current = false; // Mark initial load complete
+      currentArenaRef.current = 'one_pocket'; // Initialize arena tracker
     }
   }, []); // Only run once on mount
+
+  // Track arena changes to prevent sounds on arena switch
+  useEffect(() => {
+    // Detect arena change by checking if game state changed significantly
+    // If so, mark that sounds should be disabled temporarily
+    const isArenaSwitch = teamAQueue.length === 0 && teamBQueue.length === 0 && currentGameNumber === 1;
+    
+    if (isArenaSwitch && currentArenaRef.current !== 'one_pocket') {
+      console.log('🔄 [ARENA SWITCH] Arena changed, disabling sounds temporarily');
+      isInitialLoadRef.current = true; // Temporarily disable sounds
+      
+      // Re-enable sounds after a short delay
+      const timer = setTimeout(() => {
+        console.log('✅ [ARENA SWITCH] Re-enabling sounds after arena switch');
+        isInitialLoadRef.current = false;
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+    
+    currentArenaRef.current = 'one_pocket';
+  }, [teamAQueue, teamBQueue, currentGameNumber]
 
   // Log betting queue changes for debugging
   useEffect(() => {
