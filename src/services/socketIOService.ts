@@ -148,7 +148,7 @@ class SocketIOService {
       log('⏱️ Connection attempt started at:', new Date().toISOString());
       
       const ioOptions = {
-        transports: ['websocket', 'polling'],
+        transports: ['polling'], // Changed to polling-only for local development
         timeout: 20000,
         forceNew: false,
         reconnection: true,
