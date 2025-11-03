@@ -48,26 +48,26 @@ const ArenaSelector = () => {
     <div className="fixed bottom-6 left-6 flex gap-2 z-50">
       {/* Rotation Arena Button */}
       <button
-        onClick={handleRotationArena}
+        onDoubleClick={handleRotationArena}
         className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl ${
           isRotation
             ? "bg-gradient-to-br from-[#00FF00] to-[#00FFCC] text-black ring-2 ring-[#00FF00]"
             : "bg-gradient-to-br from-[#00FF00] to-[#00FFCC] text-black"
         }`}
-        title="Rotation Arena (9 Ball)"
+        title="Rotation Arena (9 Ball) - Double Click to Switch"
       >
         <span className="text-sm">9</span>
       </button>
 
       {/* One Pocket Arena Button */}
       <button
-        onClick={handleOnePocketArena}
+        onDoubleClick={handleOnePocketArena}
         className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl ${
           isOnePocket
             ? "bg-gradient-to-br from-[#00FF00] to-[#00FFCC] text-black ring-2 ring-[#00FF00]"
             : "bg-gradient-to-br from-[#00FF00] to-[#00FFCC] text-black"
         }`}
-        title="One Pocket Arena"
+        title="One Pocket Arena - Double Click to Switch"
       >
         <span className="text-xs">1P</span>
       </button>
