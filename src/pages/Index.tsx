@@ -68,6 +68,9 @@ const Index = () => {
     teamBBalls: 0
   });
 
+  // Ref to track if component is unmounting (switching arenas)
+  const isUnmountingRef = useRef(false);
+
   // Extract state from gameState context
   const {
     teamAQueue,
@@ -127,7 +130,7 @@ const Index = () => {
     const teamANewBets = teamAQueue.length - prevQueueSizesRef.current.teamA;
     const teamBNewBets = teamBQueue.length - prevQueueSizesRef.current.teamB;
     
-    if (teamANewBets > 0 || teamBNewBets > 0) {
+    if ((teamANewBets > 0 || teamBNewBets > 0) && !isUnmountingRef.current) {
       console.log(`🔊 [BET SOUND] New bets detected! Team A: +${teamANewBets}, Team B: +${teamBNewBets}`);
       playSilverSound();
     }
@@ -1060,9 +1063,10 @@ const Index = () => {
     updateGameState({ teamBGames: games });
   };
 
+  // Cleanup sounds on component unmount
   useEffect(() => {
     return () => {
-      // Stop all sounds when the component unmounts
+      isUnmountingRef.current = true;
       stopSilverSound();
       stopCheerSound();
       stopPoolSound();

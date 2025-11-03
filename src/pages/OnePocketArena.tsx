@@ -68,6 +68,9 @@ const OnePocketArena = () => {
     teamBBalls: 0
   });
 
+  // Ref to track if component is unmounting (switching arenas)
+  const isUnmountingRef = useRef(false);
+
   // Extract state from gameState context
   const {
     teamAQueue,
@@ -127,7 +130,7 @@ const OnePocketArena = () => {
     const teamANewBets = teamAQueue.length - prevQueueSizesRef.current.teamA;
     const teamBNewBets = teamBQueue.length - prevQueueSizesRef.current.teamB;
 
-    if (teamANewBets > 0 || teamBNewBets > 0) {
+    if ((teamANewBets > 0 || teamBNewBets > 0) && !isUnmountingRef.current) {
       console.log(`🔊 [BET SOUND - ONE POCKET] New bets detected! Team A: +${teamANewBets}, Team B: +${teamBNewBets}`);
       playSilverSound();
     }
@@ -1063,6 +1066,7 @@ const OnePocketArena = () => {
   // Cleanup sounds on component unmount
   useEffect(() => {
     return () => {
+      isUnmountingRef.current = true;
       stopSilverSound();
       stopCheerSound();
       stopPoolSound();
