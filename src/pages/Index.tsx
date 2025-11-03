@@ -61,9 +61,6 @@ const Index = () => {
   // Ref to track if this is initial load (prevents sounds on refresh)
   const isInitialLoadRef = useRef(true);
   
-  // Ref to track arena to prevent sounds during arena switches
-  const currentArenaRef = useRef('default');
-  
   // Ref to track previous state for detecting changes
   const prevStateRef = useRef({ 
     teamA: 0, 
@@ -149,31 +146,10 @@ const Index = () => {
       };
       
       isInitialLoadRef.current = false; // Mark initial load complete
-      currentArenaRef.current = 'default'; // Initialize arena tracker
-    }
+      }
   }, []); // Only run once on mount
 
-  // Track arena changes to prevent sounds on arena switch
-  useEffect(() => {
-    // Detect arena change by checking if game state changed significantly
-    // If so, mark that sounds should be disabled temporarily
-    const isArenaSwitch = teamAQueue.length === 0 && teamBQueue.length === 0 && currentGameNumber === 1;
-    
-    if (isArenaSwitch && currentArenaRef.current !== 'default') {
-      console.log('🔄 [ARENA SWITCH] Arena changed, disabling sounds temporarily');
-      isInitialLoadRef.current = true; // Temporarily disable sounds
-      
-      // Re-enable sounds after a short delay
-      const timer = setTimeout(() => {
-        console.log('✅ [ARENA SWITCH] Re-enabling sounds after arena switch');
-        isInitialLoadRef.current = false;
-      }, 500);
-      
-      return () => clearTimeout(timer);
-    }
-    
-    currentArenaRef.current = 'default';
-  }, [teamAQueue, teamBQueue, currentGameNumber]);
+  
 
   // Detect new bets and play sound once per new bet
   useEffect(() => {
@@ -208,12 +184,14 @@ const Index = () => {
   }, [bookedBets, playPoolSound]);
 
   // Detect game wins and play cheer sound
+  // Note: prevGameNumber > 0 check prevents sound on arena switch (when game resets to 1)
   useEffect(() => {
     if (isInitialLoadRef.current) return;
     const newGameNumber = currentGameNumber;
     const prevGameNumber = prevStateRef.current.gameNumber;
     
-    if (newGameNumber > prevGameNumber && prevGameNumber > 0) {
+    // Only play cheer if: game number increased AND previous was NOT 0 (not arena switch) AND previous WAS tracked
+    if (newGameNumber > prevGameNumber && prevGameNumber > 0 {
       console.log(`🔊 [WIN SOUND] Game won! New game number: ${newGameNumber}`);
       playCheerSound();
     }
