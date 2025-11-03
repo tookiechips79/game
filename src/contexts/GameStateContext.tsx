@@ -121,6 +121,59 @@ const STORAGE_KEY_DEFAULT_ARENA = 'gameState_default_arena';
 const STORAGE_KEY_ONE_POCKET_ARENA = 'gameState_one_pocket_arena';
 const STORAGE_KEY_ADMIN_DEFAULT = 'adminState_default_arena';
 const STORAGE_KEY_ADMIN_ONE_POCKET = 'adminState_one_pocket_arena';
+const STORAGE_KEY_TIMER_DEFAULT = 'timerState_default_arena';
+const STORAGE_KEY_TIMER_ONE_POCKET = 'timerState_one_pocket_arena';
+
+// Helper to save timer state persistently
+const saveTimerStateToStorage = (arenaId: string, state: GameState) => {
+  const key = arenaId === 'one_pocket' ? STORAGE_KEY_TIMER_ONE_POCKET : STORAGE_KEY_TIMER_DEFAULT;
+  try {
+    // Only save timer if it's running - we need to know when it started
+    if (state.isTimerRunning) {
+      const timerData = {
+        isTimerRunning: true,
+        timerSeconds: state.timerSeconds,
+        startTime: Date.now(), // When we're saving (now)
+        lastSeconds: state.timerSeconds // The current second count
+      };
+      localStorage.setItem(key, JSON.stringify(timerData));
+      console.log(`⏱️ [TIMER SAVE] Timer state saved for arena "${arenaId}": ${state.timerSeconds}s`);
+    }
+  } catch (error) {
+    console.error(`Failed to save timer state to localStorage for arena ${arenaId}:`, error);
+  }
+};
+
+// Helper to load timer state and calculate elapsed time
+const loadTimerStateFromStorage = (arenaId: string): { timerSeconds: number; isTimerRunning: boolean } => {
+  const key = arenaId === 'one_pocket' ? STORAGE_KEY_TIMER_ONE_POCKET : STORAGE_KEY_TIMER_DEFAULT;
+  try {
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      const timerData = JSON.parse(stored);
+      
+      // If timer was running, calculate how much time has elapsed since we last saved
+      if (timerData.isTimerRunning) {
+        const timeSinceSave = Math.floor((Date.now() - timerData.startTime) / 1000);
+        const resumedSeconds = timerData.lastSeconds + timeSinceSave;
+        
+        console.log(`⏱️ [TIMER LOAD] Timer resumed for arena "${arenaId}": was at ${timerData.lastSeconds}s, now ${resumedSeconds}s (${timeSinceSave}s elapsed)`);
+        
+        return {
+          isTimerRunning: true,
+          timerSeconds: resumedSeconds
+        };
+      }
+    }
+  } catch (error) {
+    console.error(`Failed to load timer state from localStorage for arena ${arenaId}:`, error);
+  }
+  
+  return {
+    isTimerRunning: false,
+    timerSeconds: 0
+  };
+};
 
 // Helper to load state from localStorage
 const loadGameStateFromStorage = (arenaId: string): GameState => {
@@ -129,7 +182,17 @@ const loadGameStateFromStorage = (arenaId: string): GameState => {
     const stored = localStorage.getItem(key);
     if (stored) {
       const parsed = JSON.parse(stored);
-      return { ...defaultGameState, ...parsed };
+      
+      // Load timer state separately
+      const timerState = loadTimerStateFromStorage(arenaId);
+      
+      return { 
+        ...defaultGameState, 
+        ...parsed,
+        // Override with timer state if timer is running
+        isTimerRunning: timerState.isTimerRunning,
+        timerSeconds: timerState.timerSeconds
+      };
     }
   } catch (error) {
     console.error(`Failed to load game state from localStorage for arena ${arenaId}:`, error);
@@ -315,6 +378,16 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   useEffect(() => {
     saveAdminStateToStorage('one_pocket', localAdminStateOnePocket);
   }, [localAdminStateOnePocket]);
+
+  // TIMER PERSISTENCE: Save timer state whenever it changes
+  // This ensures timer can resume after page refresh
+  useEffect(() => {
+    saveTimerStateToStorage('default', gameStateDefault);
+  }, [gameStateDefault.isTimerRunning, gameStateDefault.timerSeconds]);
+
+  useEffect(() => {
+    saveTimerStateToStorage('one_pocket', gameStateOnePocket);
+  }, [gameStateOnePocket.isTimerRunning, gameStateOnePocket.timerSeconds]);
 
   // CROSS-TAB SYNC: Listen for storage changes from other tabs/windows
   useEffect(() => {
