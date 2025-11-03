@@ -167,7 +167,7 @@ const OnePocketArena = () => {
     }
     
     currentArenaRef.current = 'one_pocket';
-  }, [teamAQueue, teamBQueue, currentGameNumber]
+  }, [teamAQueue, teamBQueue, currentGameNumber]);
 
   // Log betting queue changes for debugging
   useEffect(() => {
