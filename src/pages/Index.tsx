@@ -46,6 +46,9 @@ const Index = () => {
   
   const { gameState, updateGameState, isAdmin, localAdminState, updateLocalAdminState, startTimer, pauseTimer, resetTimer, setTimer, resetTimerOnMatchStart, resetTimerOnGameWin } = useGameState();
   
+  // Ref to track previous bet queue sizes for detecting new bets
+  const prevQueueSizesRef = useRef({ teamA: 0, teamB: 0 });
+
   // Sound effect for bet placement
   const { play: playSilverSound } = useSound('/silver.mp3', { volume: 0.8 });
   
@@ -103,22 +106,22 @@ const Index = () => {
     console.log(`💰 [BET QUEUE] Team B Queue: ${teamBQueue.length} bets`, teamBQueue);
   }, [teamAQueue, teamBQueue]);
 
-  // Listen for sound events from other clients
+  // Detect new bets and play sound once per new bet
   useEffect(() => {
-    const handlePlaySound = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const { soundType } = customEvent.detail;
-      console.log(`🔊 [SOUND EVENT] Playing sound: ${soundType}`);
-      if (soundType === "placeBet") {
-        playSilverSound();
-      }
+    const teamANewBets = teamAQueue.length - prevQueueSizesRef.current.teamA;
+    const teamBNewBets = teamBQueue.length - prevQueueSizesRef.current.teamB;
+    
+    if (teamANewBets > 0 || teamBNewBets > 0) {
+      console.log(`🔊 [BET SOUND] New bets detected! Team A: +${teamANewBets}, Team B: +${teamBNewBets}`);
+      playSilverSound();
+    }
+    
+    // Update refs
+    prevQueueSizesRef.current = {
+      teamA: teamAQueue.length,
+      teamB: teamBQueue.length
     };
-
-    window.addEventListener('playSound', handlePlaySound);
-    return () => {
-      window.removeEventListener('playSound', handlePlaySound);
-    };
-  }, [playSilverSound]);
+  }, [teamAQueue, teamBQueue, playSilverSound]);
 
   const generateBetId = () => {
     // Generate a 7-digit unique ID using counter + random number
@@ -127,14 +130,6 @@ const Index = () => {
     const newId = parseInt(`${paddedCounter}${random.toString().padStart(3, '0')}`);
     updateGameState({ betCounter: betCounter + 1 });
     return newId;
-  };
-
-  const playSound = (soundType: string) => {
-    if (soundType === "placeBet") {
-      playSilverSound();
-      // Broadcast sound event to all connected clients
-      socketIOService.emitSoundEvent("placeBet");
-    }
   };
 
   const toggleAdminMode = () => {
@@ -238,8 +233,6 @@ const Index = () => {
     }, 500);
     
     // Timer will be controlled by admin (pause/resume/reset)
-    
-    playSound("win");
   };
 
   const handleTeamBWin = (duration: number) => {
@@ -272,8 +265,6 @@ const Index = () => {
     }, 500);
     
     // Timer will be controlled by admin (pause/resume/reset)
-    
-    playSound("win");
   };
   
   const processBetsForGameWin = (winningTeam: 'A' | 'B', duration: number) => {
@@ -509,8 +500,6 @@ const Index = () => {
       return;
     }
     
-    playSound("placeBet");
-
     const betId = generateBetId();
     const bet: Bet = { 
       id: betId, 
@@ -600,8 +589,6 @@ const Index = () => {
       teamSide: team
     };
 
-    playSound("placeBet");
-
     if (isNextGame) {
       if (team === 'A') {
         const updatedAQueue = [...nextTeamAQueue, bet];
@@ -681,7 +668,6 @@ const Index = () => {
           
           // Bet booked successfully - no toast notification
           
-          playSound("match");
         }
       }
     }
@@ -737,7 +723,6 @@ const Index = () => {
           
           // Next game bet booked successfully - no toast notification
           
-          playSound("match");
         }
       }
     }
@@ -938,7 +923,6 @@ const Index = () => {
     
     if (betDeleted) {
       // Bet deleted successfully - no toast notification
-      playSound("delete");
       setBetId("");
     } else {
       toast.error("Error", {
@@ -1078,6 +1062,9 @@ const Index = () => {
           adminModalRef={adminModalRef}
           gameLabel={gameLabel}
           currentGameNumber={currentGameNumber}
+          onTeamANameChange={(name) => updateGameState({ teamAName: name })}
+          onTeamBNameChange={(name) => updateGameState({ teamBName: name })}
+          onBreakChange={(hasBreak) => updateGameState({ teamAHasBreak: hasBreak })}
           onTeamANameChange={(name) => updateGameState({ teamAName: name })}
           onTeamBNameChange={(name) => updateGameState({ teamBName: name })}
           onBreakChange={(hasBreak) => updateGameState({ teamAHasBreak: hasBreak })}

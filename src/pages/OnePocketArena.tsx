@@ -46,6 +46,9 @@ const OnePocketArena = () => {
   
   const { gameState, updateGameState, isAdmin, localAdminState, updateLocalAdminState, startTimer, pauseTimer, resetTimer, setTimer, resetTimerOnMatchStart, resetTimerOnGameWin } = useGameState();
   
+  // Ref to track previous bet queue sizes for detecting new bets
+  const prevQueueSizesRef = useRef({ teamA: 0, teamB: 0 });
+
   // Sound effect for bet placement
   const { play: playSilverSound } = useSound('/silver.mp3', { volume: 0.8 });
   
@@ -103,22 +106,22 @@ const OnePocketArena = () => {
     console.log(`💰 [BET QUEUE - ONE POCKET] Team B Queue: ${teamBQueue.length} bets`, teamBQueue);
   }, [teamAQueue, teamBQueue]);
 
-  // Listen for sound events from other clients
+  // Detect new bets and play sound once per new bet
   useEffect(() => {
-    const handlePlaySound = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const { soundType } = customEvent.detail;
-      console.log(`🔊 [SOUND EVENT - ONE POCKET] Playing sound: ${soundType}`);
-      if (soundType === "placeBet") {
-        playSilverSound();
-      }
+    const teamANewBets = teamAQueue.length - prevQueueSizesRef.current.teamA;
+    const teamBNewBets = teamBQueue.length - prevQueueSizesRef.current.teamB;
+    
+    if (teamANewBets > 0 || teamBNewBets > 0) {
+      console.log(`🔊 [BET SOUND - ONE POCKET] New bets detected! Team A: +${teamANewBets}, Team B: +${teamBNewBets}`);
+      playSilverSound();
+    }
+    
+    // Update refs
+    prevQueueSizesRef.current = {
+      teamA: teamAQueue.length,
+      teamB: teamBQueue.length
     };
-
-    window.addEventListener('playSound', handlePlaySound);
-    return () => {
-      window.removeEventListener('playSound', handlePlaySound);
-    };
-  }, [playSilverSound]);
+  }, [teamAQueue, teamBQueue, playSilverSound]);
 
   const generateBetId = () => {
     // Generate a 7-digit unique ID using counter + random number
@@ -127,14 +130,6 @@ const OnePocketArena = () => {
     const newId = parseInt(`${paddedCounter}${random.toString().padStart(3, '0')}`);
     updateGameState({ betCounter: betCounter + 1 });
     return newId;
-  };
-
-  const playSound = (soundType: string) => {
-    if (soundType === "placeBet") {
-      playSilverSound();
-      // Broadcast sound event to all connected clients
-      socketIOService.emitSoundEvent("placeBet");
-    }
   };
 
   const toggleAdminMode = () => {
@@ -238,12 +233,10 @@ const OnePocketArena = () => {
     }, 500);
     
     // Timer will be controlled by admin (pause/resume/reset)
-    
-    playSound("win");
   };
 
   const handleTeamBWin = (duration: number) => {
-    console.log('🏆 [handleTeamBWin] WIN BUTTON CLICKED FOR TEAM B!');
+    console.log('🏆 [handleTeamBWin - ONE POCKET] WIN BUTTON CLICKED FOR TEAM B!');
     // Pause timer when game is won (don't reset it)
     pauseTimer();
     
@@ -258,7 +251,7 @@ const OnePocketArena = () => {
     // Increment game counter and game number AFTER bets are processed
     // Using 500ms to ensure all bet processing is complete
     setTimeout(() => {
-      console.log('🏆 [handleTeamBWin] Incrementing game counter after bet processing');
+      console.log('🏆 [handleTeamBWin - ONE POCKET] Incrementing game counter after bet processing');
       console.log(`   Previous: teamBGames=${teamBGames}, currentGameNumber=${currentGameNumber}`);
       console.log(`   About to call updateGameState with: { teamBGames: ${teamBGames + 1}, currentGameNumber: ${currentGameNumber + 1} }`);
       updateGameState({
@@ -272,8 +265,6 @@ const OnePocketArena = () => {
     }, 500);
     
     // Timer will be controlled by admin (pause/resume/reset)
-    
-    playSound("win");
   };
   
   const processBetsForGameWin = (winningTeam: 'A' | 'B', duration: number) => {
@@ -509,8 +500,6 @@ const OnePocketArena = () => {
       return;
     }
     
-    playSound("placeBet");
-
     const betId = generateBetId();
     const bet: Bet = { 
       id: betId, 
@@ -600,8 +589,6 @@ const OnePocketArena = () => {
       teamSide: team
     };
 
-    playSound("placeBet");
-
     if (isNextGame) {
       if (team === 'A') {
         const updatedAQueue = [...nextTeamAQueue, bet];
@@ -681,7 +668,6 @@ const OnePocketArena = () => {
           
           // Bet booked successfully - no toast notification
           
-          playSound("match");
         }
       }
     }
@@ -737,7 +723,6 @@ const OnePocketArena = () => {
           
           // Next game bet booked successfully - no toast notification
           
-          playSound("match");
         }
       }
     }
@@ -814,7 +799,7 @@ const OnePocketArena = () => {
     }
   };
 
-  const deleteBet = () => {
+  const deleteBet = (id: string) => {
     if (!betId) {
       toast.error("Error", {
         description: "Please enter a valid Bet ID",
@@ -823,16 +808,16 @@ const OnePocketArena = () => {
       return;
     }
 
-    const id = parseInt(betId);
+    const idInt = parseInt(id);
     let betDeleted = false;
     
-    const deletedBetA = teamAQueue.find(bet => bet.id === id);
+    const deletedBetA = teamAQueue.find(bet => bet.id === idInt);
     if (deletedBetA) {
-      const newTeamAQueue = teamAQueue.filter(bet => bet.id !== id);
+      const newTeamAQueue = teamAQueue.filter(bet => bet.id !== idInt);
       updateGameState({ teamAQueue: newTeamAQueue });
       
       if (deletedBetA.booked) {
-        const matchedBookedBet = bookedBets.find(bookedBet => bookedBet.idA === id);
+        const matchedBookedBet = bookedBets.find(bookedBet => bookedBet.idA === idInt);
         if (matchedBookedBet) {
           const newTeamBQueue = teamBQueue.map(bet => {
             if (bet.id === matchedBookedBet.idB) {
@@ -840,7 +825,7 @@ const OnePocketArena = () => {
             }
             return bet;
           });
-          const newBookedBets = bookedBets.filter(bookedBet => bookedBet.idA !== id);
+          const newBookedBets = bookedBets.filter(bookedBet => bookedBet.idA !== idInt);
           
           updateGameState({
             teamBQueue: newTeamBQueue,
@@ -853,13 +838,13 @@ const OnePocketArena = () => {
       betDeleted = true;
     }
     
-    const deletedBetB = teamBQueue.find(bet => bet.id === id);
+    const deletedBetB = teamBQueue.find(bet => bet.id === idInt);
     if (deletedBetB && !betDeleted) {
-      const newTeamBQueue = teamBQueue.filter(bet => bet.id !== id);
+      const newTeamBQueue = teamBQueue.filter(bet => bet.id !== idInt);
       updateGameState({ teamBQueue: newTeamBQueue });
       
       if (deletedBetB.booked) {
-        const matchedBookedBet = bookedBets.find(bookedBet => bookedBet.idB === id);
+        const matchedBookedBet = bookedBets.find(bookedBet => bookedBet.idB === idInt);
         if (matchedBookedBet) {
           const newTeamAQueue = teamAQueue.map(bet => {
             if (bet.id === matchedBookedBet.idA) {
@@ -867,7 +852,7 @@ const OnePocketArena = () => {
             }
             return bet;
           });
-          const newBookedBets = bookedBets.filter(bookedBet => bookedBet.idB !== id);
+          const newBookedBets = bookedBets.filter(bookedBet => bookedBet.idB !== idInt);
           
           updateGameState({
             teamAQueue: newTeamAQueue,
@@ -881,13 +866,13 @@ const OnePocketArena = () => {
     }
     
     if (!betDeleted) {
-      const deletedNextBetA = nextTeamAQueue.find(bet => bet.id === id);
+      const deletedNextBetA = nextTeamAQueue.find(bet => bet.id === idInt);
       if (deletedNextBetA) {
-        const newNextTeamAQueue = nextTeamAQueue.filter(bet => bet.id !== id);
+        const newNextTeamAQueue = nextTeamAQueue.filter(bet => bet.id !== idInt);
         updateGameState({ nextTeamAQueue: newNextTeamAQueue });
         
         if (deletedNextBetA.booked) {
-          const matchedBookedBet = nextBookedBets.find(bookedBet => bookedBet.idA === id);
+          const matchedBookedBet = nextBookedBets.find(bookedBet => bookedBet.idA === idInt);
           if (matchedBookedBet) {
             const newNextTeamBQueue = nextTeamBQueue.map(bet => {
               if (bet.id === matchedBookedBet.idB) {
@@ -895,7 +880,7 @@ const OnePocketArena = () => {
               }
               return bet;
             });
-            const newNextBookedBets = nextBookedBets.filter(bookedBet => bookedBet.idA !== id);
+            const newNextBookedBets = nextBookedBets.filter(bookedBet => bookedBet.idA !== idInt);
             
             updateGameState({
               nextTeamBQueue: newNextTeamBQueue,
@@ -908,13 +893,13 @@ const OnePocketArena = () => {
         betDeleted = true;
       }
       
-      const deletedNextBetB = nextTeamBQueue.find(bet => bet.id === id);
+      const deletedNextBetB = nextTeamBQueue.find(bet => bet.id === idInt);
       if (deletedNextBetB && !betDeleted) {
-        const newNextTeamBQueue = nextTeamBQueue.filter(bet => bet.id !== id);
+        const newNextTeamBQueue = nextTeamBQueue.filter(bet => bet.id !== idInt);
         updateGameState({ nextTeamBQueue: newNextTeamBQueue });
         
         if (deletedNextBetB.booked) {
-          const matchedBookedBet = nextBookedBets.find(bookedBet => bookedBet.idB === id);
+          const matchedBookedBet = nextBookedBets.find(bookedBet => bookedBet.idB === idInt);
           if (matchedBookedBet) {
             const newNextTeamAQueue = nextTeamAQueue.map(bet => {
               if (bet.id === matchedBookedBet.idA) {
@@ -922,7 +907,7 @@ const OnePocketArena = () => {
               }
               return bet;
             });
-            const newNextBookedBets = nextBookedBets.filter(bookedBet => bookedBet.idB !== id);
+            const newNextBookedBets = nextBookedBets.filter(bookedBet => bookedBet.idB !== idInt);
             
             updateGameState({
               nextTeamAQueue: newNextTeamAQueue,
@@ -938,7 +923,6 @@ const OnePocketArena = () => {
     
     if (betDeleted) {
       // Bet deleted successfully - no toast notification
-      playSound("delete");
       setBetId("");
     } else {
       toast.error("Error", {
