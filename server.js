@@ -32,8 +32,8 @@ const io = new Server(server, {
     allowedHeaders: "*"
   },
   transports: ['websocket', 'polling'],
-  pingTimeout: 60000,
-  pingInterval: 25000,
+  pingTimeout: 45000,
+  pingInterval: 20000,
   allowEIO3: true,
   maxHttpBufferSize: 1e6,
   serveClient: false,
@@ -214,18 +214,25 @@ function startServerTimer(arenaId = 'default') {
   timer.isRunning = true;
   arenaState.isTimerRunning = true;
   
+  // OPTIMIZED: Reduce broadcast frequency from 1s to 500ms
+  // Only broadcast when timer is actually running
+  let lastBroadcastTime = Date.now();
   timer.interval = setInterval(() => {
-    // Calculate total elapsed time from when the timer first started
-    const totalElapsed = Math.floor((Date.now() - timer.continuousStartTime) / 1000);
-    
-    // Broadcast timer update only to this arena's room
-    io.to(`arena:${arenaId}`).emit('timer-update', {
-      isTimerRunning: arenaState.isTimerRunning,
-      timerSeconds: totalElapsed,
-      serverStartTime: timer.startTime,
-      accumulatedTime: totalElapsed
-    });
-  }, 1000);
+    // Only broadcast if enough time has passed (delta-based sending)
+    const now = Date.now();
+    if (now - lastBroadcastTime >= 500) {
+      const totalElapsed = Math.floor((Date.now() - timer.continuousStartTime) / 1000);
+      
+      io.to(`arena:${arenaId}`).emit('timer-update', {
+        isTimerRunning: arenaState.isTimerRunning,
+        timerSeconds: totalElapsed,
+        serverStartTime: timer.startTime,
+        accumulatedTime: totalElapsed
+      });
+      
+      lastBroadcastTime = now;
+    }
+  }, 500); // Check every 500ms instead of 1000ms
 }
 
 function stopServerTimer(arenaId = 'default') {
@@ -312,12 +319,28 @@ io.engine.on('parse_error', (err) => {
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log(`✅ [CONNECTION] Socket connected: ${socket.id}`);
-  console.log(`📍 [CONNECTION] Handshake headers:`, JSON.stringify(socket.handshake.headers));
   
   // Track arena but DON'T join any room yet - wait for set-arena
   let currentArenaId = 'default';
   let arenaIdentified = false;
   socketArenaMap.set(socket.id, currentArenaId);
+  
+  // THROTTLING: Prevent event flooding - track last emit times per socket
+  const emitThrottle = {
+    betUpdate: 0,
+    gameState: 0,
+    timer: 0
+  };
+  const THROTTLE_DELAY = 50; // ms - only emit once per 50ms
+  
+  const shouldThrottle = (type) => {
+    const now = Date.now();
+    if (now - emitThrottle[type] >= THROTTLE_DELAY) {
+      emitThrottle[type] = now;
+      return false;
+    }
+    return true;
+  };
   
   // DO NOT join any room here - wait for set-arena to identify arena first
   
@@ -328,7 +351,6 @@ io.on('connection', (socket) => {
     // If arena is being changed and we were previously in a room, leave it
     if (arenaIdentified && currentArenaId !== newArenaId) {
       socket.leave(`arena:${currentArenaId}`);
-      console.log(`🔓 [ARENA] Socket ${socket.id} left arena: ${currentArenaId}`);
     }
     
     socketArenaMap.set(socket.id, newArenaId);
@@ -337,19 +359,15 @@ io.on('connection', (socket) => {
     // NOW join the arena-specific room
     socket.join(`arena:${newArenaId}`);
     arenaIdentified = true;
-    console.log(`🎯 [ARENA] Socket ${socket.id} identified and joined arena: ${newArenaId} (room: arena:${newArenaId})`);
     
     // SEND INITIAL DATA ONLY AFTER ARENA IS IDENTIFIED AND ROOM IS JOINED
     try {
       const arenaState = getGameState(currentArenaId);
       const timer = getArenaTimer(currentArenaId);
       
-      console.log(`📤 [EMIT 1] About to emit game-state-update for arena '${currentArenaId}'`);
       // Emit initial game state with arena ID
       const gameStateData = { ...arenaState, arenaId: currentArenaId };
-      console.log(`📤 [DEBUG] Game state data arenaId: ${gameStateData.arenaId}`);
       socket.emit('game-state-update', gameStateData);
-      console.log(`✅ [EMIT 1] game-state-update emitted`);
       
       // Emit initial timer state with server's authoritative start time
       const currentElapsed = timer.continuousStartTime 
@@ -359,18 +377,14 @@ io.on('connection', (socket) => {
       socket.emit('timer-update', {
         isTimerRunning: timer.isRunning,
         timerSeconds: currentElapsed,
-        serverStartTime: timer.startTime,  // Milliseconds when timer started
+        serverStartTime: timer.startTime,
         accumulatedTime: currentElapsed,
         arenaId: currentArenaId
       });
-      console.log(`✅ [EMIT TIMER] timer-update emitted with elapsed time: ${currentElapsed}s`);
       
       // Emit connected users coins
       const coinsData = calculateConnectedUsersCoins();
-      const coinsDataWithArena = { ...coinsData, arenaId: currentArenaId };
-      console.log(`📤 [DEBUG] Coins data arenaId: ${coinsDataWithArena.arenaId}`);
-      socket.emit('connected-users-coins-update', coinsDataWithArena);
-      console.log(`✅ [EMIT 2] connected-users-coins-update emitted`);
+      socket.emit('connected-users-coins-update', { ...coinsData, arenaId: currentArenaId });
       
       // Emit initial bet data with arena ID
       const betData = {
@@ -382,11 +396,7 @@ io.on('connection', (socket) => {
         nextTeamAQueue: arenaState.nextTeamAQueue,
         nextTeamBQueue: arenaState.nextTeamBQueue
       };
-      console.log(`📤 [DEBUG] Bet data arenaId: ${betData.arenaId}`);
       socket.emit('bet-update', betData);
-      console.log(`✅ [EMIT 3] bet-update emitted with queues`);
-      
-      console.log(`📤 [ARENA] Initial data sent to ${socket.id} for arena '${currentArenaId}'`);
     } catch (error) {
       console.error(`❌ [ARENA] Error sending initial data to ${socket.id}:`, error.message);
     }

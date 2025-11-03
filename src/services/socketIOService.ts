@@ -1,5 +1,14 @@
 import { io, Socket } from 'socket.io-client';
 
+// DEBUG FLAG - Set to false in production
+const DEBUG = false;
+const log = (label: string, data?: any) => {
+  if (DEBUG) console.log(label, data);
+};
+const warn = (label: string, data?: any) => {
+  if (DEBUG) console.warn(label, data);
+};
+
 export interface BetSyncData {
   teamAQueue?: any[];
   teamBQueue?: any[];
@@ -53,31 +62,31 @@ class SocketIOService {
   private lastIdentifiedArena: string = 'default';
 
   constructor() {
-    console.log('🚀 SocketIOService constructor called');
+    log('🚀 SocketIOService constructor called');
     this.updateArenaId();
     // Initialize lastIdentifiedArena from the current hash to ensure correct arena on first emit
     this.lastIdentifiedArena = this.getArenaId();
-    console.log(`📍 Initialized lastIdentifiedArena to: ${this.lastIdentifiedArena}`);
+    log(`📍 Initialized lastIdentifiedArena to: ${this.lastIdentifiedArena}`);
     this.initializeSocket();
   }
 
   private updateArenaId() {
     // Detect arena from URL hash (using hash routing)
     const hash = window.location.hash;
-    console.log(`🔍 [DEBUG] Raw hash value: "${hash}"`);
-    console.log(`🔍 [DEBUG] Checking if hash includes "/one-pocket-arena":`, hash.includes('/one-pocket-arena'));
+    log(`🔍 [DEBUG] Raw hash value: "${hash}"`);
+    log(`🔍 [DEBUG] Checking if hash includes "/one-pocket-arena":`, hash.includes('/one-pocket-arena'));
     if (hash.includes('/one-pocket-arena')) {
       this.arenaId = 'one_pocket';
     } else {
       this.arenaId = 'default';
     }
-    console.log(`📍 Arena ID set to: ${this.arenaId} (from hash: ${hash})`);
+    log(`📍 Arena ID set to: ${this.arenaId} (from hash: ${hash})`);
   }
 
   private getArenaId(): string {
     // Detect arena from URL hash at runtime (using hash routing)
     const hash = window.location.hash;
-    console.log(`🔍 [DEBUG-GET] Raw hash value: "${hash}"`);
+    log(`🔍 [DEBUG-GET] Raw hash value: "${hash}"`);
     if (hash.includes('/one-pocket-arena')) {
       return 'one_pocket';
     }
@@ -88,7 +97,7 @@ class SocketIOService {
   private checkAndReidentifyArena() {
     const currentArena = this.getArenaId();
     if (currentArena !== this.lastIdentifiedArena && this.socket?.connected) {
-      console.log(`🔄 Arena change detected: ${this.lastIdentifiedArena} → ${currentArena}. Re-identifying...`);
+      log(`🔄 Arena change detected: ${this.lastIdentifiedArena} → ${currentArena}. Re-identifying...`);
       this.socket?.emit('set-arena', { arenaId: currentArena });
       this.lastIdentifiedArena = currentArena;
     }
@@ -102,21 +111,21 @@ class SocketIOService {
         return;
       }
       
-      console.log('✅ Socket.IO client library loaded successfully');
+      log('✅ Socket.IO client library loaded successfully');
       
       // Detect protocol: use HTTPS on production, HTTP on localhost
       const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
       const serverUrl = `${protocol}//${window.location.hostname}:3001`;
       
-      console.log('🔌 Connecting to Socket.IO');
-      console.log('🌐 Current page URL:', window.location.href);
-      console.log('📍 Hostname:', window.location.hostname);
-      console.log('🔒 Protocol:', protocol);
-      console.log('📌 Server URL:', serverUrl);
+      log('🔌 Connecting to Socket.IO');
+      log('🌐 Current page URL:', window.location.href);
+      log('📍 Hostname:', window.location.hostname);
+      log('🔒 Protocol:', protocol);
+      log('📌 Server URL:', serverUrl);
       
       // Start connection timing
       const connectionStartTime = Date.now();
-      console.log('⏱️ Connection attempt started at:', new Date().toISOString());
+      log('⏱️ Connection attempt started at:', new Date().toISOString());
       
       const ioOptions = {
         transports: ['polling', 'websocket'],
@@ -132,14 +141,14 @@ class SocketIOService {
       
       this.socket = io(serverUrl, ioOptions);
 
-      console.log('🔌 Socket.IO client created');
+      log('🔌 Socket.IO client created');
 
       this.setupEventListeners(serverUrl, connectionStartTime);
       
       // Add a timeout check
       setTimeout(() => {
         if (this.socket && !this.socket.connected) {
-          console.warn('⚠️ Socket.IO connection not established after 15 seconds');
+          warn('⚠️ Socket.IO connection not established after 15 seconds');
         }
       }, 15000);
       
@@ -153,11 +162,11 @@ class SocketIOService {
 
     this.socket.on('connect', () => {
       const connectionTime = Date.now() - connectionStartTime;
-      console.log('✅ Socket.IO connected:', this.socket?.id);
-      console.log('🌐 Server URL:', serverUrl);
-      console.log('⏱️ Connection time:', connectionTime + 'ms');
-      console.log('🔗 Transport used:', this.socket?.io.engine.transport.name);
-      console.log('📱 Device info:', {
+      log('✅ Socket.IO connected:', this.socket?.id);
+      log('🌐 Server URL:', serverUrl);
+      log('⏱️ Connection time:', connectionTime + 'ms');
+      log('🔗 Transport used:', this.socket?.io.engine.transport.name);
+      log('📱 Device info:', {
         userAgent: navigator.userAgent,
         isMobile: /iPhone|iPad|Android|Mobile/.test(navigator.userAgent),
         viewport: `${window.innerWidth}x${window.innerHeight}`
@@ -167,17 +176,17 @@ class SocketIOService {
       
       // Send arena ID to server
       const currentArenaId = this.getArenaId();
-      console.log(`📤 Sending arena ID to server: ${currentArenaId}`);
+      log(`📤 Sending arena ID to server: ${currentArenaId}`);
       this.socket?.emit('set-arena', { arenaId: currentArenaId });
       
       // Request current game state immediately on connection - CRITICAL FOR MOBILE
-      console.log('📤 [URGENT] Requesting current game state from server (mobile optimization)');
+      log('📤 [URGENT] Requesting current game state from server (mobile optimization)');
       this.socket?.emit('request-game-state', { arenaId: currentArenaId });
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('❌ Socket.IO disconnected:', reason);
-      console.log('🔄 Will attempt to reconnect automatically...');
+      log('❌ Socket.IO disconnected:', reason);
+      log('🔄 Will attempt to reconnect automatically...');
       this.isConnected = false;
     });
 
@@ -192,12 +201,12 @@ class SocketIOService {
         transport: error.transport
       });
       console.error('⏱️ Connection failed after:', connectionTime + 'ms');
-      console.log('🔄 Will attempt to reconnect automatically...');
+      log('🔄 Will attempt to reconnect automatically...');
       this.isConnected = false;
     });
 
     this.socket.on('reconnect', (attemptNumber) => {
-      console.log('🔄 Socket.IO reconnected after', attemptNumber, 'attempts');
+      log('🔄 Socket.IO reconnected after', attemptNumber, 'attempts');
       this.isConnected = true;
     });
 
@@ -211,12 +220,12 @@ class SocketIOService {
     });
 
     this.socket.on('reconnecting', (attemptNumber) => {
-      console.log('🔄 Socket.IO reconnecting... attempt', attemptNumber);
+      log('🔄 Socket.IO reconnecting... attempt', attemptNumber);
     });
 
     // Add connection attempt tracking
     this.socket.on('connect_attempt', () => {
-      console.log('🔄 Socket.IO connection attempt started');
+      log('🔄 Socket.IO connection attempt started');
     });
   }
 
@@ -227,15 +236,15 @@ class SocketIOService {
     this.checkAndReidentifyArena();
     if (this.isSocketConnected()) {
       const arenaId = this.getArenaId();
-      console.log(`📤 Emitting bet update for arena '${arenaId}':`, betData);
-      console.log(`📤 [EMIT CHECK] teamAQueue - type: ${typeof betData.teamAQueue}, isArray: ${Array.isArray(betData.teamAQueue)}, value:`, betData.teamAQueue);
-      console.log(`📤 [EMIT CHECK] teamBQueue - type: ${typeof betData.teamBQueue}, isArray: ${Array.isArray(betData.teamBQueue)}, value:`, betData.teamBQueue);
-      console.log(`📤 [EMIT CHECK] bookedBets - type: ${typeof betData.bookedBets}, isArray: ${Array.isArray(betData.bookedBets)}, value:`, betData.bookedBets);
+      log(`📤 Emitting bet update for arena '${arenaId}':`, betData);
+      log(`📤 [EMIT CHECK] teamAQueue - type: ${typeof betData.teamAQueue}, isArray: ${Array.isArray(betData.teamAQueue)}, value:`, betData.teamAQueue);
+      log(`📤 [EMIT CHECK] teamBQueue - type: ${typeof betData.teamBQueue}, isArray: ${Array.isArray(betData.teamBQueue)}, value:`, betData.teamBQueue);
+      log(`📤 [EMIT CHECK] bookedBets - type: ${typeof betData.bookedBets}, isArray: ${Array.isArray(betData.bookedBets)}, value:`, betData.bookedBets);
       const dataToSend = { ...betData, arenaId };
-      console.log(`📤 [FINAL DATA] About to emit:`, dataToSend);
+      log(`📤 [FINAL DATA] About to emit:`, dataToSend);
       this.socket?.emit('bet-update', dataToSend);
     } else {
-      console.warn('⚠️ Socket not connected, cannot emit bet update');
+      warn('⚠️ Socket not connected, cannot emit bet update');
     }
   }
 
@@ -243,10 +252,10 @@ class SocketIOService {
     this.checkAndReidentifyArena();
     if (this.isSocketConnected()) {
       const arenaId = this.getArenaId();
-      console.log(`📤 Emitting game state update for arena '${arenaId}':`, gameStateData);
+      log(`📤 Emitting game state update for arena '${arenaId}':`, gameStateData);
       this.socket?.emit('game-state-update', { ...gameStateData, arenaId });
     } else {
-      console.warn('⚠️ Socket not connected, cannot emit game state update');
+      warn('⚠️ Socket not connected, cannot emit game state update');
     }
   }
 
@@ -254,10 +263,10 @@ class SocketIOService {
     this.checkAndReidentifyArena();
     if (this.isSocketConnected()) {
       const arenaId = this.getArenaId();
-      console.log(`📤 Emitting timer update for arena '${arenaId}':`, timerData);
+      log(`📤 Emitting timer update for arena '${arenaId}':`, timerData);
       this.socket?.emit('timer-update', { ...timerData, arenaId });
     } else {
-      console.warn('⚠️ Socket not connected, cannot emit timer update');
+      warn('⚠️ Socket not connected, cannot emit timer update');
     }
   }
 
@@ -265,19 +274,19 @@ class SocketIOService {
     this.checkAndReidentifyArena();
     if (this.isSocketConnected()) {
       const arenaId = this.getArenaId();
-      console.log(`📤 Emitting score update for arena '${arenaId}':`, scoreData);
+      log(`📤 Emitting score update for arena '${arenaId}':`, scoreData);
       this.socket?.emit('score-update', { ...scoreData, arenaId });
     } else {
-      console.warn('⚠️ Socket not connected, cannot emit score update');
+      warn('⚠️ Socket not connected, cannot emit score update');
     }
   }
 
   // Public methods for listening to events
   public onBetUpdate(callback: (data: BetSyncData) => void) {
     if (this.socket) {
-      console.log('📥 [LISTENER] Setting up bet-update listener');
+      log('📥 [LISTENER] Setting up bet-update listener');
       this.socket.on('bet-update', (data: BetSyncData) => {
-        console.log('📥 [CALLBACK] bet-update callback triggered with data:', data);
+        log('📥 [CALLBACK] bet-update callback triggered with data:', data);
         callback(data);
       });
     }
@@ -328,10 +337,10 @@ class SocketIOService {
     this.checkAndReidentifyArena();
     if (this.isSocketConnected()) {
       const arenaId = this.getArenaId();
-      console.log(`📤 Requesting game state for arena '${arenaId}'`);
+      log(`📤 Requesting game state for arena '${arenaId}'`);
       this.socket?.emit('request-game-state', { arenaId });
     } else {
-      console.warn('⚠️ Socket not connected, cannot request game state');
+      warn('⚠️ Socket not connected, cannot request game state');
     }
   }
 
@@ -340,7 +349,7 @@ class SocketIOService {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
       const arenaId = this.getArenaId();
-      console.log('📤 Emitting break status update:', { teamAHasBreak, arenaId });
+      log('📤 Emitting break status update:', { teamAHasBreak, arenaId });
       this.socket.emit('break-status-update', { teamAHasBreak, arenaId });
     }
   }
@@ -348,7 +357,7 @@ class SocketIOService {
   public onBreakStatusUpdate(callback: (data: { teamAHasBreak: boolean, arenaId?: string }) => void) {
     if (this.socket) {
       this.socket.on('break-status-update', (data: { teamAHasBreak: boolean, arenaId?: string }) => {
-        console.log('📥 Received dedicated break status update:', data);
+        log('📥 Received dedicated break status update:', data);
         callback(data);
       });
     }
@@ -359,7 +368,7 @@ class SocketIOService {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
       const arenaId = this.getArenaId();
-      console.log('📤 Emitting total booked coins update');
+      log('📤 Emitting total booked coins update');
       this.socket.emit('total-booked-coins-update', { totalBookedAmount, nextTotalBookedAmount, arenaId });
     }
   }
@@ -367,7 +376,7 @@ class SocketIOService {
   public onTotalBookedCoinsUpdate(callback: (data: { totalBookedAmount: number, nextTotalBookedAmount: number, arenaId?: string }) => void) {
     if (this.socket) {
       this.socket.on('total-booked-coins-update', (data: { totalBookedAmount: number, nextTotalBookedAmount: number, arenaId?: string }) => {
-        console.log('📥 Received total booked coins update:', data);
+        log('📥 Received total booked coins update:', data);
         callback(data);
       });
     }
@@ -381,7 +390,7 @@ class SocketIOService {
   public emitUserWalletUpdate(users: any[]) {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
-      console.log('📤 Emitting user wallet update:', users.length, 'users');
+      log('📤 Emitting user wallet update:', users.length, 'users');
       this.socket.emit('user-wallet-update', { users });
     }
   }
@@ -389,7 +398,7 @@ class SocketIOService {
   public onUserWalletUpdate(callback: (data: { users: any[] }) => void) {
     if (this.socket) {
       this.socket.on('user-wallet-update', (data: { users: any[] }) => {
-        console.log('📥 Received user wallet update:', data.users.length, 'users');
+        log('📥 Received user wallet update:', data.users.length, 'users');
         callback(data);
       });
     }
@@ -399,7 +408,7 @@ class SocketIOService {
   public requestWalletData() {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
-      console.log('📤 Requesting wallet data from server');
+      log('📤 Requesting wallet data from server');
       this.socket.emit('request-wallet-data');
     }
   }
@@ -407,7 +416,7 @@ class SocketIOService {
   public onWalletDataResponse(callback: (data: { users: any[] }) => void) {
     if (this.socket) {
       this.socket.on('wallet-data-response', (data: { users: any[] }) => {
-        console.log('📥 Received wallet data response:', data.users.length, 'users');
+        log('📥 Received wallet data response:', data.users.length, 'users');
         callback(data);
       });
     }
@@ -417,7 +426,7 @@ class SocketIOService {
   public emitUserLogin(userData: { id: string; name: string; credits: number }) {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
-      console.log('📤 Emitting user login:', userData.name, 'with', userData.credits, 'coins');
+      log('📤 Emitting user login:', userData.name, 'with', userData.credits, 'coins');
       this.socket.emit('user-login', userData);
     }
   }
@@ -426,7 +435,7 @@ class SocketIOService {
   public emitUserLogout(userData: { id: string; name: string; credits: number }) {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
-      console.log('📤 Emitting user logout:', userData.name, 'with', userData.credits, 'coins');
+      log('📤 Emitting user logout:', userData.name, 'with', userData.credits, 'coins');
       this.socket.emit('user-logout', userData);
     }
   }
@@ -435,7 +444,7 @@ class SocketIOService {
   public onConnectedUsersCoinsUpdate(callback: (data: { totalCoins: number; connectedUserCount: number; connectedUsers: any[] }) => void) {
     if (this.socket) {
       this.socket.on('connected-users-coins-update', (data) => {
-        console.log('📥 Received connected users coins update:', data.totalCoins, 'coins from', data.connectedUserCount, 'users');
+        log('📥 Received connected users coins update:', data.totalCoins, 'coins from', data.connectedUserCount, 'users');
         callback(data);
       });
     }
@@ -445,7 +454,7 @@ class SocketIOService {
   public requestConnectedUsersData() {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
-      console.log('📤 Requesting connected users data refresh');
+      log('📤 Requesting connected users data refresh');
       this.socket.emit('request-connected-users-data');
     }
   }
@@ -480,7 +489,7 @@ class SocketIOService {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
       const arenaId = this.getArenaId();
-      console.log('📤 Emitting game history update:', gameHistory.length, 'records');
+      log('📤 Emitting game history update:', gameHistory.length, 'records');
       this.socket.emit('game-history-update', { gameHistory, arenaId });
     }
   }
@@ -491,8 +500,8 @@ class SocketIOService {
       this.socket.off('game-history-update');
       
       this.socket.on('game-history-update', (data: { gameHistory: any[], arenaId?: string }) => {
-        console.log('📥 [SocketIOService] Received game history update:', data.gameHistory?.length, 'records');
-        console.log('🔔 [SocketIOService] Calling callback with', data.gameHistory?.length, 'records');
+        log('📥 [SocketIOService] Received game history update:', data.gameHistory?.length, 'records');
+        log('🔔 [SocketIOService] Calling callback with', data.gameHistory?.length, 'records');
         callback(data);
       });
     }
@@ -503,7 +512,7 @@ class SocketIOService {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
       const arenaId = this.getArenaId();
-      console.log('📤 Emitting bet receipts update:', betReceipts.length, 'receipts');
+      log('📤 Emitting bet receipts update:', betReceipts.length, 'receipts');
       this.socket.emit('bet-receipts-update', { betReceipts, arenaId });
     }
   }
@@ -514,8 +523,8 @@ class SocketIOService {
       this.socket.off('bet-receipts-update');
       
       this.socket.on('bet-receipts-update', (data: { betReceipts: any[], arenaId?: string }) => {
-        console.log('📥 [SocketIOService] Received bet receipts update:', data.betReceipts?.length, 'receipts');
-        console.log('🔔 [SocketIOService] Calling callback with', data.betReceipts?.length, 'receipts');
+        log('📥 [SocketIOService] Received bet receipts update:', data.betReceipts?.length, 'receipts');
+        log('🔔 [SocketIOService] Calling callback with', data.betReceipts?.length, 'receipts');
         callback(data);
       });
     }
@@ -525,7 +534,7 @@ class SocketIOService {
   public emitClearAllData() {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
-      console.log('📤 Emitting clear all data command');
+      log('📤 Emitting clear all data command');
       this.socket.emit('clear-all-data', { timestamp: Date.now() });
     }
   }
@@ -534,7 +543,7 @@ class SocketIOService {
     if (this.socket) {
       this.socket.off('clear-all-data');
       this.socket.on('clear-all-data', () => {
-        console.log('📥 [SocketIOService] Received clear all data command');
+        log('📥 [SocketIOService] Received clear all data command');
         callback();
       });
     }
@@ -544,7 +553,7 @@ class SocketIOService {
   public emitPauseListeners() {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
-      console.log('📤 Emitting pause listeners command to ALL clients');
+      log('📤 Emitting pause listeners command to ALL clients');
       this.socket.emit('pause-listeners', { timestamp: Date.now() });
     }
   }
@@ -553,7 +562,7 @@ class SocketIOService {
     if (this.socket) {
       this.socket.off('pause-listeners');
       this.socket.on('pause-listeners', () => {
-        console.log('📥 [SocketIOService] Received pause listeners command');
+        log('📥 [SocketIOService] Received pause listeners command');
         callback();
       });
     }
@@ -563,7 +572,7 @@ class SocketIOService {
   public emitResumeListeners() {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
-      console.log('📤 Emitting resume listeners command to ALL clients');
+      log('📤 Emitting resume listeners command to ALL clients');
       this.socket.emit('resume-listeners', { timestamp: Date.now() });
     }
   }
@@ -572,7 +581,7 @@ class SocketIOService {
     if (this.socket) {
       this.socket.off('resume-listeners');
       this.socket.on('resume-listeners', () => {
-        console.log('📥 [SocketIOService] Received resume listeners command');
+        log('📥 [SocketIOService] Received resume listeners command');
         callback();
       });
     }
@@ -582,7 +591,7 @@ class SocketIOService {
   public requestGameHistoryFromClients() {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
-      console.log('📤 [P2P] Requesting game history from other clients');
+      log('📤 [P2P] Requesting game history from other clients');
       this.socket.emit('request-game-history-from-clients');
     }
   }
@@ -591,7 +600,7 @@ class SocketIOService {
     if (this.socket) {
       this.socket.off('client-requesting-game-history');
       this.socket.on('client-requesting-game-history', (data) => {
-        console.log('📨 [P2P] Another client requesting game history');
+        log('📨 [P2P] Another client requesting game history');
         callback(data);
       });
     }
@@ -599,7 +608,7 @@ class SocketIOService {
 
   public sendGameHistoryToClient(gameHistory: any[]) {
     if (this.socket && this.isSocketConnected()) {
-      console.log('📤 [P2P] Sending game history to peers:', gameHistory.length, 'records');
+      log('📤 [P2P] Sending game history to peers:', gameHistory.length, 'records');
       this.socket.emit('provide-game-history-to-client', { gameHistory });
     }
   }
@@ -608,7 +617,7 @@ class SocketIOService {
     if (this.socket) {
       this.socket.off('receive-game-history-from-clients');
       this.socket.on('receive-game-history-from-clients', (data) => {
-        console.log('📥 [P2P] Received game history from peers:', data.gameHistory?.length, 'records');
+        log('📥 [P2P] Received game history from peers:', data.gameHistory?.length, 'records');
         callback(data);
       });
     }
@@ -619,7 +628,7 @@ class SocketIOService {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
       const arenaId = this.getArenaId();
-      console.log(`🔊 Emitting sound event '${soundType}' for arena '${arenaId}'`);
+      log(`🔊 Emitting sound event '${soundType}' for arena '${arenaId}'`);
       this.socket.emit('play-sound', { soundType, arenaId, timestamp: Date.now() });
     }
   }
@@ -628,7 +637,7 @@ class SocketIOService {
     if (this.socket) {
       this.socket.off('play-sound');
       this.socket.on('play-sound', (data) => {
-        console.log(`🔊 Received sound event: '${data.soundType}' from arena '${data.arenaId}'`);
+        log(`🔊 Received sound event: '${data.soundType}' from arena '${data.arenaId}'`);
         callback(data);
       });
     }
@@ -680,9 +689,6 @@ class SocketIOService {
 
 // Create singleton instance
 export const socketIOService = new SocketIOService();
-
-// Test if the service is working
-console.log('🔧 SocketIOService singleton created:', socketIOService);
 
 // Export the class for testing
 export default SocketIOService;

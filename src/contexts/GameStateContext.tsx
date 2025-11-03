@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { Bet, BookedBet } from '@/types/user';
 import { socketIOService, BetSyncData, GameStateSyncData, TimerSyncData, ScoreSyncData } from '@/services/socketIOService';
 import { useUser } from './UserContext';
+import { debounce } from '@/utils/timerUtils';
 
 interface GameState {
   // Team Information
@@ -590,108 +591,67 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
         newState.gameLabel = `GAME ${updates.currentGameNumber}`;
       }
       
-      // Emit changes to other clients via Socket.IO
+      // Emit changes to other clients via Socket.IO (optimized - batched & debounced)
       if (socketIOService.isSocketConnected()) {
-        console.log('📤 Socket.IO connected, emitting updates:', updates);
-        
-        // Emit bet-related updates
-        if (updates.teamAQueue !== undefined || updates.teamBQueue !== undefined || updates.bookedBets !== undefined || updates.nextBookedBets !== undefined || updates.nextTeamAQueue !== undefined || updates.nextTeamBQueue !== undefined) {
-          const betData: BetSyncData = {};
-          if (updates.teamAQueue !== undefined) {
-            console.log('📤 [DETAIL] teamAQueue type:', typeof updates.teamAQueue, 'isArray:', Array.isArray(updates.teamAQueue));
-            console.log('📤 [DETAIL] teamAQueue value:', updates.teamAQueue);
-            betData.teamAQueue = updates.teamAQueue;
-          }
-          if (updates.teamBQueue !== undefined) {
-            console.log('📤 [DETAIL] teamBQueue type:', typeof updates.teamBQueue, 'isArray:', Array.isArray(updates.teamBQueue));
-            console.log('📤 [DETAIL] teamBQueue value:', updates.teamBQueue);
-            betData.teamBQueue = updates.teamBQueue;
-          }
-          if (updates.bookedBets !== undefined) {
-            console.log('📤 [DETAIL] bookedBets type:', typeof updates.bookedBets, 'isArray:', Array.isArray(updates.bookedBets));
-            console.log('📤 [DETAIL] bookedBets value:', updates.bookedBets);
-            betData.bookedBets = updates.bookedBets;
-          }
-          if (updates.nextBookedBets !== undefined) betData.nextGameBets = updates.nextBookedBets;
-          if (updates.nextTeamAQueue !== undefined) betData.nextTeamAQueue = updates.nextTeamAQueue;
-          if (updates.nextTeamBQueue !== undefined) betData.nextTeamBQueue = updates.nextTeamBQueue;
-          
-          console.log('📤 Emitting bet update:', betData);
-          console.log('📤 Sample bet with userName:', betData.teamAQueue?.[0] || betData.teamBQueue?.[0]);
-          console.log('📤 [FINAL CHECK] betData.teamAQueue is array?:', Array.isArray(betData.teamAQueue));
-          // Use microtask to ensure React state update is processed before sending to server
-          Promise.resolve().then(() => {
-            console.log('📤 [BEFORE EMIT] betData.teamAQueue type:', typeof betData.teamAQueue, 'value:', betData.teamAQueue);
+        // Batch and debounce all socket emissions to reduce network traffic
+        const emitBatchedUpdates = debounce(() => {
+          // Emit bet-related updates
+          if (updates.teamAQueue !== undefined || updates.teamBQueue !== undefined || updates.bookedBets !== undefined || updates.nextBookedBets !== undefined || updates.nextTeamAQueue !== undefined || updates.nextTeamBQueue !== undefined) {
+            const betData: BetSyncData = {};
+            if (updates.teamAQueue !== undefined) betData.teamAQueue = updates.teamAQueue;
+            if (updates.teamBQueue !== undefined) betData.teamBQueue = updates.teamBQueue;
+            if (updates.bookedBets !== undefined) betData.bookedBets = updates.bookedBets;
+            if (updates.nextBookedBets !== undefined) betData.nextGameBets = updates.nextBookedBets;
+            if (updates.nextTeamAQueue !== undefined) betData.nextTeamAQueue = updates.nextTeamAQueue;
+            if (updates.nextTeamBQueue !== undefined) betData.nextTeamBQueue = updates.nextTeamBQueue;
             socketIOService.emitBetUpdate(betData);
-          });
-        }
-        
-        // Emit total booked coins updates
-        if (updates.totalBookedAmount !== undefined || updates.nextTotalBookedAmount !== undefined) {
-          const totalBookedAmount = updates.totalBookedAmount !== undefined ? updates.totalBookedAmount : newState.totalBookedAmount;
-          const nextTotalBookedAmount = updates.nextTotalBookedAmount !== undefined ? updates.nextTotalBookedAmount : newState.nextTotalBookedAmount;
-          
-          console.log('📤 Emitting total booked coins update:', { totalBookedAmount, nextTotalBookedAmount });
-          socketIOService.emitTotalBookedCoinsUpdate(totalBookedAmount, nextTotalBookedAmount);
-        }
-        
-        // Emit game state updates (scores, balls, etc.)
-        if (updates.teamAGames !== undefined ||
-            updates.teamBGames !== undefined ||
-            updates.teamABalls !== undefined || updates.teamBBalls !== undefined ||
-            updates.isGameActive !== undefined || updates.winner !== undefined ||
-            updates.currentGameNumber !== undefined || // Added game number to condition
-            updates.teamAHasBreak !== undefined || // Added break status to condition
-            updates.teamAName || updates.teamBName || updates.gameDescription) {
-          const gameStateData: GameStateSyncData = {};
-          if (updates.teamAGames !== undefined) gameStateData.teamAScore = updates.teamAGames;
-          if (updates.teamBGames !== undefined) gameStateData.teamBScore = updates.teamBGames;
-          if (updates.teamABalls !== undefined) gameStateData.teamABalls = updates.teamABalls;
-          if (updates.teamBBalls !== undefined) gameStateData.teamBBalls = updates.teamBBalls;
-          if (updates.isGameActive !== undefined) gameStateData.isGameActive = updates.isGameActive;
-          if (updates.winner !== undefined) gameStateData.winner = updates.winner;
-          if (updates.currentGameNumber !== undefined) gameStateData.currentGameNumber = updates.currentGameNumber; // Added game number emission
-          if (updates.teamAHasBreak !== undefined) {
-            gameStateData.teamAHasBreak = updates.teamAHasBreak; // Added break status emission
-            console.log('📤 Break status change detected, emitting:', updates.teamAHasBreak);
-            // Also emit dedicated break status update
-            socketIOService.emitBreakStatusUpdate(updates.teamAHasBreak);
-          }
-          if (updates.teamAName || updates.teamBName || updates.gameDescription) {
-            gameStateData.gameInfo = {
-              teamAName: updates.teamAName || prevState.teamAName,
-              teamBName: updates.teamBName || prevState.teamBName,
-              gameTitle: "Game Bird",
-              gameDescription: updates.gameDescription || prevState.gameDescription
-            };
           }
           
-          console.log('📤 Emitting game state update:', gameStateData);
-          socketIOService.emitGameStateUpdate(gameStateData);
-        }
-        
-        // Emit timer updates
-        if (updates.isTimerRunning !== undefined || updates.timerSeconds !== undefined) {
-          const timerData: TimerSyncData = {
-            isTimerRunning: updates.isTimerRunning !== undefined ? updates.isTimerRunning : prevState.isTimerRunning,
-            timerSeconds: updates.timerSeconds !== undefined ? updates.timerSeconds : prevState.timerSeconds
-          };
+          // Emit total booked coins updates
+          if (updates.totalBookedAmount !== undefined || updates.nextTotalBookedAmount !== undefined) {
+            socketIOService.emitTotalBookedCoinsUpdate(
+              updates.totalBookedAmount !== undefined ? updates.totalBookedAmount : newState.totalBookedAmount,
+              updates.nextTotalBookedAmount !== undefined ? updates.nextTotalBookedAmount : newState.nextTotalBookedAmount
+            );
+          }
           
-          socketIOService.emitTimerUpdate(timerData);
-        }
+          // Emit game state updates (scores, balls, etc.) - BATCHED
+          if (updates.teamAGames !== undefined ||
+              updates.teamBGames !== undefined ||
+              updates.teamABalls !== undefined || updates.teamBBalls !== undefined ||
+              updates.isGameActive !== undefined || updates.winner !== undefined ||
+              updates.currentGameNumber !== undefined ||
+              updates.teamAHasBreak !== undefined ||
+              updates.teamAName || updates.teamBName || updates.gameDescription) {
+            const gameStateData: GameStateSyncData = {};
+            if (updates.teamAGames !== undefined) gameStateData.teamAScore = updates.teamAGames;
+            if (updates.teamBGames !== undefined) gameStateData.teamBScore = updates.teamBGames;
+            if (updates.teamABalls !== undefined) gameStateData.teamABalls = updates.teamABalls;
+            if (updates.teamBBalls !== undefined) gameStateData.teamBBalls = updates.teamBBalls;
+            if (updates.isGameActive !== undefined) gameStateData.isGameActive = updates.isGameActive;
+            if (updates.winner !== undefined) gameStateData.winner = updates.winner;
+            if (updates.currentGameNumber !== undefined) gameStateData.currentGameNumber = updates.currentGameNumber;
+            if (updates.teamAHasBreak !== undefined) {
+              gameStateData.teamAHasBreak = updates.teamAHasBreak;
+              socketIOService.emitBreakStatusUpdate(updates.teamAHasBreak);
+            }
+            if (updates.teamAName || updates.teamBName || updates.gameDescription) {
+              gameStateData.gameInfo = {
+                teamAName: updates.teamAName || prevState.teamAName,
+                teamBName: updates.teamBName || prevState.teamBName,
+                gameTitle: "Game Bird",
+                gameDescription: updates.gameDescription || prevState.gameDescription
+              };
+            }
+            socketIOService.emitGameStateUpdate(gameStateData);
+            socketIOService.emitScoreUpdate({
+              teamAScore: updates.teamAGames !== undefined ? updates.teamAGames : prevState.teamAGames,
+              teamBScore: updates.teamBGames !== undefined ? updates.teamBGames : prevState.teamBGames
+            });
+          }
+        }, 50); // Debounce all emissions by 50ms for batching
         
-        // Emit score updates
-        if (updates.teamAGames !== undefined || updates.teamBGames !== undefined) {
-          const scoreData: ScoreSyncData = {
-            teamAScore: updates.teamAGames !== undefined ? updates.teamAGames : prevState.teamAGames,
-            teamBScore: updates.teamBGames !== undefined ? updates.teamBGames : prevState.teamBGames
-          };
-          
-          console.log('🏀 [updateGameState] Emitting score update:', scoreData);
-          console.log(`   Previous scores - A: ${prevState.teamAGames}, B: ${prevState.teamBGames}`);
-          console.log(`   New scores - A: ${scoreData.teamAScore}, B: ${scoreData.teamBScore}`);
-          socketIOService.emitScoreUpdate(scoreData);
-        }
+        emitBatchedUpdates();
       }
       
       return newState;
