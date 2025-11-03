@@ -728,4 +728,24 @@ io.on('connection', (socket) => {
     const requestId = data?.requestId || `request-${Date.now()}`;
     console.log(`📨 [P2P] Server requesting game history for arena '${arenaId}' (requestId: ${requestId})`);
     // Broadcast ONLY to the specific arena
-    io.to(`arena:${arenaId}`
+    io.to(`arena:${arenaId}`).emit('request-game-history-from-clients', {
+      requestId,
+      arenaId,
+      serverId: socket.id,
+      originalData: data
+    });
+  });
+
+  // Handle sound events - broadcast to all clients in the arena
+  socket.on('play-sound', (data) => {
+    const arenaId = data?.arenaId || 'default';
+    console.log(`🔊 Sound event '${data.soundType}' for arena '${arenaId}'`);
+    // Broadcast sound to ALL clients in the same arena (including sender)
+    io.to(`arena:${arenaId}`).emit('play-sound', data);
+  });
+});
+
+// Start server
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => {
+  console.log(`🎮 Game Bird server running on port ${PORT}`);
