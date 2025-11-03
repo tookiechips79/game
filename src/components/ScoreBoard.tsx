@@ -110,6 +110,7 @@ const ScoreBoard = (props: ScoreBoardProps) => {
     <>
       <ScoreboardMainDisplay 
         {...props}
+        disableGameAnimation={props.currentGameNumber === 1}
         displayBreak={displayBreak}
         displayGameLabel={displayGameLabel}
         displayTeamAGames={displayTeamAGames}
