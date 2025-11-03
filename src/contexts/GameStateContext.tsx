@@ -167,6 +167,21 @@ const saveGameStateToStorage = (arenaId: string, state: GameState) => {
       nextTotalBookedAmount: state.nextTotalBookedAmount
     };
     localStorage.setItem(key, JSON.stringify(toStore));
+    
+    // VERIFY: Log what was actually saved
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      console.log(`💾 [SAVE] Arena "${arenaId}" saved to localStorage:`, {
+        key,
+        teamAQueueLength: parsed.teamAQueue?.length || 0,
+        teamBQueueLength: parsed.teamBQueue?.length || 0,
+        bookedBetsLength: parsed.bookedBets?.length || 0,
+        teamAGames: parsed.teamAGames,
+        teamBGames: parsed.teamBGames,
+        sizeKB: (saved.length / 1024).toFixed(2)
+      });
+    }
   } catch (error) {
     console.error(`Failed to save game state to localStorage for arena ${arenaId}:`, error);
   }
