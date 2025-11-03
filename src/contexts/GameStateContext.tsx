@@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom';
 import { Bet, BookedBet } from '@/types/user';
 import { socketIOService, BetSyncData, GameStateSyncData, TimerSyncData, ScoreSyncData } from '@/services/socketIOService';
 import { useUser } from './UserContext';
-import { useSound } from '@/hooks/use-sound';
 
 interface GameState {
   // Team Information
@@ -488,19 +487,6 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
           console.log('   New state after update - A: ', newState.teamAGames, ', B: ', newState.teamBGames);
           return newState;
         });
-      });
-    });
-
-    // Listen for sound effects from other clients
-    socketIOService.onSoundEffect((data: { soundType: string; arenaId?: string; timestamp?: number }) => {
-      validateArenaAndUpdate(data.arenaId, () => {
-        console.log(`🔊 Received sound effect event: ${data.soundType}`);
-        // Play the sound on all clients in the same arena
-        if (data.soundType === 'silver') {
-          // We need to use the sound hook here, but we're in context
-          // So we'll emit a custom event that components can listen to
-          window.dispatchEvent(new CustomEvent('play-sound', { detail: { type: 'silver' } }));
-        }
       });
     });
 

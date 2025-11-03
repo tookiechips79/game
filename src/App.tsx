@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, HashRouter, useLocation, useNavigate } from "react-router-dom";
 import { UserProvider } from "@/contexts/UserContext";
 import { GameStateProvider } from "@/contexts/GameStateContext";
-import { useSound } from "@/hooks/use-sound";
 import Index from "./pages/Index";
 import OnePocketArena from "./pages/OnePocketArena";
 import Landing from "./pages/Landing";
@@ -76,28 +75,6 @@ const ArenaSelector = () => {
   );
 };
 
-// Sound player component that handles global sound effects
-const SoundPlayer = ({ children }: { children: React.ReactNode }) => {
-  const { play: playSilverSound } = useSound('/silver.mp3', { volume: 0.8 });
-  
-  React.useEffect(() => {
-    const handlePlaySound = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const soundType = customEvent.detail?.type;
-      console.log(`🔊 [SoundPlayer] Playing sound: ${soundType}`);
-      
-      if (soundType === 'silver') {
-        playSilverSound();
-      }
-    };
-    
-    window.addEventListener('play-sound', handlePlaySound);
-    return () => window.removeEventListener('play-sound', handlePlaySound);
-  }, [playSilverSound]);
-  
-  return <>{children}</>;
-};
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <UserProvider>
@@ -106,24 +83,22 @@ const App = () => (
         <Sonner />
         <HashRouter>
           <GameStateProvider>
-            <SoundPlayer>
-              <Routes>
-                <Route path="/" element={<Landing />} />
-                <Route path="/signup" element={<SignupPage />} />
-                <Route path="/member-signup" element={<MemberSignupPage />} />
-                <Route path="/features" element={<FeaturesPage />} />
-                <Route path="/about" element={<AboutPage />} />
-                <Route path="/betting-queue" element={<Index />} />
-                <Route path="/one-pocket-arena" element={<OnePocketArena />} />
-                <Route path="/subscription" element={<PaymentPage />} />
-                <Route path="/user-settings" element={<UserSettings />} />
-                <Route path="/reload-coins" element={<ReloadCoinsPage />} />
-                <Route path="/faq" element={<FAQPage />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              <ArenaSelector />
-            </SoundPlayer>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route path="/member-signup" element={<MemberSignupPage />} />
+              <Route path="/features" element={<FeaturesPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/betting-queue" element={<Index />} />
+              <Route path="/one-pocket-arena" element={<OnePocketArena />} />
+              <Route path="/subscription" element={<PaymentPage />} />
+              <Route path="/user-settings" element={<UserSettings />} />
+              <Route path="/reload-coins" element={<ReloadCoinsPage />} />
+              <Route path="/faq" element={<FAQPage />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <ArenaSelector />
           </GameStateProvider>
         </HashRouter>
       </TooltipProvider>

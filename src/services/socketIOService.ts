@@ -615,28 +615,6 @@ class SocketIOService {
     }
   }
 
-  // ========== SOUND EFFECTS SYNCHRONIZATION ==========
-  // Emit sound effect to all clients in the arena
-  public emitSoundEffect(soundType: string) {
-    this.checkAndReidentifyArena();
-    if (this.socket && this.isSocketConnected()) {
-      const arenaId = this.getArenaId();
-      console.log(`🔊 Emitting sound effect '${soundType}' to arena '${arenaId}'`);
-      this.socket.emit('sound-effect', { soundType, arenaId, timestamp: Date.now() });
-    }
-  }
-
-  // Listen for sound effects from other clients
-  public onSoundEffect(callback: (data: { soundType: string; arenaId?: string; timestamp?: number }) => void) {
-    if (this.socket) {
-      this.socket.off('sound-effect');
-      this.socket.on('sound-effect', (data) => {
-        console.log(`🔊 Received sound effect '${data.soundType}' from arena '${data.arenaId}'`);
-        callback(data);
-      });
-    }
-  }
-
   public offBetReceiptsUpdate() {
     if (this.socket) {
       this.socket.off('bet-receipts-update');

@@ -689,22 +689,6 @@ io.on('connection', (socket) => {
     io.to(`arena:${arenaId}`).emit('resume-listeners', data);
   });
   
-  // ========== SOUND EFFECTS SYNCHRONIZATION ==========
-  // Handle sound effects - broadcast to all clients in the arena
-  socket.on('sound-effect', (data) => {
-    const arenaId = data?.arenaId || 'default';
-    const soundType = data?.soundType || 'unknown';
-    console.log(`🔊 Received sound effect '${soundType}' for arena '${arenaId}'`);
-    
-    // Broadcast sound effect to ALL clients in the SAME ARENA (including sender)
-    io.to(`arena:${arenaId}`).emit('sound-effect', {
-      soundType: soundType,
-      arenaId: arenaId,
-      timestamp: data?.timestamp || Date.now()
-    });
-    console.log(`🔊 Broadcasted sound effect '${soundType}' to arena '${arenaId}'`);
-  });
-  
   // Handle score updates
   socket.on('score-update', (scoreData) => {
     const { arenaId = 'default', ...actualScoreData } = scoreData;
