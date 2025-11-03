@@ -116,15 +116,95 @@ const defaultLocalAdminState: LocalAdminState = {
   isAgentMode: false,
 };
 
+// LocalStorage keys for persistence
+const STORAGE_KEY_DEFAULT_ARENA = 'gameState_default_arena';
+const STORAGE_KEY_ONE_POCKET_ARENA = 'gameState_one_pocket_arena';
+const STORAGE_KEY_ADMIN_DEFAULT = 'adminState_default_arena';
+const STORAGE_KEY_ADMIN_ONE_POCKET = 'adminState_one_pocket_arena';
+
+// Helper to load state from localStorage
+const loadGameStateFromStorage = (arenaId: string): GameState => {
+  const key = arenaId === 'one_pocket' ? STORAGE_KEY_ONE_POCKET_ARENA : STORAGE_KEY_DEFAULT_ARENA;
+  try {
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return { ...defaultGameState, ...parsed };
+    }
+  } catch (error) {
+    console.error(`Failed to load game state from localStorage for arena ${arenaId}:`, error);
+  }
+  return defaultGameState;
+};
+
+// Helper to save state to localStorage
+const saveGameStateToStorage = (arenaId: string, state: GameState) => {
+  const key = arenaId === 'one_pocket' ? STORAGE_KEY_ONE_POCKET_ARENA : STORAGE_KEY_DEFAULT_ARENA;
+  try {
+    // Only store critical fields to reduce size
+    const toStore = {
+      teamAName: state.teamAName,
+      teamBName: state.teamBName,
+      teamAGames: state.teamAGames,
+      teamBGames: state.teamBGames,
+      teamABalls: state.teamABalls,
+      teamBBalls: state.teamBBalls,
+      teamAHasBreak: state.teamAHasBreak,
+      currentGameNumber: state.currentGameNumber,
+      gameDescription: state.gameDescription,
+      timerSeconds: state.timerSeconds,
+      isTimerRunning: state.isTimerRunning,
+      betCounter: state.betCounter,
+      colorIndex: state.colorIndex,
+      // Betting queues
+      teamAQueue: state.teamAQueue,
+      teamBQueue: state.teamBQueue,
+      bookedBets: state.bookedBets,
+      nextTeamAQueue: state.nextTeamAQueue,
+      nextTeamBQueue: state.nextTeamBQueue,
+      nextBookedBets: state.nextBookedBets,
+      totalBookedAmount: state.totalBookedAmount,
+      nextTotalBookedAmount: state.nextTotalBookedAmount
+    };
+    localStorage.setItem(key, JSON.stringify(toStore));
+  } catch (error) {
+    console.error(`Failed to save game state to localStorage for arena ${arenaId}:`, error);
+  }
+};
+
+// Helper to load admin state from localStorage
+const loadAdminStateFromStorage = (arenaId: string): LocalAdminState => {
+  const key = arenaId === 'one_pocket' ? STORAGE_KEY_ADMIN_ONE_POCKET : STORAGE_KEY_ADMIN_DEFAULT;
+  try {
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.error(`Failed to load admin state from localStorage for arena ${arenaId}:`, error);
+  }
+  return defaultLocalAdminState;
+};
+
+// Helper to save admin state to localStorage
+const saveAdminStateToStorage = (arenaId: string, state: LocalAdminState) => {
+  const key = arenaId === 'one_pocket' ? STORAGE_KEY_ADMIN_ONE_POCKET : STORAGE_KEY_ADMIN_DEFAULT;
+  try {
+    localStorage.setItem(key, JSON.stringify(state));
+  } catch (error) {
+    console.error(`Failed to save admin state to localStorage for arena ${arenaId}:`, error);
+  }
+};
+
 export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const location = useLocation();
   const { betHistory, userBetReceipts } = useUser();
   
-  // Separate state for each arena
-  const [gameStateDefault, setGameStateDefault] = useState<GameState>(defaultGameState);
-  const [gameStateOnePocket, setGameStateOnePocket] = useState<GameState>(defaultGameState);
-  const [localAdminStateDefault, setLocalAdminStateDefault] = useState<LocalAdminState>({ isAdminMode: false, isAgentMode: false });
-  const [localAdminStateOnePocket, setLocalAdminStateOnePocket] = useState<LocalAdminState>({ isAdminMode: false, isAgentMode: false });
+  // Separate state for each arena - NOW LOAD FROM STORAGE
+  const [gameStateDefault, setGameStateDefault] = useState<GameState>(() => loadGameStateFromStorage('default'));
+  const [gameStateOnePocket, setGameStateOnePocket] = useState<GameState>(() => loadGameStateFromStorage('one_pocket'));
+  const [localAdminStateDefault, setLocalAdminStateDefault] = useState<LocalAdminState>(() => loadAdminStateFromStorage('default'));
+  const [localAdminStateOnePocket, setLocalAdminStateOnePocket] = useState<LocalAdminState>(() => loadAdminStateFromStorage('one_pocket'));
 
   // Get the current arena ID from the location hash
   const getArenaIdFromRoute = () => {
@@ -204,38 +284,74 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   // Save game state to localStorage whenever it changes
   useEffect(() => {
-    const storageKey = `betting_app_game_state_${currentArenaId}`;
-    localStorage.setItem(storageKey, JSON.stringify(getCurrentGameState()));
+    saveGameStateToStorage(currentArenaId, getCurrentGameState());
   }, [getCurrentGameState(), currentArenaId]);
 
-  // Save local admin state to localStorage whenever it changes (separate from game state)
+  // Save admin state to localStorage whenever it changes
   useEffect(() => {
-    const storageKey = `betting_app_local_admin_state_${currentArenaId}`;
-    // Only persist isAgentMode, NOT isAdminMode (admin mode requires password every time)
-    const stateToSave = {
-      isAdminMode: false,  // Never save admin mode - must re-authenticate
-      isAgentMode: getCurrentLocalAdminState().isAgentMode  // Keep agent mode preference
-    };
-    localStorage.setItem(storageKey, JSON.stringify(stateToSave));
+    saveAdminStateToStorage(currentArenaId, getCurrentLocalAdminState());
   }, [getCurrentLocalAdminState(), currentArenaId]);
 
-  // Listen for storage changes from other tabs/windows
+  // CROSS-TAB SYNC: Listen for storage changes from other tabs/windows
   useEffect(() => {
-    const expectedKey = `betting_app_game_state_${currentArenaId}`;
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === expectedKey && e.newValue) {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (!event.key) return;
+      
+      // Load game state if it changed in another tab
+      if (event.key === STORAGE_KEY_DEFAULT_ARENA && currentArenaId === 'default') {
         try {
-          const newState = JSON.parse(e.newValue);
-          setCurrentGameState(newState);
-        } catch (error) {
-          console.error('Error parsing updated game state:', error);
+          const newState = JSON.parse(event.newValue || '{}');
+          setGameStateDefault(prev => ({ ...prev, ...newState }));
+        } catch (e) {
+          console.error('Failed to sync game state from other tab:', e);
+        }
+      }
+      
+      if (event.key === STORAGE_KEY_ONE_POCKET_ARENA && currentArenaId === 'one_pocket') {
+        try {
+          const newState = JSON.parse(event.newValue || '{}');
+          setGameStateOnePocket(prev => ({ ...prev, ...newState }));
+        } catch (e) {
+          console.error('Failed to sync game state from other tab:', e);
+        }
+      }
+      
+      // Load admin state if it changed in another tab
+      if (event.key === STORAGE_KEY_ADMIN_DEFAULT && currentArenaId === 'default') {
+        try {
+          const newState = JSON.parse(event.newValue || '{}');
+          setLocalAdminStateDefault(newState);
+        } catch (e) {
+          console.error('Failed to sync admin state from other tab:', e);
+        }
+      }
+      
+      if (event.key === STORAGE_KEY_ADMIN_ONE_POCKET && currentArenaId === 'one_pocket') {
+        try {
+          const newState = JSON.parse(event.newValue || '{}');
+          setLocalAdminStateOnePocket(newState);
+        } catch (e) {
+          console.error('Failed to sync admin state from other tab:', e);
         }
       }
     };
-
+    
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [currentArenaId]);
+
+  // RECOVERY: When tab becomes visible again, request fresh state from server
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Tab is now visible - request fresh state from server to ensure sync
+        socketIOService.requestGameState();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   // Request latest game state from server when arena changes
   useEffect(() => {
