@@ -500,9 +500,18 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       });
     });
 
+    // REQUEST INITIAL STATE IMMEDIATELY on connection
+    // This is critical for mobile devices to get fresh data
+    socketIOService.requestGameState();
+    
+    console.log('📡 [INIT] Requested initial game state on connection');
+
     return () => {
-      // Cleanup: disconnect when component unmounts
-      socketIOService.disconnect();
+      // Cleanup listeners when component unmounts
+      socketIOService.socket?.off('bet-update');
+      socketIOService.socket?.off('game-state-update');
+      socketIOService.socket?.off('timer-update');
+      socketIOService.socket?.off('score-update');
     };
   }, [currentArenaId]);
 

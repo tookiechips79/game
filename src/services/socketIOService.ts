@@ -157,6 +157,11 @@ class SocketIOService {
       console.log('🌐 Server URL:', serverUrl);
       console.log('⏱️ Connection time:', connectionTime + 'ms');
       console.log('🔗 Transport used:', this.socket?.io.engine.transport.name);
+      console.log('📱 Device info:', {
+        userAgent: navigator.userAgent,
+        isMobile: /iPhone|iPad|Android|Mobile/.test(navigator.userAgent),
+        viewport: `${window.innerWidth}x${window.innerHeight}`
+      });
       this.isConnected = true;
       this.reconnectAttempts = 0;
       
@@ -165,8 +170,8 @@ class SocketIOService {
       console.log(`📤 Sending arena ID to server: ${currentArenaId}`);
       this.socket?.emit('set-arena', { arenaId: currentArenaId });
       
-      // Request current game state immediately on connection
-      console.log('📤 Requesting current game state from server');
+      // Request current game state immediately on connection - CRITICAL FOR MOBILE
+      console.log('📤 [URGENT] Requesting current game state from server (mobile optimization)');
       this.socket?.emit('request-game-state', { arenaId: currentArenaId });
     });
 

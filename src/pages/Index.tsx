@@ -24,6 +24,7 @@ import { useGameState } from "@/contexts/GameStateContext";
 import { Bet, BookedBet, ConfirmationState } from "@/types/user";
 import { socketIOService } from "@/services/socketIOService";
 import { useSound } from "@/hooks/use-sound";
+import SocketIOStatus from "@/components/SocketIOStatus";
 
 // ============================================================================
 // 9 BALL ARENA - DEFAULT BETTING QUEUE
@@ -1062,6 +1063,9 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-black p-4 md:p-8 pt-32 relative">
+      
+      {/* Debug Status - Shows data sync info for mobile troubleshooting */}
+      <SocketIOStatus />
       
       <div className="max-w-full mx-auto relative z-10">
         <UserWidgetsContainer 
