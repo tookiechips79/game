@@ -55,6 +55,7 @@ interface ScoreboardMainDisplayProps {
   teamAPlayerImageUrl?: string;
   teamBPlayerImageUrl?: string;
   showBallCount?: boolean;
+  disableGameAnimation?: boolean;
 }
 
 const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
@@ -153,8 +154,9 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
               {displayBreak && <BreakIndicator hasBreak={true} color="#95deff" side="A" />}
               
               <TeamScoreSection
-                teamName={teamAName}
-                games={displayTeamAGames}
+      disableAnimation={disableGameAnimation}
+      teamName={teamAName}
+      games={displayTeamAGames}
                 balls={teamABalls}
                 hasBreak={displayBreak}
                 showControls={showControls}
@@ -178,8 +180,9 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
               {!displayBreak && <BreakIndicator hasBreak={true} color="#fa1593" side="B" />}
               
               <TeamScoreSection
-                teamName={teamBName}
-                games={displayTeamBGames}
+      disableAnimation={disableGameAnimation}
+      teamName={teamBName}
+      games={displayTeamBGames}
                 balls={teamBBalls}
                 hasBreak={!displayBreak}
                 showControls={showControls}

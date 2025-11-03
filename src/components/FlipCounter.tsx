@@ -6,19 +6,28 @@ interface FlipCounterProps {
   color?: string;
   className?: string;
   fontClassName?: string;
+  disableAnimation?: boolean;
 }
 
 const FlipCounter: React.FC<FlipCounterProps> = ({ 
   value, 
   color = 'white',
   className = '',
-  fontClassName = ''
+  fontClassName = '',
+  disableAnimation = false
 }) => {
   const [prevValue, setPrevValue] = useState(value);
   const [isAnimating, setIsAnimating] = useState(false);
   const lastAnimationTimeRef = useRef<number>(0);
   
   useEffect(() => {
+    // Skip animation if disabled (e.g., during arena switches)
+    if (disableAnimation) {
+      setPrevValue(value);
+      setIsAnimating(false);
+      return;
+    }
+    
     // Always animate on value change, even if it's the same value as before
     const now = Date.now();
     const timeSinceLastAnimation = now - lastAnimationTimeRef.current;
@@ -35,7 +44,7 @@ const FlipCounter: React.FC<FlipCounterProps> = ({
       
       return () => clearTimeout(timer);
     }
-  }, [value]); // Only depend on value changes
+  }, [value, disableAnimation]); // Depend on both value and disableAnimation
   
   return (
     <div className={`flip-counter relative ${className}`}>
