@@ -115,28 +115,47 @@ class SocketIOService {
       
       // Detect protocol: use HTTPS on production, HTTP on localhost
       const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
-      const serverUrl = `${protocol}//${window.location.hostname}:3001`;
+      
+      // IMPORTANT: Determine server URL based on deployment environment
+      let serverUrl: string;
+      
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        // Local development: connect to port 3001 on localhost
+        serverUrl = `http://localhost:3001`;
+      } else if (window.location.hostname.includes('render.com') || window.location.hostname.includes('onrender.com')) {
+        // Render deployment: backend and frontend are on same host, use same URL
+        // Render will route /socket.io to the backend server
+        serverUrl = `${protocol}//${window.location.hostname}`;
+      } else {
+        // Other deployments: try same host with port 3001
+        serverUrl = `${protocol}//${window.location.hostname}:3001`;
+      }
       
       log('🔌 Connecting to Socket.IO');
       log('🌐 Current page URL:', window.location.href);
       log('📍 Hostname:', window.location.hostname);
       log('🔒 Protocol:', protocol);
       log('📌 Server URL:', serverUrl);
+      log('🌍 Environment detected:', 
+        window.location.hostname.includes('render.com') || window.location.hostname.includes('onrender.com')
+          ? 'Render Deployment'
+          : window.location.hostname === 'localhost' ? 'Local Development' : 'Other');
       
       // Start connection timing
       const connectionStartTime = Date.now();
       log('⏱️ Connection attempt started at:', new Date().toISOString());
       
       const ioOptions = {
-        transports: ['polling', 'websocket'],
-        timeout: 30000,
+        transports: ['websocket', 'polling'],
+        timeout: 20000,
         forceNew: false,
         reconnection: true,
         reconnectionAttempts: 15,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
         secure: window.location.protocol === 'https:',
-        rejectUnauthorized: false
+        rejectUnauthorized: false,
+        path: '/socket.io/'
       };
       
       this.socket = io(serverUrl, ioOptions);
