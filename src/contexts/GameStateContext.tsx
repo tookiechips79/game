@@ -449,7 +449,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     });
 
     // Listen for dedicated break status updates
-    socketIOService.onBreakStatusUpdate((data: { teamAHasBreak: boolean }) => {
+    socketIOService.onBreakStatusUpdate((data: { teamAHasBreak: boolean, arenaId?: string }) => {
       validateArenaAndUpdate(data.arenaId, () => {
         console.log('📥 Received dedicated break status update:', data);
         setCurrentGameState(prevState => ({
@@ -460,7 +460,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     });
 
     // Listen for total booked coins updates
-    socketIOService.onTotalBookedCoinsUpdate((data: { totalBookedAmount: number, nextTotalBookedAmount: number }) => {
+    socketIOService.onTotalBookedCoinsUpdate((data: { totalBookedAmount: number, nextTotalBookedAmount: number, arenaId?: string }) => {
       validateArenaAndUpdate(data.arenaId, () => {
         console.log('📥 Received total booked coins update:', data);
         setCurrentGameState(prevState => ({

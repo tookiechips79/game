@@ -329,18 +329,19 @@ class SocketIOService {
     }
   }
 
+  // Break Status Synchronization
   public emitBreakStatusUpdate(teamAHasBreak: boolean) {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
       const arenaId = this.getArenaId();
-      console.log('📤 Emitting dedicated break status update:', teamAHasBreak);
+      console.log('📤 Emitting break status update:', { teamAHasBreak, arenaId });
       this.socket.emit('break-status-update', { teamAHasBreak, arenaId });
     }
   }
 
-  public onBreakStatusUpdate(callback: (data: { teamAHasBreak: boolean }) => void) {
+  public onBreakStatusUpdate(callback: (data: { teamAHasBreak: boolean, arenaId?: string }) => void) {
     if (this.socket) {
-      this.socket.on('break-status-update', (data: { teamAHasBreak: boolean }) => {
+      this.socket.on('break-status-update', (data: { teamAHasBreak: boolean, arenaId?: string }) => {
         console.log('📥 Received dedicated break status update:', data);
         callback(data);
       });
@@ -357,9 +358,9 @@ class SocketIOService {
     }
   }
 
-  public onTotalBookedCoinsUpdate(callback: (data: { totalBookedAmount: number, nextTotalBookedAmount: number }) => void) {
+  public onTotalBookedCoinsUpdate(callback: (data: { totalBookedAmount: number, nextTotalBookedAmount: number, arenaId?: string }) => void) {
     if (this.socket) {
-      this.socket.on('total-booked-coins-update', (data: { totalBookedAmount: number, nextTotalBookedAmount: number }) => {
+      this.socket.on('total-booked-coins-update', (data: { totalBookedAmount: number, nextTotalBookedAmount: number, arenaId?: string }) => {
         console.log('📥 Received total booked coins update:', data);
         callback(data);
       });
@@ -478,12 +479,12 @@ class SocketIOService {
     }
   }
 
-  public onGameHistoryUpdate(callback: (data: { gameHistory: any[] }) => void) {
+  public onGameHistoryUpdate(callback: (data: { gameHistory: any[], arenaId?: string }) => void) {
     if (this.socket) {
       // Remove any existing listeners first to prevent duplicates
       this.socket.off('game-history-update');
       
-      this.socket.on('game-history-update', (data: { gameHistory: any[] }) => {
+      this.socket.on('game-history-update', (data: { gameHistory: any[], arenaId?: string }) => {
         console.log('📥 [SocketIOService] Received game history update:', data.gameHistory?.length, 'records');
         console.log('🔔 [SocketIOService] Calling callback with', data.gameHistory?.length, 'records');
         callback(data);
@@ -501,12 +502,12 @@ class SocketIOService {
     }
   }
 
-  public onBetReceiptsUpdate(callback: (data: { betReceipts: any[] }) => void) {
+  public onBetReceiptsUpdate(callback: (data: { betReceipts: any[], arenaId?: string }) => void) {
     if (this.socket) {
       // Remove any existing listeners first to prevent duplicates
       this.socket.off('bet-receipts-update');
       
-      this.socket.on('bet-receipts-update', (data: { betReceipts: any[] }) => {
+      this.socket.on('bet-receipts-update', (data: { betReceipts: any[], arenaId?: string }) => {
         console.log('📥 [SocketIOService] Received bet receipts update:', data.betReceipts?.length, 'receipts');
         console.log('🔔 [SocketIOService] Calling callback with', data.betReceipts?.length, 'receipts');
         callback(data);
