@@ -1090,7 +1090,7 @@ const OnePocketArena = () => {
       (window as any).__MUTE_SOUNDS = true;
       setTimeout(() => {
         (window as any).__MUTE_SOUNDS = false;
-      }, 500);
+      }, 10000);
     };
   }, [location.pathname]);
 
@@ -1099,7 +1099,7 @@ const OnePocketArena = () => {
     (window as any).__MUTE_SOUNDS = true;
     const timer = setTimeout(() => {
       (window as any).__MUTE_SOUNDS = false;
-    }, 500);
+    }, 10000);
     return () => clearTimeout(timer);
   }, [location.pathname]);
 

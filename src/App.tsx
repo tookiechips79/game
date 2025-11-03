@@ -38,7 +38,7 @@ const ArenaSelector = () => {
     (window as any).__MUTE_SOUNDS = true;
     setTimeout(() => {
       (window as any).__MUTE_SOUNDS = false;
-    }, 500);
+    }, 10000);
     navigate("/betting-queue");
   };
 
@@ -47,7 +47,7 @@ const ArenaSelector = () => {
     (window as any).__MUTE_SOUNDS = true;
     setTimeout(() => {
       (window as any).__MUTE_SOUNDS = false;
-    }, 500);
+    }, 10000);
     navigate("/one-pocket-arena");
   };
 
