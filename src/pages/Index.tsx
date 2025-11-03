@@ -58,6 +58,15 @@ const Index = () => {
       }, 500);
     };
   }, [location.pathname]);
+
+  // Additional: Mute immediately when route changes BEFORE unmount
+  useEffect(() => {
+    (window as any).__MUTE_SOUNDS = true;
+    const timer = setTimeout(() => {
+      (window as any).__MUTE_SOUNDS = false;
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
   
   // Ref to track previous bet queue sizes for detecting new bets
   const prevQueueSizesRef = useRef({ teamA: 0, teamB: 0 });
