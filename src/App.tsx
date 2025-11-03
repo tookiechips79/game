@@ -34,10 +34,20 @@ const ArenaSelector = () => {
   if (!isArenasPage) return null;
 
   const handleRotationArena = () => {
+    // Mute sounds BEFORE navigation
+    (window as any).__MUTE_SOUNDS = true;
+    setTimeout(() => {
+      (window as any).__MUTE_SOUNDS = false;
+    }, 500);
     navigate("/betting-queue");
   };
 
   const handleOnePocketArena = () => {
+    // Mute sounds BEFORE navigation
+    (window as any).__MUTE_SOUNDS = true;
+    setTimeout(() => {
+      (window as any).__MUTE_SOUNDS = false;
+    }, 500);
     navigate("/one-pocket-arena");
   };
 
