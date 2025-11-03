@@ -724,10 +724,13 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     let rafId: number | null = null;
     let lastSecond: number = -1;
     
+    // Get current arena state
+    const currentState = currentArenaId === 'one_pocket' ? gameStateOnePocket : gameStateDefault;
+    
     // Only run if timer is running
-    if (getCurrentGameState().isTimerRunning) {
+    if (currentState.isTimerRunning) {
       const startTime = Date.now();
-      const startSeconds = getCurrentGameState().timerSeconds;
+      const startSeconds = currentState.timerSeconds;
       
       const updateTimer = () => {
         const currentTime = Date.now();
@@ -756,12 +759,13 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
         cancelAnimationFrame(rafId);
       }
     };
-  }, [getCurrentGameState().isTimerRunning, getCurrentGameState().timerSeconds]);
+  }, [currentArenaId, gameStateDefault.isTimerRunning, gameStateDefault.timerSeconds, gameStateOnePocket.isTimerRunning, gameStateOnePocket.timerSeconds]);
 
   // Handle visibility changes to ensure timer accuracy when tab becomes active again (mobile-friendly)
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (getCurrentGameState().isTimerRunning && !document.hidden) {
+      const currentState = currentArenaId === 'one_pocket' ? gameStateOnePocket : gameStateDefault;
+      if (currentState.isTimerRunning && !document.hidden) {
         // Tab became visible again - timer will automatically resume with requestAnimationFrame
         console.log('📱 App became visible, timer continues with requestAnimationFrame');
       } else if (document.hidden) {
@@ -783,7 +787,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       window.removeEventListener('focus', handleVisibilityChange);
       window.removeEventListener('blur', () => {});
     };
-  }, [getCurrentGameState().isTimerRunning, getCurrentGameState().timerSeconds]);
+  }, [currentArenaId, gameStateDefault.isTimerRunning, gameStateOnePocket.isTimerRunning]);
 
   const updateGameState = useCallback((updates: Partial<GameState>) => {
     setCurrentGameState(prevState => {
