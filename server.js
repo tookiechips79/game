@@ -227,9 +227,11 @@ function startServerTimer(arenaId = 'default') {
         isTimerRunning: arenaState.isTimerRunning,
         timerSeconds: totalElapsed,
         serverStartTime: timer.startTime,
-        accumulatedTime: totalElapsed
+        accumulatedTime: totalElapsed,
+        arenaId: arenaId
       });
       
+      console.log(`📤 [TIMER BROADCAST] Arena '${arenaId}': timerSeconds=${totalElapsed}, isRunning=${arenaState.isTimerRunning}`);
       lastBroadcastTime = now;
     }
   }, 500); // Check every 500ms instead of 1000ms
@@ -257,7 +259,8 @@ function stopServerTimer(arenaId = 'default') {
     isTimerRunning: false,
     timerSeconds: totalElapsed,
     serverStartTime: null,
-    accumulatedTime: totalElapsed
+    accumulatedTime: totalElapsed,
+    arenaId: arenaId
   });
 }
 
