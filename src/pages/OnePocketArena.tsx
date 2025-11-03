@@ -1083,6 +1083,17 @@ const OnePocketArena = () => {
     };
   }, [stopSilverSound, stopCheerSound, stopPoolSound, stopBooSound]);
 
+  // Mute sounds when changing arenas (detect route change)
+  useEffect(() => {
+    return () => {
+      // Set mute flag when THIS component is about to unmount
+      (window as any).__MUTE_SOUNDS = true;
+      setTimeout(() => {
+        (window as any).__MUTE_SOUNDS = false;
+      }, 200);
+    };
+  }, [location.pathname]);
+
 
   return (
     <div className="min-h-screen p-4 md:p-8 pt-32 relative" style={{ backgroundColor: '#ADD8E6', color: '#000000' }}>

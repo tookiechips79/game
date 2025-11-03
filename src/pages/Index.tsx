@@ -47,6 +47,17 @@ const Index = () => {
   
   const { gameState, updateGameState, isAdmin, localAdminState, updateLocalAdminState, startTimer, pauseTimer, resetTimer, setTimer, resetTimerOnMatchStart, resetTimerOnGameWin } = useGameState();
   const location = useLocation();
+
+  // Mute sounds when changing arenas (detect route change)
+  useEffect(() => {
+    return () => {
+      // Set mute flag when THIS component is about to unmount
+      (window as any).__MUTE_SOUNDS = true;
+      setTimeout(() => {
+        (window as any).__MUTE_SOUNDS = false;
+      }, 200);
+    };
+  }, [location.pathname]);
   
   // Ref to track previous bet queue sizes for detecting new bets
   const prevQueueSizesRef = useRef({ teamA: 0, teamB: 0 });
