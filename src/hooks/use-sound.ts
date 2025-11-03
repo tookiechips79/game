@@ -10,14 +10,41 @@ export const useSound = (soundUrl: string, options: UseSoundOptions = {}) => {
 
   const play = useCallback(() => {
     try {
+      // Create new audio instance
       const audio = new Audio(soundUrl);
+      
+      // Set volume and playback rate
       audio.volume = Math.max(0, Math.min(1, volume));
       audio.playbackRate = playbackRate;
-      audio.play().catch((error) => {
-        console.warn('Failed to play sound:', error);
+      
+      // Reset time to start from beginning
+      audio.currentTime = 0;
+      
+      // Add error event listener
+      audio.addEventListener('error', (e) => {
+        console.warn(`🔊 [SOUND ERROR] Failed to load sound: ${soundUrl}`, e);
       });
+      
+      // Add canplay event listener for debugging
+      audio.addEventListener('canplay', () => {
+        console.log(`🔊 [SOUND READY] Sound loaded and ready: ${soundUrl}`);
+      });
+      
+      // Attempt to play with error handling
+      const playPromise = audio.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log(`🔊 [SOUND PLAYING] Now playing: ${soundUrl}`);
+          })
+          .catch((error) => {
+            console.warn(`🔊 [SOUND BLOCKED] Browser blocked sound playback: ${soundUrl}`, error.name);
+            // This is common on mobile or when user hasn't interacted with page
+          });
+      }
     } catch (error) {
-      console.warn('Error creating audio:', error);
+      console.warn(`🔊 [SOUND EXCEPTION] Error creating or playing audio: ${soundUrl}`, error);
     }
   }, [soundUrl, volume, playbackRate]);
 

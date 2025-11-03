@@ -52,6 +52,21 @@ const OnePocketArena = () => {
   // Sound effect for bet placement
   const { play: playSilverSound } = useSound('/silver.mp3', { volume: 0.8 });
   
+  // Sound effects for other game events
+  const { play: playCheerSound } = useSound('/cheer.mp3', { volume: 0.8 });
+  const { play: playPoolSound } = useSound('/pool.mp3', { volume: 0.8 });
+  const { play: playBooSound } = useSound('/boo.mp3', { volume: 0.8 });
+  
+  // Ref to track previous state for detecting changes
+  const prevStateRef = useRef({ 
+    teamA: 0, 
+    teamB: 0,
+    bookedCount: 0,
+    gameNumber: 0,
+    teamABalls: 0,
+    teamBBalls: 0
+  });
+
   // Extract state from gameState context
   const {
     teamAQueue,
@@ -110,18 +125,75 @@ const OnePocketArena = () => {
   useEffect(() => {
     const teamANewBets = teamAQueue.length - prevQueueSizesRef.current.teamA;
     const teamBNewBets = teamBQueue.length - prevQueueSizesRef.current.teamB;
-    
+
     if (teamANewBets > 0 || teamBNewBets > 0) {
       console.log(`🔊 [BET SOUND - ONE POCKET] New bets detected! Team A: +${teamANewBets}, Team B: +${teamBNewBets}`);
       playSilverSound();
     }
-    
+
     // Update refs
     prevQueueSizesRef.current = {
       teamA: teamAQueue.length,
       teamB: teamBQueue.length
     };
   }, [teamAQueue, teamBQueue, playSilverSound]);
+
+  // Detect booked bets and play pool/match sound
+  useEffect(() => {
+    const newBookedCount = bookedBets.length;
+    const prevBookedCount = prevStateRef.current.bookedCount;
+    
+    if (newBookedCount > prevBookedCount) {
+      console.log(`🔊 [MATCH SOUND - ONE POCKET] Bets matched! New booked count: ${newBookedCount}`);
+      playPoolSound();
+    }
+    
+    prevStateRef.current.bookedCount = newBookedCount;
+  }, [bookedBets, playPoolSound]);
+
+  // Detect game wins and play cheer sound
+  useEffect(() => {
+    const newGameNumber = currentGameNumber;
+    const prevGameNumber = prevStateRef.current.gameNumber;
+    
+    if (newGameNumber > prevGameNumber && prevGameNumber > 0) {
+      console.log(`🔊 [WIN SOUND - ONE POCKET] Game won! New game number: ${newGameNumber}`);
+      playCheerSound();
+    }
+    
+    prevStateRef.current.gameNumber = newGameNumber;
+  }, [currentGameNumber, playCheerSound]);
+
+  // Detect ball count increases and decreases and play sounds
+  useEffect(() => {
+    const teamABallsIncreased = teamABalls > prevStateRef.current.teamABalls;
+    const teamBBallsIncreased = teamBBalls > prevStateRef.current.teamBBalls;
+    const teamABallsDecreased = teamABalls < prevStateRef.current.teamABalls;
+    const teamBBallsDecreased = teamBBalls < prevStateRef.current.teamBBalls;
+    
+    if (teamABallsIncreased) {
+      console.log(`🔊 [BALL SOUND - ONE POCKET] Team A ball count increased from ${prevStateRef.current.teamABalls} to ${teamABalls}`);
+      playPoolSound();
+    }
+    
+    if (teamBBallsIncreased) {
+      console.log(`🔊 [BALL SOUND - ONE POCKET] Team B ball count increased from ${prevStateRef.current.teamBBalls} to ${teamBBalls}`);
+      playPoolSound();
+    }
+    
+    if (teamABallsDecreased) {
+      console.log(`🔊 [BALL MINUS SOUND - ONE POCKET] Team A ball count decreased from ${prevStateRef.current.teamABalls} to ${teamABalls}`);
+      playBooSound();
+    }
+    
+    if (teamBBallsDecreased) {
+      console.log(`🔊 [BALL MINUS SOUND - ONE POCKET] Team B ball count decreased from ${prevStateRef.current.teamBBalls} to ${teamBBalls}`);
+      playBooSound();
+    }
+    
+    prevStateRef.current.teamABalls = teamABalls;
+    prevStateRef.current.teamBBalls = teamBBalls;
+  }, [teamABalls, teamBBalls, playPoolSound, playBooSound]);
 
   const generateBetId = () => {
     // Generate a 7-digit unique ID using counter + random number

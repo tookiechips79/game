@@ -104,23 +104,23 @@ class SocketIOService {
       
       console.log('✅ Socket.IO client library loaded successfully');
       
-      // For Render deployment, backend and frontend are on the same domain
-      // For local dev, use localhost:3001
-      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const serverUrl = isLocalhost ? `http://${window.location.hostname}:3001` : undefined;
+      // Simple approach: Connect to server on same host/port 3001
+      // This works for:
+      // - localhost:8080 → localhost:3001
+      // - 192.168.x.x:8080 → 192.168.x.x:3001
+      const serverUrl = `http://${window.location.hostname}:3001`;
       
       console.log('🔌 Connecting to Socket.IO');
       console.log('🌐 Current page URL:', window.location.href);
       console.log('📍 Hostname:', window.location.hostname);
-      console.log('🏭 Is Localhost:', isLocalhost);
-      console.log('📌 Server URL:', serverUrl || 'same domain (Render)');
+      console.log('📌 Server URL:', serverUrl);
       
       // Start connection timing
       const connectionStartTime = Date.now();
       console.log('⏱️ Connection attempt started at:', new Date().toISOString());
       
       const ioOptions = {
-        transports: ['polling', 'websocket'],
+        transports: ['polling'],
         timeout: 30000,
         forceNew: false,
         reconnection: true,
@@ -129,7 +129,7 @@ class SocketIOService {
         reconnectionDelayMax: 5000
       };
       
-      this.socket = serverUrl ? io(serverUrl, ioOptions) : io(ioOptions);
+      this.socket = io(serverUrl, ioOptions);
 
       console.log('🔌 Socket.IO client created');
 
