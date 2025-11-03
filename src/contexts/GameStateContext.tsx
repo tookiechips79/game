@@ -490,6 +490,15 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       });
     });
 
+    // Listen for sound effects from other clients
+    socketIOService.onSoundEffect((data: { soundType: string; arenaId?: string; timestamp?: number }) => {
+      validateArenaAndUpdate(data.arenaId, () => {
+        console.log(`🔊 Received sound effect event: ${data.soundType}`);
+        // The sound will be played by the component that sent it
+        // This listener just ensures the event is received for arena validation
+      });
+    });
+
     return () => {
       // Cleanup: disconnect when component unmounts
       socketIOService.disconnect();

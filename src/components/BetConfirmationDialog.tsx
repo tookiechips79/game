@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Wallet } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import { useSound } from "@/hooks/use-sound";
+import { socketIOService } from "@/services/socketIOService";
 
 interface BetConfirmationDialogProps {
   isOpen: boolean;
@@ -59,7 +60,10 @@ const BetConfirmationDialog: React.FC<BetConfirmationDialogProps> = ({
       return;
     }
     
-    // Play the silver sound when bet is confirmed
+    // Emit the silver sound effect to all clients in the arena
+    socketIOService.emitSoundEffect('silver');
+    
+    // Play the silver sound locally
     playSilverSound();
     
     // Call onConfirm and close the dialog immediately
