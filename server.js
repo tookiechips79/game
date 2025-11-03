@@ -201,27 +201,34 @@ function startServerTimer(arenaId = 'default') {
   const timer = getArenaTimer(arenaId);
   const arenaState = getGameState(arenaId);
   
+  console.log(`⏱️ [START TIMER] Called for arena '${arenaId}', timer.isRunning=${timer.isRunning}`);
+  
   if (timer.interval) {
     clearInterval(timer.interval);
+    console.log(`⏱️ [START TIMER] Cleared existing interval`);
   }
   
   // If this is the first time starting, record the continuous start time
   if (!timer.continuousStartTime) {
     timer.continuousStartTime = Date.now();
+    console.log(`⏱️ [START TIMER] Set continuousStartTime to now`);
   }
   
   timer.startTime = Date.now();
   timer.isRunning = true;
   arenaState.isTimerRunning = true;
+  console.log(`⏱️ [START TIMER] Timer state updated: isRunning=true`);
   
   // OPTIMIZED: Reduce broadcast frequency from 1s to 500ms
   // Only broadcast when timer is actually running
   let lastBroadcastTime = Date.now();
+  let broadcastCount = 0;
   timer.interval = setInterval(() => {
     // Only broadcast if enough time has passed (delta-based sending)
     const now = Date.now();
     if (now - lastBroadcastTime >= 500) {
       const totalElapsed = Math.floor((Date.now() - timer.continuousStartTime) / 1000);
+      broadcastCount++;
       
       io.to(`arena:${arenaId}`).emit('timer-update', {
         isTimerRunning: arenaState.isTimerRunning,
@@ -231,10 +238,12 @@ function startServerTimer(arenaId = 'default') {
         arenaId: arenaId
       });
       
-      console.log(`📤 [TIMER BROADCAST] Arena '${arenaId}': timerSeconds=${totalElapsed}, isRunning=${arenaState.isTimerRunning}`);
+      console.log(`📤 [TIMER BROADCAST #${broadcastCount}] Arena '${arenaId}': timerSeconds=${totalElapsed}, isRunning=${arenaState.isTimerRunning}`);
       lastBroadcastTime = now;
     }
   }, 500); // Check every 500ms instead of 1000ms
+  
+  console.log(`⏱️ [START TIMER] Interval set for arena '${arenaId}'`);
 }
 
 function stopServerTimer(arenaId = 'default') {
@@ -351,9 +360,12 @@ io.on('connection', (socket) => {
   socket.on('set-arena', (data) => {
     const newArenaId = data.arenaId || 'default';
     
+    console.log(`🏟️ [SET-ARENA] Socket ${socket.id} requesting arena '${newArenaId}'`);
+    
     // If arena is being changed and we were previously in a room, leave it
     if (arenaIdentified && currentArenaId !== newArenaId) {
       socket.leave(`arena:${currentArenaId}`);
+      console.log(`🏟️ [SET-ARENA] Left old arena room '${currentArenaId}'`);
     }
     
     socketArenaMap.set(socket.id, newArenaId);
@@ -361,6 +373,7 @@ io.on('connection', (socket) => {
     
     // NOW join the arena-specific room
     socket.join(`arena:${newArenaId}`);
+    console.log(`🏟️ [SET-ARENA] Joined arena room '${newArenaId}'. Current rooms: ${JSON.stringify(socket.rooms)}`);
     arenaIdentified = true;
     
     // SEND INITIAL DATA ONLY AFTER ARENA IS IDENTIFIED AND ROOM IS JOINED
