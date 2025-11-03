@@ -172,6 +172,21 @@ const saveGameStateToStorage = (arenaId: string, state: GameState) => {
   }
 };
 
+// Helper to load state from localStorage
+const loadGameStateFromStorage = (arenaId: string): GameState => {
+  const key = arenaId === 'one_pocket' ? STORAGE_KEY_ONE_POCKET_ARENA : STORAGE_KEY_DEFAULT_ARENA;
+  try {
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return { ...defaultGameState, ...parsed };
+    }
+  } catch (error) {
+    console.error(`Failed to load game state from localStorage for arena ${arenaId}:`, error);
+  }
+  return defaultGameState;
+};
+
 // Helper to load admin state from localStorage
 const loadAdminStateFromStorage = (arenaId: string): LocalAdminState => {
   const key = arenaId === 'one_pocket' ? STORAGE_KEY_ADMIN_ONE_POCKET : STORAGE_KEY_ADMIN_DEFAULT;
