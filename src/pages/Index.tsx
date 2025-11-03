@@ -173,7 +173,7 @@ const Index = () => {
     }
     
     currentArenaRef.current = 'default';
-  }, [teamAQueue, teamBQueue, currentGameNumber]
+  }, [teamAQueue, teamBQueue, currentGameNumber]);
 
   // Detect new bets and play sound once per new bet
   useEffect(() => {
