@@ -179,23 +179,25 @@ const OnePocketArena = () => {
     const teamABallsDecreased = teamABalls < prevStateRef.current.teamABalls;
     const teamBBallsDecreased = teamBBalls < prevStateRef.current.teamBBalls;
     
-    if (teamABallsIncreased) {
-      console.log(`🔊 [BALL SOUND - ONE POCKET] Team A ball count increased from ${prevStateRef.current.teamABalls} to ${teamABalls}`);
+    // Play pool sound ONCE if any team's balls increased
+    if (teamABallsIncreased || teamBBallsIncreased) {
+      if (teamABallsIncreased) {
+        console.log(`🔊 [BALL SOUND - ONE POCKET] Team A ball count increased from ${prevStateRef.current.teamABalls} to ${teamABalls}`);
+      }
+      if (teamBBallsIncreased) {
+        console.log(`🔊 [BALL SOUND - ONE POCKET] Team B ball count increased from ${prevStateRef.current.teamBBalls} to ${teamBBalls}`);
+      }
       playPoolSound();
     }
     
-    if (teamBBallsIncreased) {
-      console.log(`🔊 [BALL SOUND - ONE POCKET] Team B ball count increased from ${prevStateRef.current.teamBBalls} to ${teamBBalls}`);
-      playPoolSound();
-    }
-    
-    if (teamABallsDecreased) {
-      console.log(`🔊 [BALL MINUS SOUND - ONE POCKET] Team A ball count decreased from ${prevStateRef.current.teamABalls} to ${teamABalls}`);
-      playBooSound();
-    }
-    
-    if (teamBBallsDecreased) {
-      console.log(`🔊 [BALL MINUS SOUND - ONE POCKET] Team B ball count decreased from ${prevStateRef.current.teamBBalls} to ${teamBBalls}`);
+    // Play boo sound ONCE if any team's balls decreased
+    if (teamABallsDecreased || teamBBallsDecreased) {
+      if (teamABallsDecreased) {
+        console.log(`🔊 [BALL MINUS SOUND - ONE POCKET] Team A ball count decreased from ${prevStateRef.current.teamABalls} to ${teamABalls}`);
+      }
+      if (teamBBallsDecreased) {
+        console.log(`🔊 [BALL MINUS SOUND - ONE POCKET] Team B ball count decreased from ${prevStateRef.current.teamBBalls} to ${teamBBalls}`);
+      }
       playBooSound();
     }
     
