@@ -368,14 +368,45 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        // Tab is now visible - request fresh state from server to ensure sync
+        console.log('📱 Page became visible - requesting fresh game state');
         socketIOService.requestGameState();
       }
     };
-    
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
+
+  // TIMER RECOVERY: On page refresh, sync timer state with server continuously
+  useEffect(() => {
+    if (!socketIOService.isSocketConnected()) return;
+    
+    const currentState = getCurrentGameState();
+    
+    // If timer should be running but isn't, restart it
+    if (currentState.isTimerRunning) {
+      console.log('✅ [TIMER RECOVERY] Timer was running before refresh, restarting...');
+      // Re-emit timer start to server to ensure it's running on all clients
+      socketIOService.emitTimerUpdate({
+        isTimerRunning: true,
+        timerSeconds: currentState.timerSeconds
+      });
+    }
+    
+    // Set up an interval to sync timer state periodically (every 2 seconds)
+    // This ensures that if timer gets out of sync, it will recover
+    const syncInterval = setInterval(() => {
+      const latestState = getCurrentGameState();
+      if (latestState.isTimerRunning) {
+        // Emit a keepalive to ensure server knows client is still running timer
+        socketIOService.emitTimerUpdate({
+          isTimerRunning: true,
+          timerSeconds: latestState.timerSeconds
+        });
+      }
+    }, 2000);
+    
+    return () => clearInterval(syncInterval);
+  }, [socketIOService.isSocketConnected()]);
 
   // Request latest game state from server when arena changes
   useEffect(() => {
@@ -684,6 +715,42 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       }
     };
   }, [getCurrentGameState().isTimerRunning, getCurrentGameState().timerSeconds]);
+
+  // CONTINUOUS TIMER: Keep timer running on client-side when isTimerRunning is true
+  useEffect(() => {
+    const currentState = getCurrentGameState();
+    if (!currentState.isTimerRunning) return;
+    
+    console.log('⏱️ [TIMER TICK] Timer is running, starting continuous update loop');
+    
+    // Store the last emitted seconds to avoid spamming server with updates
+    let lastEmittedSeconds = currentState.timerSeconds;
+    
+    // Update timer every 100ms for smooth display
+    const interval = setInterval(() => {
+      setCurrentGameState(prevState => {
+        if (!prevState.isTimerRunning) {
+          console.log('⏱️ [TIMER TICK] Timer stopped, clearing interval');
+          return prevState;
+        }
+        
+        const newSeconds = prevState.timerSeconds + 0.1; // Add 100ms
+        
+        // Emit to server every 1 second only (to avoid flooding)
+        if (Math.floor(newSeconds) > Math.floor(lastEmittedSeconds)) {
+          lastEmittedSeconds = newSeconds;
+          socketIOService.emitTimerUpdate({
+            isTimerRunning: true,
+            timerSeconds: Math.floor(newSeconds)
+          });
+        }
+        
+        return { ...prevState, timerSeconds: newSeconds };
+      });
+    }, 100);
+    
+    return () => clearInterval(interval);
+  }, [getCurrentGameState().isTimerRunning]);
 
   // Handle visibility changes to ensure timer accuracy when tab becomes active again (mobile-friendly)
   useEffect(() => {
