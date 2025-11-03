@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, orientation=landscape" />
     <title>Game Bird Betting App</title>
     <meta name="description" content="Real-time betting app for Game Bird matches" />
     <meta name="author" content="Game Bird" />
@@ -14,6 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Game Bird" />
     <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="screen-orientation" content="landscape" />
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
@@ -22,6 +23,26 @@
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+    
+    <!-- Landscape-only CSS -->
+    <style>
+      @media (max-width: 1024px) {
+        body {
+          transform: rotate(90deg);
+          transform-origin: left top;
+          width: 100vh;
+          overflow-x: hidden;
+          position: fixed;
+          top: 0;
+          left: 0;
+        }
+        
+        html {
+          width: 100vh;
+          height: 100vw;
+        }
+      }
+    </style>
   </head>
 
   <body style="background-color: black; margin: 0; padding: 0;">
@@ -32,6 +53,13 @@
     
     <!-- PWA Service Worker Registration -->
     <script>
+      // Lock screen orientation to landscape
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape-primary').catch((error) => {
+          console.log('Could not lock orientation: ', error);
+        });
+      }
+      
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
