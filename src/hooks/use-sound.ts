@@ -11,6 +11,11 @@ export const useSound = (soundUrl: string, options: UseSoundOptions = {}) => {
 
   const play = useCallback(() => {
     try {
+      // Check if sounds are globally muted (e.g., during arena transitions)
+      if ((window as any).__MUTE_SOUNDS) {
+        return;
+      }
+
       // If a sound is already playing, stop it first
       if (audioRef.current) {
         audioRef.current.pause();

@@ -1070,11 +1070,16 @@ const OnePocketArena = () => {
   // Cleanup sounds on component unmount
   useEffect(() => {
     return () => {
-      isUnmountingRef.current = true;
+      // Mute all sounds globally during arena transition
+      (window as any).__MUTE_SOUNDS = true;
       stopSilverSound();
       stopCheerSound();
       stopPoolSound();
       stopBooSound();
+      // Unmute after a brief delay to allow sounds to stop
+      setTimeout(() => {
+        (window as any).__MUTE_SOUNDS = false;
+      }, 100);
     };
   }, [stopSilverSound, stopCheerSound, stopPoolSound, stopBooSound]);
 

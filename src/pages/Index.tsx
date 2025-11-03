@@ -69,9 +69,6 @@ const Index = () => {
     teamBBalls: 0
   });
 
-  // Ref to track if component is unmounting (switching arenas)
-  const isUnmountingRef = useRef(false);
-
   // Extract state from gameState context
   const {
     teamAQueue,
@@ -131,9 +128,7 @@ const Index = () => {
     const teamANewBets = teamAQueue.length - prevQueueSizesRef.current.teamA;
     const teamBNewBets = teamBQueue.length - prevQueueSizesRef.current.teamB;
     
-    // Only play sound if we're on this page AND not unmounting
-    const isOnThisPage = location.pathname === "/" || location.pathname === "/betting-queue";
-    if ((teamANewBets > 0 || teamBNewBets > 0) && !isUnmountingRef.current && isOnThisPage) {
+    if (teamANewBets > 0 || teamBNewBets > 0) {
       console.log(`🔊 [BET SOUND] New bets detected! Team A: +${teamANewBets}, Team B: +${teamBNewBets}`);
       playSilverSound();
     }
@@ -143,7 +138,7 @@ const Index = () => {
       teamA: teamAQueue.length,
       teamB: teamBQueue.length
     };
-  }, [teamAQueue, teamBQueue, playSilverSound, location.pathname]);
+  }, [teamAQueue, teamBQueue, playSilverSound]);
 
   // Detect booked bets and play pool/match sound
   useEffect(() => {
@@ -1069,18 +1064,18 @@ const Index = () => {
   // Cleanup sounds on component unmount
   useEffect(() => {
     return () => {
-      isUnmountingRef.current = true;
+      // Mute all sounds globally during arena transition
+      (window as any).__MUTE_SOUNDS = true;
       stopSilverSound();
       stopCheerSound();
       stopPoolSound();
       stopBooSound();
+      // Unmute after a brief delay to allow sounds to stop
+      setTimeout(() => {
+        (window as any).__MUTE_SOUNDS = false;
+      }, 100);
     };
   }, [stopSilverSound, stopCheerSound, stopPoolSound, stopBooSound]);
-
-  useEffect(() => {
-    isUnmountingRef.current = false;
-  }, [location.pathname]);
-
 
   return (
     <div className="min-h-screen bg-black p-4 md:p-8 pt-32 relative">
