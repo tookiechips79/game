@@ -55,7 +55,7 @@ const Index = () => {
       (window as any).__MUTE_SOUNDS = true;
       setTimeout(() => {
         (window as any).__MUTE_SOUNDS = false;
-      }, 200);
+      }, 500);
     };
   }, [location.pathname]);
   
