@@ -51,12 +51,12 @@ const Index = () => {
   const prevQueueSizesRef = useRef({ teamA: 0, teamB: 0 });
 
   // Sound effect for bet placement
-  const { play: playSilverSound } = useSound('/silver.mp3', { volume: 0.8 });
+  const { play: playSilverSound, stop: stopSilverSound } = useSound('/silver.mp3', { volume: 0.8 });
   
   // Sound effects for other game events
-  const { play: playCheerSound } = useSound('/cheer.mp3', { volume: 0.8 });
-  const { play: playPoolSound } = useSound('/pool.mp3', { volume: 0.8 });
-  const { play: playBooSound } = useSound('/boo.mp3', { volume: 0.8 });
+  const { play: playCheerSound, stop: stopCheerSound } = useSound('/cheer.mp3', { volume: 0.8 });
+  const { play: playPoolSound, stop: stopPoolSound } = useSound('/pool.mp3', { volume: 0.8 });
+  const { play: playBooSound, stop: stopBooSound } = useSound('/boo.mp3', { volume: 0.8 });
   
   // Ref to track previous state for detecting changes
   const prevStateRef = useRef({ 
@@ -1059,6 +1059,16 @@ const Index = () => {
   const handleTeamBGamesChange = (games: number) => {
     updateGameState({ teamBGames: games });
   };
+
+  useEffect(() => {
+    return () => {
+      // Stop all sounds when the component unmounts
+      stopSilverSound();
+      stopCheerSound();
+      stopPoolSound();
+      stopBooSound();
+    };
+  }, [stopSilverSound, stopCheerSound, stopPoolSound, stopBooSound]);
 
 
   return (

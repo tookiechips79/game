@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 interface UseSoundOptions {
   volume?: number; // 0 to 1
@@ -7,11 +7,19 @@ interface UseSoundOptions {
 
 export const useSound = (soundUrl: string, options: UseSoundOptions = {}) => {
   const { volume = 0.7, playbackRate = 1 } = options;
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const play = useCallback(() => {
     try {
+      // If a sound is already playing, stop it first
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+
       // Create new audio instance
       const audio = new Audio(soundUrl);
+      audioRef.current = audio;
       
       // Set volume and playback rate
       audio.volume = Math.max(0, Math.min(1, volume));
@@ -48,5 +56,13 @@ export const useSound = (soundUrl: string, options: UseSoundOptions = {}) => {
     }
   }, [soundUrl, volume, playbackRate]);
 
-  return { play };
+  const stop = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      console.log(`🔇 [SOUND STOPPED] Stopped: ${soundUrl}`);
+    }
+  }, [soundUrl]);
+
+  return { play, stop };
 };
