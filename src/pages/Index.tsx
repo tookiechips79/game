@@ -191,7 +191,7 @@ const Index = () => {
     const prevGameNumber = prevStateRef.current.gameNumber;
     
     // Only play cheer if: game number increased AND previous was NOT 0 (not arena switch) AND previous WAS tracked
-    if (newGameNumber > prevGameNumber && prevGameNumber > 0 {
+    if (newGameNumber > prevGameNumber && prevGameNumber > 0) {
       console.log(`🔊 [WIN SOUND] Game won! New game number: ${newGameNumber}`);
       playCheerSound();
     }
