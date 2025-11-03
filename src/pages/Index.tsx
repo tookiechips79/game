@@ -58,9 +58,6 @@ const Index = () => {
   const { play: playPoolSound } = useSound('/pool.mp3', { volume: 0.8 });
   const { play: playBooSound } = useSound('/boo.mp3', { volume: 0.8 });
   
-  // Ref to track if this is initial load (prevents sounds on refresh)
-  const isInitialLoadRef = useRef(true);
-  
   // Ref to track previous state for detecting changes
   const prevStateRef = useRef({ 
     teamA: 0, 
@@ -125,35 +122,8 @@ const Index = () => {
     console.log(`💰 [BET QUEUE] Team B Queue: ${teamBQueue.length} bets`, teamBQueue);
   }, [teamAQueue, teamBQueue]);
 
-  // Initialize sound tracking on mount - MUST RUN FIRST
-  useEffect(() => {
-    if (isInitialLoadRef.current) {
-      console.log('🎵 [SOUND] Initializing sound tracking - skipping sounds on initial load');
-      
-      // Initialize refs with current values
-      prevQueueSizesRef.current = {
-        teamA: teamAQueue.length,
-        teamB: teamBQueue.length
-      };
-      
-      prevStateRef.current = {
-        teamA: teamAQueue.length,
-        teamB: teamBQueue.length,
-        bookedCount: bookedBets.length,
-        gameNumber: currentGameNumber,
-        teamABalls: teamABalls,
-        teamBBalls: teamBBalls
-      };
-      
-      isInitialLoadRef.current = false; // Mark initial load complete
-      }
-  }, []); // Only run once on mount
-
-  
-
   // Detect new bets and play sound once per new bet
   useEffect(() => {
-    if (isInitialLoadRef.current) return;
     const teamANewBets = teamAQueue.length - prevQueueSizesRef.current.teamA;
     const teamBNewBets = teamBQueue.length - prevQueueSizesRef.current.teamB;
     
@@ -171,7 +141,6 @@ const Index = () => {
 
   // Detect booked bets and play pool/match sound
   useEffect(() => {
-    if (isInitialLoadRef.current) return;
     const newBookedCount = bookedBets.length;
     const prevBookedCount = prevStateRef.current.bookedCount;
     
@@ -184,26 +153,20 @@ const Index = () => {
   }, [bookedBets, playPoolSound]);
 
   // Detect game wins and play cheer sound
-  // Note: prevGameNumber > 0 check prevents sound on arena switch (when game resets to 1)
   useEffect(() => {
-    if (isInitialLoadRef.current) return;
     const newGameNumber = currentGameNumber;
     const prevGameNumber = prevStateRef.current.gameNumber;
     
-    // Only play cheer if: game number increased AND previous was NOT 0 (not arena switch)
     if (newGameNumber > prevGameNumber && prevGameNumber > 0) {
       console.log(`🔊 [WIN SOUND] Game won! New game number: ${newGameNumber}`);
       playCheerSound();
-      prevStateRef.current.gameNumber = newGameNumber; // Update ref ONLY after playing sound
-    } else if (prevGameNumber === 0 || newGameNumber !== prevGameNumber) {
-      // Update ref silently if this is an arena switch (prevGameNumber is 0) or value changed but no sound
-      prevStateRef.current.gameNumber = newGameNumber;
     }
+    
+    prevStateRef.current.gameNumber = newGameNumber;
   }, [currentGameNumber, playCheerSound]);
 
   // Detect ball count increases and decreases and play sounds
   useEffect(() => {
-    if (isInitialLoadRef.current) return;
     const teamABallsIncreased = teamABalls > prevStateRef.current.teamABalls;
     const teamBBallsIncreased = teamBBalls > prevStateRef.current.teamBBalls;
     const teamABallsDecreased = teamABalls < prevStateRef.current.teamABalls;

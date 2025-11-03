@@ -142,6 +142,7 @@ const saveGameStateToStorage = (arenaId: string, state: GameState) => {
   const key = arenaId === 'one_pocket' ? STORAGE_KEY_ONE_POCKET_ARENA : STORAGE_KEY_DEFAULT_ARENA;
   try {
     // Only store critical fields to reduce size
+    // IMPORTANT: Do NOT save timer state - timers should reset on page load
     const toStore = {
       teamAName: state.teamAName,
       teamBName: state.teamBName,
@@ -152,8 +153,7 @@ const saveGameStateToStorage = (arenaId: string, state: GameState) => {
       teamAHasBreak: state.teamAHasBreak,
       currentGameNumber: state.currentGameNumber,
       gameDescription: state.gameDescription,
-      timerSeconds: state.timerSeconds,
-      isTimerRunning: state.isTimerRunning,
+      // DO NOT SAVE TIMER: timerSeconds, isTimerRunning - these should reset on refresh
       betCounter: state.betCounter,
       colorIndex: state.colorIndex,
       // Betting queues
@@ -368,45 +368,14 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        console.log('📱 Page became visible - requesting fresh game state');
+        // Tab is now visible - request fresh state from server to ensure sync
         socketIOService.requestGameState();
       }
     };
+    
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
-
-  // TIMER RECOVERY: On page refresh, sync timer state with server continuously
-  useEffect(() => {
-    if (!socketIOService.isSocketConnected()) return;
-    
-    const currentState = getCurrentGameState();
-    
-    // If timer should be running but isn't, restart it
-    if (currentState.isTimerRunning) {
-      console.log('✅ [TIMER RECOVERY] Timer was running before refresh, restarting...');
-      // Re-emit timer start to server to ensure it's running on all clients
-      socketIOService.emitTimerUpdate({
-        isTimerRunning: true,
-        timerSeconds: currentState.timerSeconds
-      });
-    }
-    
-    // Set up an interval to sync timer state periodically (every 2 seconds)
-    // This ensures that if timer gets out of sync, it will recover
-    const syncInterval = setInterval(() => {
-      const latestState = getCurrentGameState();
-      if (latestState.isTimerRunning) {
-        // Emit a keepalive to ensure server knows client is still running timer
-        socketIOService.emitTimerUpdate({
-          isTimerRunning: true,
-          timerSeconds: latestState.timerSeconds
-        });
-      }
-    }, 2000);
-    
-    return () => clearInterval(syncInterval);
-  }, [socketIOService.isSocketConnected()]);
 
   // Request latest game state from server when arena changes
   useEffect(() => {
