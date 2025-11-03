@@ -97,7 +97,8 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
   adminModalRef,
   teamAPlayerImageUrl,
   teamBPlayerImageUrl,
-  showBallCount = true
+  showBallCount = true,
+  disableGameAnimation = false
 }) => {
   return (
     <>
