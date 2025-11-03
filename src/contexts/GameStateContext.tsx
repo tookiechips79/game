@@ -650,37 +650,10 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   // Client just displays what server sends, no complex logic
   // This eliminates all refresh/persistence issues
   useEffect(() => {
-    let rafId: number | null = null;
-    let lastDisplayedSecond: number = -1;
-    
-    const currentState = currentArenaId === 'one_pocket' ? gameStateOnePocket : gameStateDefault;
-    
-    // Only animate locally if timer is running
-    if (currentState.isTimerRunning) {
-      const updateTimer = () => {
-        const currentState = currentArenaId === 'one_pocket' ? gameStateOnePocket : gameStateDefault;
-        
-        // Just display the server's timer value
-        // Server broadcasts updates, we just show them
-        if (currentState.timerSeconds !== lastDisplayedSecond) {
-          lastDisplayedSecond = currentState.timerSeconds;
-          // Timer display updates automatically via state
-        }
-        
-        rafId = requestAnimationFrame(updateTimer);
-      };
-      
-      rafId = requestAnimationFrame(updateTimer);
-    } else {
-      lastDisplayedSecond = -1;
-    }
-    
-    return () => {
-      if (rafId !== null) {
-        cancelAnimationFrame(rafId);
-      }
-    };
-  }, [currentArenaId, gameStateDefault.isTimerRunning, gameStateOnePocket.isTimerRunning]);
+    // Timer updates are handled by the onTimerUpdate listener above
+    // Server broadcasts updates, client just displays them
+    // No local animation needed - server handles time calculation
+  }, []);
 
   // Handle visibility changes to ensure timer accuracy when tab becomes active again (mobile-friendly)
   useEffect(() => {
