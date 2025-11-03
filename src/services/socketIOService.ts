@@ -608,6 +608,26 @@ class SocketIOService {
     }
   }
 
+  // Sound Broadcasting Methods
+  public emitSoundEvent(soundType: string) {
+    this.checkAndReidentifyArena();
+    if (this.socket && this.isSocketConnected()) {
+      const arenaId = this.getArenaId();
+      console.log(`🔊 Emitting sound event '${soundType}' for arena '${arenaId}'`);
+      this.socket.emit('play-sound', { soundType, arenaId, timestamp: Date.now() });
+    }
+  }
+
+  public onSoundEvent(callback: (data: { soundType: string; arenaId?: string; timestamp: number }) => void) {
+    if (this.socket) {
+      this.socket.off('play-sound');
+      this.socket.on('play-sound', (data) => {
+        console.log(`🔊 Received sound event: '${data.soundType}' from arena '${data.arenaId}'`);
+        callback(data);
+      });
+    }
+  }
+
   // Cleanup methods for proper listener removal
   public offGameHistoryUpdate() {
     if (this.socket) {

@@ -631,6 +631,14 @@ io.on('connection', (socket) => {
   // Removed bet receipts update handler to prevent external clearing
   // Bet receipts are now a permanent, immutable ledger on each client
 
+  // Handle sound events - broadcast to all clients in the arena
+  socket.on('play-sound', (data) => {
+    const arenaId = data?.arenaId || 'default';
+    console.log(`🔊 Sound event '${data.soundType}' for arena '${arenaId}'`);
+    // Broadcast sound to ALL clients in the same arena (including sender)
+    io.to(`arena:${arenaId}`).emit('play-sound', data);
+  });
+
   // Handle user wallet updates
   socket.on('user-wallet-update', (data) => {
     const arenaId = data?.arenaId || 'default';
@@ -720,98 +728,4 @@ io.on('connection', (socket) => {
     const requestId = data?.requestId || `request-${Date.now()}`;
     console.log(`📨 [P2P] Server requesting game history for arena '${arenaId}' (requestId: ${requestId})`);
     // Broadcast ONLY to the specific arena
-    io.to(`arena:${arenaId}`).emit('receive-game-history-from-clients', {
-      from: 'server',
-      requestId: requestId,
-      arenaId: arenaId
-    });
-  });
-  
-  // Handle game history responses from clients
-  socket.on('provide-game-history', (data) => {
-    const arenaId = data?.arenaId || 'default';
-    console.log(`📥 [P2P] Client providing game history for arena '${arenaId}': ${data.history.length} records`);
-    // This is handled by individual clients, no broadcast needed
-  });
-
-  // Handle disconnect
-  socket.on('disconnect', () => {
-    console.log(`User disconnected: ${socket.id}`);
-    
-    // Remove user from connected users and update coins
-    const disconnectedUser = connectedUsers.get(socket.id);
-    if (disconnectedUser) {
-      console.log(`User ${disconnectedUser.name} disconnected, removing from connected users`);
-      connectedUsers.delete(socket.id);
-      
-      // Broadcast updated connected users coins to all clients
-      const coinsData = calculateConnectedUsersCoins();
-      io.emit('connected-users-coins-update', coinsData);
-      console.log(`📊 Connected users coins after disconnect: ${coinsData.totalCoins} coins from ${coinsData.connectedUserCount} users`);
-    }
-  });
-});
-
-// API endpoint to get current game state
-app.get('/api/game-state', (req, res) => {
-  res.json(serverGameState);
-});
-
-// API endpoint to get connected users debug info
-app.get('/api/connected-users', (req, res) => {
-  const coinsData = calculateConnectedUsersCoins();
-  res.json({
-    connectedUsers: Array.from(connectedUsers.entries()).map(([socketId, userData]) => ({
-      socketId,
-      userId: userData.userId,
-      name: userData.name,
-      credits: userData.credits,
-      loginTime: userData.loginTime,
-      age: userData.loginTime ? Date.now() - userData.loginTime : 0
-    })),
-    summary: coinsData
-  });
-});
-
-// API endpoint to reset game state
-app.post('/api/reset-game', (req, res) => {
-  serverGameState = {
-    teamAQueue: [],
-    teamBQueue: [],
-    bookedBets: [],
-    nextGameBets: [],
-    teamAScore: 0,
-    teamBScore: 0,
-    isTimerRunning: false,
-    timerSeconds: 0,
-    gameInfo: {
-      teamAName: "Team A",
-      teamBName: "Team B",
-      gameTitle: "Game Bird",
-      gameDescription: "Place your bets!"
-    },
-    isGameActive: false,
-    winner: null,
-    lastUpdated: Date.now()
-  };
-  
-  // Broadcast reset to all clients
-  io.emit('game-state-update', serverGameState);
-  
-  res.json({ success: true, message: 'Game state reset' });
-});
-
-// Serve the main app for the root route
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
-
-const PORT = process.env.PORT || 3001;
-
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📱 PWA accessible at: http://localhost:${PORT}`);
-  console.log(`📱 Mobile access: http://192.168.4.83:${PORT}`);
-  console.log(`🌐 Socket.IO server ready for real-time sync`);
-  console.log(`📱 Mobile users: Tap "Advanced" → "Proceed to site" if you see security warning`);
-});
+    io.to(`arena:${arenaId}`

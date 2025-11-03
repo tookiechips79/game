@@ -490,6 +490,16 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       });
     });
 
+    // Listen for sound events from other clients
+    socketIOService.onSoundEvent((soundData) => {
+      validateArenaAndUpdate(soundData.arenaId, () => {
+        console.log(`🔊 Playing sound '${soundData.soundType}' from arena '${soundData.arenaId}'`);
+        // Import and play the sound based on soundType
+        // This will be handled by emitting a custom event that components can listen to
+        window.dispatchEvent(new CustomEvent('playSound', { detail: { soundType: soundData.soundType } }));
+      });
+    });
+
     return () => {
       // Cleanup: disconnect when component unmounts
       socketIOService.disconnect();

@@ -103,6 +103,23 @@ const OnePocketArena = () => {
     console.log(`💰 [BET QUEUE - ONE POCKET] Team B Queue: ${teamBQueue.length} bets`, teamBQueue);
   }, [teamAQueue, teamBQueue]);
 
+  // Listen for sound events from other clients
+  useEffect(() => {
+    const handlePlaySound = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { soundType } = customEvent.detail;
+      console.log(`🔊 [SOUND EVENT - ONE POCKET] Playing sound: ${soundType}`);
+      if (soundType === "placeBet") {
+        playSilverSound();
+      }
+    };
+
+    window.addEventListener('playSound', handlePlaySound);
+    return () => {
+      window.removeEventListener('playSound', handlePlaySound);
+    };
+  }, [playSilverSound]);
+
   const generateBetId = () => {
     // Generate a 7-digit unique ID using counter + random number
     const random = Math.floor(Math.random() * 1000);
@@ -115,6 +132,8 @@ const OnePocketArena = () => {
   const playSound = (soundType: string) => {
     if (soundType === "placeBet") {
       playSilverSound();
+      // Broadcast sound event to all connected clients
+      socketIOService.emitSoundEvent("placeBet");
     }
   };
 
