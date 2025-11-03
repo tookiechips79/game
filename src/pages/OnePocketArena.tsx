@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { 
   ArrowLeft, Zap, Coins, CheckSquare, Unlock, 
   Wallet, TimerReset, ReceiptText, SkipForward, ArrowDownUp, ArrowDown, Trash2
@@ -46,6 +46,8 @@ const OnePocketArena = () => {
   } = useUser();
   
   const { gameState, updateGameState, isAdmin, localAdminState, updateLocalAdminState, startTimer, pauseTimer, resetTimer, setTimer, resetTimerOnMatchStart, resetTimerOnGameWin } = useGameState();
+  
+  const location = useLocation();
   
   // Ref to track previous bet queue sizes for detecting new bets
   const prevQueueSizesRef = useRef({ teamA: 0, teamB: 0 });
@@ -130,7 +132,9 @@ const OnePocketArena = () => {
     const teamANewBets = teamAQueue.length - prevQueueSizesRef.current.teamA;
     const teamBNewBets = teamBQueue.length - prevQueueSizesRef.current.teamB;
 
-    if ((teamANewBets > 0 || teamBNewBets > 0) && !isUnmountingRef.current) {
+    // Only play sound if we're on this page AND not unmounting
+    const isOnThisPage = location.pathname === "/one-pocket-arena";
+    if ((teamANewBets > 0 || teamBNewBets > 0) && !isUnmountingRef.current && isOnThisPage) {
       console.log(`🔊 [BET SOUND - ONE POCKET] New bets detected! Team A: +${teamANewBets}, Team B: +${teamBNewBets}`);
       playSilverSound();
     }
@@ -140,7 +144,7 @@ const OnePocketArena = () => {
       teamA: teamAQueue.length,
       teamB: teamBQueue.length
     };
-  }, [teamAQueue, teamBQueue, playSilverSound]);
+  }, [teamAQueue, teamBQueue, playSilverSound, location.pathname]);
 
   // Detect booked bets and play pool/match sound
   useEffect(() => {
