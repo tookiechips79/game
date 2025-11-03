@@ -774,6 +774,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       isTimerRunning: getCurrentGameState().isTimerRunning,
       timerSeconds: getCurrentGameState().timerSeconds
     });
+    console.log('🕐 [TIMER START] Socket connected?', socketIOService.isSocketConnected());
     
     // Update local state
     updateGameState({
@@ -783,10 +784,16 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     console.log('🕐 [TIMER START] Updated game state, emitting to server');
     // Explicitly emit to server to start timer immediately
     Promise.resolve().then(() => {
+      const state = getCurrentGameState();
+      console.log('🕐 [TIMER START] About to emit - timerSeconds:', state.timerSeconds);
+      console.log('🕐 [TIMER START] Socket connection status:', socketIOService.isSocketConnected());
+      
       socketIOService.emitTimerUpdate({
         isTimerRunning: true,
-        timerSeconds: getCurrentGameState().timerSeconds
+        timerSeconds: state.timerSeconds
       });
+      
+      console.log('🕐 [TIMER START] Emission complete!');
     });
   };
 
@@ -796,6 +803,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       isTimerRunning: getCurrentGameState().isTimerRunning,
       timerSeconds: getCurrentGameState().timerSeconds
     });
+    console.log('⏸️ [TIMER PAUSE] Socket connected?', socketIOService.isSocketConnected());
     
     // Update local state
     updateGameState({
@@ -805,10 +813,15 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     console.log('⏸️ [TIMER PAUSE] Updated game state, emitting to server');
     // Explicitly emit to server to pause timer immediately
     Promise.resolve().then(() => {
+      const state = getCurrentGameState();
+      console.log('⏸️ [TIMER PAUSE] About to emit - timerSeconds:', state.timerSeconds);
+      
       socketIOService.emitTimerUpdate({
         isTimerRunning: false,
-        timerSeconds: getCurrentGameState().timerSeconds
+        timerSeconds: state.timerSeconds
       });
+      
+      console.log('⏸️ [TIMER PAUSE] Emission complete!');
     });
   };
 
@@ -818,6 +831,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       isTimerRunning: getCurrentGameState().isTimerRunning,
       timerSeconds: getCurrentGameState().timerSeconds
     });
+    console.log('🔄 [TIMER RESET] Socket connected?', socketIOService.isSocketConnected());
     
     // Update local state
     updateGameState({
@@ -828,10 +842,15 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     console.log('🔄 [TIMER RESET] Updated game state, emitting to server');
     // Explicitly emit to server to reset timer immediately
     Promise.resolve().then(() => {
+      const state = getCurrentGameState();
+      console.log('🔄 [TIMER RESET] About to emit - resetting to 0');
+      
       socketIOService.emitTimerUpdate({
         isTimerRunning: false,
         timerSeconds: 0
       });
+      
+      console.log('🔄 [TIMER RESET] Emission complete!');
     });
   };
 
