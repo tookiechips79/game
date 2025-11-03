@@ -190,13 +190,15 @@ const Index = () => {
     const newGameNumber = currentGameNumber;
     const prevGameNumber = prevStateRef.current.gameNumber;
     
-    // Only play cheer if: game number increased AND previous was NOT 0 (not arena switch) AND previous WAS tracked
+    // Only play cheer if: game number increased AND previous was NOT 0 (not arena switch)
     if (newGameNumber > prevGameNumber && prevGameNumber > 0) {
       console.log(`🔊 [WIN SOUND] Game won! New game number: ${newGameNumber}`);
       playCheerSound();
+      prevStateRef.current.gameNumber = newGameNumber; // Update ref ONLY after playing sound
+    } else if (prevGameNumber === 0 || newGameNumber !== prevGameNumber) {
+      // Update ref silently if this is an arena switch (prevGameNumber is 0) or value changed but no sound
+      prevStateRef.current.gameNumber = newGameNumber;
     }
-    
-    prevStateRef.current.gameNumber = newGameNumber;
   }, [currentGameNumber, playCheerSound]);
 
   // Detect ball count increases and decreases and play sounds
