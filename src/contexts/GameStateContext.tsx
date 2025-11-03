@@ -283,14 +283,23 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   }, [currentArenaId]);
 
   // Save game state to localStorage whenever it changes
+  // Use actual state objects, not function calls, for proper dependency tracking
   useEffect(() => {
-    saveGameStateToStorage(currentArenaId, getCurrentGameState());
-  }, [getCurrentGameState(), currentArenaId]);
+    saveGameStateToStorage('default', gameStateDefault);
+  }, [gameStateDefault]);
+
+  useEffect(() => {
+    saveGameStateToStorage('one_pocket', gameStateOnePocket);
+  }, [gameStateOnePocket]);
 
   // Save admin state to localStorage whenever it changes
   useEffect(() => {
-    saveAdminStateToStorage(currentArenaId, getCurrentLocalAdminState());
-  }, [getCurrentLocalAdminState(), currentArenaId]);
+    saveAdminStateToStorage('default', localAdminStateDefault);
+  }, [localAdminStateDefault]);
+
+  useEffect(() => {
+    saveAdminStateToStorage('one_pocket', localAdminStateOnePocket);
+  }, [localAdminStateOnePocket]);
 
   // CROSS-TAB SYNC: Listen for storage changes from other tabs/windows
   useEffect(() => {
@@ -412,78 +421,68 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       validateArenaAndUpdate(betData.arenaId, () => {
         try {
           console.log('📥 Received bet update from server:', betData);
-          console.log('📥 Current state before update:', {
-            teamAQueueLength: getCurrentGameState().teamAQueue.length,
-            teamBQueueLength: getCurrentGameState().teamBQueue.length,
-            bookedBetsLength: getCurrentGameState().bookedBets.length
-          });
           
           setCurrentGameState(prevState => {
             const newState = { ...prevState };
             let hasUpdates = false;
             
-            // Smart merging: only update if the incoming data is different or newer
-            if (betData.teamAQueue !== undefined) {
-              console.log('📥 Updating teamAQueue:', betData.teamAQueue.length, 'items');
-              // Always update teamAQueue - server is authoritative
+            // SMART MERGE: Only accept server updates that have actual data
+            // Prevent empty server state from overwriting good local data
+            
+            if (betData.teamAQueue !== undefined && betData.teamAQueue.length > 0) {
+              newState.teamAQueue = betData.teamAQueue;
+              hasUpdates = true;
+            } else if (betData.teamAQueue !== undefined && betData.teamAQueue.length === 0 && prevState.teamAQueue.length > 0) {
+              // Don't overwrite local bets with empty array from server
+              // Keep local data if server sends nothing
+              console.log('⚠️ Server sent empty teamAQueue, keeping local data');
+            } else if (betData.teamAQueue !== undefined) {
               newState.teamAQueue = betData.teamAQueue;
               hasUpdates = true;
             }
-            if (betData.teamBQueue !== undefined) {
-              console.log('📥 Updating teamBQueue:', betData.teamBQueue.length, 'items');
-              // Always update teamBQueue - server is authoritative
+            
+            if (betData.teamBQueue !== undefined && betData.teamBQueue.length > 0) {
+              newState.teamBQueue = betData.teamBQueue;
+              hasUpdates = true;
+            } else if (betData.teamBQueue !== undefined && betData.teamBQueue.length === 0 && prevState.teamBQueue.length > 0) {
+              console.log('⚠️ Server sent empty teamBQueue, keeping local data');
+            } else if (betData.teamBQueue !== undefined) {
               newState.teamBQueue = betData.teamBQueue;
               hasUpdates = true;
             }
-            if (betData.bookedBets !== undefined) {
-              console.log('📥 Updating bookedBets:', betData.bookedBets.length, 'items');
-              // Always update bookedBets - server is authoritative
+            
+            if (betData.bookedBets !== undefined && betData.bookedBets.length > 0) {
+              newState.bookedBets = betData.bookedBets;
+              hasUpdates = true;
+            } else if (betData.bookedBets !== undefined && betData.bookedBets.length === 0 && prevState.bookedBets.length > 0) {
+              console.log('⚠️ Server sent empty bookedBets, keeping local data');
+            } else if (betData.bookedBets !== undefined) {
               newState.bookedBets = betData.bookedBets;
               hasUpdates = true;
             }
+            
             if (betData.nextGameBets !== undefined) {
-              console.log('📥 Updating nextBookedBets:', betData.nextGameBets.length, 'items');
-              // Always update nextBookedBets - server is authoritative
               newState.nextBookedBets = betData.nextGameBets;
               hasUpdates = true;
             }
             if (betData.nextTeamAQueue !== undefined) {
-              console.log('📥 Updating nextTeamAQueue:', betData.nextTeamAQueue.length, 'items');
-              // Always update - server is authoritative
               newState.nextTeamAQueue = betData.nextTeamAQueue;
               hasUpdates = true;
             }
             if (betData.nextTeamBQueue !== undefined) {
-              console.log('📥 Updating nextTeamBQueue:', betData.nextTeamBQueue.length, 'items');
-              // Always update - server is authoritative
               newState.nextTeamBQueue = betData.nextTeamBQueue;
               hasUpdates = true;
             }
             
             if (betData.totalBookedAmount !== undefined) {
-              console.log('📥 Updating totalBookedAmount:', betData.totalBookedAmount);
               newState.totalBookedAmount = betData.totalBookedAmount;
               hasUpdates = true;
             }
             
             if (betData.nextTotalBookedAmount !== undefined) {
-              console.log('📥 Updating nextTotalBookedAmount:', betData.nextTotalBookedAmount);
               newState.nextTotalBookedAmount = betData.nextTotalBookedAmount;
               hasUpdates = true;
             }
-            
-            if (hasUpdates) {
-              console.log('📥 State updated successfully with bet data');
-              console.log('📥 Queue sizes - A:', newState.teamAQueue.length, 'B:', newState.teamBQueue.length, 'NextA:', newState.nextTeamAQueue.length, 'NextB:', newState.nextTeamBQueue.length);
-            } else {
-              console.log('📥 No updates applied from bet data');
-            }
-            
-            console.log('📥 New state after update:', {
-              teamAQueueLength: newState.teamAQueue.length,
-              teamBQueueLength: newState.teamBQueue.length,
-              bookedBetsLength: newState.bookedBets.length
-            });
             
             return newState;
           });
