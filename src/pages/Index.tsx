@@ -70,6 +70,9 @@ const Index = () => {
   
   // Ref to track previous bet queue sizes for detecting new bets
   const prevQueueSizesRef = useRef({ teamA: 0, teamB: 0 });
+  
+  // Ref to track if we should mute cheer sound on win button
+  const muteCheerOnWinRef = useRef(false);
 
   // Sound effect for bet placement
   const { play: playSilverSound, stop: stopSilverSound } = useSound('/silver.mp3', { volume: 0.8 });
@@ -179,8 +182,14 @@ const Index = () => {
     const prevGameNumber = prevStateRef.current.gameNumber;
     
     if (newGameNumber > prevGameNumber && prevGameNumber > 0) {
-      console.log(`🔊 [WIN SOUND] Game won! New game number: ${newGameNumber}`);
-      playCheerSound();
+      // Check if cheer sound should be muted (e.g., when win button is clicked)
+      if (muteCheerOnWinRef.current) {
+        console.log(`🔊 [WIN SOUND] Game won but cheer MUTED - New game number: ${newGameNumber}`);
+        muteCheerOnWinRef.current = false; // Reset the flag
+      } else {
+        console.log(`🔊 [WIN SOUND] Game won! New game number: ${newGameNumber}`);
+        playCheerSound();
+      }
     }
     
     prevStateRef.current.gameNumber = newGameNumber;
@@ -311,6 +320,9 @@ const Index = () => {
     // Pause timer when game is won (don't reset it)
     pauseTimer();
     
+    // Set flag to mute cheer sound when win button is clicked
+    muteCheerOnWinRef.current = true;
+    
     toast.success(`${teamAName} Wins!`, {
       description: `${teamAName} has won a game`,
       className: "custom-toast-success",
@@ -342,6 +354,9 @@ const Index = () => {
     console.log('🏆 [handleTeamBWin] WIN BUTTON CLICKED FOR TEAM B!');
     // Pause timer when game is won (don't reset it)
     pauseTimer();
+    
+    // Set flag to mute cheer sound when win button is clicked
+    muteCheerOnWinRef.current = true;
     
     toast.success(`${teamBName} Wins!`, {
       description: `${teamBName} has won a game`,
