@@ -10,7 +10,7 @@ interface UserContextType {
   setCurrentUser: (user: User | null) => void;
   addUser: (name: string, password: string) => User;
   authenticateUser: (name: string, password: string) => User | null;
-  addCredits: (userId: string, amount: number, isAdmin?: boolean) => void;
+  addCredits: (userId: string, amount: number, isAdmin?: boolean, reason?: string) => void;
   deductCredits: (userId: string, amount: number, isAdminAction?: boolean) => boolean;
   getUserById: (id: string) => User | undefined;
   getAllUsers: () => User[];
@@ -789,7 +789,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return user || null;
   };
 
-  const addCredits = (userId: string, amount: number, isAdmin: boolean = false) => {
+  const addCredits = (userId: string, amount: number, isAdmin: boolean = false, reason: string = 'admin_add') => {
     if (amount <= 0) return;
     
     setUsers(prev => {
@@ -817,17 +817,28 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const userName = users.find(u => u.id === userId)?.name || userId;
     
     if (isAdmin) {
-      toast.success("Credits Added", {
-        description: `Added ${amount} credits to ${userName}`,
+      // Determine toast message and transaction details based on reason
+      let toastTitle = "Credits Added";
+      let toastDescription = `Added ${amount} credits to ${userName}`;
+      let transactionDetails = 'Admin added coins to account';
+      
+      if (reason === 'bet_refund') {
+        toastTitle = "Bet Refunded";
+        toastDescription = `Refunded ${amount} credits to ${userName}`;
+        transactionDetails = 'Bet refunded';
+      }
+      
+      toast.success(toastTitle, {
+        description: toastDescription,
         className: "custom-toast-success"
       });
       
       addCreditTransaction({
         userId,
         userName: userName,
-        type: 'admin_add',
+        type: reason as 'admin_add' | 'bet_refund',
         amount,
-        details: 'Admin added coins to account'
+        details: transactionDetails
       });
     }
   };

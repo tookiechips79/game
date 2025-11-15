@@ -935,7 +935,7 @@ const Index = () => {
     
     if (betDeleted && deletedBet) {
       // Refund credits to the user
-      addCredits(deletedBet.userId, deletedBet.amount, true);
+      addCredits(deletedBet.userId, deletedBet.amount, true, 'bet_refund');
       
       // Bet deleted successfully - no toast notification
     } else {

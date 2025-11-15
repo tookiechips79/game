@@ -57,7 +57,7 @@ export interface CreditTransaction {
   id: string;
   userId: string;
   userName: string;
-  type: 'deposit' | 'withdrawal' | 'subscription' | 'admin_add' | 'admin_deduct' | 'cashout';
+  type: 'deposit' | 'withdrawal' | 'subscription' | 'admin_add' | 'admin_deduct' | 'cashout' | 'bet_refund';
   amount: number;
   details: string;
   timestamp: number;
