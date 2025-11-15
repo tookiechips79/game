@@ -298,24 +298,25 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   }, [currentArenaId]);
 
-  // FULL SERVER-AUTHORITATIVE: NO localStorage saves needed
-  // All state changes are broadcast via Socket.IO to all devices
-  // Server is the source of truth, clients just display what server sends
-  // localStorage is disabled for server-authoritative model
+  // SMART FALLBACK: Keep localStorage saves as backup ONLY
+  // Primary: Server is source of truth
+  // Fallback (if server doesn't respond): Use localStorage to prevent black screen
+  // This ensures good UX while maintaining server-authoritative architecture
   
-  // Commented out - these are no longer needed:
-  // useEffect(() => {
-  //   saveGameStateToStorage('default', gameStateDefault);
-  // }, [gameStateDefault]);
-  // useEffect(() => {
-  //   saveGameStateToStorage('one_pocket', gameStateOnePocket);
-  // }, [gameStateOnePocket]);
-  // useEffect(() => {
-  //   saveAdminStateToStorage('default', localAdminStateDefault);
-  // }, [localAdminStateDefault]);
-  // useEffect(() => {
-  //   saveAdminStateToStorage('one_pocket', localAdminStateOnePocket);
-  // }, [localAdminStateOnePocket]);
+  // Only save as fallback for emergency scenarios
+  useEffect(() => {
+    if (gameStateDefault && gameStateDefault.teamAName !== "Player A") {
+      // Only save if state has actual data (not defaults)
+      saveGameStateToStorage('default', gameStateDefault);
+    }
+  }, [gameStateDefault]);
+
+  useEffect(() => {
+    if (gameStateOnePocket && gameStateOnePocket.teamAName !== "Player A") {
+      // Only save if state has actual data (not defaults)
+      saveGameStateToStorage('one_pocket', gameStateOnePocket);
+    }
+  }, [gameStateOnePocket]);
 
   // CROSS-TAB SYNC: Listen for storage changes from other tabs/windows
   useEffect(() => {
@@ -658,8 +659,35 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     
     console.log('📡 [INIT] Requested initial game state on connection');
 
+    // FALLBACK: If server doesn't respond within 3 seconds, use localStorage to prevent black screen
+    const fallbackTimer = setTimeout(() => {
+      console.warn('⚠️ [FALLBACK] Server did not respond within 3 seconds, loading from localStorage as fallback');
+      const storedDefault = localStorage.getItem('game_state_default');
+      const storedOnePocket = localStorage.getItem('game_state_one_pocket');
+      
+      if (storedDefault) {
+        try {
+          setCurrentGameState(JSON.parse(storedDefault));
+          console.log('📦 Loaded default arena from localStorage fallback');
+        } catch (e) {
+          console.error('Error parsing localStorage fallback:', e);
+        }
+      }
+      
+      if (storedOnePocket) {
+        try {
+          const parsed = JSON.parse(storedOnePocket);
+          setCurrentGameState(parsed);
+          console.log('📦 Loaded one-pocket arena from localStorage fallback');
+        } catch (e) {
+          console.error('Error parsing localStorage fallback:', e);
+        }
+      }
+    }, 3000);
+
     return () => {
       // Cleanup listeners when component unmounts
+      clearTimeout(fallbackTimer);
       socketIOService.socket?.off('bet-update');
       socketIOService.socket?.off('game-state-update');
       socketIOService.socket?.off('timer-update');
