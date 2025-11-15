@@ -16,10 +16,16 @@ export const useSound = (soundUrl: string, options: UseSoundOptions = {}) => {
         return;
       }
 
-      // If a sound is already playing, stop it first
+      // CRITICAL: Stop any currently playing audio first to prevent echoes
       if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
+        try {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+          audioRef.current.src = ''; // Clear the source to fully stop playback
+          console.log(`🔇 [SOUND CLEANUP] Stopped previous instance before playing new: ${soundUrl}`);
+        } catch (e) {
+          console.warn(`🔊 [SOUND CLEANUP ERROR] Error stopping previous audio:`, e);
+        }
       }
 
       // Create new audio instance
@@ -63,9 +69,14 @@ export const useSound = (soundUrl: string, options: UseSoundOptions = {}) => {
 
   const stop = useCallback(() => {
     if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      console.log(`🔇 [SOUND STOPPED] Stopped: ${soundUrl}`);
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current.src = ''; // Clear the source to fully stop playback
+        console.log(`🔇 [SOUND STOPPED] Stopped and cleared: ${soundUrl}`);
+      } catch (e) {
+        console.warn(`🔊 [SOUND STOP ERROR] Error stopping audio:`, e);
+      }
     }
   }, [soundUrl]);
 
