@@ -73,6 +73,9 @@ const Index = () => {
   
   // Ref to track if we should mute cheer sound on win button
   const muteCheerOnWinRef = useRef(false);
+  
+  // Ref to track if we should mute pool/boo sounds (e.g., when plus/minus buttons are clicked)
+  const mutePoolBooSoundsRef = useRef(false);
 
   // Sound effect for bet placement
   const { play: playSilverSound, stop: stopSilverSound } = useSound('/silver.mp3', { volume: 0.8 });
@@ -208,24 +211,36 @@ const Index = () => {
     
     // Play pool sound ONCE if any team's balls increased (and it's not initial render)
     if ((teamABallsIncreased || teamBBallsIncreased) && notInitialRender) {
-      if (teamABallsIncreased) {
-        console.log(`🔊 [BALL SOUND] Team A ball count increased from ${prevStateRef.current.teamABalls} to ${teamABalls}`);
+      // Check if pool/boo sounds should be muted (e.g., when plus button is clicked)
+      if (mutePoolBooSoundsRef.current) {
+        console.log(`🔊 [BALL SOUND] Balls increased but pool sound MUTED`);
+        mutePoolBooSoundsRef.current = false; // Reset the flag
+      } else {
+        if (teamABallsIncreased) {
+          console.log(`🔊 [BALL SOUND] Team A ball count increased from ${prevStateRef.current.teamABalls} to ${teamABalls}`);
+        }
+        if (teamBBallsIncreased) {
+          console.log(`🔊 [BALL SOUND] Team B ball count increased from ${prevStateRef.current.teamBBalls} to ${teamBBalls}`);
+        }
+        playPoolSound();
       }
-      if (teamBBallsIncreased) {
-        console.log(`🔊 [BALL SOUND] Team B ball count increased from ${prevStateRef.current.teamBBalls} to ${teamBBalls}`);
-      }
-      playPoolSound();
     }
     
     // Play boo sound ONCE if any team's balls decreased (and it's not initial render)
     if ((teamABallsDecreased || teamBBallsDecreased) && notInitialRender) {
-      if (teamABallsDecreased) {
-        console.log(`🔊 [BALL MINUS SOUND] Team A ball count decreased from ${prevStateRef.current.teamABalls} to ${teamABalls}`);
+      // Check if pool/boo sounds should be muted (e.g., when minus button is clicked)
+      if (mutePoolBooSoundsRef.current) {
+        console.log(`🔊 [BALL MINUS SOUND] Balls decreased but boo sound MUTED`);
+        mutePoolBooSoundsRef.current = false; // Reset the flag
+      } else {
+        if (teamABallsDecreased) {
+          console.log(`🔊 [BALL MINUS SOUND] Team A ball count decreased from ${prevStateRef.current.teamABalls} to ${teamABalls}`);
+        }
+        if (teamBBallsDecreased) {
+          console.log(`🔊 [BALL MINUS SOUND] Team B ball count decreased from ${prevStateRef.current.teamBBalls} to ${teamBBalls}`);
+        }
+        playBooSound();
       }
-      if (teamBBallsDecreased) {
-        console.log(`🔊 [BALL MINUS SOUND] Team B ball count decreased from ${prevStateRef.current.teamBBalls} to ${teamBBalls}`);
-      }
-      playBooSound();
     }
     
     // Only update refs if there's an actual change (prevents stale refs)
@@ -1090,10 +1105,14 @@ const Index = () => {
   }, [teamAQueue, teamBQueue, nextTeamAQueue, nextTeamBQueue]);
 
   const handleTeamABallsChange = (balls: number) => {
+    // Mute pool/boo sounds when plus/minus button is clicked
+    mutePoolBooSoundsRef.current = true;
     updateGameState({ teamABalls: balls });
   };
   
   const handleTeamBBallsChange = (balls: number) => {
+    // Mute pool/boo sounds when plus/minus button is clicked
+    mutePoolBooSoundsRef.current = true;
     updateGameState({ teamBBalls: balls });
   };
 
