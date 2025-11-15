@@ -90,6 +90,7 @@ const Index = () => {
     teamA: 0, 
     teamB: 0,
     bookedCount: 0,
+    nextBookedCount: 0,
     gameNumber: 0,
     teamABalls: 0,
     teamBBalls: 0
@@ -178,6 +179,19 @@ const Index = () => {
     
     prevStateRef.current.bookedCount = newBookedCount;
   }, [bookedBets, playPoolSound]);
+
+  // Detect next game booked bets and play silver sound
+  useEffect(() => {
+    const newNextBookedCount = nextBookedBets.length;
+    const prevNextBookedCount = prevStateRef.current.nextBookedCount || 0;
+    
+    if (newNextBookedCount > prevNextBookedCount) {
+      console.log(`🔊 [NEXT GAME BET SOUND] Next game bet placed! New count: ${newNextBookedCount}`);
+      playSilverSound();
+    }
+    
+    prevStateRef.current.nextBookedCount = newNextBookedCount;
+  }, [nextBookedBets, playSilverSound]);
 
   // Detect game wins and play cheer sound
   useEffect(() => {
