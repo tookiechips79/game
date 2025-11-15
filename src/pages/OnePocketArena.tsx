@@ -166,18 +166,19 @@ const OnePocketArena = () => {
     prevStateRef.current.bookedCount = newBookedCount;
   }, [bookedBets, playPoolSound]);
 
-  // Detect next game booked bets and play silver sound
+  // Detect next game bets placed in queues and play silver sound
   useEffect(() => {
-    const newNextBookedCount = nextBookedBets.length;
-    const prevNextBookedCount = prevStateRef.current.nextBookedCount || 0;
+    // Count total next game bets (both queues combined)
+    const newNextGameBetCount = nextTeamAQueue.length + nextTeamBQueue.length;
+    const prevNextGameBetCount = prevStateRef.current.nextBookedCount || 0;
     
-    if (newNextBookedCount > prevNextBookedCount) {
-      console.log(`🔊 [NEXT GAME BET SOUND - ONE POCKET] Next game bet placed! New count: ${newNextBookedCount}`);
+    if (newNextGameBetCount > prevNextGameBetCount) {
+      console.log(`🔊 [NEXT GAME BET SOUND - ONE POCKET] Next game bet placed! New count: ${newNextGameBetCount}`);
       playSilverSound();
     }
     
-    prevStateRef.current.nextBookedCount = newNextBookedCount;
-  }, [nextBookedBets, playSilverSound]);
+    prevStateRef.current.nextBookedCount = newNextGameBetCount;
+  }, [nextTeamAQueue, nextTeamBQueue, playSilverSound]);
 
   // Detect game wins and play cheer sound
   useEffect(() => {
