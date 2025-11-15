@@ -216,8 +216,9 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   const { betHistory, userBetReceipts } = useUser();
   
   // Separate state for each arena - NOW LOAD FROM STORAGE
-  const [gameStateDefault, setGameStateDefault] = useState<GameState>(() => loadGameStateFromStorage('default'));
-  const [gameStateOnePocket, setGameStateOnePocket] = useState<GameState>(() => loadGameStateFromStorage('one_pocket'));
+  // FULL SERVER-AUTHORITATIVE MODEL: Initialize with defaults, server will send actual state
+  const [gameStateDefault, setGameStateDefault] = useState<GameState>(defaultGameState);
+  const [gameStateOnePocket, setGameStateOnePocket] = useState<GameState>(defaultGameStateOnePocket);
   const [localAdminStateDefault, setLocalAdminStateDefault] = useState<LocalAdminState>(() => loadAdminStateFromStorage('default'));
   const [localAdminStateOnePocket, setLocalAdminStateOnePocket] = useState<LocalAdminState>(() => loadAdminStateFromStorage('one_pocket'));
 
@@ -297,24 +298,24 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   }, [currentArenaId]);
 
-  // Save game state to localStorage whenever it changes
-  // Use actual state objects, not function calls, for proper dependency tracking
-  useEffect(() => {
-    saveGameStateToStorage('default', gameStateDefault);
-  }, [gameStateDefault]);
-
-  useEffect(() => {
-    saveGameStateToStorage('one_pocket', gameStateOnePocket);
-  }, [gameStateOnePocket]);
-
-  // Save admin state to localStorage whenever it changes
-  useEffect(() => {
-    saveAdminStateToStorage('default', localAdminStateDefault);
-  }, [localAdminStateDefault]);
-
-  useEffect(() => {
-    saveAdminStateToStorage('one_pocket', localAdminStateOnePocket);
-  }, [localAdminStateOnePocket]);
+  // FULL SERVER-AUTHORITATIVE: NO localStorage saves needed
+  // All state changes are broadcast via Socket.IO to all devices
+  // Server is the source of truth, clients just display what server sends
+  // localStorage is disabled for server-authoritative model
+  
+  // Commented out - these are no longer needed:
+  // useEffect(() => {
+  //   saveGameStateToStorage('default', gameStateDefault);
+  // }, [gameStateDefault]);
+  // useEffect(() => {
+  //   saveGameStateToStorage('one_pocket', gameStateOnePocket);
+  // }, [gameStateOnePocket]);
+  // useEffect(() => {
+  //   saveAdminStateToStorage('default', localAdminStateDefault);
+  // }, [localAdminStateDefault]);
+  // useEffect(() => {
+  //   saveAdminStateToStorage('one_pocket', localAdminStateOnePocket);
+  // }, [localAdminStateOnePocket]);
 
   // CROSS-TAB SYNC: Listen for storage changes from other tabs/windows
   useEffect(() => {
