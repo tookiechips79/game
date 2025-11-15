@@ -631,6 +631,26 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       });
     });
 
+    // Listen for team names updates from other devices (CROSS-DEVICE SYNC)
+    socketIOService.onTeamNamesUpdate((teamNamesData) => {
+      validateArenaAndUpdate(teamNamesData.arenaId, () => {
+        console.log(`👥 [CROSS-DEVICE SYNC] Received team names update: ${teamNamesData.teamAName} vs ${teamNamesData.teamBName}`);
+        setCurrentGameState(prevState => ({
+          ...prevState,
+          teamAName: teamNamesData.teamAName,
+          teamBName: teamNamesData.teamBName
+        }));
+      });
+    });
+
+    // Listen for admin state updates from other devices (CROSS-DEVICE SYNC)
+    socketIOService.onAdminStateUpdate((adminStateData) => {
+      validateArenaAndUpdate(adminStateData.arenaId, () => {
+        console.log(`⚙️ [CROSS-DEVICE SYNC] Received admin state update for arena '${adminStateData.arenaId}'`);
+        setCurrentLocalAdminState(adminStateData.adminState);
+      });
+    });
+
     // REQUEST INITIAL STATE IMMEDIATELY on connection
     // This is critical for mobile devices to get fresh data
     socketIOService.requestGameState();
@@ -643,6 +663,8 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       socketIOService.socket?.off('game-state-update');
       socketIOService.socket?.off('timer-update');
       socketIOService.socket?.off('score-update');
+      socketIOService.socket?.off('team-names-update');
+      socketIOService.socket?.off('admin-state-update');
     };
   }, [currentArenaId]);
 
@@ -743,6 +765,14 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
                 gameTitle: "Game Bird",
                 gameDescription: updates.gameDescription || prevState.gameDescription
               };
+              
+              // EMIT TEAM NAMES SEPARATELY FOR CROSS-DEVICE SYNC
+              if (updates.teamAName || updates.teamBName) {
+                socketIOService.emitTeamNamesUpdate(
+                  updates.teamAName || prevState.teamAName,
+                  updates.teamBName || prevState.teamBName
+                );
+              }
             }
             socketIOService.emitGameStateUpdate(gameStateData);
             socketIOService.emitScoreUpdate({

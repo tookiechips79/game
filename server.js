@@ -774,6 +774,30 @@ io.on('connection', (socket) => {
     // Broadcast sound to ALL clients in the same arena (including sender)
     io.to(`arena:${arenaId}`).emit('play-sound', data);
   });
+
+  // Handle team names updates - broadcast to all clients in the arena
+  socket.on('team-names-update', (data) => {
+    const arenaId = data?.arenaId || 'default';
+    console.log(`👥 [TEAM NAMES UPDATE] Arena '${arenaId}': ${data.teamAName} vs ${data.teamBName}`);
+    // Broadcast to ALL clients in the same arena
+    io.to(`arena:${arenaId}`).emit('team-names-update', data);
+  });
+
+  // Handle admin state updates - broadcast to all clients in the arena
+  socket.on('admin-state-update', (data) => {
+    const arenaId = data?.arenaId || 'default';
+    console.log(`⚙️ [ADMIN STATE UPDATE] Arena '${arenaId}'`);
+    // Broadcast to ALL clients in the same arena
+    io.to(`arena:${arenaId}`).emit('admin-state-update', data);
+  });
+
+  // Handle full state sync - broadcast to all clients in the arena
+  socket.on('full-state-sync', (data) => {
+    const arenaId = data?.arenaId || 'default';
+    console.log(`📡 [FULL STATE SYNC] Arena '${arenaId}' - syncing complete game state`);
+    // Broadcast to ALL clients in the same arena (excluding sender)
+    socket.broadcast.to(`arena:${arenaId}`).emit('full-state-sync', data);
+  });
 });
 
 // Start server
