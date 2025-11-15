@@ -179,8 +179,12 @@ const OnePocketArena = () => {
     const teamABallsDecreased = teamABalls < prevStateRef.current.teamABalls;
     const teamBBallsDecreased = teamBBalls < prevStateRef.current.teamBBalls;
     
-    // Play pool sound ONCE if any team's balls increased
-    if (teamABallsIncreased || teamBBallsIncreased) {
+    // Only play sounds if ball count ACTUALLY changed (not on initial render)
+    const ballCountChanged = teamABallsIncreased || teamABallsDecreased || teamBBallsIncreased || teamBBallsDecreased;
+    const notInitialRender = prevStateRef.current.teamABalls !== 0 || prevStateRef.current.teamBBalls !== 0;
+    
+    // Play pool sound ONCE if any team's balls increased (and it's not initial render)
+    if ((teamABallsIncreased || teamBBallsIncreased) && notInitialRender) {
       if (teamABallsIncreased) {
         console.log(`🔊 [BALL SOUND - ONE POCKET] Team A ball count increased from ${prevStateRef.current.teamABalls} to ${teamABalls}`);
       }
@@ -190,8 +194,8 @@ const OnePocketArena = () => {
       playPoolSound();
     }
     
-    // Play boo sound ONCE if any team's balls decreased
-    if (teamABallsDecreased || teamBBallsDecreased) {
+    // Play boo sound ONCE if any team's balls decreased (and it's not initial render)
+    if ((teamABallsDecreased || teamBBallsDecreased) && notInitialRender) {
       if (teamABallsDecreased) {
         console.log(`🔊 [BALL MINUS SOUND - ONE POCKET] Team A ball count decreased from ${prevStateRef.current.teamABalls} to ${teamABalls}`);
       }
@@ -201,8 +205,11 @@ const OnePocketArena = () => {
       playBooSound();
     }
     
-    prevStateRef.current.teamABalls = teamABalls;
-    prevStateRef.current.teamBBalls = teamBBalls;
+    // Only update refs if there's an actual change (prevents stale refs)
+    if (ballCountChanged) {
+      prevStateRef.current.teamABalls = teamABalls;
+      prevStateRef.current.teamBBalls = teamBBalls;
+    }
   }, [teamABalls, teamBBalls, playPoolSound, playBooSound]);
 
   const generateBetId = () => {
