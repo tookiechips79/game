@@ -664,6 +664,66 @@ class SocketIOService {
     }
   }
 
+  // Cross-Device Synchronization - Emit complete game state for new/reconnecting devices
+  public emitFullGameStateSync(fullGameState: any) {
+    this.checkAndReidentifyArena();
+    if (this.socket && this.isSocketConnected()) {
+      const arenaId = this.getArenaId();
+      log(`📡 Emitting FULL game state sync for arena '${arenaId}' to other devices`);
+      this.socket.emit('full-state-sync', { gameState: fullGameState, arenaId, timestamp: Date.now() });
+    }
+  }
+
+  public onFullGameStateSync(callback: (data: { gameState: any; arenaId?: string; timestamp: number }) => void) {
+    if (this.socket) {
+      this.socket.off('full-state-sync');
+      this.socket.on('full-state-sync', (data) => {
+        log(`📡 Received FULL game state sync from arena '${data.arenaId}':`, data.gameState);
+        callback(data);
+      });
+    }
+  }
+
+  // Emit team names specifically for cross-device sync
+  public emitTeamNamesUpdate(teamAName: string, teamBName: string) {
+    this.checkAndReidentifyArena();
+    if (this.socket && this.isSocketConnected()) {
+      const arenaId = this.getArenaId();
+      log(`👥 Emitting team names update for arena '${arenaId}': ${teamAName} vs ${teamBName}`);
+      this.socket.emit('team-names-update', { teamAName, teamBName, arenaId, timestamp: Date.now() });
+    }
+  }
+
+  public onTeamNamesUpdate(callback: (data: { teamAName: string; teamBName: string; arenaId?: string; timestamp: number }) => void) {
+    if (this.socket) {
+      this.socket.off('team-names-update');
+      this.socket.on('team-names-update', (data) => {
+        log(`👥 Received team names update for arena '${data.arenaId}': ${data.teamAName} vs ${data.teamBName}`);
+        callback(data);
+      });
+    }
+  }
+
+  // Emit admin state changes for cross-device sync
+  public emitAdminStateUpdate(adminState: any) {
+    this.checkAndReidentifyArena();
+    if (this.socket && this.isSocketConnected()) {
+      const arenaId = this.getArenaId();
+      log(`⚙️ Emitting admin state update for arena '${arenaId}'`);
+      this.socket.emit('admin-state-update', { adminState, arenaId, timestamp: Date.now() });
+    }
+  }
+
+  public onAdminStateUpdate(callback: (data: { adminState: any; arenaId?: string; timestamp: number }) => void) {
+    if (this.socket) {
+      this.socket.off('admin-state-update');
+      this.socket.on('admin-state-update', (data) => {
+        log(`⚙️ Received admin state update for arena '${data.arenaId}'`);
+        callback(data);
+      });
+    }
+  }
+
   // Cleanup methods for proper listener removal
   public offGameHistoryUpdate() {
     if (this.socket) {
