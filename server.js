@@ -5,8 +5,8 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Deployment version: 4
-// Force Render to rebuild with fresh dist files
+// Deployment version: 3
+// Force Render to redeploy with fresh instance
 
 // Global error handlers
 process.on('uncaughtException', (error) => {
@@ -31,67 +31,29 @@ const io = new Server(server, {
     credentials: false,
     allowedHeaders: "*"
   },
-  // Safari compatibility: try websocket first, but support polling
   transports: ['websocket', 'polling'],
-  pingTimeout: 60000,  // Increased for Safari
-  pingInterval: 25000, // Increased for Safari
+  pingTimeout: 45000,
+  pingInterval: 20000,
   allowEIO3: true,
   maxHttpBufferSize: 1e6,
   serveClient: false,
   connectTimeout: 60000,
-  perMessageDeflate: false, // Safari doesn't handle compression well
+  perMessageDeflate: false,
   upgrade: true,
-  upgradeTimeout: 10000,
-  // Safari-specific tweaks
-  cleanupInterval: 30000,
-  cookie: {
-    name: 'io',
-    path: '/',
-    httpOnly: false,
-    secure: true,  // Required for https
-    sameSite: false
-  }
+  upgradeTimeout: 10000
 });
 
-// Middleware - CORS already handles OPTIONS requests globally
+// Middleware
 app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["*"],
-  credentials: false,
-  exposedHeaders: ["Content-Type", "Content-Length", "ETag"],
-  preflightContinue: false,
-  optionsSuccessStatus: 200
+  credentials: false
 }));
 
 // Log all incoming requests
 app.use((req, res, next) => {
   console.log(`📨 [HTTP] ${req.method} ${req.path} from ${req.ip}`);
-  next();
-});
-
-// Cache-busting headers for assets
-app.use((req, res, next) => {
-  // Safari-specific fixes
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Vary', 'Accept-Encoding, Origin');
-  
-  // Force no-cache for HTML and service worker
-  if (req.path === '/' || req.path === '/index.html' || req.path === '/sw.js') {
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    // Safari needs explicit content type
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  } 
-  // Long cache for assets with hashes
-  else if (req.path.startsWith('/assets/')) {
-    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-  }
-  // Safari workaround: prevent caching of dynamic content
-  else if (req.path.startsWith('/socket.io')) {
-    res.setHeader('Cache-Control', 'no-cache, must-revalidate');
-  }
   next();
 });
 
@@ -113,28 +75,17 @@ app.use(express.static(path.join(__dirname, 'dist')));
 // Serve static files from public directory (for test pages)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// SPA routing: serve index.html for all routes (Express will match in order)
-// This must come AFTER all other routes (static files, API, socket.io, health, etc.)
-app.get(/.*/, (req, res) => {
-  // CRITICAL: Don't serve index.html for these:
-  // - API routes
-  // - Socket.IO routes
-  // - Asset files (JS, CSS, images, fonts)
-  // - Files with extensions
-  if (req.path.startsWith('/api/') || 
-      req.path.startsWith('/socket.io') ||
-      req.path.includes('.') ||  // Files with extensions (assets)
-      req.path.startsWith('/assets/')) {
-    res.status(404).json({ error: 'Not found' });
-    return;
+// SPA routing: serve index.html for all non-API routes (use middleware instead of app.get)
+app.use((req, res, next) => {
+  // Don't serve index.html for API or Socket.IO routes
+  if (req.path.startsWith('/api/') || req.path.startsWith('/socket.io')) {
+    return next();
   }
   
-  // Serve index.html for all other routes (SPA routing)
-  const indexPath = path.join(__dirname, 'dist', 'index.html');
-  res.sendFile(indexPath, (err) => {
+  // For all other routes, serve index.html (SPA routing)
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'), (err) => {
     if (err) {
-      console.error('Error serving index.html:', err);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: 'Could not serve index.html' });
     }
   });
 });
