@@ -1141,24 +1141,24 @@ const OnePocketArena = () => {
     };
   }, [stopSilverSound, stopCheerSound, stopPoolSound, stopBooSound]);
 
-  // Mute sounds when changing arenas (detect route change)
+  // Mute sounds during arena transitions to prevent echoes and overlapping audio
+  // This effect runs when the component is mounted/unmounted or route changes
   useEffect(() => {
-    return () => {
-      // Set mute flag when THIS component is about to unmount
-      (window as any).__MUTE_SOUNDS = true;
-      setTimeout(() => {
-        (window as any).__MUTE_SOUNDS = false;
-      }, 10000);
-    };
-  }, [location.pathname]);
-
-  // Additional: Mute immediately when route changes BEFORE unmount
-  useEffect(() => {
-    (window as any).__MUTE_SOUNDS = true;
-    const timer = setTimeout(() => {
+    // Initialize mute flag (ensure it starts in correct state)
+    if ((window as any).__MUTE_SOUNDS === undefined) {
       (window as any).__MUTE_SOUNDS = false;
-    }, 10000);
-    return () => clearTimeout(timer);
+    }
+    
+    // Cleanup on unmount: mute for 5 seconds to prevent overlapping sounds during transition
+    return () => {
+      console.log('🔇 [SOUND] Arena transition detected - muting sounds for 5 seconds');
+      (window as any).__MUTE_SOUNDS = true;
+      const timer = setTimeout(() => {
+        (window as any).__MUTE_SOUNDS = false;
+        console.log('🔊 [SOUND] Mute period expired - sounds enabled again');
+      }, 5000);
+      return () => clearTimeout(timer);
+    };
   }, [location.pathname]);
 
 
