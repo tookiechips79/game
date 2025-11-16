@@ -333,7 +333,9 @@ class SocketIOService {
     if (this.socket) {
       log('📥 [LISTENER] Setting up bet-update listener');
       this.socket.on('bet-update', (data: BetSyncData) => {
-        log('📥 [CALLBACK] bet-update callback triggered with data:', data);
+        const arenaLabel = getArenaLabel(data.arenaId || 'default');
+        const currentArenaLabel = getArenaLabel(this.arenaId);
+        console.log(`📥 ${arenaLabel} bet-update received (Current arena: ${currentArenaLabel})`);
         callback(data);
       });
     }
@@ -341,19 +343,35 @@ class SocketIOService {
 
   public onGameStateUpdate(callback: (data: GameStateSyncData) => void) {
     if (this.socket) {
-      this.socket.on('game-state-update', callback);
+      this.socket.on('game-state-update', (data: GameStateSyncData) => {
+        const arenaLabel = getArenaLabel(data.arenaId || 'default');
+        const currentArenaLabel = getArenaLabel(this.arenaId);
+        console.log(`📥 ${arenaLabel} game-state-update received (Current arena: ${currentArenaLabel})`);
+        // Pass data with arena info for filtering in GameStateContext
+        callback(data);
+      });
     }
   }
 
   public onTimerUpdate(callback: (data: TimerSyncData) => void) {
     if (this.socket) {
-      this.socket.on('timer-update', callback);
+      this.socket.on('timer-update', (data: TimerSyncData) => {
+        const arenaLabel = getArenaLabel(data.arenaId || 'default');
+        const currentArenaLabel = getArenaLabel(this.arenaId);
+        console.log(`📥 ${arenaLabel} timer-update received (Current arena: ${currentArenaLabel})`);
+        callback(data);
+      });
     }
   }
 
   public onScoreUpdate(callback: (data: ScoreSyncData) => void) {
     if (this.socket) {
-      this.socket.on('score-update', callback);
+      this.socket.on('score-update', (data: any) => {
+        const arenaLabel = getArenaLabel(data.arenaId || 'default');
+        const currentArenaLabel = getArenaLabel(this.arenaId);
+        console.log(`📥 ${arenaLabel} score-update received (Current arena: ${currentArenaLabel})`);
+        callback(data);
+      });
     }
   }
 
@@ -404,7 +422,9 @@ class SocketIOService {
   public onBreakStatusUpdate(callback: (data: { teamAHasBreak: boolean, arenaId?: string }) => void) {
     if (this.socket) {
       this.socket.on('break-status-update', (data: { teamAHasBreak: boolean, arenaId?: string }) => {
-        log('📥 Received dedicated break status update:', data);
+        const arenaLabel = getArenaLabel(data.arenaId || 'default');
+        const currentArenaLabel = getArenaLabel(this.arenaId);
+        console.log(`📥 ${arenaLabel} break-status-update received (Current arena: ${currentArenaLabel})`);
         callback(data);
       });
     }
@@ -415,7 +435,8 @@ class SocketIOService {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
       const arenaId = this.getArenaId();
-      log('📤 Emitting total booked coins update');
+      const arenaLabel = getArenaLabel(arenaId);
+      console.log(`📤 ${arenaLabel} Emitting total booked coins update`);
       this.socket.emit('total-booked-coins-update', { totalBookedAmount, nextTotalBookedAmount, arenaId });
     }
   }
@@ -423,7 +444,9 @@ class SocketIOService {
   public onTotalBookedCoinsUpdate(callback: (data: { totalBookedAmount: number, nextTotalBookedAmount: number, arenaId?: string }) => void) {
     if (this.socket) {
       this.socket.on('total-booked-coins-update', (data: { totalBookedAmount: number, nextTotalBookedAmount: number, arenaId?: string }) => {
-        log('📥 Received total booked coins update:', data);
+        const arenaLabel = getArenaLabel(data.arenaId || 'default');
+        const currentArenaLabel = getArenaLabel(this.arenaId);
+        console.log(`📥 ${arenaLabel} total-booked-coins-update received (Current arena: ${currentArenaLabel})`);
         callback(data);
       });
     }
@@ -724,7 +747,9 @@ class SocketIOService {
     if (this.socket) {
       this.socket.off('team-names-update');
       this.socket.on('team-names-update', (data) => {
-        log(`👥 Received team names update for arena '${data.arenaId}': ${data.teamAName} vs ${data.teamBName}`);
+        const arenaLabel = getArenaLabel(data.arenaId || 'default');
+        const currentArenaLabel = getArenaLabel(this.arenaId);
+        console.log(`📥 ${arenaLabel} team-names-update received (Current arena: ${currentArenaLabel})`);
         callback(data);
       });
     }
