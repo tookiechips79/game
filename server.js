@@ -31,16 +31,26 @@ const io = new Server(server, {
     credentials: false,
     allowedHeaders: "*"
   },
+  // Safari compatibility: try websocket first, but support polling
   transports: ['websocket', 'polling'],
-  pingTimeout: 45000,
-  pingInterval: 20000,
+  pingTimeout: 60000,  // Increased for Safari
+  pingInterval: 25000, // Increased for Safari
   allowEIO3: true,
   maxHttpBufferSize: 1e6,
   serveClient: false,
   connectTimeout: 60000,
-  perMessageDeflate: false,
+  perMessageDeflate: false, // Safari doesn't handle compression well
   upgrade: true,
-  upgradeTimeout: 10000
+  upgradeTimeout: 10000,
+  // Safari-specific tweaks
+  cleanupInterval: 30000,
+  cookie: {
+    name: 'io',
+    path: '/',
+    httpOnly: false,
+    secure: true,  // Required for https
+    sameSite: false
+  }
 });
 
 // Middleware
@@ -48,8 +58,14 @@ app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["*"],
-  credentials: false
+  credentials: false,
+  exposedHeaders: ["Content-Type", "Content-Length", "ETag"],
+  preflightContinue: true,
+  optionsSuccessStatus: 200
 }));
+
+// Handle preflight requests
+app.options('*', cors());
 
 // Log all incoming requests
 app.use((req, res, next) => {
@@ -59,15 +75,25 @@ app.use((req, res, next) => {
 
 // Cache-busting headers for assets
 app.use((req, res, next) => {
+  // Safari-specific fixes
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Vary', 'Accept-Encoding, Origin');
+  
   // Force no-cache for HTML and service worker
   if (req.path === '/' || req.path === '/index.html' || req.path === '/sw.js') {
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
+    // Safari needs explicit content type
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
   } 
   // Long cache for assets with hashes
   else if (req.path.startsWith('/assets/')) {
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  }
+  // Safari workaround: prevent caching of dynamic content
+  else if (req.path.startsWith('/socket.io')) {
+    res.setHeader('Cache-Control', 'no-cache, must-revalidate');
   }
   next();
 });
