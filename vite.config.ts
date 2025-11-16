@@ -22,11 +22,20 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    // Force cache busting with timestamp-based file names
     rollupOptions: {
       output: {
         manualChunks: undefined,
+        // Add timestamp to filenames for cache busting
+        entryFileNames: `assets/[name]-[hash].js`,
+        chunkFileNames: `assets/[name]-[hash].js`,
+        assetFileNames: `assets/[name]-[hash][extname]`,
       },
     },
+    // Ensure clean builds
+    emptyOutDir: true,
+    sourcemap: false,
+    minify: 'terser',
   },
   ssr: {
     noExternal: ['@rollup/rollup-linux-x64-gnu'],

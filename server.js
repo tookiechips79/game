@@ -57,6 +57,21 @@ app.use((req, res, next) => {
   next();
 });
 
+// Cache-busting headers for assets
+app.use((req, res, next) => {
+  // Force no-cache for HTML and service worker
+  if (req.path === '/' || req.path === '/index.html' || req.path === '/sw.js') {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  } 
+  // Long cache for assets with hashes
+  else if (req.path.startsWith('/assets/')) {
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  }
+  next();
+});
+
 app.use(express.json());
 
 // Health check endpoint
