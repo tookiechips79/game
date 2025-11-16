@@ -56,8 +56,8 @@ const ArenaSelector = () => {
 
   return (
     <div className="fixed bottom-6 left-6 flex gap-2 z-50">
-      {/* Rotation Arena Button */}
-      <button
+      {/* Rotation Arena Button - HIDDEN */}
+      {/* <button
         onDoubleClick={handleRotationArena}
         className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl ${
           isRotation
@@ -67,7 +67,7 @@ const ArenaSelector = () => {
         title="Rotation Arena (9 Ball) - Double Click to Switch"
       >
         <span className="text-sm">9</span>
-      </button>
+      </button> */}
 
       {/* One Pocket Arena Button */}
       <button
@@ -94,12 +94,13 @@ const App = () => (
         <HashRouter>
           <GameStateProvider>
             <Routes>
-              <Route path="/" element={<Landing />} />
+              {/* 9-BALL ARENA HIDDEN - Redirect to 1-Pocket */}
+              <Route path="/" element={<OnePocketArena />} />
               <Route path="/signup" element={<SignupPage />} />
               <Route path="/member-signup" element={<MemberSignupPage />} />
               <Route path="/features" element={<FeaturesPage />} />
               <Route path="/about" element={<AboutPage />} />
-              <Route path="/betting-queue" element={<Index />} />
+              <Route path="/betting-queue" element={<OnePocketArena />} />
               <Route path="/one-pocket-arena" element={<OnePocketArena />} />
               <Route path="/subscription" element={<PaymentPage />} />
               <Route path="/user-settings" element={<UserSettings />} />
