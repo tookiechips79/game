@@ -800,8 +800,8 @@ io.on('connection', (socket) => {
   });
 });
 
-// Start server
+// Start server - listen on 0.0.0.0 for external connections (required for Render deployment)
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, '127.0.0.1', () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`🎮 Game Bird server running on port ${PORT}`);
 });

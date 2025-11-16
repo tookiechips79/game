@@ -110,6 +110,41 @@ const defaultGameState: GameState = {
   timerStartTime: null,
 };
 
+const defaultGameStateOnePocket: GameState = {
+  // Team Information
+  teamAName: "Player A",
+  teamBName: "Player B",
+  teamAGames: 0,
+  teamABalls: 0,
+  teamBGames: 0,
+  teamBBalls: 0,
+  teamAHasBreak: true,
+  gameLabel: "GAME*",
+  currentGameNumber: 1,
+  gameDescription: "",
+  
+  // Betting Queues
+  teamAQueue: [],
+  teamBQueue: [],
+  nextTeamAQueue: [],
+  nextTeamBQueue: [],
+  
+  // Booked Bets
+  bookedBets: [],
+  totalBookedAmount: 0,
+  nextBookedBets: [],
+  nextTotalBookedAmount: 0,
+  
+  // Bet Management
+  betCounter: 1,
+  colorIndex: 0,
+  
+  // Timer (synchronized across browsers)
+  timerSeconds: 0,
+  isTimerRunning: false,
+  timerStartTime: null,
+};
+
 const defaultLocalAdminState: LocalAdminState = {
   // Admin Controls (Local to each browser)
   isAdminMode: false,
