@@ -1,13 +1,32 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 
 interface UseSoundOptions {
   volume?: number; // 0 to 1
   playbackRate?: number; // 0.5 to 2
 }
 
+// Global audio pool for preloading and reusing audio elements
+const audioPool: { [key: string]: HTMLAudioElement } = {};
+
 export const useSound = (soundUrl: string, options: UseSoundOptions = {}) => {
   const { volume = 0.7, playbackRate = 1 } = options;
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const retryCountRef = useRef(0);
+  const maxRetries = 3;
+
+  // Preload audio on mount
+  useEffect(() => {
+    if (!audioPool[soundUrl]) {
+      try {
+        const audio = new Audio(soundUrl);
+        audio.preload = 'auto';
+        audioPool[soundUrl] = audio;
+        console.log(`🎵 [PRELOAD] Preloaded audio: ${soundUrl}`);
+      } catch (e) {
+        console.warn(`🔊 [PRELOAD ERROR] Failed to preload: ${soundUrl}`, e);
+      }
+    }
+  }, [soundUrl]);
 
   const play = useCallback(() => {
     try {
@@ -22,14 +41,21 @@ export const useSound = (soundUrl: string, options: UseSoundOptions = {}) => {
           audioRef.current.pause();
           audioRef.current.currentTime = 0;
           audioRef.current.src = ''; // Clear the source to fully stop playback
-          console.log(`🔇 [SOUND CLEANUP] Stopped previous instance before playing new: ${soundUrl}`);
         } catch (e) {
-          console.warn(`🔊 [SOUND CLEANUP ERROR] Error stopping previous audio:`, e);
+          // Silently fail
         }
       }
 
-      // Create new audio instance
-      const audio = new Audio(soundUrl);
+      // Use preloaded audio from pool if available
+      let audio: HTMLAudioElement;
+      if (audioPool[soundUrl]) {
+        audio = audioPool[soundUrl].cloneNode() as HTMLAudioElement;
+        console.log(`🔊 [SOUND POOL] Using pooled audio: ${soundUrl}`);
+      } else {
+        audio = new Audio(soundUrl);
+        console.log(`🔊 [SOUND NEW] Creating new audio instance: ${soundUrl}`);
+      }
+      
       audioRef.current = audio;
       
       // Set volume and playback rate
@@ -39,15 +65,15 @@ export const useSound = (soundUrl: string, options: UseSoundOptions = {}) => {
       // Reset time to start from beginning
       audio.currentTime = 0;
       
-      // Add error event listener
+      // Add error event listener with retry logic
       audio.addEventListener('error', (e) => {
-        console.warn(`🔊 [SOUND ERROR] Failed to load sound: ${soundUrl}`, e);
-      });
-      
-      // Add canplay event listener for debugging
-      audio.addEventListener('canplay', () => {
-        console.log(`🔊 [SOUND READY] Sound loaded and ready: ${soundUrl}`);
-      });
+        console.warn(`🔊 [SOUND ERROR] Failed to load: ${soundUrl}`, e);
+        if (retryCountRef.current < maxRetries) {
+          retryCountRef.current++;
+          console.log(`🔄 [SOUND RETRY] Attempting retry ${retryCountRef.current}/${maxRetries}`);
+          setTimeout(() => play(), 100); // Retry after 100ms
+        }
+      }, { once: true });
       
       // Attempt to play with error handling
       const playPromise = audio.play();
@@ -55,15 +81,15 @@ export const useSound = (soundUrl: string, options: UseSoundOptions = {}) => {
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
-            console.log(`🔊 [SOUND PLAYING] Now playing: ${soundUrl}`);
+            console.log(`🔊 [SOUND PLAYING] ▶️  ${soundUrl}`);
+            retryCountRef.current = 0; // Reset retry count on success
           })
           .catch((error) => {
-            console.warn(`🔊 [SOUND BLOCKED] Browser blocked sound playback: ${soundUrl}`, error.name);
-            // This is common on mobile or when user hasn't interacted with page
+            console.warn(`🔊 [SOUND BLOCKED] Browser blocked: ${soundUrl}`, error.name);
           });
       }
     } catch (error) {
-      console.warn(`🔊 [SOUND EXCEPTION] Error creating or playing audio: ${soundUrl}`, error);
+      console.warn(`🔊 [SOUND EXCEPTION] Error: ${soundUrl}`, error);
     }
   }, [soundUrl, volume, playbackRate]);
 
@@ -82,3 +108,4 @@ export const useSound = (soundUrl: string, options: UseSoundOptions = {}) => {
 
   return { play, stop };
 };
+
