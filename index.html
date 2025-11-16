@@ -64,13 +64,38 @@
       
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('SW registered: ', registration);
-            })
-            .catch((registrationError) => {
-              console.log('SW registration failed: ', registrationError);
+          // Aggressive Service Worker management for cache busting
+          navigator.serviceWorker.getRegistrations().then((registrations) => {
+            // Unregister all old Service Workers
+            for (let reg of registrations) {
+              console.log('🧹 Unregistering old SW:', reg.scope);
+              reg.unregister();
+            }
+            
+            // Register fresh Service Worker with cache busting
+            navigator.serviceWorker.register('/sw.js?v=' + Date.now())
+              .then((registration) => {
+                console.log('✅ SW registered (fresh):', registration.scope);
+                // Check for updates every 5 seconds
+                setInterval(() => {
+                  registration.update();
+                }, 5000);
+              })
+              .catch((registrationError) => {
+                console.error('❌ SW registration failed:', registrationError);
+              });
+          });
+        });
+        
+        // Also check for SW updates on page visibility change
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            navigator.serviceWorker.getRegistrations().then((registrations) => {
+              for (let reg of registrations) {
+                reg.update();
+              }
             });
+          }
         });
       }
     </script>
