@@ -94,12 +94,13 @@ const App = () => (
         <HashRouter>
           <GameStateProvider>
             <Routes>
-              {/* 9-BALL ARENA HIDDEN - Redirect to 1-Pocket */}
-              <Route path="/" element={<OnePocketArena />} />
+              {/* Main landing page - keep accessible */}
+              <Route path="/" element={<Landing />} />
               <Route path="/signup" element={<SignupPage />} />
               <Route path="/member-signup" element={<MemberSignupPage />} />
               <Route path="/features" element={<FeaturesPage />} />
               <Route path="/about" element={<AboutPage />} />
+              {/* 9-BALL ARENA HIDDEN - Redirect betting arena routes to 1-Pocket only */}
               <Route path="/betting-queue" element={<OnePocketArena />} />
               <Route path="/one-pocket-arena" element={<OnePocketArena />} />
               <Route path="/subscription" element={<PaymentPage />} />
