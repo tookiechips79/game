@@ -668,6 +668,39 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       });
     });
 
+    // CRITICAL: Listen for game state updates from server (new browser sync)
+    if (socketIOService.socket) {
+      socketIOService.socket.off('game-state-update');
+      socketIOService.socket.on('game-state-update', (data) => {
+        console.log('📥 [GAME STATE UPDATE] Received from server:', data);
+        validateArenaAndUpdate(data.arenaId, () => {
+          setCurrentGameState(prevState => ({
+            ...prevState,
+            ...data
+          }));
+        });
+      });
+    }
+
+    // CRITICAL: Listen for bet updates from server (new browser sync)
+    if (socketIOService.socket) {
+      socketIOService.socket.off('bet-update');
+      socketIOService.socket.on('bet-update', (data) => {
+        console.log('📥 [BET UPDATE] Received from server:', data);
+        validateArenaAndUpdate(data.arenaId, () => {
+          setCurrentGameState(prevState => ({
+            ...prevState,
+            teamAQueue: data.teamAQueue || prevState.teamAQueue,
+            teamBQueue: data.teamBQueue || prevState.teamBQueue,
+            bookedBets: data.bookedBets || prevState.bookedBets,
+            nextTeamAQueue: data.nextTeamAQueue || prevState.nextTeamAQueue,
+            nextTeamBQueue: data.nextTeamBQueue || prevState.nextTeamBQueue,
+            nextBookedBets: data.nextGameBets || prevState.nextBookedBets
+          }));
+        });
+      });
+    }
+
     // Listen for team names updates from other devices (CROSS-DEVICE SYNC)
     socketIOService.onTeamNamesUpdate((teamNamesData) => {
       validateArenaAndUpdate(teamNamesData.arenaId, () => {
