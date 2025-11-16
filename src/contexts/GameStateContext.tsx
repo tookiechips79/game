@@ -308,7 +308,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
         setCurrentGameState(parsedState);
       } catch (error) {
         console.error('Error parsing stored game state:', error);
-      setCurrentGameState(defaultGameState);
+        setCurrentGameState(defaultGameState);
       }
     }
   }, [currentArenaId]);
@@ -417,11 +417,15 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   // Request latest game state from server when arena changes
   useEffect(() => {
     const requestGameState = () => {
-      console.log(`📤 [ARENA SWITCH] Requesting game state for arena: "${currentArenaId}"`);
+      console.log(`📤 [ARENA SWITCH] Requesting game state for arena: "${currentArenaId}" - forcing server sync`);
       socketIOService.requestGameState();
     };
 
-    // Wait a small delay to ensure socket has identified the new arena
+    // Request immediately when arena changes to get fresh server state
+    // Don't rely on stale localStorage data
+    requestGameState();
+    
+    // Also request after a small delay to handle socket reconnection
     const timer = setTimeout(requestGameState, 100);
     return () => clearTimeout(timer);
   }, [currentArenaId]);
