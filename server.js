@@ -86,6 +86,90 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
+// 💰 CREDIT LEDGER SYSTEM - Server-Authoritative
+// Every credit transaction is permanently recorded
+const creditLedger = {
+  // userId -> { balance: number, transactions: [] }
+};
+
+// Transaction types that are allowed
+const TRANSACTION_TYPES = {
+  RELOAD_COINS: 'reload_coins',      // User purchased coins
+  ADMIN_ADD: 'admin_add',            // Admin manually added
+  BET_PLACED: 'bet_placed',          // Bet deducted from account
+  BET_REFUNDED: 'bet_refund',        // Bet returned to account
+  CASHOUT: 'cashout',                // User withdrew coins
+  BET_WON: 'bet_won',                // Winnings added to account
+};
+
+// Initialize user credits (in-memory for now, could persist to file/DB)
+function initializeUserCredits(userId, initialBalance = 1000) {
+  if (!creditLedger[userId]) {
+    creditLedger[userId] = {
+      balance: initialBalance,
+      transactions: [
+        {
+          type: TRANSACTION_TYPES.ADMIN_ADD,
+          amount: initialBalance,
+          timestamp: Date.now(),
+          reason: 'Initial account balance',
+          adminNotes: 'System initialization'
+        }
+      ]
+    };
+    console.log(`💰 [CREDITS] Initialized user ${userId} with ${initialBalance} credits`);
+  }
+  return creditLedger[userId];
+}
+
+// Add transaction to ledger (immutable)
+function addTransaction(userId, transactionType, amount, reason = '', adminNotes = '') {
+  if (!creditLedger[userId]) {
+    initializeUserCredits(userId);
+  }
+  
+  const user = creditLedger[userId];
+  const newBalance = user.balance + amount; // Can be positive or negative
+  
+  if (newBalance < 0) {
+    console.error(`❌ [CREDITS] Cannot deduct ${amount} from ${userId}: insufficient balance`);
+    return null;
+  }
+  
+  const transaction = {
+    type: transactionType,
+    amount,
+    oldBalance: user.balance,
+    newBalance,
+    timestamp: Date.now(),
+    reason,
+    adminNotes
+  };
+  
+  user.balance = newBalance;
+  user.transactions.push(transaction);
+  
+  console.log(`💰 [CREDITS] ${userId}: ${transactionType} | Amount: ${amount} | New Balance: ${newBalance}`);
+  
+  return transaction;
+}
+
+// Get user's credit balance
+function getUserBalance(userId) {
+  if (!creditLedger[userId]) {
+    initializeUserCredits(userId);
+  }
+  return creditLedger[userId].balance;
+}
+
+// Get user's transaction history
+function getUserTransactionHistory(userId) {
+  if (!creditLedger[userId]) {
+    initializeUserCredits(userId);
+  }
+  return creditLedger[userId].transactions;
+}
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
@@ -374,6 +458,121 @@ io.engine.on('connection_error', (err) => {
 
 io.engine.on('parse_error', (err) => {
   console.error('❌ [ENGINE] Parse error:', err);
+});
+
+// 💰 CREDIT API ENDPOINTS
+// Get user balance
+app.get('/api/credits/:userId', (req, res) => {
+  const { userId } = req.params;
+  const balance = getUserBalance(userId);
+  res.json({ userId, balance });
+});
+
+// Get user transaction history
+app.get('/api/credits/:userId/history', (req, res) => {
+  const { userId } = req.params;
+  const transactions = getUserTransactionHistory(userId);
+  res.json({ userId, transactions });
+});
+
+// Add credits (admin only, or system operations)
+app.post('/api/credits/:userId/add', (req, res) => {
+  const { userId } = req.params;
+  const { amount, reason = '', adminNotes = '' } = req.body;
+  
+  if (!amount || amount <= 0) {
+    return res.status(400).json({ error: 'Invalid amount' });
+  }
+  
+  const transaction = addTransaction(userId, TRANSACTION_TYPES.ADMIN_ADD, amount, reason, adminNotes);
+  
+  if (!transaction) {
+    return res.status(400).json({ error: 'Could not process transaction' });
+  }
+  
+  res.json({ success: true, transaction, newBalance: creditLedger[userId].balance });
+});
+
+// Place bet (deduct credits)
+app.post('/api/credits/:userId/bet', (req, res) => {
+  const { userId } = req.params;
+  const { amount, betDetails = '' } = req.body;
+  
+  if (!amount || amount <= 0) {
+    return res.status(400).json({ error: 'Invalid bet amount' });
+  }
+  
+  const transaction = addTransaction(userId, TRANSACTION_TYPES.BET_PLACED, -amount, betDetails);
+  
+  if (!transaction) {
+    return res.status(400).json({ error: 'Insufficient credits' });
+  }
+  
+  res.json({ success: true, transaction, newBalance: creditLedger[userId].balance });
+});
+
+// Refund bet
+app.post('/api/credits/:userId/refund', (req, res) => {
+  const { userId } = req.params;
+  const { amount, reason = '' } = req.body;
+  
+  if (!amount || amount <= 0) {
+    return res.status(400).json({ error: 'Invalid refund amount' });
+  }
+  
+  const transaction = addTransaction(userId, TRANSACTION_TYPES.BET_REFUNDED, amount, reason);
+  
+  if (!transaction) {
+    return res.status(400).json({ error: 'Could not process refund' });
+  }
+  
+  res.json({ success: true, transaction, newBalance: creditLedger[userId].balance });
+});
+
+// Win bet (add credits)
+app.post('/api/credits/:userId/win', (req, res) => {
+  const { userId } = req.params;
+  const { amount, betDetails = '' } = req.body;
+  
+  if (!amount || amount <= 0) {
+    return res.status(400).json({ error: 'Invalid win amount' });
+  }
+  
+  const transaction = addTransaction(userId, TRANSACTION_TYPES.BET_WON, amount, betDetails);
+  
+  if (!transaction) {
+    return res.status(400).json({ error: 'Could not process win' });
+  }
+  
+  res.json({ success: true, transaction, newBalance: creditLedger[userId].balance });
+});
+
+// Cashout (deduct credits)
+app.post('/api/credits/:userId/cashout', (req, res) => {
+  const { userId } = req.params;
+  const { amount } = req.body;
+  
+  if (!amount || amount <= 0) {
+    return res.status(400).json({ error: 'Invalid cashout amount' });
+  }
+  
+  const transaction = addTransaction(userId, TRANSACTION_TYPES.CASHOUT, -amount, 'User cashout');
+  
+  if (!transaction) {
+    return res.status(400).json({ error: 'Insufficient credits' });
+  }
+  
+  res.json({ success: true, transaction, newBalance: creditLedger[userId].balance });
+});
+
+// Get all user credits (admin view)
+app.get('/api/credits-admin/all', (req, res) => {
+  const allUsers = Object.entries(creditLedger).map(([userId, data]) => ({
+    userId,
+    balance: data.balance,
+    transactionCount: data.transactions.length
+  }));
+  res.json(allUsers);
 });
 
 // Socket.IO connection handling
