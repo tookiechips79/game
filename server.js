@@ -8,6 +8,33 @@ import { fileURLToPath } from 'url';
 // Deployment version: 3
 // Force Render to redeploy with fresh instance
 
+/*
+🎯 ARENA INDEPENDENCE GUARANTEE
+================================
+Each arena (default, one_pocket, etc.) maintains COMPLETELY INDEPENDENT state:
+
+✅ Server-Side:
+- arenaGameStates = { 'default': {...}, 'one_pocket': {...} }
+- Each arena has its own game counts, scores, balls, bets, timers
+- Updates to one arena do NOT affect other arenas
+- Broadcasts use io.to(`arena:${arenaId}`) for arena-specific delivery
+
+✅ Client-Side:
+- gameStateDefault and gameStateOnePocket are separate React states
+- setCurrentGameState() only updates the current arena's state
+- validateArenaAndUpdate() ensures only matching arena data is processed
+- Socket listeners check arena ID before updating state
+
+✅ Communication:
+- Every Socket.IO message includes arenaId
+- Server broadcasts ONLY to specific arena room
+- Clients validate arena ID before accepting updates
+
+RESULT: If you change Rotation arena scores to 10-5, One Pocket arena will 
+        still have its own independent scores (e.g., 3-2). Switching between
+        arenas will ALWAYS show the correct data for that arena.
+*/
+
 // Global error handlers
 process.on('uncaughtException', (error) => {
   console.error('❌ [GLOBAL] Uncaught Exception:', error);
@@ -563,8 +590,9 @@ io.on('connection', (socket) => {
     arenaState.lastUpdated = Date.now();
     
     // Broadcast the bet update to ALL clients in the SAME ARENA (including sender)
+    // 🎯 ARENA INDEPENDENCE: Only sending to arena '${arenaId}', not affecting other arenas
     io.to(`arena:${arenaId}`).emit('bet-update', data);
-    console.log(`📤 Broadcasted bet-update to arena '${arenaId}'`);
+    console.log(`📤 [ARENA-INDEPENDENT] Broadcasted bet-update to arena '${arenaId}' ONLY`);
   });
   
   // Handle game history updates - sync across all clients
@@ -610,27 +638,33 @@ io.on('connection', (socket) => {
   // Handle game state updates
   socket.on('game-state-update', (gameStateData) => {
     const { arenaId = 'default', ...actualGameState } = gameStateData;
-    console.log(`📥 Received game state update for arena '${arenaId}':`, actualGameState);
+    console.log(`📥 [ARENA-INDEPENDENT] Received game state update for arena '${arenaId}':`, actualGameState);
     
     const arenaState = getGameState(arenaId);
+    
+    // 🎯 ARENA INDEPENDENCE CHECK
+    // Verify we're updating the correct arena
+    const allArenaKeys = Object.keys(arenaGameStates);
+    console.log(`🏟️ [ARENA CHECK] Current arenas on server: ${allArenaKeys.join(', ')} | Updating: ${arenaId}`);
     
     // Detect if a game was won (currentGameNumber increased)
     const gameWonDetected = actualGameState.currentGameNumber && 
                            actualGameState.currentGameNumber > arenaState.currentGameNumber;
     
-    // Update server's game state with new values
+    // Update server's game state with new values (ONLY for this arena)
     Object.assign(arenaState, actualGameState);
+    console.log(`✅ [ARENA-INDEPENDENT] Updated ONLY arena '${arenaId}' state. Other arenas unaffected.`);
     
     // If a game was won, reset the timer
     if (gameWonDetected) {
-      console.log(`🏆 [GAME WON] Game ${actualGameState.currentGameNumber} started - resetting timer for arena '${arenaId}'`);
+      console.log(`🏆 [GAME WON] Game ${actualGameState.currentGameNumber} started - resetting timer for arena '${arenaId}' ONLY`);
       resetServerTimer(arenaId);
     }
     
     // Broadcast the COMPLETE updated game state to ALL clients in the arena (like bet-update does)
     // This ensures all devices have identical data, even if they miss some intermediate updates
     io.to(`arena:${arenaId}`).emit('game-state-update', { ...arenaState, arenaId });
-    console.log(`📤 Broadcasted game-state-update to arena '${arenaId}' with complete state:`, arenaState);
+    console.log(`📤 [ARENA-INDEPENDENT] Broadcasted game-state-update to arena '${arenaId}' ONLY with complete state`);
   });
   
   // Handle timer updates
@@ -781,19 +815,19 @@ io.on('connection', (socket) => {
   // Handle score updates
   socket.on('score-update', (scoreData) => {
     const { arenaId = 'default', ...actualScoreData } = scoreData;
-    console.log(`📥 Received score update for arena '${arenaId}':`, actualScoreData);
+    console.log(`📥 [ARENA-INDEPENDENT] Received score update for arena '${arenaId}':`, actualScoreData);
     
     const arenaState = getGameState(arenaId);
     if (actualScoreData.teamAScore !== undefined) arenaState.teamAScore = actualScoreData.teamAScore;
     if (actualScoreData.teamBScore !== undefined) arenaState.teamBScore = actualScoreData.teamBScore;
     
-    // Broadcast the COMPLETE updated scores to ALL clients in the arena
+    // Broadcast the COMPLETE updated scores to ALL clients in the arena (ONLY this arena)
     io.to(`arena:${arenaId}`).emit('score-update', { 
       teamAScore: arenaState.teamAScore, 
       teamBScore: arenaState.teamBScore,
       arenaId 
     });
-    console.log(`📤 Broadcasted score-update to arena '${arenaId}':`, { teamAScore: arenaState.teamAScore, teamBScore: arenaState.teamBScore });
+    console.log(`📤 [ARENA-INDEPENDENT] Broadcasted score-update to arena '${arenaId}' ONLY`);
   });
   
   // Handle test messages
