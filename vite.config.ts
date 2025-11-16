@@ -35,7 +35,8 @@ export default defineConfig(({ mode }) => ({
     // Ensure clean builds
     emptyOutDir: true,
     sourcemap: false,
-    minify: 'terser',
+    // Use default Vite minifier (esbuild) - no need for terser
+    minify: true,
   },
   ssr: {
     noExternal: ['@rollup/rollup-linux-x64-gnu'],
