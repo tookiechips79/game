@@ -116,19 +116,30 @@ class SocketIOService {
       // Detect protocol: use HTTPS on production, HTTP on localhost
       const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
       
-      // IMPORTANT: Determine server URL based on deployment environment
+      // IMPORTANT: Use server-based Socket.IO for ALL environments
+      // This ensures all clients (web, mobile, tablet) connect to the same data source
+      // 
+      // LOCAL: http://localhost:3001 (both frontend and backend on same machine)
+      // RENDER: https://gamebird-app.onrender.com (same domain, different ports internally)
+      // RESULT: All clients always connect to the backend server, never direct connections
+      
       let serverUrl: string;
       
       if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        // Local development: connect to port 3001 on localhost
+        // Local development via localhost: connect to backend on port 3001
         serverUrl = `http://localhost:3001`;
+      } else if (window.location.hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+        // Local network IP (e.g., 192.168.x.x): connect to backend on same IP + port 3001
+        // This allows iPad/mobile on same WiFi to connect via IP
+        serverUrl = `http://${window.location.hostname}:3001`;
       } else {
-        // Production deployments (Render, etc.): 
-        // Both frontend and backend run on same server/port
-        // Socket.IO will be served on the same domain/port as the frontend
-        // Render exposes one port (usually 3001), and both services listen there
+        // Production (Render, AWS, etc.): 
+        // Both frontend and backend run on same server
+        // Connect to same domain - Socket.IO auto-routes to backend
         serverUrl = `${protocol}//${window.location.hostname}`;
       }
+      
+      console.log(`✅ Socket.IO Server URL: ${serverUrl}`);
       
       log('🔌 Connecting to Socket.IO');
       log('🌐 Current page URL:', window.location.href);
