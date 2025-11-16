@@ -52,6 +52,12 @@ export interface ScoreSyncData {
   teamBScore: number;
 }
 
+// 🎯 Arena Labels for clear differentiation
+const getArenaLabel = (arenaId: string): string => {
+  if (arenaId === 'one_pocket') return '🎯 [1-POCKET]';
+  return '🎱 [9-BALL]';
+};
+
 class SocketIOService {
   private socket: Socket | null = null;
   private isConnected: boolean = false;
@@ -291,7 +297,8 @@ class SocketIOService {
     this.checkAndReidentifyArena();
     if (this.isSocketConnected()) {
       const arenaId = this.getArenaId();
-      log(`📤 Emitting game state update for arena '${arenaId}':`, gameStateData);
+      const arenaLabel = getArenaLabel(arenaId);
+      console.log(`📤 ${arenaLabel} Emitting game state update:`, gameStateData);
       this.socket?.emit('game-state-update', { ...gameStateData, arenaId });
     } else {
       warn('⚠️ Socket not connected, cannot emit game state update');
@@ -313,7 +320,8 @@ class SocketIOService {
     this.checkAndReidentifyArena();
     if (this.isSocketConnected()) {
       const arenaId = this.getArenaId();
-      log(`📤 Emitting score update for arena '${arenaId}':`, scoreData);
+      const arenaLabel = getArenaLabel(arenaId);
+      console.log(`📤 ${arenaLabel} Emitting score update:`, scoreData);
       this.socket?.emit('score-update', { ...scoreData, arenaId });
     } else {
       warn('⚠️ Socket not connected, cannot emit score update');

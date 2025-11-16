@@ -117,6 +117,12 @@ app.use((req, res, next) => {
   });
 });
 
+// 🎯 Arena Labels for clear differentiation in logs
+const getArenaLabel = (arenaId) => {
+  if (arenaId === 'one_pocket') return '🎯 [1-POCKET]';
+  return '🎱 [9-BALL]';
+};
+
 // Store game state on server - now with arena separation
 const createDefaultGameState = () => ({
   teamAQueue: [],
@@ -638,14 +644,16 @@ io.on('connection', (socket) => {
   // Handle game state updates
   socket.on('game-state-update', (gameStateData) => {
     const { arenaId = 'default', ...actualGameState } = gameStateData;
-    console.log(`📥 [ARENA-INDEPENDENT] Received game state update for arena '${arenaId}':`, actualGameState);
+    const arenaLabel = getArenaLabel(arenaId);
+    console.log(`📥 ${arenaLabel} Received game state update:`, actualGameState);
     
     const arenaState = getGameState(arenaId);
     
     // 🎯 ARENA INDEPENDENCE CHECK
     // Verify we're updating the correct arena
     const allArenaKeys = Object.keys(arenaGameStates);
-    console.log(`🏟️ [ARENA CHECK] Current arenas on server: ${allArenaKeys.join(', ')} | Updating: ${arenaId}`);
+    const allLabels = allArenaKeys.map(id => getArenaLabel(id)).join(' | ');
+    console.log(`🏟️ [ARENA CHECK] Active arenas: ${allLabels} → Updating: ${arenaLabel}`);
     
     // Detect if a game was won (currentGameNumber increased)
     const gameWonDetected = actualGameState.currentGameNumber && 
@@ -653,18 +661,18 @@ io.on('connection', (socket) => {
     
     // Update server's game state with new values (ONLY for this arena)
     Object.assign(arenaState, actualGameState);
-    console.log(`✅ [ARENA-INDEPENDENT] Updated ONLY arena '${arenaId}' state. Other arenas unaffected.`);
+    console.log(`✅ ${arenaLabel} Updated. Other arenas isolated.`);
     
     // If a game was won, reset the timer
     if (gameWonDetected) {
-      console.log(`🏆 [GAME WON] Game ${actualGameState.currentGameNumber} started - resetting timer for arena '${arenaId}' ONLY`);
+      console.log(`🏆 ${arenaLabel} Game ${actualGameState.currentGameNumber} won - resetting timer`);
       resetServerTimer(arenaId);
     }
     
     // Broadcast the COMPLETE updated game state to ALL clients in the arena (like bet-update does)
     // This ensures all devices have identical data, even if they miss some intermediate updates
     io.to(`arena:${arenaId}`).emit('game-state-update', { ...arenaState, arenaId });
-    console.log(`📤 [ARENA-INDEPENDENT] Broadcasted game-state-update to arena '${arenaId}' ONLY with complete state`);
+    console.log(`📤 ${arenaLabel} Broadcasted game-state-update`);
   });
   
   // Handle timer updates

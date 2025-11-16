@@ -461,14 +461,20 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     socketIOService.connect();
 
     // Helper to validate arena before processing update
+    const getArenaLabel = (arenaId: string) => {
+      return arenaId === 'one_pocket' ? '🎯 [1-POCKET]' : '🎱 [9-BALL]';
+    };
+    
     const validateArenaAndUpdate = (incomingArenaId: string, updateProcessor: () => void) => {
-      console.log(`🎯 [ARENA VALIDATION] Current arena: ${currentArenaId}, Incoming arena: ${incomingArenaId}`);
+      const currentLabel = getArenaLabel(currentArenaId);
+      const incomingLabel = getArenaLabel(incomingArenaId);
+      console.log(`🎯 [ARENA VALIDATION] Current: ${currentLabel}, Incoming: ${incomingLabel}`);
       // Only process if the incoming data is for the current arena
       if (incomingArenaId === currentArenaId) {
-        console.log(`✅ [ARENA VALIDATION] Arena matches! Processing update...`);
+        console.log(`✅ [ARENA VALIDATION] ${currentLabel} matches! Processing update...`);
         updateProcessor();
       } else {
-        console.log(`❌ [ARENA VALIDATION] Arena mismatch! Ignoring update for ${incomingArenaId}`);
+        console.log(`❌ [ARENA VALIDATION] ${currentLabel} != ${incomingLabel}. Ignoring update!`);
       }
     };
 
