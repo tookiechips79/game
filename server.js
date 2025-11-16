@@ -5,8 +5,8 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Deployment version: 3
-// Force Render to redeploy with fresh instance
+// Deployment version: 4
+// Force Render to rebuild with fresh dist files
 
 // Global error handlers
 process.on('uncaughtException', (error) => {
