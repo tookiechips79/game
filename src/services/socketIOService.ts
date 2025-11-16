@@ -122,14 +122,12 @@ class SocketIOService {
       if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         // Local development: connect to port 3001 on localhost
         serverUrl = `http://localhost:3001`;
-      } else if (window.location.hostname.includes('render.com') || window.location.hostname.includes('onrender.com')) {
-        // Render deployment: both frontend and backend run on same service
-        // Socket.IO should connect to backend on port 3001 internally, or use same domain
-        // Since both run in same container, use localhost:3001 internally
-        serverUrl = `http://localhost:3001`;
       } else {
-        // Other deployments: try same host with port 3001
-        serverUrl = `${protocol}//${window.location.hostname}:3001`;
+        // Production deployments (Render, etc.): 
+        // Both frontend and backend run on same server/port
+        // Socket.IO will be served on the same domain/port as the frontend
+        // Render exposes one port (usually 3001), and both services listen there
+        serverUrl = `${protocol}//${window.location.hostname}`;
       }
       
       log('🔌 Connecting to Socket.IO');

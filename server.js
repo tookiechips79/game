@@ -75,6 +75,16 @@ app.use(express.static(path.join(__dirname, 'dist')));
 // Serve static files from public directory (for test pages)
 app.use(express.static(path.join(__dirname, 'public')));
 
+// SPA routing: serve index.html for all non-API routes
+app.get('*', (req, res) => {
+  // Don't serve index.html for API or Socket.IO routes
+  if (req.path.startsWith('/api/') || req.path.startsWith('/socket.io')) {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
 // Store game state on server - now with arena separation
 const createDefaultGameState = () => ({
   teamAQueue: [],
