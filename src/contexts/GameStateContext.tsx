@@ -801,14 +801,21 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     }, 3000);
 
     return () => {
-      // Cleanup listeners when component unmounts
+      // 🎯 CRITICAL CLEANUP: Remove ALL listeners when arena changes or component unmounts
+      // This prevents cross-arena contamination where old listeners still fire for new arena
+      console.log(`🧹 [ARENA CLEANUP] Cleaning up all Socket.IO listeners`);
       clearTimeout(fallbackTimer);
-      socketIOService.socket?.off('bet-update');
-      socketIOService.socket?.off('game-state-update');
-      socketIOService.socket?.off('timer-update');
-      socketIOService.socket?.off('score-update');
-      socketIOService.socket?.off('team-names-update');
-      socketIOService.socket?.off('admin-state-update');
+      
+      // Use proper cleanup methods to ensure complete removal
+      socketIOService.offBetUpdate();
+      socketIOService.offGameStateUpdate();
+      socketIOService.offTimerUpdate();
+      socketIOService.offScoreUpdate();
+      socketIOService.offTeamNamesUpdate();
+      socketIOService.offAdminStateUpdate();
+      socketIOService.offArenaStateSnapshot();
+      socketIOService.offBreakStatusUpdate();
+      socketIOService.offTotalBookedCoinsUpdate();
     };
   }, [currentArenaId]);
 

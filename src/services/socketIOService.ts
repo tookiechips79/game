@@ -754,6 +754,70 @@ class SocketIOService {
   }
 
   // Cleanup methods for proper listener removal
+  // 🎯 CRITICAL: These must be called when arena changes to prevent cross-arena contamination
+  public offBetUpdate() {
+    if (this.socket) {
+      this.socket.off('bet-update');
+      log(`🧹 [CLEANUP] Removed bet-update listener`);
+    }
+  }
+
+  public offGameStateUpdate() {
+    if (this.socket) {
+      this.socket.off('game-state-update');
+      log(`🧹 [CLEANUP] Removed game-state-update listener`);
+    }
+  }
+
+  public offScoreUpdate() {
+    if (this.socket) {
+      this.socket.off('score-update');
+      log(`🧹 [CLEANUP] Removed score-update listener`);
+    }
+  }
+
+  public offTimerUpdate() {
+    if (this.socket) {
+      this.socket.off('timer-update');
+      log(`🧹 [CLEANUP] Removed timer-update listener`);
+    }
+  }
+
+  public offBreakStatusUpdate() {
+    if (this.socket) {
+      this.socket.off('break-status-update');
+      log(`🧹 [CLEANUP] Removed break-status-update listener`);
+    }
+  }
+
+  public offTotalBookedCoinsUpdate() {
+    if (this.socket) {
+      this.socket.off('total-booked-coins-update');
+      log(`🧹 [CLEANUP] Removed total-booked-coins-update listener`);
+    }
+  }
+
+  public offTeamNamesUpdate() {
+    if (this.socket) {
+      this.socket.off('team-names-update');
+      log(`🧹 [CLEANUP] Removed team-names-update listener`);
+    }
+  }
+
+  public offAdminStateUpdate() {
+    if (this.socket) {
+      this.socket.off('admin-state-update');
+      log(`🧹 [CLEANUP] Removed admin-state-update listener`);
+    }
+  }
+
+  public offArenaStateSnapshot() {
+    if (this.socket) {
+      this.socket.off('arena-state-snapshot');
+      log(`🧹 [CLEANUP] Removed arena-state-snapshot listener`);
+    }
+  }
+
   public offGameHistoryUpdate() {
     if (this.socket) {
       this.socket.off('game-history-update');
