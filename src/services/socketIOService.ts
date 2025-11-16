@@ -169,7 +169,13 @@ class SocketIOService {
         rejectUnauthorized: false,
         path: '/socket.io/',
         upgrade: true,
-        upgradeTimeout: 10000
+        upgradeTimeout: 10000,
+        // Critical for CORS on production
+        withCredentials: false,
+        // Ensure it works with same-origin or cross-origin
+        extraHeaders: {
+          'Accept-Language': 'en-US'
+        }
       };
       
       this.socket = io(serverUrl, ioOptions);
