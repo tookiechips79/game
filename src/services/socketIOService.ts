@@ -123,9 +123,10 @@ class SocketIOService {
         // Local development: connect to port 3001 on localhost
         serverUrl = `http://localhost:3001`;
       } else if (window.location.hostname.includes('render.com') || window.location.hostname.includes('onrender.com')) {
-        // Render deployment: backend and frontend are on same host, use same URL
-        // Render will route /socket.io to the backend server
-        serverUrl = `${protocol}//${window.location.hostname}`;
+        // Render deployment: both frontend and backend run on same service
+        // Socket.IO should connect to backend on port 3001 internally, or use same domain
+        // Since both run in same container, use localhost:3001 internally
+        serverUrl = `http://localhost:3001`;
       } else {
         // Other deployments: try same host with port 3001
         serverUrl = `${protocol}//${window.location.hostname}:3001`;
@@ -148,7 +149,7 @@ class SocketIOService {
       log('⏱️ Connection attempt started at:', new Date().toISOString());
       
       const ioOptions = {
-        transports: ['polling'], // Changed to polling-only for local development
+        transports: ['websocket', 'polling'], // Try websocket first, fallback to polling
         timeout: 20000,
         forceNew: false,
         reconnection: true,
@@ -157,7 +158,9 @@ class SocketIOService {
         reconnectionDelayMax: 5000,
         secure: window.location.protocol === 'https:',
         rejectUnauthorized: false,
-        path: '/socket.io/'
+        path: '/socket.io/',
+        upgrade: true,
+        upgradeTimeout: 10000
       };
       
       this.socket = io(serverUrl, ioOptions);
