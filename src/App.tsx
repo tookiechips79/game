@@ -33,16 +33,7 @@ const ArenaSelector = () => {
   
   if (!isArenasPage) return null;
 
-  const handleRotationArena = () => {
-    // Mute sounds BEFORE navigation
-    (window as any).__MUTE_SOUNDS = true;
-    setTimeout(() => {
-      (window as any).__MUTE_SOUNDS = false;
-    }, 10000);
-    navigate("/betting-queue");
-  };
-
-  const handleOnePocketArena = () => {
+  const handleBettingQueue = () => {
     // Mute sounds BEFORE navigation
     (window as any).__MUTE_SOUNDS = true;
     setTimeout(() => {
@@ -51,35 +42,21 @@ const ArenaSelector = () => {
     navigate("/one-pocket-arena");
   };
 
-  const isRotation = currentPath === "/" || currentPath === "/betting-queue";
-  const isOnePocket = currentPath === "/one-pocket-arena";
+  const isBettingArena = currentPath === "/betting-queue" || currentPath === "/one-pocket-arena";
 
   return (
     <div className="fixed bottom-6 left-6 flex gap-2 z-50">
-      {/* Rotation Arena Button - HIDDEN */}
-      {/* <button
-        onDoubleClick={handleRotationArena}
-        className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl ${
-          isRotation
-            ? "bg-gradient-to-br from-[#00FF00] to-[#00FFCC] text-black ring-2 ring-[#00FF00]"
-            : "bg-gradient-to-br from-[#00FF00] to-[#00FFCC] text-black"
-        }`}
-        title="Rotation Arena (9 Ball) - Double Click to Switch"
-      >
-        <span className="text-sm">9</span>
-      </button> */}
-
-      {/* One Pocket Arena Button */}
+      {/* Betting Queue Button - One Pocket Arena */}
       <button
-        onDoubleClick={handleOnePocketArena}
-        className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl ${
-          isOnePocket
+        onDoubleClick={handleBettingQueue}
+        className={`px-4 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl ${
+          isBettingArena
             ? "bg-gradient-to-br from-[#00FF00] to-[#00FFCC] text-black ring-2 ring-[#00FF00]"
             : "bg-gradient-to-br from-[#00FF00] to-[#00FFCC] text-black"
         }`}
-        title="One Pocket Arena - Double Click to Switch"
+        title="Betting Queue - Double Click"
       >
-        <span className="text-xs">1P</span>
+        <span className="text-sm">Betting Queue</span>
       </button>
     </div>
   );
