@@ -78,11 +78,19 @@ app.use(express.static(path.join(__dirname, 'public')));
 // SPA routing: serve index.html for all routes (Express will match in order)
 // This must come AFTER all other routes (static files, API, socket.io, health, etc.)
 app.get(/.*/, (req, res) => {
-  // Double-check we're not serving API or Socket.IO
-  if (req.path.startsWith('/api/') || req.path.startsWith('/socket.io')) {
+  // CRITICAL: Don't serve index.html for these:
+  // - API routes
+  // - Socket.IO routes
+  // - Asset files (JS, CSS, images, fonts)
+  // - Files with extensions
+  if (req.path.startsWith('/api/') || 
+      req.path.startsWith('/socket.io') ||
+      req.path.includes('.') ||  // Files with extensions (assets)
+      req.path.startsWith('/assets/')) {
     res.status(404).json({ error: 'Not found' });
     return;
   }
+  
   // Serve index.html for all other routes (SPA routing)
   const indexPath = path.join(__dirname, 'dist', 'index.html');
   res.sendFile(indexPath, (err) => {
