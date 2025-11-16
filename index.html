@@ -47,7 +47,27 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root" style="width: 100%; height: 100%; background: black;"></div>
+    
+    <!-- Fallback if React fails to render -->
+    <script>
+      window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = {
+        isDisabled: false
+      };
+      
+      // Log when app starts
+      console.log('🚀 Game Bird App Loading...');
+      
+      // Global error handler to catch any issues
+      window.addEventListener('error', (event) => {
+        console.error('❌ Global Error:', event.error);
+      });
+      
+      window.addEventListener('unhandledrejection', (event) => {
+        console.error('❌ Unhandled Rejection:', event.reason);
+      });
+    </script>
+    
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
