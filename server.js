@@ -53,19 +53,16 @@ const io = new Server(server, {
   }
 });
 
-// Middleware
+// Middleware - CORS already handles OPTIONS requests globally
 app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["*"],
   credentials: false,
   exposedHeaders: ["Content-Type", "Content-Length", "ETag"],
-  preflightContinue: true,
+  preflightContinue: false,
   optionsSuccessStatus: 200
 }));
-
-// Handle preflight requests
-app.options('*', cors());
 
 // Log all incoming requests
 app.use((req, res, next) => {
