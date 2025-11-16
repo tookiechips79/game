@@ -789,108 +789,157 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return user || null;
   };
 
-  const addCredits = (userId: string, amount: number, isAdmin: boolean = false, reason: string = 'admin_add') => {
+  const addCredits = async (userId: string, amount: number, isAdmin: boolean = false, reason: string = 'admin_add') => {
     if (amount <= 0) return;
     
-    setUsers(prev => {
-      const updatedUsers = prev.map(user => {
-        if (user.id === userId) {
-          const updatedUser = { ...user, credits: user.credits + amount };
-          
-          if (currentUser?.id === userId) {
-            setCurrentUser(updatedUser);
+    try {
+      // 💰 Call server API instead of modifying local state
+      // Server is authoritative - it validates, processes, and records the transaction
+      const response = await fetch(`/api/credits/${userId}/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount,
+          reason: isAdmin ? reason : 'system_operation',
+          adminNotes: isAdmin ? `Admin action: ${reason}` : ''
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to add credits on server');
+      }
+      
+      const data = await response.json();
+      const newBalance = data.newBalance;
+      
+      // Update local state with server-confirmed balance
+      setUsers(prev => {
+        const updatedUsers = prev.map(user => {
+          if (user.id === userId) {
+            const updatedUser = { ...user, credits: newBalance };
+            if (currentUser?.id === userId) {
+              setCurrentUser(updatedUser);
+            }
+            return updatedUser;
           }
-          
-          return updatedUser;
+          return user;
+        });
+        
+        // Emit wallet update for connected users coin counter
+        if (socketIOService.isSocketConnected()) {
+          socketIOService.emitUserWalletUpdate(updatedUsers);
         }
-        return user;
+        
+        return updatedUsers;
       });
       
-      // Emit wallet update for connected users coin counter
-      if (socketIOService.isSocketConnected()) {
-        socketIOService.emitUserWalletUpdate(updatedUsers);
+      const userName = users.find(u => u.id === userId)?.name || userId;
+      
+      if (isAdmin) {
+        // Determine toast message based on reason
+        let toastTitle = "Credits Added";
+        let toastDescription = `Added ${amount} credits to ${userName}`;
+        let transactionType: 'admin_add' | 'bet_refund' = 'admin_add';
+        
+        if (reason === 'bet_refund') {
+          toastTitle = "Bet Refunded";
+          toastDescription = `Refunded ${amount} credits to ${userName}`;
+          transactionType = 'bet_refund';
+        }
+        
+        toast.success(toastTitle, {
+          description: toastDescription,
+          className: "custom-toast-success"
+        });
+        
+        // Record in credit transactions
+        addCreditTransaction({
+          userId,
+          userName: userName,
+          type: transactionType,
+          amount,
+          details: reason === 'bet_refund' ? 'Bet refunded' : 'Admin added coins to account'
+        });
       }
-      
-      return updatedUsers;
-    });
-    
-    const userName = users.find(u => u.id === userId)?.name || userId;
-    
-    if (isAdmin) {
-      // Determine toast message and transaction details based on reason
-      let toastTitle = "Credits Added";
-      let toastDescription = `Added ${amount} credits to ${userName}`;
-      let transactionDetails = 'Admin added coins to account';
-      
-      if (reason === 'bet_refund') {
-        toastTitle = "Bet Refunded";
-        toastDescription = `Refunded ${amount} credits to ${userName}`;
-        transactionDetails = 'Bet refunded';
-      }
-      
-      toast.success(toastTitle, {
-        description: toastDescription,
-        className: "custom-toast-success"
-      });
-      
-      addCreditTransaction({
-        userId,
-        userName: userName,
-        type: reason as 'admin_add' | 'bet_refund',
-        amount,
-        details: transactionDetails
+    } catch (error) {
+      console.error('❌ [CREDITS] Error adding credits:', error);
+      toast.error("Error", {
+        description: "Failed to add credits - server operation failed",
+        className: "custom-toast-error"
       });
     }
   };
 
-  const deductCredits = (userId: string, amount: number, isAdminAction: boolean = false): boolean => {
+  const deductCredits = async (userId: string, amount: number, isAdminAction: boolean = false): Promise<boolean> => {
     if (amount <= 0) return true;
     
     const user = users.find(u => u.id === userId);
     if (!user) return false;
     
-    if (user.credits < amount && !isAdminAction) {
-      toast.error("Insufficient Credits", {
-        description: `${user.name} doesn't have enough credits`,
+    try {
+      // 💰 Call server API to validate and deduct credits
+      // Server checks balance before allowing deduction
+      const response = await fetch(`/api/credits/${userId}/bet`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount,
+          betDetails: isAdminAction ? 'Admin deducted' : 'Bet placed'
+        })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        toast.error("Insufficient Credits", {
+          description: error.error || `${user.name} doesn't have enough credits`,
+          className: "custom-toast-error"
+        });
+        return false;
+      }
+      
+      const data = await response.json();
+      const newBalance = data.newBalance;
+      
+      // Update local state with server-confirmed balance
+      setUsers(prev => {
+        const updatedUsers = prev.map(u => {
+          if (u.id === userId) {
+            const updatedUser = { ...u, credits: newBalance };
+            if (currentUser?.id === userId) {
+              setCurrentUser(updatedUser);
+            }
+            return updatedUser;
+          }
+          return u;
+        });
+        
+        // Emit wallet update for connected users coin counter
+        if (socketIOService.isSocketConnected()) {
+          socketIOService.emitUserWalletUpdate(updatedUsers);
+        }
+        
+        return updatedUsers;
+      });
+      
+      if (isAdminAction) {
+        addCreditTransaction({
+          userId,
+          userName: user.name,
+          type: 'admin_deduct',
+          amount,
+          details: 'Admin removed coins from account'
+        });
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('❌ [CREDITS] Error deducting credits:', error);
+      toast.error("Error", {
+        description: "Failed to process deduction - server operation failed",
         className: "custom-toast-error"
       });
       return false;
     }
-    
-    setUsers(prev => {
-      const updatedUsers = prev.map(u => {
-        if (u.id === userId) {
-          const newCredits = Math.max(0, u.credits - amount);
-          const updatedUser = { ...u, credits: newCredits };
-          
-          if (currentUser?.id === userId) {
-            setCurrentUser(updatedUser);
-          }
-          
-          return updatedUser;
-        }
-        return u;
-      });
-      
-      // Emit wallet update for connected users coin counter
-      if (socketIOService.isSocketConnected()) {
-        socketIOService.emitUserWalletUpdate(updatedUsers);
-      }
-      
-      return updatedUsers;
-    });
-    
-    if (isAdminAction) {
-      addCreditTransaction({
-        userId,
-        userName: user.name,
-        type: 'admin_deduct',
-        amount,
-        details: 'Admin removed coins from account'
-      });
-    }
-    
-    return true;
   };
 
   const incrementWins = (userId: string) => {
@@ -1214,7 +1263,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return newUser;
   };
 
-  const processCashout = (userId: string, amount: number): boolean => {
+  const processCashout = async (userId: string, amount: number): Promise<boolean> => {
     if (amount <= 0) {
       toast.error("Invalid Amount", {
         description: "Please enter a valid amount greater than 0",
@@ -1232,41 +1281,61 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return false;
     }
     
-    if (user.credits < amount) {
-      toast.error("Insufficient Balance", {
-        description: `You only have ${user.credits} COINS available to cashout`,
+    try {
+      // 💰 Call server API to process cashout
+      const response = await fetch(`/api/credits/${userId}/cashout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        toast.error("Cashout Failed", {
+          description: error.error || 'Insufficient balance or server error',
+          className: "custom-toast-error"
+        });
+        return false;
+      }
+      
+      const data = await response.json();
+      const newBalance = data.newBalance;
+      
+      // Update local state with server-confirmed balance
+      setUsers(prev => prev.map(u => {
+        if (u.id === userId) {
+          const updatedUser = { ...u, credits: newBalance };
+          if (currentUser?.id === userId) {
+            setCurrentUser(updatedUser);
+          }
+          return updatedUser;
+        }
+        return u;
+      }));
+      
+      // Record cashout in transaction history
+      addCreditTransaction({
+        userId: userId,
+        userName: user.name,
+        type: 'cashout',
+        amount,
+        details: 'Cashed out coins from wallet'
+      });
+      
+      toast.success("Cashout Successful", {
+        description: `${amount} COINS have been cashed out from your account`,
+        className: "custom-toast-success"
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('❌ [CREDITS] Error processing cashout:', error);
+      toast.error("Cashout Failed", {
+        description: "Server error - please try again later",
         className: "custom-toast-error"
       });
       return false;
     }
-    
-    setUsers(prev => prev.map(u => {
-      if (u.id === userId) {
-        const updatedUser = { ...u, credits: u.credits - amount };
-        
-        if (currentUser?.id === userId) {
-          setCurrentUser(updatedUser);
-        }
-        
-        return updatedUser;
-      }
-      return u;
-    }));
-    
-    addCreditTransaction({
-      userId: userId,
-      userName: user.name,
-      type: 'cashout',
-      amount,
-      details: 'Cashed out coins from wallet'
-    });
-    
-    toast.success("Cashout Successful", {
-      description: `${amount} COINS have been cashed out from your account`,
-      className: "custom-toast-success"
-    });
-    
-    return true;
   };
 
   // Socket listener for connected users coins updates
