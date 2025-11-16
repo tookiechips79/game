@@ -931,6 +931,18 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
                 );
               }
             }
+            
+            // 🎯 DEBUG: Log which arena is emitting updates
+            const getArenaLabel = (arenaId: string) => arenaId === 'one_pocket' ? '🎯 [1-POCKET]' : '🎱 [9-BALL]';
+            const arenaLabel = getArenaLabel(currentArenaId);
+            console.log(`🔴 [EMIT] ${arenaLabel} updateGameState is emitting updates:`, { 
+              teamAGames: updates.teamAGames, 
+              teamBGames: updates.teamBGames,
+              teamABalls: updates.teamABalls,
+              teamBBalls: updates.teamBBalls,
+              currentArenaId
+            });
+            
             socketIOService.emitGameStateUpdate(gameStateData);
             socketIOService.emitScoreUpdate({
               teamAScore: updates.teamAGames !== undefined ? updates.teamAGames : prevState.teamAGames,
