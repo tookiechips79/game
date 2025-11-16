@@ -742,6 +742,17 @@ class SocketIOService {
     }
   }
 
+  // 🎯 NEW: Listener for complete arena state snapshot when switching arenas
+  // This ensures client gets ALL data from server as source of truth
+  public onArenaStateSnapshot(callback: (data: { arenaId: string; gameState: any; timestamp: number }) => void) {
+    if (this.socket) {
+      this.socket.on('arena-state-snapshot', (data) => {
+        log(`📡 [ARENA-STATE-SNAPSHOT] Received complete state for arena '${data.arenaId}'`, data);
+        callback(data);
+      });
+    }
+  }
+
   // Cleanup methods for proper listener removal
   public offGameHistoryUpdate() {
     if (this.socket) {

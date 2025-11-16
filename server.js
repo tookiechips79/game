@@ -428,6 +428,33 @@ io.on('connection', (socket) => {
         nextTeamBQueue: arenaState.nextTeamBQueue
       };
       socket.emit('bet-update', betData);
+      
+      // 🎯 NEW: Send complete arena state snapshot when arena changes
+      // This ensures client gets ALL data from server as source of truth
+      socket.emit('arena-state-snapshot', {
+        arenaId: currentArenaId,
+        gameState: {
+          teamAGames: arenaState.teamAScore,
+          teamBGames: arenaState.teamBScore,
+          teamABalls: arenaState.teamABalls,
+          teamBBalls: arenaState.teamBBalls,
+          currentGameNumber: arenaState.currentGameNumber,
+          teamAHasBreak: arenaState.teamAHasBreak,
+          teamAQueue: arenaState.teamAQueue,
+          teamBQueue: arenaState.teamBQueue,
+          bookedBets: arenaState.bookedBets,
+          nextTeamAQueue: arenaState.nextTeamAQueue,
+          nextTeamBQueue: arenaState.nextTeamBQueue,
+          nextBookedBets: arenaState.nextGameBets,
+          totalBookedAmount: arenaState.totalBookedAmount,
+          nextTotalBookedAmount: arenaState.nextTotalBookedAmount,
+          isGameActive: arenaState.isGameActive,
+          winner: arenaState.winner,
+          gameInfo: arenaState.gameInfo
+        },
+        timestamp: Date.now()
+      });
+      console.log(`📡 [ARENA-SWITCH] Sent complete arena state snapshot to ${socket.id}`);
     } catch (error) {
       console.error(`❌ [ARENA] Error sending initial data to ${socket.id}:`, error.message);
     }

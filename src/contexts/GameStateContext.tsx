@@ -725,6 +725,49 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       });
     });
 
+    // 🎯 NEW: Listen for complete arena state snapshot when switching arenas
+    // This is the PRIMARY listener for ensuring all data comes from server
+    socketIOService.onArenaStateSnapshot((snapshotData) => {
+      validateArenaAndUpdate(snapshotData.arenaId, () => {
+        console.log(`📡 [ARENA-STATE-SNAPSHOT] Received complete state snapshot for arena '${snapshotData.arenaId}':`, snapshotData.gameState);
+        
+        // Replace ENTIRE game state with server's snapshot
+        // This ensures we have authoritative data from server
+        const { gameState } = snapshotData;
+        
+        setCurrentGameState(prevState => ({
+          ...prevState,
+          // Game counts and scores
+          teamAGames: gameState.teamAGames !== undefined ? gameState.teamAGames : prevState.teamAGames,
+          teamBGames: gameState.teamBGames !== undefined ? gameState.teamBGames : prevState.teamBGames,
+          teamABalls: gameState.teamABalls !== undefined ? gameState.teamABalls : prevState.teamABalls,
+          teamBBalls: gameState.teamBBalls !== undefined ? gameState.teamBBalls : prevState.teamBBalls,
+          currentGameNumber: gameState.currentGameNumber !== undefined ? gameState.currentGameNumber : prevState.currentGameNumber,
+          teamAHasBreak: gameState.teamAHasBreak !== undefined ? gameState.teamAHasBreak : prevState.teamAHasBreak,
+          // Betting queues
+          teamAQueue: gameState.teamAQueue || prevState.teamAQueue,
+          teamBQueue: gameState.teamBQueue || prevState.teamBQueue,
+          bookedBets: gameState.bookedBets || prevState.bookedBets,
+          nextTeamAQueue: gameState.nextTeamAQueue || prevState.nextTeamAQueue,
+          nextTeamBQueue: gameState.nextTeamBQueue || prevState.nextTeamBQueue,
+          nextBookedBets: gameState.nextBookedBets || prevState.nextBookedBets,
+          // Coin totals
+          totalBookedAmount: gameState.totalBookedAmount !== undefined ? gameState.totalBookedAmount : prevState.totalBookedAmount,
+          nextTotalBookedAmount: gameState.nextTotalBookedAmount !== undefined ? gameState.nextTotalBookedAmount : prevState.nextTotalBookedAmount,
+          // Game state
+          isGameActive: gameState.isGameActive !== undefined ? gameState.isGameActive : prevState.isGameActive,
+          winner: gameState.winner !== undefined ? gameState.winner : prevState.winner,
+          gameLabel: gameState.currentGameNumber !== undefined ? `GAME ${gameState.currentGameNumber}` : prevState.gameLabel,
+          // Game info
+          teamAName: gameState.gameInfo?.teamAName || prevState.teamAName,
+          teamBName: gameState.gameInfo?.teamBName || prevState.teamBName,
+          gameDescription: gameState.gameInfo?.gameDescription || prevState.gameDescription
+        }));
+        
+        console.log(`✅ [ARENA-STATE-SNAPSHOT] Updated entire game state from server snapshot`);
+      });
+    });
+
     // REQUEST INITIAL STATE IMMEDIATELY on connection
     // This is critical for mobile devices to get fresh data
     socketIOService.requestGameState();
