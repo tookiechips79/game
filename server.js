@@ -591,6 +591,7 @@ io.on('connection', (socket) => {
     const gameWonDetected = actualGameState.currentGameNumber && 
                            actualGameState.currentGameNumber > arenaState.currentGameNumber;
     
+    // Update server's game state with new values
     Object.assign(arenaState, actualGameState);
     
     // If a game was won, reset the timer
@@ -599,9 +600,10 @@ io.on('connection', (socket) => {
       resetServerTimer(arenaId);
     }
     
-    // Broadcast ONLY to the specific arena's room - INCLUDE arenaId
-    io.to(`arena:${arenaId}`).emit('game-state-update', { ...actualGameState, arenaId });
-    console.log(`📤 Broadcasted game-state-update to arena '${arenaId}'`);
+    // Broadcast the COMPLETE updated game state to ALL clients in the arena (like bet-update does)
+    // This ensures all devices have identical data, even if they miss some intermediate updates
+    io.to(`arena:${arenaId}`).emit('game-state-update', { ...arenaState, arenaId });
+    console.log(`📤 Broadcasted game-state-update to arena '${arenaId}' with complete state:`, arenaState);
   });
   
   // Handle timer updates
@@ -652,8 +654,9 @@ io.on('connection', (socket) => {
     arenaState.teamAHasBreak = data.teamAHasBreak;
     arenaState.lastUpdated = Date.now();
     
-    // Broadcast to all other clients in the SAME ARENA
-    socket.to(`arena:${arenaId}`).emit('break-status-update', data);
+    // Broadcast to ALL clients in the SAME ARENA (including sender) for consistency
+    io.to(`arena:${arenaId}`).emit('break-status-update', { ...data, arenaId });
+    console.log(`📤 Broadcasted break-status-update to arena '${arenaId}'`);
   });
 
   // BET HISTORY IS NOW COMPLETELY LOCAL - NO SERVER SYNC
@@ -665,12 +668,17 @@ io.on('connection', (socket) => {
     console.log('Received total booked coins update:', data);
     const arenaId = data.arenaId || 'default';
     const arenaState = getGameState(arenaId);
-    arenaState.totalBookedAmount = data.totalBookedAmount;
-    arenaState.nextTotalBookedAmount = data.nextTotalBookedAmount;
+    if (data.totalBookedAmount !== undefined) arenaState.totalBookedAmount = data.totalBookedAmount;
+    if (data.nextTotalBookedAmount !== undefined) arenaState.nextTotalBookedAmount = data.nextTotalBookedAmount;
     arenaState.lastUpdated = Date.now();
     
-    // Broadcast to all other clients in the SAME ARENA
-    socket.to(`arena:${arenaId}`).emit('total-booked-coins-update', data);
+    // Broadcast to ALL clients in the SAME ARENA (including sender) for consistency
+    io.to(`arena:${arenaId}`).emit('total-booked-coins-update', { 
+      totalBookedAmount: arenaState.totalBookedAmount,
+      nextTotalBookedAmount: arenaState.nextTotalBookedAmount,
+      arenaId
+    });
+    console.log(`📤 Broadcasted total-booked-coins-update to arena '${arenaId}'`);
   });
 
   // BET RECEIPTS ARE NOW COMPLETELY LOCAL - NO SERVER SYNC
@@ -749,12 +757,16 @@ io.on('connection', (socket) => {
     console.log(`📥 Received score update for arena '${arenaId}':`, actualScoreData);
     
     const arenaState = getGameState(arenaId);
-    arenaState.teamAScore = actualScoreData.teamAScore;
-    arenaState.teamBScore = actualScoreData.teamBScore;
+    if (actualScoreData.teamAScore !== undefined) arenaState.teamAScore = actualScoreData.teamAScore;
+    if (actualScoreData.teamBScore !== undefined) arenaState.teamBScore = actualScoreData.teamBScore;
     
-    // Broadcast ONLY to the specific arena's room
-    io.to(`arena:${arenaId}`).emit('score-update', actualScoreData);
-    console.log(`📤 Broadcasted score-update to arena '${arenaId}'`);
+    // Broadcast the COMPLETE updated scores to ALL clients in the arena
+    io.to(`arena:${arenaId}`).emit('score-update', { 
+      teamAScore: arenaState.teamAScore, 
+      teamBScore: arenaState.teamBScore,
+      arenaId 
+    });
+    console.log(`📤 Broadcasted score-update to arena '${arenaId}':`, { teamAScore: arenaState.teamAScore, teamBScore: arenaState.teamBScore });
   });
   
   // Handle test messages
