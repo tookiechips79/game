@@ -151,6 +151,19 @@ function addTransaction(userId, transactionType, amount, reason = '', adminNotes
   
   console.log(`💰 [CREDITS] ${userId}: ${transactionType} | Amount: ${amount} | New Balance: ${newBalance}`);
   
+  // 📡 BROADCAST CREDIT UPDATE TO ALL BROWSERS OF THIS USER
+  // This ensures all browsers/devices of the same user see the updated balance in real-time
+  if (typeof io !== 'undefined') {
+    io.emit('credit-update', {
+      userId,
+      oldBalance: transaction.oldBalance,
+      newBalance: transaction.newBalance,
+      transactionType,
+      timestamp: transaction.timestamp
+    });
+    console.log(`📡 [CREDITS-BROADCAST] Emitted credit-update for ${userId}: ${newBalance}`);
+  }
+  
   return transaction;
 }
 
