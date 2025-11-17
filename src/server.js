@@ -6,18 +6,30 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 // Database module (PostgreSQL)
-import {
-  initializeDatabase,
-  createOrUpdateUser,
-  getUserById,
-  authenticateUser,
-  getAllUsers,
-  getUserBalance,
-  addTransaction,
-  getUserTransactionHistory,
-  updateUserStats,
-  getDatabaseStats,
-} from './db/database.js';
+// Lazy import - will be loaded when needed
+let dbModule = null;
+let initializeDatabase, createOrUpdateUser, getUserById, authenticateUser, getAllUsers, getUserBalance, addTransaction, getUserTransactionHistory, updateUserStats, getDatabaseStats;
+
+async function loadDatabaseModule() {
+  if (dbModule) return;
+  try {
+    dbModule = await import('./db/database.js');
+    initializeDatabase = dbModule.initializeDatabase;
+    createOrUpdateUser = dbModule.createOrUpdateUser;
+    getUserById = dbModule.getUserById;
+    authenticateUser = dbModule.authenticateUser;
+    getAllUsers = dbModule.getAllUsers;
+    getUserBalance = dbModule.getUserBalance;
+    addTransaction = dbModule.addTransaction;
+    getUserTransactionHistory = dbModule.getUserTransactionHistory;
+    updateUserStats = dbModule.updateUserStats;
+    getDatabaseStats = dbModule.getDatabaseStats;
+    return dbModule;
+  } catch (error) {
+    console.warn('⚠️ [SERVER] Database module not found:', error.message);
+    return null;
+  }
+}
 
 // Deployment version: 3
 // Force Render to redeploy with fresh instance
@@ -1238,8 +1250,12 @@ const PORT = process.env.PORT || 3001;
 // Initialize database and start server
 async function startServer() {
   try {
+    // Load database module
+    console.log('🚀 [SERVER] Loading database module...');
+    await loadDatabaseModule();
+    
     // Initialize PostgreSQL database
-    if (process.env.DATABASE_URL) {
+    if (process.env.DATABASE_URL && initializeDatabase) {
       console.log('🚀 [SERVER] Initializing PostgreSQL database...');
       await initializeDatabase();
       console.log('✅ [DATABASE] Ready for operations');
