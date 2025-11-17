@@ -5,6 +5,20 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+// Database module (PostgreSQL)
+import {
+  initializeDatabase,
+  createOrUpdateUser,
+  getUserById,
+  authenticateUser,
+  getAllUsers,
+  getUserBalance,
+  addTransaction,
+  getUserTransactionHistory,
+  updateUserStats,
+  getDatabaseStats,
+} from './src/db/database.js';
+
 // Deployment version: 3
 // Force Render to redeploy with fresh instance
 
@@ -223,97 +237,20 @@ app.use((req, res, next) => {
 
 // 👥 SERVER-SIDE USER STORAGE
 // Store all users on server (shared across all browsers/devices)
-const userLedger = {
-  // userId -> { id, name, password, credits, wins, losses, membershipStatus, subscriptionDate }
-};
-
-// Helper function to initialize default admin user
-function initializeDefaultAdmin() {
-  const adminId = "admin-default";
-  if (!userLedger[adminId]) {
-    userLedger[adminId] = {
-      id: adminId,
-      name: "Admin",
-      password: "admin",
-      credits: 1000,
-      wins: 0,
-      losses: 0,
-      membershipStatus: 'active',
-      subscriptionDate: Date.now()
-    };
-    console.log(`👤 [USERS] Default admin user initialized`);
-  }
-}
-
-// Initialize admin on startup
-initializeDefaultAdmin();
-
-// Add a new user
-function addUser(name, password, initialCredits = 0) {
-  if (!name || !password) {
-    console.error('❌ [USERS] Name and password required');
-    return null;
-  }
-
-  // Check if user already exists (case-insensitive)
-  const userExists = Object.values(userLedger).find(u => u.name.toLowerCase() === name.toLowerCase());
-  if (userExists) {
-    console.warn(`⚠️ [USERS] User "${name}" already exists`);
-    return null;
-  }
-
-  const userId = `user-${Date.now()}`;
-  userLedger[userId] = {
-    id: userId,
-    name,
-    password,
-    credits: initialCredits,
-    wins: 0,
-    losses: 0,
-    membershipStatus: 'inactive',
-    subscriptionDate: null
-  };
-
-  console.log(`👤 [USERS] New user created: "${name}" (${userId})`);
-  return userLedger[userId];
-}
-
-// Get user by name and password
-function authenticateUser(name, password) {
-  const user = Object.values(userLedger).find(u => 
-    u.name.toLowerCase() === name.toLowerCase() && u.password === password
-  );
-  
-  if (user) {
-    console.log(`✅ [USERS] User authenticated: "${user.name}"`);
-  } else {
-    console.warn(`⚠️ [USERS] Authentication failed for: "${name}"`);
-  }
-  
-  return user || null;
-}
-
-// Get user by ID
-function getUserById(userId) {
-  return userLedger[userId] || null;
-}
-
-// Get all users
-function getAllUsers() {
-  return Object.values(userLedger);
-}
-
-// Update user (for credits, wins, losses, etc)
-function updateUser(userId, updates) {
-  if (!userLedger[userId]) {
-    console.error(`❌ [USERS] User not found: ${userId}`);
-    return null;
-  }
-
-  userLedger[userId] = { ...userLedger[userId], ...updates };
-  console.log(`✅ [USERS] User updated: ${userId}`);
-  return userLedger[userId];
-}
+// ============================================================================
+// 👥 USER MANAGEMENT - NOW USING POSTGRESQL DATABASE
+// ============================================================================
+// 
+// User functions are now provided by ./src/db/database.js
+// This module handles:
+//   • createOrUpdateUser(userId, name, password, initialCredits)
+//   • getUserById(userId)
+//   • authenticateUser(name, password)
+//   • getAllUsers()
+//   • updateUserStats(userId, wins, losses)
+//
+// All user data is now persistent in PostgreSQL!
+// ============================================================================
 
 // 🎯 Arena Labels for clear differentiation in logs
 const getArenaLabel = (arenaId) => {
@@ -1385,6 +1322,29 @@ io.on('connection', (socket) => {
 
 // Start server - listen on 0.0.0.0 for external connections (required for Render deployment)
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🎮 Game Bird server running on port ${PORT}`);
-});
+
+// Initialize database and start server
+async function startServer() {
+  try {
+    // Initialize PostgreSQL database
+    if (process.env.DATABASE_URL) {
+      console.log('🚀 [SERVER] Initializing PostgreSQL database...');
+      await initializeDatabase();
+      console.log('✅ [DATABASE] Ready for operations');
+    } else {
+      console.warn('⚠️ [SERVER] DATABASE_URL not set - using in-memory storage (data will be lost on restart)');
+      console.warn('   Set DATABASE_URL environment variable to enable persistence');
+    }
+
+    // Start server
+    server.listen(PORT, '0.0.0.0', () => {
+      console.log(`🎮 Game Bird server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('❌ [SERVER] Failed to start:', error);
+    process.exit(1);
+  }
+}
+
+// Start the server
+startServer();
