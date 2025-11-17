@@ -42,7 +42,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
   const handleSocialLogin = (provider: "google" | "apple") => {
     setIsLoading(true);
     
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsLoading(false);
       
       const randomName = `${provider}User${Math.floor(Math.random() * 1000)}`;
