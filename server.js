@@ -149,6 +149,13 @@ function addTransaction(userId, transactionType, amount, reason = '', adminNotes
   user.balance = newBalance;
   user.transactions.push(transaction);
   
+  // 🔗 SYNC CREDITS TO USER LEDGER
+  // Keep userLedger in sync so credits are persistent and shared across devices
+  if (userLedger[userId]) {
+    userLedger[userId].credits = newBalance;
+    console.log(`🔗 [CREDITS-SYNC] Synced credits to userLedger: ${userId} = ${newBalance}`);
+  }
+  
   console.log(`💰 [CREDITS] ${userId}: ${transactionType} | Amount: ${amount} | New Balance: ${newBalance}`);
   
   // 📡 BROADCAST CREDIT UPDATE TO ALL BROWSERS OF THIS USER
@@ -688,15 +695,19 @@ app.get('/api/credits-admin/all', (req, res) => {
 
 // Get all users (shared across all devices)
 app.get('/api/users', (req, res) => {
-  const users = getAllUsers().map(u => ({
-    id: u.id,
-    name: u.name,
-    credits: u.credits,
-    wins: u.wins,
-    losses: u.losses,
-    membershipStatus: u.membershipStatus,
-    subscriptionDate: u.subscriptionDate
-  }));
+  const users = getAllUsers().map(u => {
+    // Get credits from credit ledger (source of truth)
+    const userCredits = creditLedger[u.id]?.balance || u.credits || 0;
+    return {
+      id: u.id,
+      name: u.name,
+      credits: userCredits,
+      wins: u.wins,
+      losses: u.losses,
+      membershipStatus: u.membershipStatus,
+      subscriptionDate: u.subscriptionDate
+    };
+  });
   console.log(`📋 [USERS] Fetching all users: ${users.length} users`);
   res.json(users);
 });
@@ -711,10 +722,13 @@ app.get('/api/users/:userId', (req, res) => {
     return res.status(404).json({ error: 'User not found' });
   }
 
+  // Get credits from credit ledger (source of truth)
+  const userCredits = creditLedger[userId]?.balance || user.credits || 0;
+
   res.json({
     id: user.id,
     name: user.name,
-    credits: user.credits,
+    credits: userCredits,
     wins: user.wins,
     losses: user.losses,
     membershipStatus: user.membershipStatus,
@@ -767,10 +781,13 @@ app.post('/api/users/auth', (req, res) => {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
 
+  // Get credits from credit ledger (source of truth)
+  const userCredits = creditLedger[user.id]?.balance || user.credits || 0;
+
   res.json({
     id: user.id,
     name: user.name,
-    credits: user.credits,
+    credits: userCredits,
     wins: user.wins,
     losses: user.losses,
     membershipStatus: user.membershipStatus,
