@@ -79,6 +79,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Flag to prevent re-emitting bet receipts updates during clear operations
   const hasReceivedFirstBetReceiptsUpdateRef = useRef(false);
 
+  // 💰 Flag to prevent excessive credit fetches
+  const lastCreditFetchRef = useRef<number>(0);
+  const CREDIT_FETCH_THROTTLE_MS = 1000; // Min 1 second between fetches
+
   // CRITICAL: Backup tracking of all games ever added - prevents loss during rapid adds
   // This ref maintains a complete history that acts as a safety net
   const allGamesEverAddedRef = useRef<BetHistoryRecord[]>([]);
@@ -1341,11 +1345,18 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // 💰 FETCH CURRENT USER BALANCE FROM SERVER ON MOUNT
   // This ensures every browser loads the accurate server balance
   useEffect(() => {
+    if (!currentUser) {
+      console.log('⚠️ [CREDITS] No current user, skipping balance sync');
+      return;
+    }
+
     const syncCurrentUserBalanceFromServer = async () => {
-      if (!currentUser) {
-        console.log('⚠️ [CREDITS] No current user, skipping balance sync');
+      // Throttle fetches to prevent excessive API calls
+      const now = Date.now();
+      if (now - lastCreditFetchRef.current < CREDIT_FETCH_THROTTLE_MS) {
         return;
       }
+      lastCreditFetchRef.current = now;
 
       try {
         console.log(`📡 [CREDITS] Fetching server balance for user: ${currentUser.id}`);
@@ -1366,9 +1377,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log(`🔄 [CREDITS] Balance mismatch detected! Updating from server...`);
           
           // Update users array with server balance
-          const updatedUser = { ...currentUser, credits: serverBalance };
           setUsers(prev => prev.map(u => {
             if (u.id === currentUser.id) {
+              const updatedUser = { ...u, credits: serverBalance };
               console.log(`✅ [CREDITS] Updated ${currentUser.id}: ${u.credits} → ${serverBalance}`);
               return updatedUser;
             }
@@ -1376,7 +1387,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }));
 
           // Also update current user to trigger UI re-render
-          setCurrentUserWithLogin(updatedUser);
+          setCurrentUserWithLogin({ ...currentUser, credits: serverBalance });
         } else {
           console.log(`✅ [CREDITS] Balances match! Current user is in sync`);
         }
@@ -1392,7 +1403,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const syncInterval = setInterval(syncCurrentUserBalanceFromServer, 5000);
     
     return () => clearInterval(syncInterval);
-  }, [currentUser?.id]); // Re-run when current user changes
+  }, [currentUser]); // Use full currentUser object to avoid stale closures
 
   // 💰 LISTEN FOR REAL-TIME CREDIT UPDATES FROM SERVER
   // When another browser updates this user's balance, sync it here
@@ -1412,17 +1423,23 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return u;
         }));
 
-        // Update current user
-        const updatedUser = { ...currentUser, credits: data.newBalance };
-        setCurrentUserWithLogin(updatedUser);
-
-        // Show toast if significant change
-        if (Math.abs(data.newBalance - currentUser.credits) > 0) {
-          toast.info("Balance Updated", {
-            description: `Your balance is now ${data.newBalance} coins`,
-            className: "custom-toast-info"
-          });
-        }
+        // Update current user  
+        setCurrentUserWithLogin(prev => {
+          if (prev?.id === currentUser.id) {
+            const updated = { ...prev, credits: data.newBalance };
+            
+            // Show toast if significant change
+            if (Math.abs(data.newBalance - prev.credits) > 0) {
+              toast.info("Balance Updated", {
+                description: `Your balance is now ${data.newBalance} coins`,
+                className: "custom-toast-info"
+              });
+            }
+            
+            return updated;
+          }
+          return prev;
+        });
       }
     };
 
