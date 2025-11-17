@@ -18,6 +18,7 @@ import MemberSignupPage from "./pages/MemberSignup";
 import FeaturesPage from "./pages/Features";
 import AboutPage from "./pages/About";
 import FAQPage from "./pages/FAQ";
+import { CreditAuditDashboard } from "@/components/CreditAuditDashboard";
 import "./App.css";
 
 const queryClient = new QueryClient();
@@ -84,6 +85,7 @@ const App = () => (
               <Route path="/user-settings" element={<UserSettings />} />
               <Route path="/reload-coins" element={<ReloadCoinsPage />} />
               <Route path="/faq" element={<FAQPage />} />
+              <Route path="/credit-audit" element={<CreditAuditDashboard />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
