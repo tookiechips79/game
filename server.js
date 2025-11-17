@@ -214,6 +214,100 @@ app.use((req, res, next) => {
   });
 });
 
+// 👥 SERVER-SIDE USER STORAGE
+// Store all users on server (shared across all browsers/devices)
+const userLedger = {
+  // userId -> { id, name, password, credits, wins, losses, membershipStatus, subscriptionDate }
+};
+
+// Helper function to initialize default admin user
+function initializeDefaultAdmin() {
+  const adminId = "admin-default";
+  if (!userLedger[adminId]) {
+    userLedger[adminId] = {
+      id: adminId,
+      name: "Admin",
+      password: "admin",
+      credits: 1000,
+      wins: 0,
+      losses: 0,
+      membershipStatus: 'active',
+      subscriptionDate: Date.now()
+    };
+    console.log(`👤 [USERS] Default admin user initialized`);
+  }
+}
+
+// Initialize admin on startup
+initializeDefaultAdmin();
+
+// Add a new user
+function addUser(name, password, initialCredits = 0) {
+  if (!name || !password) {
+    console.error('❌ [USERS] Name and password required');
+    return null;
+  }
+
+  // Check if user already exists (case-insensitive)
+  const userExists = Object.values(userLedger).find(u => u.name.toLowerCase() === name.toLowerCase());
+  if (userExists) {
+    console.warn(`⚠️ [USERS] User "${name}" already exists`);
+    return null;
+  }
+
+  const userId = `user-${Date.now()}`;
+  userLedger[userId] = {
+    id: userId,
+    name,
+    password,
+    credits: initialCredits,
+    wins: 0,
+    losses: 0,
+    membershipStatus: 'inactive',
+    subscriptionDate: null
+  };
+
+  console.log(`👤 [USERS] New user created: "${name}" (${userId})`);
+  return userLedger[userId];
+}
+
+// Get user by name and password
+function authenticateUser(name, password) {
+  const user = Object.values(userLedger).find(u => 
+    u.name.toLowerCase() === name.toLowerCase() && u.password === password
+  );
+  
+  if (user) {
+    console.log(`✅ [USERS] User authenticated: "${user.name}"`);
+  } else {
+    console.warn(`⚠️ [USERS] Authentication failed for: "${name}"`);
+  }
+  
+  return user || null;
+}
+
+// Get user by ID
+function getUserById(userId) {
+  return userLedger[userId] || null;
+}
+
+// Get all users
+function getAllUsers() {
+  return Object.values(userLedger);
+}
+
+// Update user (for credits, wins, losses, etc)
+function updateUser(userId, updates) {
+  if (!userLedger[userId]) {
+    console.error(`❌ [USERS] User not found: ${userId}`);
+    return null;
+  }
+
+  userLedger[userId] = { ...userLedger[userId], ...updates };
+  console.log(`✅ [USERS] User updated: ${userId}`);
+  return userLedger[userId];
+}
+
 // 🎯 Arena Labels for clear differentiation in logs
 const getArenaLabel = (arenaId) => {
   if (arenaId === 'one_pocket') return '🎯 [1-POCKET]';
@@ -586,6 +680,124 @@ app.get('/api/credits-admin/all', (req, res) => {
     transactionCount: data.transactions.length
   }));
   res.json(allUsers);
+});
+
+// ============================================================================
+// 👥 USER MANAGEMENT API ENDPOINTS
+// ============================================================================
+
+// Get all users (shared across all devices)
+app.get('/api/users', (req, res) => {
+  const users = getAllUsers().map(u => ({
+    id: u.id,
+    name: u.name,
+    credits: u.credits,
+    wins: u.wins,
+    losses: u.losses,
+    membershipStatus: u.membershipStatus,
+    subscriptionDate: u.subscriptionDate
+  }));
+  console.log(`📋 [USERS] Fetching all users: ${users.length} users`);
+  res.json(users);
+});
+
+// Get user by ID
+app.get('/api/users/:userId', (req, res) => {
+  const { userId } = req.params;
+  const user = getUserById(userId);
+  
+  if (!user) {
+    console.warn(`⚠️ [USERS] User not found: ${userId}`);
+    return res.status(404).json({ error: 'User not found' });
+  }
+
+  res.json({
+    id: user.id,
+    name: user.name,
+    credits: user.credits,
+    wins: user.wins,
+    losses: user.losses,
+    membershipStatus: user.membershipStatus,
+    subscriptionDate: user.subscriptionDate
+  });
+});
+
+// Create new user
+app.post('/api/users', (req, res) => {
+  const { name, password, initialCredits = 0 } = req.body;
+
+  if (!name || !password) {
+    return res.status(400).json({ error: 'Name and password required' });
+  }
+
+  const newUser = addUser(name, password, initialCredits);
+  
+  if (!newUser) {
+    return res.status(400).json({ error: 'User already exists or creation failed' });
+  }
+
+  // Also initialize credit ledger for this user
+  if (!creditLedger[newUser.id]) {
+    initializeUserCredits(newUser.id, initialCredits);
+    console.log(`💰 [CREDITS] Initialized credit ledger for new user: ${newUser.id}`);
+  }
+
+  res.json({
+    id: newUser.id,
+    name: newUser.name,
+    credits: newUser.credits,
+    wins: newUser.wins,
+    losses: newUser.losses,
+    membershipStatus: newUser.membershipStatus,
+    subscriptionDate: newUser.subscriptionDate
+  });
+});
+
+// Authenticate user (login)
+app.post('/api/users/auth', (req, res) => {
+  const { name, password } = req.body;
+
+  if (!name || !password) {
+    return res.status(400).json({ error: 'Name and password required' });
+  }
+
+  const user = authenticateUser(name, password);
+  
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+
+  res.json({
+    id: user.id,
+    name: user.name,
+    credits: user.credits,
+    wins: user.wins,
+    losses: user.losses,
+    membershipStatus: user.membershipStatus,
+    subscriptionDate: user.subscriptionDate
+  });
+});
+
+// Update user (admin only)
+app.put('/api/users/:userId', (req, res) => {
+  const { userId } = req.params;
+  const updates = req.body;
+
+  const updatedUser = updateUser(userId, updates);
+  
+  if (!updatedUser) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+
+  res.json({
+    id: updatedUser.id,
+    name: updatedUser.name,
+    credits: updatedUser.credits,
+    wins: updatedUser.wins,
+    losses: updatedUser.losses,
+    membershipStatus: updatedUser.membershipStatus,
+    subscriptionDate: updatedUser.subscriptionDate
+  });
 });
 
 // Socket.IO connection handling
