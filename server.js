@@ -102,107 +102,19 @@ app.use(express.json());
 
 // 💰 CREDIT LEDGER SYSTEM - Server-Authoritative
 // Every credit transaction is permanently recorded
-const creditLedger = {
-  // userId -> { balance: number, transactions: [] }
-};
-
-// Transaction types that are allowed
-const TRANSACTION_TYPES = {
-  RELOAD_COINS: 'reload_coins',      // User purchased coins
-  ADMIN_ADD: 'admin_add',            // Admin manually added
-  BET_PLACED: 'bet_placed',          // Bet deducted from account
-  BET_REFUNDED: 'bet_refund',        // Bet returned to account
-  CASHOUT: 'cashout',                // User withdrew coins
-  BET_WON: 'bet_won',                // Winnings added to account
-};
-
-// Initialize user credits (in-memory for now, could persist to file/DB)
-function initializeUserCredits(userId, initialBalance = 1000) {
-  if (!creditLedger[userId]) {
-    creditLedger[userId] = {
-      balance: initialBalance,
-      transactions: [
-        {
-          type: TRANSACTION_TYPES.ADMIN_ADD,
-          amount: initialBalance,
-          timestamp: Date.now(),
-          reason: 'Initial account balance',
-          adminNotes: 'System initialization'
-        }
-      ]
-    };
-    console.log(`💰 [CREDITS] Initialized user ${userId} with ${initialBalance} credits`);
-  }
-  return creditLedger[userId];
-}
-
-// Add transaction to ledger (immutable)
-function addTransaction(userId, transactionType, amount, reason = '', adminNotes = '') {
-  if (!creditLedger[userId]) {
-    initializeUserCredits(userId);
-  }
-  
-  const user = creditLedger[userId];
-  const newBalance = user.balance + amount; // Can be positive or negative
-  
-  if (newBalance < 0) {
-    console.error(`❌ [CREDITS] Cannot deduct ${amount} from ${userId}: insufficient balance`);
-    return null;
-  }
-  
-  const transaction = {
-    type: transactionType,
-    amount,
-    oldBalance: user.balance,
-    newBalance,
-    timestamp: Date.now(),
-    reason,
-    adminNotes
-  };
-  
-  user.balance = newBalance;
-  user.transactions.push(transaction);
-  
-  // 🔗 SYNC CREDITS TO USER LEDGER
-  // Keep userLedger in sync so credits are persistent and shared across devices
-  if (userLedger[userId]) {
-    userLedger[userId].credits = newBalance;
-    console.log(`🔗 [CREDITS-SYNC] Synced credits to userLedger: ${userId} = ${newBalance}`);
-  }
-  
-  console.log(`💰 [CREDITS] ${userId}: ${transactionType} | Amount: ${amount} | New Balance: ${newBalance}`);
-  
-  // 📡 BROADCAST CREDIT UPDATE TO ALL BROWSERS OF THIS USER
-  // This ensures all browsers/devices of the same user see the updated balance in real-time
-  if (typeof io !== 'undefined') {
-    io.emit('credit-update', {
-      userId,
-      oldBalance: transaction.oldBalance,
-      newBalance: transaction.newBalance,
-      transactionType,
-      timestamp: transaction.timestamp
-    });
-    console.log(`📡 [CREDITS-BROADCAST] Emitted credit-update for ${userId}: ${newBalance}`);
-  }
-  
-  return transaction;
-}
-
-// Get user's credit balance
-function getUserBalance(userId) {
-  if (!creditLedger[userId]) {
-    initializeUserCredits(userId);
-  }
-  return creditLedger[userId].balance;
-}
-
-// Get user's transaction history
-function getUserTransactionHistory(userId) {
-  if (!creditLedger[userId]) {
-    initializeUserCredits(userId);
-  }
-  return creditLedger[userId].transactions;
-}
+// ============================================================================
+// 💰 CREDIT SYSTEM - NOW USING POSTGRESQL DATABASE
+// ============================================================================
+// 
+// All credit functions are now provided by ./src/db/database.js:
+//   • addTransaction(userId, type, amount, reason, adminNotes)
+//   • getUserBalance(userId)
+//   • getUserTransactionHistory(userId)
+//   • createOrUpdateUser(userId, name, password, initialCredits)
+//   • updateUserStats(userId, wins, losses)
+//
+// These functions handle BOTH in-memory (fallback) and PostgreSQL (primary)
+// ============================================================================
 
 // Health check endpoint
 app.get('/health', (req, res) => {
