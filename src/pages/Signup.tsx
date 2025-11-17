@@ -90,8 +90,8 @@ const SignupPage = () => {
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Create new user
-      const newUser = addUser(formData.name.trim(), formData.password);
+      // Create new user via server
+      const newUser = await addUser(formData.name.trim(), formData.password);
       
       // Set as current user
       setCurrentUser(newUser);

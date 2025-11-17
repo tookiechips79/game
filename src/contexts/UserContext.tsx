@@ -738,31 +738,38 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
-  const addUser = (name: string, password: string): User => {
+  const addUser = async (name: string, password: string): Promise<User> => {
     if (!name.trim() || !password.trim()) {
       throw new Error("Name and password are required");
     }
     
     try {
-      const newUser: User = {
-        id: `user-${Date.now()}`,
-        name,
-        credits: 0,
-        password,
-        wins: 0,
-        losses: 0,
-        membershipStatus: 'inactive'
-      };
+      console.log(`👤 [USERS] Creating new user: ${name}`);
       
+      // Save to server (source of truth)
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, password, initialCredits: 0 })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create user on server');
+      }
+      
+      const newUser = await response.json();
+      console.log(`✅ [USERS] User created on server: ${newUser.name} (ID: ${newUser.id})`);
+      
+      // Update local state
       setUsers(prev => {
         const updatedUsers = [...prev, newUser];
         
         // Backup to localStorage with error handling
         try {
           localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
-          console.log('✅ User added and backed up to localStorage');
+          console.log('💾 [USERS] User backed up to localStorage');
         } catch (storageError) {
-          console.error('❌ Failed to backup user to localStorage:', storageError);
+          console.error('⚠️ [USERS] Failed to backup user to localStorage:', storageError);
           // Continue anyway - the user is still added to state
         }
         
@@ -776,7 +783,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return newUser;
     } catch (error) {
-      console.error('❌ Error adding user:', error);
+      console.error('❌ [USERS] Error adding user:', error);
       toast.error("Failed to Add User", {
         description: "There was an error creating the user. Please try again.",
         className: "custom-toast-error"
@@ -785,12 +792,46 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
-  const authenticateUser = (name: string, password: string): User | null => {
-    const user = users.find(u => 
-      u.name.toLowerCase() === name.toLowerCase() && 
-      u.password === password
-    );
-    return user || null;
+  const authenticateUser = async (name: string, password: string): Promise<User | null> => {
+    try {
+      // 👤 Authenticate on server (source of truth)
+      console.log(`🔐 [AUTH] Authenticating user: ${name}`);
+      
+      const response = await fetch('/api/users/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, password })
+      });
+      
+      if (!response.ok) {
+        console.warn('⚠️ [AUTH] Authentication failed: invalid credentials');
+        return null;
+      }
+      
+      const user = await response.json();
+      console.log(`✅ [AUTH] User authenticated: ${user.name} (credits: ${user.credits})`);
+      
+      // Update local users list with fresh data from server
+      setUsers(prev => {
+        const existingIndex = prev.findIndex(u => u.id === user.id);
+        if (existingIndex >= 0) {
+          const updated = [...prev];
+          updated[existingIndex] = user;
+          return updated;
+        }
+        return [...prev, user];
+      });
+      
+      return user;
+    } catch (error) {
+      console.error('❌ [AUTH] Error during authentication:', error);
+      // Fallback to local authentication
+      const user = users.find(u => 
+        u.name.toLowerCase() === name.toLowerCase() && 
+        u.password === password
+      );
+      return user || null;
+    }
   };
 
   const addCredits = async (userId: string, amount: number, isAdmin: boolean = false, reason: string = 'admin_add') => {
@@ -1454,6 +1495,46 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
   }, [currentUser?.id]);
+
+  // 👥 FETCH USERS FROM SERVER ON APP LOAD
+  // Override localStorage with server data to ensure accuracy
+  useEffect(() => {
+    const fetchUsersFromServer = async () => {
+      try {
+        console.log('📡 [USERS] Fetching users from server...');
+        const response = await fetch('/api/users');
+        
+        if (!response.ok) {
+          console.warn('⚠️ [USERS] Failed to fetch users from server');
+          return;
+        }
+        
+        const serverUsers = await response.json();
+        console.log(`✅ [USERS] Loaded ${serverUsers.length} users from server`);
+        
+        // Update local state with server users (overrides localStorage)
+        setUsers(serverUsers);
+        
+        // Also save to localStorage for fallback
+        try {
+          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(serverUsers));
+          console.log('💾 [USERS] Synced users to localStorage backup');
+        } catch (e) {
+          console.warn('⚠️ [USERS] Could not save to localStorage:', e);
+        }
+      } catch (error) {
+        console.error('❌ [USERS] Error fetching users from server:', error);
+      }
+    };
+    
+    // Fetch users on mount
+    fetchUsersFromServer();
+    
+    // Also fetch every 10 seconds to keep credits fresh
+    const refreshInterval = setInterval(fetchUsersFromServer, 10000);
+    
+    return () => clearInterval(refreshInterval);
+  }, []);
 
   // Socket listener for connected users coins updates
   useEffect(() => {

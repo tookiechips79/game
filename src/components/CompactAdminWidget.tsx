@@ -60,7 +60,7 @@ const CompactAdminWidget = React.forwardRef<
   const { addUser, setCurrentUser, addCredits, deductCredits, users } = useUser();
 
   // Handle Create User
-  const handleCreateUser = () => {
+  const handleCreateUser = async () => {
     if (!newUserName.trim()) {
       toast.error("Please enter a valid name", { className: "custom-toast-error" });
       return;
@@ -69,12 +69,17 @@ const CompactAdminWidget = React.forwardRef<
       toast.error("Please enter a valid password", { className: "custom-toast-error" });
       return;
     }
-    const newUser = addUser(newUserName.trim(), newUserPassword.trim());
-    if (newUser) {
-      setCurrentUser(newUser);
-      toast.success("User Created", { description: `New user "${newUserName}" created successfully`, className: "custom-toast-success" });
-      setNewUserName("");
-      setNewUserPassword("");
+    try {
+      // 👤 Create user via server
+      const newUser = await addUser(newUserName.trim(), newUserPassword.trim());
+      if (newUser) {
+        setCurrentUser(newUser);
+        toast.success("User Created", { description: `New user "${newUserName}" created successfully`, className: "custom-toast-success" });
+        setNewUserName("");
+        setNewUserPassword("");
+      }
+    } catch (error) {
+      console.error('❌ [USERS] Error creating user:', error);
     }
   };
 

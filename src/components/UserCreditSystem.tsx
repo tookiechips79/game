@@ -37,7 +37,7 @@ export const CreateUserForm: React.FC = () => {
   const [newUserPassword, setNewUserPassword] = useState("");
   const { addUser, setCurrentUser } = useUser();
   
-  const handleCreateUser = () => {
+  const handleCreateUser = async () => {
     if (!newUserName.trim()) {
       toast.error("Please enter a valid name", {
         className: "custom-toast-error"
@@ -52,12 +52,17 @@ export const CreateUserForm: React.FC = () => {
       return;
     }
     
-    const newUser = addUser(newUserName.trim(), newUserPassword.trim());
-    if (newUser) {
-      setCurrentUser(newUser);
+    try {
+      // 👤 Create user via server
+      const newUser = await addUser(newUserName.trim(), newUserPassword.trim());
+      if (newUser) {
+        setCurrentUser(newUser);
+      }
+      setNewUserName("");
+      setNewUserPassword("");
+    } catch (error) {
+      console.error('❌ [USERS] Error creating user:', error);
     }
-    setNewUserName("");
-    setNewUserPassword("");
   };
   
   return (

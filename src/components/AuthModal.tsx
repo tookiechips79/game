@@ -53,7 +53,8 @@ const AuthModal: React.FC<AuthModalProps> = ({
       
       if (!user) {
         try {
-          user = addUser(randomName, randomPassword);
+          // 👤 Create user via server
+          user = await addUser(randomName, randomPassword);
           toast.success(`${provider} Account Created`, {
             description: `New account created via ${provider}`,
             className: "custom-toast-success"
@@ -78,7 +79,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
     }, 1500);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!loginName.trim() || !loginPassword.trim()) {
@@ -91,15 +92,14 @@ const AuthModal: React.FC<AuthModalProps> = ({
     
     setIsLoading(true);
     
-    setTimeout(() => {
-      setIsLoading(false);
-      
-      const user = authenticateUser(loginName, loginPassword);
+    try {
+      // 👤 Authenticate via server
+      const user = await authenticateUser(loginName, loginPassword);
       
       if (user) {
         setCurrentUser(user);
         toast.success("Welcome back!", {
-          description: `Logged in as ${user.name}`,
+          description: `Logged in as ${user.name} (Credits: ${user.credits})`,
           className: "custom-toast-success"
         });
         onClose();
@@ -109,10 +109,18 @@ const AuthModal: React.FC<AuthModalProps> = ({
           className: "custom-toast-error"
         });
       }
-    }, 800); // Simulate network delay
+    } catch (error) {
+      console.error('❌ [AUTH] Login error:', error);
+      toast.error("Login error", {
+        description: "An error occurred during login. Please try again.",
+        className: "custom-toast-error"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!registerName.trim()) {
@@ -146,36 +154,36 @@ const AuthModal: React.FC<AuthModalProps> = ({
       u.name.toLowerCase() === registerName.toLowerCase()
     );
     
-    setTimeout(() => {
+    if (userExists) {
       setIsLoading(false);
+      toast.error("Registration failed", {
+        description: "This name is already taken. Please try another name.",
+        className: "custom-toast-error"
+      });
+      return;
+    }
+    
+    try {
+      // 👤 Create user via server
+      const newUser = await addUser(registerName, registerPassword);
+      setRegistered(true);
       
-      if (userExists) {
-        toast.error("Registration failed", {
-          description: "This name is already taken. Please try another name.",
-          className: "custom-toast-error"
+      setTimeout(() => {
+        setCurrentUser(newUser);
+        onClose();
+        toast.success("Welcome to Game Bird!", {
+          description: `Your account has been created and you're now logged in.`,
+          className: "custom-toast-success"
         });
-        return;
-      }
-      
-      try {
-        const newUser = addUser(registerName, registerPassword);
-        setRegistered(true);
-        
-        setTimeout(() => {
-          setCurrentUser(newUser);
-          onClose();
-          toast.success("Welcome to Game Bird!", {
-            description: `Your account has been created and you're now logged in.`,
-            className: "custom-toast-success"
-          });
-        }, 1500);
-      } catch (error) {
-        toast.error("Registration failed", {
-          description: error instanceof Error ? error.message : "An error occurred during registration.",
-          className: "custom-toast-error"
-        });
-      }
-    }, 800); // Simulate network delay
+      }, 1500);
+    } catch (error) {
+      toast.error("Registration failed", {
+        description: error instanceof Error ? error.message : "An error occurred during registration.",
+        className: "custom-toast-error"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleTabChange = (tab: "login" | "register") => {
