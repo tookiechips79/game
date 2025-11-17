@@ -579,6 +579,20 @@ io.engine.on('parse_error', (err) => {
 app.get('/api/credits/:userId', (req, res) => {
   const { userId } = req.params;
   const balance = getUserBalance(userId);
+  
+  // 📊 LOG ALL BALANCE FETCHES
+  console.log(`📡 [CREDITS-GET] Fetching balance for ${userId}: ${balance}`);
+  
+  // Verify against user ledger for debugging
+  if (userLedger[userId]) {
+    const userLedgerBalance = userLedger[userId].credits;
+    if (userLedgerBalance !== balance) {
+      console.warn(`⚠️ [CREDITS-SYNC] Mismatch for ${userId}: creditLedger=${balance}, userLedger=${userLedgerBalance}`);
+    } else {
+      console.log(`✅ [CREDITS-SYNC] Balance verified for ${userId}: both ledgers match = ${balance}`);
+    }
+  }
+  
   res.json({ userId, balance });
 });
 
@@ -595,16 +609,24 @@ app.post('/api/credits/:userId/add', (req, res) => {
   const { amount, reason = '', adminNotes = '' } = req.body;
   
   if (!amount || amount <= 0) {
+    console.warn(`⚠️ [CREDITS-ADD] Invalid amount: ${amount}`);
     return res.status(400).json({ error: 'Invalid amount' });
   }
+  
+  const oldBalance = getUserBalance(userId);
+  console.log(`💰 [CREDITS-ADD] Adding ${amount} to ${userId} (old balance: ${oldBalance}, reason: ${reason})`);
   
   const transaction = addTransaction(userId, TRANSACTION_TYPES.ADMIN_ADD, amount, reason, adminNotes);
   
   if (!transaction) {
+    console.warn(`⚠️ [CREDITS-ADD] Transaction failed for ${userId}`);
     return res.status(400).json({ error: 'Could not process transaction' });
   }
   
-  res.json({ success: true, transaction, newBalance: creditLedger[userId].balance });
+  const newBalance = creditLedger[userId].balance;
+  console.log(`✅ [CREDITS-ADD] Success: ${userId} balance updated ${oldBalance} → ${newBalance}`);
+  
+  res.json({ success: true, transaction, newBalance });
 });
 
 // Place bet (deduct credits)
@@ -613,16 +635,24 @@ app.post('/api/credits/:userId/bet', (req, res) => {
   const { amount, betDetails = '' } = req.body;
   
   if (!amount || amount <= 0) {
+    console.warn(`⚠️ [CREDITS-BET] Invalid bet amount: ${amount}`);
     return res.status(400).json({ error: 'Invalid bet amount' });
   }
+  
+  const oldBalance = getUserBalance(userId);
+  console.log(`💰 [CREDITS-BET] Placing bet: userId=${userId}, amount=${amount}, oldBalance=${oldBalance}`);
   
   const transaction = addTransaction(userId, TRANSACTION_TYPES.BET_PLACED, -amount, betDetails);
   
   if (!transaction) {
+    console.warn(`⚠️ [CREDITS-BET] Insufficient balance: ${userId} only has ${oldBalance}`);
     return res.status(400).json({ error: 'Insufficient credits' });
   }
   
-  res.json({ success: true, transaction, newBalance: creditLedger[userId].balance });
+  const newBalance = creditLedger[userId].balance;
+  console.log(`✅ [CREDITS-BET] Success: ${userId} balance updated ${oldBalance} → ${newBalance}`);
+  
+  res.json({ success: true, transaction, newBalance });
 });
 
 // Refund bet
@@ -695,10 +725,12 @@ app.get('/api/credits-admin/all', (req, res) => {
 
 // Get all users (shared across all devices)
 app.get('/api/users', (req, res) => {
+  console.log(`📡 [USERS-GET] Fetching all users...`);
+  
   const users = getAllUsers().map(u => {
     // Get credits from credit ledger (source of truth)
     const userCredits = creditLedger[u.id]?.balance || u.credits || 0;
-    return {
+    const userObj = {
       id: u.id,
       name: u.name,
       credits: userCredits,
@@ -707,23 +739,37 @@ app.get('/api/users', (req, res) => {
       membershipStatus: u.membershipStatus,
       subscriptionDate: u.subscriptionDate
     };
+    
+    // Verify balance
+    if (creditLedger[u.id]) {
+      console.log(`✅ [USERS-GET] ${u.name} (${u.id}): credits=${userCredits}`);
+    } else {
+      console.warn(`⚠️ [USERS-GET] ${u.name} (${u.id}): no creditLedger entry`);
+    }
+    
+    return userObj;
   });
-  console.log(`📋 [USERS] Fetching all users: ${users.length} users`);
+  
+  console.log(`📋 [USERS] Returning ${users.length} users with verified credits`);
   res.json(users);
 });
 
 // Get user by ID
 app.get('/api/users/:userId', (req, res) => {
   const { userId } = req.params;
+  console.log(`📡 [USER-GET] Fetching user: ${userId}`);
+  
   const user = getUserById(userId);
   
   if (!user) {
-    console.warn(`⚠️ [USERS] User not found: ${userId}`);
+    console.warn(`⚠️ [USER-GET] User not found: ${userId}`);
     return res.status(404).json({ error: 'User not found' });
   }
 
   // Get credits from credit ledger (source of truth)
   const userCredits = creditLedger[userId]?.balance || user.credits || 0;
+  
+  console.log(`✅ [USER-GET] ${user.name} (${userId}): credits=${userCredits}`);
 
   res.json({
     id: user.id,

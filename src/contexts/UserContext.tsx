@@ -835,9 +835,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addCredits = async (userId: string, amount: number, isAdmin: boolean = false, reason: string = 'admin_add') => {
-    if (amount <= 0) return;
+    if (amount <= 0) {
+      console.warn('⚠️ [CREDITS] Invalid amount:', amount);
+      return;
+    }
     
     try {
+      console.log(`💰 [CREDITS-ADD] Starting: userId=${userId}, amount=${amount}, reason=${reason}`);
+      
       // 💰 Call server API instead of modifying local state
       // Server is authoritative - it validates, processes, and records the transaction
       const response = await fetch(`/api/credits/${userId}/add`, {
@@ -851,11 +856,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (!response.ok) {
-        throw new Error('Failed to add credits on server');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Server error: ${response.status} - ${errorData.error || 'Unknown'}`);
       }
       
       const data = await response.json();
       const newBalance = data.newBalance;
+      console.log(`✅ [CREDITS-ADD] Server returned newBalance=${newBalance}`);
       
       // Update local state with server-confirmed balance
       setUsers(prev => {
@@ -916,12 +923,20 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const deductCredits = async (userId: string, amount: number, isAdminAction: boolean = false): Promise<boolean> => {
-    if (amount <= 0) return true;
+    if (amount <= 0) {
+      console.warn('⚠️ [CREDITS] Invalid deduct amount:', amount);
+      return true;
+    }
     
     const user = users.find(u => u.id === userId);
-    if (!user) return false;
+    if (!user) {
+      console.warn('⚠️ [CREDITS] User not found:', userId);
+      return false;
+    }
     
     try {
+      console.log(`💰 [CREDITS-BET] Starting: userId=${userId}, amount=${amount}, currentBalance=${user.credits}`);
+      
       // 💰 Call server API to validate and deduct credits
       // Server checks balance before allowing deduction
       const response = await fetch(`/api/credits/${userId}/bet`, {
@@ -934,7 +949,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json().catch(() => ({}));
+        console.warn(`⚠️ [CREDITS-BET] Server rejected: ${response.status}`, error);
         toast.error("Insufficient Credits", {
           description: error.error || `${user.name} doesn't have enough credits`,
           className: "custom-toast-error"
@@ -944,6 +960,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const data = await response.json();
       const newBalance = data.newBalance;
+      console.log(`✅ [CREDITS-BET] Server returned newBalance=${newBalance}`);
       
       // Update local state with server-confirmed balance
       setUsers(prev => {
