@@ -453,109 +453,134 @@ app.get('/api/credits/:userId/history', async (req, res) => {
 });
 
 // Add credits (admin only, or system operations)
-app.post('/api/credits/:userId/add', (req, res) => {
-  const { userId } = req.params;
-  const { amount, reason = '', adminNotes = '' } = req.body;
-  
-  if (!amount || amount <= 0) {
-    console.warn(`⚠️ [CREDITS-ADD] Invalid amount: ${amount}`);
-    return res.status(400).json({ error: 'Invalid amount' });
+app.post('/api/credits/:userId/add', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { amount, reason = '', adminNotes = '' } = req.body;
+    
+    if (!amount || amount <= 0) {
+      console.warn(`⚠️ [CREDITS-ADD] Invalid amount: ${amount}`);
+      return res.status(400).json({ error: 'Invalid amount' });
+    }
+    
+    const oldBalance = await getUserBalance(userId);
+    console.log(`💰 [CREDITS-ADD] Adding ${amount} to ${userId} (old balance: ${oldBalance}, reason: ${reason})`);
+    
+    const transaction = await addTransaction(userId, TRANSACTION_TYPES.ADMIN_ADD, amount, reason, adminNotes);
+    
+    if (!transaction) {
+      console.warn(`⚠️ [CREDITS-ADD] Transaction failed for ${userId}`);
+      return res.status(400).json({ error: 'Could not process transaction' });
+    }
+    
+    const newBalance = creditLedger[userId].balance;
+    console.log(`✅ [CREDITS-ADD] Success: ${userId} balance updated ${oldBalance} → ${newBalance}`);
+    
+    res.json({ success: true, transaction, newBalance });
+  } catch (error) {
+    console.error(`❌ [CREDITS-ADD] Error:`, error);
+    res.status(500).json({ error: 'Failed to add credits' });
   }
-  
-  const oldBalance = getUserBalance(userId);
-  console.log(`💰 [CREDITS-ADD] Adding ${amount} to ${userId} (old balance: ${oldBalance}, reason: ${reason})`);
-  
-  const transaction = addTransaction(userId, TRANSACTION_TYPES.ADMIN_ADD, amount, reason, adminNotes);
-  
-  if (!transaction) {
-    console.warn(`⚠️ [CREDITS-ADD] Transaction failed for ${userId}`);
-    return res.status(400).json({ error: 'Could not process transaction' });
-  }
-  
-  const newBalance = creditLedger[userId].balance;
-  console.log(`✅ [CREDITS-ADD] Success: ${userId} balance updated ${oldBalance} → ${newBalance}`);
-  
-  res.json({ success: true, transaction, newBalance });
 });
 
 // Place bet (deduct credits)
-app.post('/api/credits/:userId/bet', (req, res) => {
-  const { userId } = req.params;
-  const { amount, betDetails = '' } = req.body;
-  
-  if (!amount || amount <= 0) {
-    console.warn(`⚠️ [CREDITS-BET] Invalid bet amount: ${amount}`);
-    return res.status(400).json({ error: 'Invalid bet amount' });
+app.post('/api/credits/:userId/bet', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { amount, betDetails = '' } = req.body;
+    
+    if (!amount || amount <= 0) {
+      console.warn(`⚠️ [CREDITS-BET] Invalid bet amount: ${amount}`);
+      return res.status(400).json({ error: 'Invalid bet amount' });
+    }
+    
+    const oldBalance = await getUserBalance(userId);
+    console.log(`💰 [CREDITS-BET] Placing bet: userId=${userId}, amount=${amount}, oldBalance=${oldBalance}`);
+    
+    const transaction = await addTransaction(userId, TRANSACTION_TYPES.BET_PLACED, -amount, betDetails);
+    
+    if (!transaction) {
+      console.warn(`⚠️ [CREDITS-BET] Insufficient balance: ${userId} only has ${oldBalance}`);
+      return res.status(400).json({ error: 'Insufficient credits' });
+    }
+    
+    const newBalance = creditLedger[userId].balance;
+    console.log(`✅ [CREDITS-BET] Success: ${userId} balance updated ${oldBalance} → ${newBalance}`);
+    
+    res.json({ success: true, transaction, newBalance });
+  } catch (error) {
+    console.error(`❌ [CREDITS-BET] Error:`, error);
+    res.status(500).json({ error: 'Failed to place bet' });
   }
-  
-  const oldBalance = getUserBalance(userId);
-  console.log(`💰 [CREDITS-BET] Placing bet: userId=${userId}, amount=${amount}, oldBalance=${oldBalance}`);
-  
-  const transaction = addTransaction(userId, TRANSACTION_TYPES.BET_PLACED, -amount, betDetails);
-  
-  if (!transaction) {
-    console.warn(`⚠️ [CREDITS-BET] Insufficient balance: ${userId} only has ${oldBalance}`);
-    return res.status(400).json({ error: 'Insufficient credits' });
-  }
-  
-  const newBalance = creditLedger[userId].balance;
-  console.log(`✅ [CREDITS-BET] Success: ${userId} balance updated ${oldBalance} → ${newBalance}`);
-  
-  res.json({ success: true, transaction, newBalance });
 });
 
 // Refund bet
-app.post('/api/credits/:userId/refund', (req, res) => {
-  const { userId } = req.params;
-  const { amount, reason = '' } = req.body;
-  
-  if (!amount || amount <= 0) {
-    return res.status(400).json({ error: 'Invalid refund amount' });
+app.post('/api/credits/:userId/refund', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { amount, reason = '' } = req.body;
+    
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: 'Invalid refund amount' });
+    }
+    
+    const transaction = await addTransaction(userId, TRANSACTION_TYPES.BET_REFUNDED, amount, reason);
+    
+    if (!transaction) {
+      return res.status(400).json({ error: 'Could not process refund' });
+    }
+    
+    res.json({ success: true, transaction, newBalance: creditLedger[userId].balance });
+  } catch (error) {
+    console.error(`❌ [CREDITS-REFUND] Error:`, error);
+    res.status(500).json({ error: 'Failed to refund bet' });
   }
-  
-  const transaction = addTransaction(userId, TRANSACTION_TYPES.BET_REFUNDED, amount, reason);
-  
-  if (!transaction) {
-    return res.status(400).json({ error: 'Could not process refund' });
-  }
-  
-  res.json({ success: true, transaction, newBalance: creditLedger[userId].balance });
 });
 
 // Win bet (add credits)
-app.post('/api/credits/:userId/win', (req, res) => {
-  const { userId } = req.params;
-  const { amount, betDetails = '' } = req.body;
-  
-  if (!amount || amount <= 0) {
-    return res.status(400).json({ error: 'Invalid win amount' });
+app.post('/api/credits/:userId/win', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { amount, betDetails = '' } = req.body;
+    
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: 'Invalid win amount' });
+    }
+    
+    const transaction = await addTransaction(userId, TRANSACTION_TYPES.BET_WON, amount, betDetails);
+    
+    if (!transaction) {
+      return res.status(400).json({ error: 'Could not process win' });
+    }
+    
+    res.json({ success: true, transaction, newBalance: creditLedger[userId].balance });
+  } catch (error) {
+    console.error(`❌ [CREDITS-WIN] Error:`, error);
+    res.status(500).json({ error: 'Failed to process win' });
   }
-  
-  const transaction = addTransaction(userId, TRANSACTION_TYPES.BET_WON, amount, betDetails);
-  
-  if (!transaction) {
-    return res.status(400).json({ error: 'Could not process win' });
-  }
-  
-  res.json({ success: true, transaction, newBalance: creditLedger[userId].balance });
 });
 
 // Cashout (deduct credits)
-app.post('/api/credits/:userId/cashout', (req, res) => {
-  const { userId } = req.params;
-  const { amount } = req.body;
-  
-  if (!amount || amount <= 0) {
-    return res.status(400).json({ error: 'Invalid cashout amount' });
+app.post('/api/credits/:userId/cashout', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { amount } = req.body;
+    
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: 'Invalid cashout amount' });
+    }
+    
+    const transaction = await addTransaction(userId, TRANSACTION_TYPES.CASHOUT, -amount, 'User cashout');
+    
+    if (!transaction) {
+      return res.status(400).json({ error: 'Insufficient credits' });
+    }
+    
+    res.json({ success: true, transaction, newBalance: creditLedger[userId].balance });
+  } catch (error) {
+    console.error(`❌ [CREDITS-CASHOUT] Error:`, error);
+    res.status(500).json({ error: 'Failed to process cashout' });
   }
-  
-  const transaction = addTransaction(userId, TRANSACTION_TYPES.CASHOUT, -amount, 'User cashout');
-  
-  if (!transaction) {
-    return res.status(400).json({ error: 'Insufficient credits' });
-  }
-  
-  res.json({ success: true, transaction, newBalance: creditLedger[userId].balance });
 });
 
 // Get all user credits (admin view)
@@ -573,121 +598,135 @@ app.get('/api/credits-admin/all', (req, res) => {
 // ============================================================================
 
 // Get all users (shared across all devices)
-app.get('/api/users', (req, res) => {
-  console.log(`📡 [USERS-GET] Fetching all users...`);
-  
-  const users = getAllUsers().map(u => {
-    // Get credits from credit ledger (source of truth)
-    const userCredits = creditLedger[u.id]?.balance || u.credits || 0;
-    const userObj = {
-      id: u.id,
-      name: u.name,
-      credits: userCredits,
-      wins: u.wins,
-      losses: u.losses,
-      membershipStatus: u.membershipStatus,
-      subscriptionDate: u.subscriptionDate
-    };
+app.get('/api/users', async (req, res) => {
+  try {
+    console.log(`📡 [USERS-GET] Fetching all users...`);
     
-    // Verify balance
-    if (creditLedger[u.id]) {
-      console.log(`✅ [USERS-GET] ${u.name} (${u.id}): credits=${userCredits}`);
-    } else {
-      console.warn(`⚠️ [USERS-GET] ${u.name} (${u.id}): no creditLedger entry`);
-    }
+    const users = (await getAllUsers()).map(u => {
+      // Get credits from credit ledger (source of truth)
+      const userCredits = creditLedger[u.id]?.balance || u.credits || 0;
+      const userObj = {
+        id: u.id,
+        name: u.name,
+        credits: userCredits,
+        wins: u.wins,
+        losses: u.losses,
+        membershipStatus: u.membershipStatus,
+        subscriptionDate: u.subscriptionDate
+      };
+      
+      // Verify balance
+      if (creditLedger[u.id]) {
+        console.log(`✅ [USERS-GET] ${u.name} (${u.id}): credits=${userCredits}`);
+      } else {
+        console.warn(`⚠️ [USERS-GET] ${u.name} (${u.id}): no creditLedger entry`);
+      }
+      
+      return userObj;
+    });
     
-    return userObj;
-  });
-  
-  console.log(`📋 [USERS] Returning ${users.length} users with verified credits`);
-  res.json(users);
+    console.log(`📋 [USERS] Returning ${users.length} users with verified credits`);
+    res.json(users);
+  } catch (error) {
+    console.error(`❌ [USERS-GET] Error fetching users:`, error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
 });
 
 // Get user by ID
-app.get('/api/users/:userId', (req, res) => {
-  const { userId } = req.params;
-  console.log(`📡 [USER-GET] Fetching user: ${userId}`);
-  
-  const user = getUserById(userId);
-  
-  if (!user) {
-    console.warn(`⚠️ [USER-GET] User not found: ${userId}`);
-    return res.status(404).json({ error: 'User not found' });
+app.get('/api/users/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log(`📡 [USER-GET] Fetching user: ${userId}`);
+    
+    const user = await getUserById(userId);
+    
+    if (!user) {
+      console.warn(`⚠️ [USER-GET] User not found: ${userId}`);
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Get credits from credit ledger (source of truth)
+    const userCredits = creditLedger[userId]?.balance || user.credits || 0;
+    
+    console.log(`✅ [USER-GET] ${user.name} (${userId}): credits=${userCredits}`);
+
+    res.json({
+      id: user.id,
+      name: user.name,
+      credits: userCredits,
+      wins: user.wins,
+      losses: user.losses,
+      membershipStatus: user.membershipStatus,
+      subscriptionDate: user.subscriptionDate
+    });
+  } catch (error) {
+    console.error(`❌ [USER-GET] Error fetching user:`, error);
+    res.status(500).json({ error: 'Failed to fetch user' });
   }
-
-  // Get credits from credit ledger (source of truth)
-  const userCredits = creditLedger[userId]?.balance || user.credits || 0;
-  
-  console.log(`✅ [USER-GET] ${user.name} (${userId}): credits=${userCredits}`);
-
-  res.json({
-    id: user.id,
-    name: user.name,
-    credits: userCredits,
-    wins: user.wins,
-    losses: user.losses,
-    membershipStatus: user.membershipStatus,
-    subscriptionDate: user.subscriptionDate
-  });
 });
 
 // Create new user
-app.post('/api/users', (req, res) => {
-  const { name, password, initialCredits = 0 } = req.body;
+app.post('/api/users', async (req, res) => {
+  try {
+    const { name, password, initialCredits = 0 } = req.body;
 
-  if (!name || !password) {
-    return res.status(400).json({ error: 'Name and password required' });
+    if (!name || !password) {
+      return res.status(400).json({ error: 'Name and password required' });
+    }
+
+    const newUser = await createOrUpdateUser(name, password, initialCredits);
+    
+    if (!newUser) {
+      return res.status(400).json({ error: 'User already exists or creation failed' });
+    }
+
+    res.json({
+      id: newUser.id,
+      name: newUser.name,
+      credits: newUser.credits || initialCredits,
+      wins: newUser.wins || 0,
+      losses: newUser.losses || 0,
+      membershipStatus: newUser.membershipStatus || 'free',
+      subscriptionDate: newUser.subscriptionDate
+    });
+  } catch (error) {
+    console.error(`❌ [USER-CREATE] Error:`, error);
+    res.status(500).json({ error: 'Failed to create user' });
   }
-
-  const newUser = addUser(name, password, initialCredits);
-  
-  if (!newUser) {
-    return res.status(400).json({ error: 'User already exists or creation failed' });
-  }
-
-  // Also initialize credit ledger for this user
-  if (!creditLedger[newUser.id]) {
-    initializeUserCredits(newUser.id, initialCredits);
-    console.log(`💰 [CREDITS] Initialized credit ledger for new user: ${newUser.id}`);
-  }
-
-  res.json({
-    id: newUser.id,
-    name: newUser.name,
-    credits: newUser.credits,
-    wins: newUser.wins,
-    losses: newUser.losses,
-    membershipStatus: newUser.membershipStatus,
-    subscriptionDate: newUser.subscriptionDate
-  });
 });
 
 // Authenticate user (login)
-app.post('/api/users/auth', (req, res) => {
-  const { name, password } = req.body;
+app.post('/api/users/auth', async (req, res) => {
+  try {
+    const { name, password } = req.body;
 
-  if (!name || !password) {
-    return res.status(400).json({ error: 'Name and password required' });
+    if (!name || !password) {
+      return res.status(400).json({ error: 'Name and password required' });
+    }
+
+    const user = await authenticateUser(name, password);
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Get credits from credit ledger (source of truth)
+    const userCredits = creditLedger[user.id]?.balance || user.credits || 0;
+
+    res.json({
+      id: user.id,
+      name: user.name,
+      credits: userCredits,
+      wins: user.wins,
+      losses: user.losses,
+      membershipStatus: user.membershipStatus,
+      subscriptionDate: user.subscriptionDate
+    });
+  } catch (error) {
+    console.error(`❌ [USER-AUTH] Error:`, error);
+    res.status(500).json({ error: 'Failed to authenticate user' });
   }
-
-  const user = authenticateUser(name, password);
-  
-  if (!user) {
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-
-  // Get credits from credit ledger (source of truth)
-  const userCredits = creditLedger[user.id]?.balance || user.credits || 0;
-
-  res.json({
-    id: user.id,
-    name: user.name,
-    credits: userCredits,
-    wins: user.wins,
-    losses: user.losses,
-    membershipStatus: user.membershipStatus,
-    subscriptionDate: user.subscriptionDate
-  });
 });
 
 // Update user (admin only)
