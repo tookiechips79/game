@@ -466,7 +466,7 @@ app.post('/api/credits/:userId/add', async (req, res) => {
     const oldBalance = await getUserBalance(userId);
     console.log(`💰 [CREDITS-ADD] Adding ${amount} to ${userId} (old balance: ${oldBalance}, reason: ${reason})`);
     
-    const transaction = await addTransaction(userId, TRANSACTION_TYPES.ADMIN_ADD, amount, reason, adminNotes);
+    const transaction = await addTransaction(userId, 'admin_add', amount, reason, adminNotes);
     
     if (!transaction) {
       console.warn(`⚠️ [CREDITS-ADD] Transaction failed for ${userId}`);
@@ -497,7 +497,7 @@ app.post('/api/credits/:userId/bet', async (req, res) => {
     const oldBalance = await getUserBalance(userId);
     console.log(`💰 [CREDITS-BET] Placing bet: userId=${userId}, amount=${amount}, oldBalance=${oldBalance}`);
     
-    const transaction = await addTransaction(userId, TRANSACTION_TYPES.BET_PLACED, -amount, betDetails);
+    const transaction = await addTransaction(userId, 'bet_placed', -amount, betDetails);
     
     if (!transaction) {
       console.warn(`⚠️ [CREDITS-BET] Insufficient balance: ${userId} only has ${oldBalance}`);
@@ -524,7 +524,7 @@ app.post('/api/credits/:userId/refund', async (req, res) => {
       return res.status(400).json({ error: 'Invalid refund amount' });
     }
     
-    const transaction = await addTransaction(userId, TRANSACTION_TYPES.BET_REFUNDED, amount, reason);
+    const transaction = await addTransaction(userId, 'bet_refunded', amount, reason);
     
     if (!transaction) {
       return res.status(400).json({ error: 'Could not process refund' });
@@ -547,7 +547,7 @@ app.post('/api/credits/:userId/win', async (req, res) => {
       return res.status(400).json({ error: 'Invalid win amount' });
     }
     
-    const transaction = await addTransaction(userId, TRANSACTION_TYPES.BET_WON, amount, betDetails);
+    const transaction = await addTransaction(userId, 'bet_won', amount, betDetails);
     
     if (!transaction) {
       return res.status(400).json({ error: 'Could not process win' });
@@ -570,7 +570,7 @@ app.post('/api/credits/:userId/cashout', async (req, res) => {
       return res.status(400).json({ error: 'Invalid cashout amount' });
     }
     
-    const transaction = await addTransaction(userId, TRANSACTION_TYPES.CASHOUT, -amount, 'User cashout');
+    const transaction = await addTransaction(userId, 'cashout', -amount, 'User cashout');
     
     if (!transaction) {
       return res.status(400).json({ error: 'Insufficient credits' });
@@ -730,25 +730,39 @@ app.post('/api/users/auth', async (req, res) => {
 });
 
 // Update user (admin only)
-app.put('/api/users/:userId', (req, res) => {
-  const { userId } = req.params;
-  const updates = req.body;
+app.put('/api/users/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { wins, losses } = req.body;
 
-  const updatedUser = updateUser(userId, updates);
-  
-  if (!updatedUser) {
-    return res.status(404).json({ error: 'User not found' });
+    // Update user stats if provided
+    if (wins !== undefined || losses !== undefined) {
+      await updateUserStats(userId, wins, losses);
+      console.log(`✅ [USER-UPDATE] Updated stats for ${userId}`);
+    }
+
+    // Fetch and return updated user
+    const updatedUser = await getUserById(userId);
+    
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userCredits = creditLedger[userId]?.balance || updatedUser.credits || 0;
+
+    res.json({
+      id: updatedUser.id,
+      name: updatedUser.name,
+      credits: userCredits,
+      wins: updatedUser.wins,
+      losses: updatedUser.losses,
+      membershipStatus: updatedUser.membershipStatus,
+      subscriptionDate: updatedUser.subscriptionDate
+    });
+  } catch (error) {
+    console.error(`❌ [USER-UPDATE] Error:`, error);
+    res.status(500).json({ error: 'Failed to update user' });
   }
-
-  res.json({
-    id: updatedUser.id,
-    name: updatedUser.name,
-    credits: updatedUser.credits,
-    wins: updatedUser.wins,
-    losses: updatedUser.losses,
-    membershipStatus: updatedUser.membershipStatus,
-    subscriptionDate: updatedUser.subscriptionDate
-  });
 });
 
 // Socket.IO connection handling
