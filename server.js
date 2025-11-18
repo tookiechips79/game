@@ -425,31 +425,31 @@ io.engine.on('parse_error', (err) => {
 
 // 💰 CREDIT API ENDPOINTS
 // Get user balance
-app.get('/api/credits/:userId', (req, res) => {
-  const { userId } = req.params;
-  const balance = getUserBalance(userId);
-  
-  // 📊 LOG ALL BALANCE FETCHES
-  console.log(`📡 [CREDITS-GET] Fetching balance for ${userId}: ${balance}`);
-  
-  // Verify against user ledger for debugging
-  if (userLedger[userId]) {
-    const userLedgerBalance = userLedger[userId].credits;
-    if (userLedgerBalance !== balance) {
-      console.warn(`⚠️ [CREDITS-SYNC] Mismatch for ${userId}: creditLedger=${balance}, userLedger=${userLedgerBalance}`);
-    } else {
-      console.log(`✅ [CREDITS-SYNC] Balance verified for ${userId}: both ledgers match = ${balance}`);
-    }
+app.get('/api/credits/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const balance = await getUserBalance(userId);
+    
+    // 📊 LOG ALL BALANCE FETCHES
+    console.log(`📡 [CREDITS-GET] Fetching balance for ${userId}: ${balance}`);
+    
+    res.json({ userId, balance });
+  } catch (error) {
+    console.error(`❌ [CREDITS-GET] Error fetching balance:`, error);
+    res.status(500).json({ error: 'Failed to fetch balance' });
   }
-  
-  res.json({ userId, balance });
 });
 
 // Get user transaction history
-app.get('/api/credits/:userId/history', (req, res) => {
-  const { userId } = req.params;
-  const transactions = getUserTransactionHistory(userId);
-  res.json({ userId, transactions });
+app.get('/api/credits/:userId/history', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const transactions = await getUserTransactionHistory(userId);
+    res.json({ userId, transactions });
+  } catch (error) {
+    console.error(`❌ [TRANSACTIONS-GET] Error fetching transactions:`, error);
+    res.status(500).json({ error: 'Failed to fetch transactions' });
+  }
 });
 
 // Add credits (admin only, or system operations)
