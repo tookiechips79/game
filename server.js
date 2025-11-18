@@ -473,7 +473,7 @@ app.post('/api/credits/:userId/add', async (req, res) => {
       return res.status(400).json({ error: 'Could not process transaction' });
     }
     
-    const newBalance = creditLedger[userId].balance;
+    const newBalance = await getUserBalance(userId);
     console.log(`✅ [CREDITS-ADD] Success: ${userId} balance updated ${oldBalance} → ${newBalance}`);
     
     res.json({ success: true, transaction, newBalance });
@@ -504,7 +504,7 @@ app.post('/api/credits/:userId/bet', async (req, res) => {
       return res.status(400).json({ error: 'Insufficient credits' });
     }
     
-    const newBalance = creditLedger[userId].balance;
+    const newBalance = await getUserBalance(userId);
     console.log(`✅ [CREDITS-BET] Success: ${userId} balance updated ${oldBalance} → ${newBalance}`);
     
     res.json({ success: true, transaction, newBalance });
@@ -530,7 +530,8 @@ app.post('/api/credits/:userId/refund', async (req, res) => {
       return res.status(400).json({ error: 'Could not process refund' });
     }
     
-    res.json({ success: true, transaction, newBalance: creditLedger[userId].balance });
+    const newBalance = await getUserBalance(userId);
+    res.json({ success: true, transaction, newBalance });
   } catch (error) {
     console.error(`❌ [CREDITS-REFUND] Error:`, error);
     res.status(500).json({ error: 'Failed to refund bet' });
@@ -553,7 +554,8 @@ app.post('/api/credits/:userId/win', async (req, res) => {
       return res.status(400).json({ error: 'Could not process win' });
     }
     
-    res.json({ success: true, transaction, newBalance: creditLedger[userId].balance });
+    const newBalance = await getUserBalance(userId);
+    res.json({ success: true, transaction, newBalance });
   } catch (error) {
     console.error(`❌ [CREDITS-WIN] Error:`, error);
     res.status(500).json({ error: 'Failed to process win' });
@@ -576,7 +578,8 @@ app.post('/api/credits/:userId/cashout', async (req, res) => {
       return res.status(400).json({ error: 'Insufficient credits' });
     }
     
-    res.json({ success: true, transaction, newBalance: creditLedger[userId].balance });
+    const newBalance = await getUserBalance(userId);
+    res.json({ success: true, transaction, newBalance });
   } catch (error) {
     console.error(`❌ [CREDITS-CASHOUT] Error:`, error);
     res.status(500).json({ error: 'Failed to process cashout' });
@@ -602,28 +605,24 @@ app.get('/api/users', async (req, res) => {
   try {
     console.log(`📡 [USERS-GET] Fetching all users...`);
     
-    const users = (await getAllUsers()).map(u => {
-      // Get credits from credit ledger (source of truth)
-      const userCredits = creditLedger[u.id]?.balance || u.credits || 0;
+    const allUsers = await getAllUsers();
+    
+    // Fetch credits for each user from database
+    const users = await Promise.all(allUsers.map(async (u) => {
+      const userBalance = await getUserBalance(u.id);
       const userObj = {
         id: u.id,
         name: u.name,
-        credits: userCredits,
-        wins: u.wins,
-        losses: u.losses,
-        membershipStatus: u.membershipStatus,
+        credits: userBalance || u.credits || 0,
+        wins: u.wins || 0,
+        losses: u.losses || 0,
+        membershipStatus: u.membershipStatus || 'free',
         subscriptionDate: u.subscriptionDate
       };
       
-      // Verify balance
-      if (creditLedger[u.id]) {
-        console.log(`✅ [USERS-GET] ${u.name} (${u.id}): credits=${userCredits}`);
-      } else {
-        console.warn(`⚠️ [USERS-GET] ${u.name} (${u.id}): no creditLedger entry`);
-      }
-      
+      console.log(`✅ [USERS-GET] ${u.name} (${u.id}): credits=${userObj.credits}`);
       return userObj;
-    });
+    }));
     
     console.log(`📋 [USERS] Returning ${users.length} users with verified credits`);
     res.json(users);
@@ -646,18 +645,18 @@ app.get('/api/users/:userId', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Get credits from credit ledger (source of truth)
-    const userCredits = creditLedger[userId]?.balance || user.credits || 0;
+    // Get credits from database (source of truth)
+    const userCredits = await getUserBalance(userId);
     
     console.log(`✅ [USER-GET] ${user.name} (${userId}): credits=${userCredits}`);
 
     res.json({
       id: user.id,
       name: user.name,
-      credits: userCredits,
-      wins: user.wins,
-      losses: user.losses,
-      membershipStatus: user.membershipStatus,
+      credits: userCredits || user.credits || 0,
+      wins: user.wins || 0,
+      losses: user.losses || 0,
+      membershipStatus: user.membershipStatus || 'free',
       subscriptionDate: user.subscriptionDate
     });
   } catch (error) {
@@ -711,16 +710,16 @@ app.post('/api/users/auth', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Get credits from credit ledger (source of truth)
-    const userCredits = creditLedger[user.id]?.balance || user.credits || 0;
+    // Get credits from database (source of truth)
+    const userCredits = await getUserBalance(user.id);
 
     res.json({
       id: user.id,
       name: user.name,
-      credits: userCredits,
-      wins: user.wins,
-      losses: user.losses,
-      membershipStatus: user.membershipStatus,
+      credits: userCredits || user.credits || 0,
+      wins: user.wins || 0,
+      losses: user.losses || 0,
+      membershipStatus: user.membershipStatus || 'free',
       subscriptionDate: user.subscriptionDate
     });
   } catch (error) {
@@ -748,12 +747,12 @@ app.put('/api/users/:userId', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const userCredits = creditLedger[userId]?.balance || updatedUser.credits || 0;
+    const userCredits = await getUserBalance(userId);
 
     res.json({
       id: updatedUser.id,
       name: updatedUser.name,
-      credits: userCredits,
+      credits: userCredits || updatedUser.credits || 0,
       wins: updatedUser.wins,
       losses: updatedUser.losses,
       membershipStatus: updatedUser.membershipStatus,
