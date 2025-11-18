@@ -17,7 +17,7 @@ import {
   getUserTransactionHistory,
   updateUserStats,
   getDatabaseStats,
-} from './db/database.js';
+} from './src/db/database.js';
 
 // Deployment version: 3
 // Force Render to redeploy with fresh instance
