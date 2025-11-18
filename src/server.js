@@ -13,7 +13,8 @@ let initializeDatabase, createOrUpdateUser, getUserById, authenticateUser, getAl
 async function loadDatabaseModule() {
   if (dbModule) return;
   try {
-    dbModule = await import('./db/database.js');
+    const dbPath = new URL('./db/database.js', import.meta.url).href;
+    dbModule = await import(dbPath);
     initializeDatabase = dbModule.initializeDatabase;
     createOrUpdateUser = dbModule.createOrUpdateUser;
     getUserById = dbModule.getUserById;
@@ -24,9 +25,10 @@ async function loadDatabaseModule() {
     getUserTransactionHistory = dbModule.getUserTransactionHistory;
     updateUserStats = dbModule.updateUserStats;
     getDatabaseStats = dbModule.getDatabaseStats;
+    console.log('✅ [SERVER] Database module loaded successfully');
     return dbModule;
   } catch (error) {
-    console.warn('⚠️ [SERVER] Database module not found:', error.message);
+    console.warn('⚠️ [SERVER] Database module not found, running in fallback mode:', error.message);
     return null;
   }
 }
