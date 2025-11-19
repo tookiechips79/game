@@ -984,13 +984,17 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       
       console.log('📤 [GAME-HISTORY-SYNC] Sending to server:', `Game #${record.gameNumber}`);
-      socketIOService.emitNewGameAdded(gameHistoryRecord);
+      console.log('🔌 [GAME-HISTORY-SYNC] Socket connected?', socketIOService.isSocketConnected());
       
-      // 💰 MIRROR WALLET PATTERN: Request full history from server immediately
-      // Server will broadcast complete history to all clients synchronously
       if (socketIOService.isSocketConnected()) {
+        socketIOService.emitNewGameAdded(gameHistoryRecord);
+        
+        // 💰 MIRROR WALLET PATTERN: Request full history from server immediately
+        // Server will broadcast complete history to all clients synchronously
         console.log('📡 [GAME-HISTORY-SYNC] Requesting full history from server');
         socketIOService.emitRequestGameHistory();
+      } else {
+        console.warn('⚠️ [GAME-HISTORY-SYNC] Socket NOT connected! Cannot emit game to server');
       }
     } catch (err) {
       console.error('❌ [GAME-HISTORY-SYNC] Error sending game to server:', err);

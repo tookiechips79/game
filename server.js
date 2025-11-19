@@ -1439,10 +1439,16 @@ io.on('connection', (socket) => {
     const arenaId = data?.arenaId || 'default';
     const gameHistoryRecord = data?.gameHistoryRecord;
 
+    console.log(`📥 [GAME-HISTORY] Received 'new-game-added' event for arena '${arenaId}'`);
+    console.log(`   Full data:`, JSON.stringify(data, null, 2));
+    console.log(`   gameHistoryRecord:`, gameHistoryRecord);
+
     try {
       // 🎮 CRITICAL: Validate game data before saving
       if (!gameHistoryRecord || gameHistoryRecord.gameNumber === undefined) {
         console.warn(`⚠️ [GAME-HISTORY] Invalid game data received - missing gameNumber`);
+        console.warn(`   gameHistoryRecord:`, gameHistoryRecord);
+        console.warn(`   gameNumber value:`, gameHistoryRecord?.gameNumber);
         socket.emit('game-history-error', { error: 'Invalid game data' });
         return;
       }
