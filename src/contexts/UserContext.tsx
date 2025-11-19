@@ -320,27 +320,20 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     socketIOService.connect();
 
     // 🎮 REQUEST GAME HISTORY WITH RETRY
-    // IMPORTANT: Wait for socket AND ensure we're in an arena room
-    // The server needs us to be in the arena room to broadcast to us
+    // IMPORTANT: Wait for socket to be connected, then request history
+    // The server will route it correctly based on set-arena that was already emitted
     const requestGameHistory = () => {
       if (socketIOService.socket && socketIOService.socket.connected) {
-        // Check if socket is in rooms (arena room should be set)
-        const rooms = socketIOService.socket.rooms;
-        if (rooms && rooms.size > 0) {
-          // Log which room we're in for debugging
-          const roomsList = Array.from(rooms).join(', ');
-          console.log(`📡 [HISTORY] Socket ready in rooms: ${roomsList} - requesting game history from server...`);
-          socketIOService.emitRequestGameHistory();
-        } else {
-          console.log('⏳ [HISTORY] Waiting for arena room... retrying in 200ms...');
-          setTimeout(requestGameHistory, 200);
-        }
+        console.log('📡 [HISTORY] Socket connected - requesting game history from server...');
+        socketIOService.emitRequestGameHistory();
       } else {
         console.log('⏳ [HISTORY] Socket not connected yet, retrying in 100ms...');
         setTimeout(requestGameHistory, 100);
       }
     };
-    requestGameHistory();
+    
+    // Wait a bit for socket to stabilize after connection
+    setTimeout(requestGameHistory, 500);
 
     // Listen for game history updates from other clients
     // 🎮 NEW SERVER-AUTHORITATIVE HANDLER for game history from database
