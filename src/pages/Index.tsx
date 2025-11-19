@@ -500,19 +500,33 @@ const Index = () => {
             // Normal matched bet between different users
             console.log(`💰 [BET-RESULT] Bet #${bet.id}: ${bet.amount} from each`);
             
-            // Step 1: Return BOTH original bets to users
-            console.log(`   1️⃣  Returning bets: ${userA.name} +${bet.amount}, ${userB.name} +${bet.amount}`);
-            await addCredits(userA.id, bet.amount);
+            // Get current balances before processing
+            const userABefore = getUserById(userA.id);
+            const userBBefore = getUserById(userB.id);
+            const balanceABefore = userABefore?.credits || 0;
+            const balanceBBefore = userBBefore?.credits || 0;
+            
+            console.log(`   📊 BEFORE: ${userA.name}=${balanceABefore}, ${userB.name}=${balanceBBefore}`);
+            
+            // Step 1: Return loser's bet to loser
+            console.log(`   1️⃣  Return loser's bet: ${userB.name} gets their ${bet.amount} coins back`);
             await addCredits(userB.id, bet.amount);
-            totalReturned += bet.amount * 2;
             
             // Step 2: Give loser's bet to winner
-            console.log(`   2️⃣  Processing win: ${userA.name} gets ${bet.amount} from ${userB.name}`);
+            console.log(`   2️⃣  Winner takes the prize: ${userA.name} gets ${bet.amount} from ${userB.name}`);
             await addCredits(userA.id, bet.amount);
             
-            console.log(`   ✅ WINNER: ${userA.name} ends with +${bet.amount * 2} (${bet.amount} refund + ${bet.amount} won)`);
-            console.log(`   ❌ LOSER: ${userB.name} ends with +${bet.amount - bet.amount} = 0 (break even on refund)`);
+            // Get balances after processing
+            const userAAfter = getUserById(userA.id);
+            const userBAfter = getUserById(userB.id);
+            const balanceAAfter = userAAfter?.credits || 0;
+            const balanceBAfter = userBAfter?.credits || 0;
             
+            console.log(`   📊 AFTER: ${userA.name}=${balanceAAfter}, ${userB.name}=${balanceBAfter}`);
+            console.log(`   ✅ WINNER: ${userA.name} net change: +${balanceAAfter - balanceABefore} coins`);
+            console.log(`   ❌ LOSER: ${userB.name} net change: +${balanceBAfter - balanceBBefore} coins (break even)`);
+            
+            totalReturned += bet.amount;
             totalProcessed += bet.amount * 2;
             incrementWins(userA.id);
             incrementLosses(userB.id);
@@ -530,19 +544,33 @@ const Index = () => {
             // Team B wins (and this is not a self-matched bet)
             console.log(`💰 [BET-RESULT] Bet #${bet.id}: ${bet.amount} from each`);
             
-            // Step 1: Return BOTH original bets to users
-            console.log(`   1️⃣  Returning bets: ${userA.name} +${bet.amount}, ${userB.name} +${bet.amount}`);
+            // Get current balances before processing
+            const userABefore = getUserById(userA.id);
+            const userBBefore = getUserById(userB.id);
+            const balanceABefore = userABefore?.credits || 0;
+            const balanceBBefore = userBBefore?.credits || 0;
+            
+            console.log(`   📊 BEFORE: ${userA.name}=${balanceABefore}, ${userB.name}=${balanceBBefore}`);
+            
+            // Step 1: Return loser's bet to loser
+            console.log(`   1️⃣  Return loser's bet: ${userA.name} gets their ${bet.amount} coins back`);
             await addCredits(userA.id, bet.amount);
-            await addCredits(userB.id, bet.amount);
-            totalReturned += bet.amount * 2;
             
             // Step 2: Give loser's bet to winner
-            console.log(`   2️⃣  Processing win: ${userB.name} gets ${bet.amount} from ${userA.name}`);
+            console.log(`   2️⃣  Winner takes the prize: ${userB.name} gets ${bet.amount} from ${userA.name}`);
             await addCredits(userB.id, bet.amount);
             
-            console.log(`   ✅ WINNER: ${userB.name} ends with +${bet.amount * 2} (${bet.amount} refund + ${bet.amount} won)`);
-            console.log(`   ❌ LOSER: ${userA.name} ends with +${bet.amount - bet.amount} = 0 (break even on refund)`);
+            // Get balances after processing
+            const userAAfter = getUserById(userA.id);
+            const userBAfter = getUserById(userB.id);
+            const balanceAAfter = userAAfter?.credits || 0;
+            const balanceBAfter = userBAfter?.credits || 0;
             
+            console.log(`   📊 AFTER: ${userA.name}=${balanceAAfter}, ${userB.name}=${balanceBAfter}`);
+            console.log(`   ✅ WINNER: ${userB.name} net change: +${balanceBAfter - balanceBBefore} coins`);
+            console.log(`   ❌ LOSER: ${userA.name} net change: +${balanceAAfter - balanceABefore} coins (break even)`);
+            
+            totalReturned += bet.amount;
             totalProcessed += bet.amount * 2;
             incrementWins(userB.id);
             incrementLosses(userA.id);
