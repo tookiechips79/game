@@ -452,6 +452,7 @@ const OnePocketArena = () => {
     
     if (bookedBets.length > 0) {
       let totalProcessed = 0;
+      let totalReturned = 0;
       
       // Use for...of instead of forEach so we can await
       for (const bet of bookedBets) {
@@ -466,19 +467,29 @@ const OnePocketArena = () => {
             // Self-matched bets are neutral - user gets all credits back
             console.log(`💰 [SELF-BET-NEUTRAL] Bet #${bet.id}: ${userA.name} bet on both sides`);
             console.log(`   ⚖️  NEUTRAL: ${userA.name} gets ${bet.amount * 2} coins back (no profit/loss)`);
+            
+            // Return both bets to the user
             await addCredits(userA.id, bet.amount * 2);
+            totalReturned += bet.amount * 2;
             totalProcessed += bet.amount * 2;
           } else if (winningTeam === 'A') {
             // Normal matched bet between different users
-            totalProcessed += bet.amount * 2;
-            
-            // Winner gets their bet back PLUS loser's bet (amount * 2 total)
-            // This represents: their 100 + loser's 100 = 200 total payout
             console.log(`💰 [BET-RESULT] Bet #${bet.id}: ${bet.amount} from each`);
-            console.log(`   ✅ WINNER: ${userA.name} receives ${bet.amount * 2} coins (${bet.amount} refund + ${bet.amount} from ${userB.name})`);
-            console.log(`   ❌ LOSER: ${userB.name} loses ${bet.amount} coins (given to ${userA.name})`);
             
-            await addCredits(userA.id, bet.amount * 2);
+            // Step 1: Return BOTH original bets to users
+            console.log(`   1️⃣  Returning bets: ${userA.name} +${bet.amount}, ${userB.name} +${bet.amount}`);
+            await addCredits(userA.id, bet.amount);
+            await addCredits(userB.id, bet.amount);
+            totalReturned += bet.amount * 2;
+            
+            // Step 2: Give loser's bet to winner
+            console.log(`   2️⃣  Processing win: ${userA.name} gets ${bet.amount} from ${userB.name}`);
+            await addCredits(userA.id, bet.amount);
+            
+            console.log(`   ✅ WINNER: ${userA.name} ends with +${bet.amount * 2} (${bet.amount} refund + ${bet.amount} won)`);
+            console.log(`   ❌ LOSER: ${userB.name} ends with +${bet.amount - bet.amount} = 0 (break even on refund)`);
+            
+            totalProcessed += bet.amount * 2;
             incrementWins(userA.id);
             incrementLosses(userB.id);
             
@@ -493,15 +504,22 @@ const OnePocketArena = () => {
             });
           } else {
             // Team B wins (and this is not a self-matched bet)
-            totalProcessed += bet.amount * 2;
-            
-            // Winner gets their bet back PLUS loser's bet (amount * 2 total)
-            // This represents: their 100 + loser's 100 = 200 total payout
             console.log(`💰 [BET-RESULT] Bet #${bet.id}: ${bet.amount} from each`);
-            console.log(`   ✅ WINNER: ${userB.name} receives ${bet.amount * 2} coins (${bet.amount} refund + ${bet.amount} from ${userA.name})`);
-            console.log(`   ❌ LOSER: ${userA.name} loses ${bet.amount} coins (given to ${userB.name})`);
             
-            await addCredits(userB.id, bet.amount * 2);
+            // Step 1: Return BOTH original bets to users
+            console.log(`   1️⃣  Returning bets: ${userA.name} +${bet.amount}, ${userB.name} +${bet.amount}`);
+            await addCredits(userA.id, bet.amount);
+            await addCredits(userB.id, bet.amount);
+            totalReturned += bet.amount * 2;
+            
+            // Step 2: Give loser's bet to winner
+            console.log(`   2️⃣  Processing win: ${userB.name} gets ${bet.amount} from ${userA.name}`);
+            await addCredits(userB.id, bet.amount);
+            
+            console.log(`   ✅ WINNER: ${userB.name} ends with +${bet.amount * 2} (${bet.amount} refund + ${bet.amount} won)`);
+            console.log(`   ❌ LOSER: ${userA.name} ends with +${bet.amount - bet.amount} = 0 (break even on refund)`);
+            
+            totalProcessed += bet.amount * 2;
             incrementWins(userB.id);
             incrementLosses(userA.id);
             
@@ -518,7 +536,8 @@ const OnePocketArena = () => {
         }
       }
       
-      console.log(`Total matched bets processed: ${totalProcessed} COINS`);
+      console.log(`✅ [BET-PROCESSING] Total bets returned: ${totalReturned} COINS`);
+      console.log(`✅ [BET-PROCESSING] Total credits transferred: ${totalProcessed} COINS`);
     }
     
     // 🔴 REFUND ALL UNMATCHED BETS (BOTH CURRENT AND NEXT GAME) BEFORE CLEARING THEM
