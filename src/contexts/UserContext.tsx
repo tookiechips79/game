@@ -509,8 +509,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const startTime = performance.now();
         console.log(`🎮 [GAME-ADDED] New game received from server (arena '${data.arenaId}')`);
         
-        if (pauseListenersRef.current || isClearingRef.current) {
-          console.log('⏸️ [GAME-ADDED] Ignoring due to pause/clear');
+        // 🎮 CRITICAL: Skip if listeners are paused (other users clearing)
+        // But allow if only isClearingRef is true (this user clearing)
+        if (pauseListenersRef.current) {
+          console.log('⏸️ [GAME-ADDED] Ignoring - listeners paused');
           return;
         }
         
@@ -554,15 +556,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     socketIOService.onGameHistoryCleared((data) => {
       try {
         console.log(`🧹 [HISTORY-CLEARED] Server cleared history for arena '${data.arenaId}' (${data.deletedCount} games)`);
-        if (pauseListenersRef.current || isClearingRef.current) {
-          console.log('⏸️ [HISTORY-CLEARED] Ignoring due to pause/clear');
-          return;
-        }
+        
+        // 🎮 CRITICAL FIX: Always process clear broadcasts, even during clear operations
+        // The isClearingRef check would prevent this, causing games to reappear
+        // We MUST clear the data immediately to stay in sync with server
         
         // Clear local game history
         setImmutableBetHistory([]);
         localStorage.removeItem(IMMUTABLE_BET_HISTORY_KEY);
-        console.log(`✅ [HISTORY-CLEARED] Local history cleared`);
+        localStorage.removeItem(BULLETPROOF_BET_HISTORY_KEY);
+        console.log(`✅ [HISTORY-CLEARED] Local history cleared (cleared ${data.deletedCount} games from server)`);
       } catch (err) {
         console.error('❌ [HISTORY-CLEARED] Error handling clear broadcast:', err);
       }
