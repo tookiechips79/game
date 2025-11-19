@@ -986,15 +986,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('📤 [GAME-HISTORY-SYNC] Sending to server:', `Game #${record.gameNumber}`);
       socketIOService.emitNewGameAdded(gameHistoryRecord);
       
-      // 💰 MIRROR WALLET PATTERN: Request full history from server
-      // This ensures we get the authoritative complete list from database
-      // Small delay to let server process the save
-      setTimeout(() => {
-        if (socketIOService.isSocketConnected()) {
-          console.log('📡 [GAME-HISTORY-SYNC] Requesting full history from server after save');
-          socketIOService.emitRequestGameHistory();
-        }
-      }, 100);
+      // 💰 MIRROR WALLET PATTERN: Request full history from server immediately
+      // Server will broadcast complete history to all clients synchronously
+      if (socketIOService.isSocketConnected()) {
+        console.log('📡 [GAME-HISTORY-SYNC] Requesting full history from server');
+        socketIOService.emitRequestGameHistory();
+      }
     } catch (err) {
       console.error('❌ [GAME-HISTORY-SYNC] Error sending game to server:', err);
     }
