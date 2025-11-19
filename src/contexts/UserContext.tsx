@@ -370,11 +370,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    // Request game history from other connected clients (BEFORE server sends empty)
-    setTimeout(() => {
-      console.log('🔍 [PEER-REQUEST] Requesting game history from other connected clients...');
-      socketIOService.requestGameHistoryFromClients();
-    }, 200);
+    // 🚀 OPTIMIZED: Request game history immediately (no delay for lag)
+    console.log('🔍 [PEER-REQUEST] Requesting game history from other connected clients...');
+    socketIOService.requestGameHistoryFromClients();
 
     // Listen for game history updates from other clients
     // 🎮 NEW SERVER-AUTHORITATIVE HANDLER for game history from database
@@ -508,13 +506,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for new games added by other clients (real-time broadcast from server)
     socketIOService.onGameAdded((data) => {
       try {
+        const startTime = performance.now();
         console.log(`🎮 [GAME-ADDED] New game received from server (arena '${data.arenaId}')`);
+        
         if (pauseListenersRef.current || isClearingRef.current) {
           console.log('⏸️ [GAME-ADDED] Ignoring due to pause/clear');
           return;
         }
         
-        // Add the new game to local history with deduplication
+        // 🚀 OPTIMIZED: Reduce processing time for faster sync
         const newGame = {
           ...data.game,
           id: data.game.game_id || data.game.id || `game-${Date.now()}`,
@@ -536,12 +536,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
           
           if (gameExists) {
-            console.warn(`⚠️ [GAME-ADDED] DUPLICATE: Game #${newGame.gameNumber} already exists in history - SKIPPING`);
+            console.warn(`⚠️ [GAME-ADDED] DUPLICATE: Game #${newGame.gameNumber} already exists - SKIPPING`);
             return prev; // Don't add duplicate
           }
           
           const updated = [newGame, ...prev].slice(0, MAX_GAMES);
-          console.log(`✅ [GAME-ADDED] Added new game (deduplicated), total now: ${updated.length}`);
+          const processingTime = (performance.now() - startTime).toFixed(2);
+          console.log(`✅ [GAME-ADDED] Added game #${newGame.gameNumber}, total: ${updated.length} (${processingTime}ms)`);
           return updated;
         });
       } catch (err) {
@@ -598,8 +599,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         console.log('✅ [UserContext] All data cleared');
         
-        // Reset flags after a longer delay (500ms) to allow all React state updates and re-renders to complete
-        // This prevents the listeners from processing incoming updates during the clear cascade
+        // 🚀 OPTIMIZED: Reset flags immediately (reduced from 500ms to 50ms for faster sync)
+        // 50ms is enough for React batching while keeping lag minimal
         setTimeout(() => {
           isClearingRef.current = false;
           pauseListenersRef.current = false;
@@ -608,7 +609,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           socketIOService.emitResumeListeners();
           
           console.log('🔄 [UserContext] Clear complete - resuming Socket.IO listeners');
-        }, 500);
+        }, 50);
       } catch (err) {
         console.error('❌ Error clearing all data:', err);
         isClearingRef.current = false;
@@ -1177,14 +1178,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('❌ [addBetHistoryRecord] Failed to read back from localStorage!');
     }
     
-    // 🎮 NEW: SEND GAME TO SERVER VIA SOCKET.IO (server-authoritative)
+    // 🚀 OPTIMIZED: SEND GAME TO SERVER IMMEDIATELY (no setTimeout delay for faster sync)
     // This sends the game record to be saved in the database and broadcast to all clients
-    setTimeout(() => {
-      if (pauseListenersRef.current) {
-        console.log('⏸️ [addBetHistoryRecord] Skipping emit - listeners are paused');
-        return;
-      }
-      
+    if (pauseListenersRef.current) {
+      console.log('⏸️ [addBetHistoryRecord] Skipping emit - listeners are paused');
+    } else {
       try {
         // Convert BetHistoryRecord to GameHistoryRecord format for server
         const gameHistoryRecord = {
@@ -1203,12 +1201,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           arenaId: record.arenaId || 'default' // Include arena ID
         };
         
-        console.log('📤 [addBetHistoryRecord] Sending game to server for persistence');
+        console.log('📤 [addBetHistoryRecord] Sending game to server immediately for persistence');
         socketIOService.emitNewGameAdded(gameHistoryRecord);
       } catch (err) {
         console.error('❌ Error sending game to server:', err);
       }
-    }, 0);
+    }
     
     const gameNumber = record.gameNumber;
     
