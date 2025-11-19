@@ -535,29 +535,59 @@ const Index = () => {
       console.log(`Total matched bets processed: ${totalProcessed} COINS`);
     }
     
-    // 🔴 REFUND ALL UNMATCHED NEXT GAME BETS BEFORE CLEARING THEM
+    // 🔴 REFUND ALL UNMATCHED BETS (BOTH CURRENT AND NEXT GAME) BEFORE CLEARING THEM
+    // This is CRITICAL to prevent credit loss!
+    
+    // 1. Refund unmatched CURRENT game bets
+    const unmatchedCurrentBetsA = teamAQueue.filter(bet => !bet.booked);
+    const unmatchedCurrentBetsB = teamBQueue.filter(bet => !bet.booked);
+    const allUnmatchedCurrentBets = [...unmatchedCurrentBetsA, ...unmatchedCurrentBetsB];
+    
+    let totalCurrentRefunded = 0;
+    for (const bet of allUnmatchedCurrentBets) {
+      const user = getUserById(bet.userId);
+      if (user) {
+        console.log(`💰 [REFUND-CURRENT] Refunding unmatched current game bet: ${user.name} gets ${bet.amount} coins`);
+        await addCredits(user.id, bet.amount);
+        totalCurrentRefunded += bet.amount;
+        
+        toast.info(`Returned ${bet.amount} COINS to ${user.name}`, {
+          description: `Unmatched current game bet #${bet.id} refunded`,
+          className: "custom-toast-success",
+        });
+      }
+    }
+    
+    if (totalCurrentRefunded > 0) {
+      console.log(`✅ [REFUND-CURRENT] Total refunded for unmatched current game bets: ${totalCurrentRefunded} COINS`);
+    }
+    
+    // 2. Refund unmatched NEXT game bets
     const unmatchedNextBetsA = nextTeamAQueue.filter(bet => !bet.booked);
     const unmatchedNextBetsB = nextTeamBQueue.filter(bet => !bet.booked);
     const allUnmatchedNextBets = [...unmatchedNextBetsA, ...unmatchedNextBetsB];
     
-    let totalRefunded = 0;
-    allUnmatchedNextBets.forEach(bet => {
+    let totalNextRefunded = 0;
+    for (const bet of allUnmatchedNextBets) {
       const user = getUserById(bet.userId);
       if (user) {
-        console.log(`💰 [REFUND] Refunding unmatched next game bet: ${user.name} gets ${bet.amount} coins`);
-        addCredits(user.id, bet.amount);
-        totalRefunded += bet.amount;
+        console.log(`💰 [REFUND-NEXT] Refunding unmatched next game bet: ${user.name} gets ${bet.amount} coins`);
+        await addCredits(user.id, bet.amount);
+        totalNextRefunded += bet.amount;
         
         toast.info(`Returned ${bet.amount} COINS to ${user.name}`, {
           description: `Unmatched next game bet #${bet.id} refunded`,
           className: "custom-toast-success",
         });
       }
-    });
-    
-    if (totalRefunded > 0) {
-      console.log(`✅ [REFUND] Total refunded for unmatched next game bets: ${totalRefunded} COINS`);
     }
+    
+    if (totalNextRefunded > 0) {
+      console.log(`✅ [REFUND-NEXT] Total refunded for unmatched next game bets: ${totalNextRefunded} COINS`);
+    }
+    
+    const totalRefunded = totalCurrentRefunded + totalNextRefunded;
+    console.log(`✅ [REFUND-TOTAL] Total credits refunded: ${totalRefunded} COINS`);
     
     const nextMatchedBetsA = nextTeamAQueue.filter(bet => bet.booked);
     const nextMatchedBetsB = nextTeamBQueue.filter(bet => bet.booked);
@@ -617,17 +647,18 @@ const Index = () => {
     }
   };
 
-  const deleteUnmatchedBets = () => {
+  const deleteUnmatchedBets = async () => {
     const unmatchedBetsA = teamAQueue.filter(bet => !bet.booked);
     const unmatchedBetsB = teamBQueue.filter(bet => !bet.booked);
     const allUnmatchedBets = [...unmatchedBetsA, ...unmatchedBetsB];
     
     let totalRefunded = 0;
     
-    allUnmatchedBets.forEach(bet => {
+    // Use for...of to allow await
+    for (const bet of allUnmatchedBets) {
       const user = getUserById(bet.userId);
       if (user) {
-        addCredits(user.id, bet.amount);
+        await addCredits(user.id, bet.amount);
         totalRefunded += bet.amount;
         
         toast.info(`Returned ${bet.amount} COINS to ${user.name}`, {
@@ -635,16 +666,17 @@ const Index = () => {
           className: "custom-toast-success",
         });
       }
-    });
+    }
     
     const unmatchedNextBetsA = nextTeamAQueue.filter(bet => !bet.booked);
     const unmatchedNextBetsB = nextTeamBQueue.filter(bet => !bet.booked);
     const allUnmatchedNextBets = [...unmatchedNextBetsA, ...unmatchedNextBetsB];
     
-    allUnmatchedNextBets.forEach(bet => {
+    // Use for...of to allow await
+    for (const bet of allUnmatchedNextBets) {
       const user = getUserById(bet.userId);
       if (user) {
-        addCredits(user.id, bet.amount);
+        await addCredits(user.id, bet.amount);
         totalRefunded += bet.amount;
         
         toast.info(`Returned ${bet.amount} COINS to ${user.name}`, {
@@ -652,7 +684,7 @@ const Index = () => {
           className: "custom-toast-success",
         });
       }
-    });
+    }
     
     const matchedBetsA = teamAQueue.filter(bet => bet.booked);
     const matchedBetsB = teamBQueue.filter(bet => bet.booked);
