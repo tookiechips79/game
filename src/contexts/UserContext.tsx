@@ -346,6 +346,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // 🎮 NEW SERVER-AUTHORITATIVE HANDLER for game history from database
     const handleGameHistoryUpdate = (data: { arenaId: string, games: any[], timestamp: number }) => {
       try {
+        console.log(`📥 [SERVER-HISTORY] RECEIVED BROADCAST! Games: ${data.games?.length}, Arena: '${data.arenaId}'`);
+        console.trace('[SERVER-HISTORY] Stack trace for debugging');
         console.log(`📥 [SERVER-HISTORY] Received ${data.games?.length} games from server for arena '${data.arenaId}'`);
         
         // 🎮 TRUST SERVER COMPLETELY - don't apply guards on history sync
@@ -372,8 +374,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }));
         
         // 🎮 REPLACE entire history with server version
+        console.log(`🔄 [SERVER-HISTORY] UPDATING STATE with ${ensuredHistory.length} games`);
         setImmutableBetHistory([...ensuredHistory]);
-        console.log(`✅ [SERVER-HISTORY] Updated state with ${ensuredHistory.length} games from server`);
+        console.log(`✅ [SERVER-HISTORY] State update TRIGGERED (UI should re-render)`);
       } catch (err) {
         console.error('❌ [SERVER-HISTORY] Error handling history update:', err);
       }
