@@ -327,7 +327,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Check if socket is in rooms (arena room should be set)
         const rooms = socketIOService.socket.rooms;
         if (rooms && rooms.size > 0) {
-          console.log('📡 [HISTORY] Socket ready in arena room - requesting game history from server...');
+          // Log which room we're in for debugging
+          const roomsList = Array.from(rooms).join(', ');
+          console.log(`📡 [HISTORY] Socket ready in rooms: ${roomsList} - requesting game history from server...`);
           socketIOService.emitRequestGameHistory();
         } else {
           console.log('⏳ [HISTORY] Waiting for arena room... retrying in 200ms...');
@@ -1061,9 +1063,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // 🎮 CRITICAL: Clear from server database via Socket.IO
     // Server will broadcast clear to all clients, so no localStorage needed
     try {
-      const arenaId = 'default'; // Clear for current arena
-      console.log(`📤 [RESET-HISTORY] Requesting server to clear game history for arena '${arenaId}'`);
-      socketIOService.emitClearGameHistory(arenaId);
+      // 🎮 Use socketIOService to determine correct arena
+        socketIOService.emitClearGameHistory();
     } catch (err) {
       console.error('❌ [RESET-HISTORY] Error clearing server history:', err);
     }
