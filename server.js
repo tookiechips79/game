@@ -1452,23 +1452,24 @@ io.on('connection', (socket) => {
       
       console.log(`✅ [GAME-HISTORY] New game saved for arena '${arenaId}' - Game ID: ${savedGame.game_id}, Game #${savedGame.game_number}`);
       
-      // 🎮 IMPORTANT: Broadcast ONLY to other clients (NOT the sender)
-      // The sender already has the game in their local state
-      socket.broadcast.to(`arena:${arenaId}`).emit('game-added', {
+      // 🎮 BROADCAST TO ALL CLIENTS (like game-state-update does)
+      // This ensures all clients see the same data immediately
+      io.to(`arena:${arenaId}`).emit('game-added', {
         arenaId,
         game: savedGame,
         timestamp: Date.now()
       });
 
-      // Send confirmation back to sender with persisted game ID
-      socket.emit('game-history-saved', {
+      // 🎮 ALSO SEND COMPLETE GAME HISTORY (like game-state does)
+      // This ensures all clients have the authoritative full history from server
+      const completeHistory = await getGameHistory(arenaId, 100);
+      io.to(`arena:${arenaId}`).emit('game-history-update', {
         arenaId,
-        gameId: savedGame.game_id,
-        gameNumber: savedGame.game_number,
-        success: true
+        games: completeHistory,
+        timestamp: Date.now()
       });
 
-      console.log(`📢 [GAME-HISTORY] Broadcasted new game to OTHER clients in arena '${arenaId}'`);
+      console.log(`📢 [GAME-HISTORY] Broadcasted new game + complete history to ALL clients in arena '${arenaId}'`);
     } catch (error) {
       console.error(`❌ [GAME-HISTORY] Error adding game:`, error);
       socket.emit('game-history-error', { error: 'Failed to add game' });
@@ -1491,7 +1492,14 @@ io.on('connection', (socket) => {
         timestamp: Date.now()
       });
 
-      console.log(`📢 [GAME-HISTORY] Broadcasted clear to arena '${arenaId}'`);
+      // 🎮 ALSO SEND EMPTY HISTORY SYNC (authoritative confirmation)
+      io.to(`arena:${arenaId}`).emit('game-history-update', {
+        arenaId,
+        games: [],
+        timestamp: Date.now()
+      });
+
+      console.log(`📢 [GAME-HISTORY] Broadcasted clear + empty history sync to arena '${arenaId}'`);
     } catch (error) {
       console.error(`❌ [GAME-HISTORY] Error clearing history:`, error);
       socket.emit('game-history-error', { error: 'Failed to clear game history' });
