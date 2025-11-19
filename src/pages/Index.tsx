@@ -470,9 +470,19 @@ const Index = () => {
         const userB = getUserById(bet.userIdB);
         
         if (userA && userB) {
-          totalProcessed += bet.amount * 2;
+          // Check if this is a self-matched bet (same user on both sides)
+          const isSelfMatchedBet = bet.userIdA === bet.userIdB;
           
-          if (winningTeam === 'A') {
+          if (isSelfMatchedBet) {
+            // Self-matched bets are neutral - user gets all credits back
+            console.log(`💰 [SELF-BET-NEUTRAL] Bet #${bet.id}: ${userA.name} bet on both sides`);
+            console.log(`   ⚖️  NEUTRAL: ${userA.name} gets ${bet.amount * 2} coins back (no profit/loss)`);
+            addCredits(userA.id, bet.amount * 2);
+            totalProcessed += bet.amount * 2;
+          } else if (winningTeam === 'A') {
+            // Normal matched bet between different users
+            totalProcessed += bet.amount * 2;
+            
             // Winner gets their bet back PLUS loser's bet (amount * 2 total)
             // This represents: their 100 + loser's 100 = 200 total payout
             console.log(`💰 [BET-RESULT] Bet #${bet.id}: ${bet.amount} from each`);
@@ -493,6 +503,9 @@ const Index = () => {
               className: "custom-toast-error",
             });
           } else {
+            // Team B wins (and this is not a self-matched bet)
+            totalProcessed += bet.amount * 2;
+            
             // Winner gets their bet back PLUS loser's bet (amount * 2 total)
             // This represents: their 100 + loser's 100 = 200 total payout
             console.log(`💰 [BET-RESULT] Bet #${bet.id}: ${bet.amount} from each`);
@@ -820,11 +833,10 @@ const Index = () => {
     for (let i = 0; i < newAQueue.length; i++) {
       if (!newAQueue[i].booked) {
         // Find a matching bet on the opposite team
-        // IMPORTANT: Don't allow same user to bet against themselves!
+        // Allow same user to bet both sides (self-matched bets result in neutral outcome)
         const matchIndex = newBQueue.findIndex(bBet => 
           !bBet.booked && 
-          bBet.amount === newAQueue[i].amount &&
-          bBet.userId !== newAQueue[i].userId  // 🔴 PREVENT SELF-BETTING
+          bBet.amount === newAQueue[i].amount
         );
         
         if (matchIndex !== -1) {
@@ -881,11 +893,10 @@ const Index = () => {
     for (let i = 0; i < newAQueue.length; i++) {
       if (!newAQueue[i].booked) {
         // Find a matching bet on the opposite team
-        // IMPORTANT: Don't allow same user to bet against themselves!
+        // Allow same user to bet both sides (self-matched bets result in neutral outcome)
         const matchIndex = newBQueue.findIndex(bBet => 
           !bBet.booked && 
-          bBet.amount === newAQueue[i].amount &&
-          bBet.userId !== newAQueue[i].userId  // 🔴 PREVENT SELF-BETTING
+          bBet.amount === newAQueue[i].amount
         );
         
         if (matchIndex !== -1) {
