@@ -1,7 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 
 // DEBUG FLAG - Set to false in production
-const DEBUG = false;
+const DEBUG = true; // 🎮 ENABLED for debugging socket connection
 const log = (label: string, data?: any) => {
   if (DEBUG) console.log(label, data);
 };
