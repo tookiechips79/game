@@ -459,14 +459,15 @@ const OnePocketArena = () => {
           totalProcessed += bet.amount * 2;
           
           if (winningTeam === 'A') {
-            // Winner gets their bet back PLUS winnings (amount * 2 total)
-            console.log(`✅ [BET-WIN] ${userA.name} wins ${bet.amount}, gets ${bet.amount * 2} back`);
+            // Winner gets their bet back PLUS loser's bet (amount * 2 total)
+            // This represents: their 100 + loser's 100 = 200 total payout
+            console.log(`💰 [BET-RESULT] Bet #${bet.id}: ${bet.amount} from each`);
+            console.log(`   ✅ WINNER: ${userA.name} receives ${bet.amount * 2} coins (${bet.amount} refund + ${bet.amount} from ${userB.name})`);
+            console.log(`   ❌ LOSER: ${userB.name} loses ${bet.amount} coins (given to ${userA.name})`);
+            
             addCredits(userA.id, bet.amount * 2);
             incrementWins(userA.id);
             incrementLosses(userB.id);
-            
-            // Loser's credits were already deducted when bet was placed, they just lose them
-            console.log(`❌ [BET-LOSS] ${userB.name} loses ${bet.amount} (already deducted when bet placed)`);
             
             toast.success(`${userA.name} Won ${bet.amount} COINS`, {
               description: `Bet on ${teamAName} paid off!`,
@@ -478,14 +479,15 @@ const OnePocketArena = () => {
               className: "custom-toast-error",
             });
           } else {
-            // Winner gets their bet back PLUS winnings (amount * 2 total)
-            console.log(`✅ [BET-WIN] ${userB.name} wins ${bet.amount}, gets ${bet.amount * 2} back`);
+            // Winner gets their bet back PLUS loser's bet (amount * 2 total)
+            // This represents: their 100 + loser's 100 = 200 total payout
+            console.log(`💰 [BET-RESULT] Bet #${bet.id}: ${bet.amount} from each`);
+            console.log(`   ✅ WINNER: ${userB.name} receives ${bet.amount * 2} coins (${bet.amount} refund + ${bet.amount} from ${userA.name})`);
+            console.log(`   ❌ LOSER: ${userA.name} loses ${bet.amount} coins (given to ${userB.name})`);
+            
             addCredits(userB.id, bet.amount * 2);
             incrementWins(userB.id);
             incrementLosses(userA.id);
-            
-            // Loser's credits were already deducted when bet was placed, they just lose them
-            console.log(`❌ [BET-LOSS] ${userA.name} loses ${bet.amount} (already deducted when bet placed)`);
             
             toast.success(`${userB.name} Won ${bet.amount} COINS`, {
               description: `Bet on ${teamBName} paid off!`,
