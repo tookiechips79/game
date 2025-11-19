@@ -71,7 +71,7 @@ class SocketIOService {
     log('🚀 SocketIOService constructor called');
     this.updateArenaId();
     // Initialize lastIdentifiedArena from the current hash to ensure correct arena on first emit
-    this.lastIdentifiedArena = this.getArenaId();
+    this.lastIdentifiedArena = this.getArenaIdPrivate();
     log(`📍 Initialized lastIdentifiedArena to: ${this.lastIdentifiedArena}`);
     this.initializeSocket();
   }
@@ -89,7 +89,7 @@ class SocketIOService {
     log(`📍 Arena ID set to: ${this.arenaId} (from hash: ${hash})`);
   }
 
-  private getArenaId(): string {
+  private getArenaIdPrivate(): string {
     // Detect arena from URL hash at runtime (using hash routing)
     const hash = window.location.hash;
     log(`🔍 [DEBUG-GET] Raw hash value: "${hash}"`);
@@ -99,9 +99,14 @@ class SocketIOService {
     return 'default';
   }
 
+  // 🎯 PUBLIC getter for arena ID - used by clients like UserContext
+  public getArenaId(): string {
+    return this.getArenaIdPrivate();
+  }
+
   // Check if we need to re-identify with a different arena
   private checkAndReidentifyArena() {
-    const currentArena = this.getArenaId();
+    const currentArena = this.getArenaIdPrivate();
     if (currentArena !== this.lastIdentifiedArena && this.socket?.connected) {
       log(`🔄 Arena change detected: ${this.lastIdentifiedArena} → ${currentArena}. Re-identifying...`);
       this.socket?.emit('set-arena', { arenaId: currentArena });
@@ -220,7 +225,7 @@ class SocketIOService {
       this.reconnectAttempts = 0;
       
       // Send arena ID to server
-      const currentArenaId = this.getArenaId();
+      const currentArenaId = this.getArenaIdPrivate();
       log(`📤 Sending arena ID to server: ${currentArenaId}`);
       this.socket?.emit('set-arena', { arenaId: currentArenaId });
       
@@ -581,7 +586,7 @@ class SocketIOService {
   public emitClearAllData() {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
-      const arenaId = this.currentArenaId || 'default';
+      const arenaId = this.getArenaIdPrivate() || 'default';
       log(`📤 Emitting clear all data command for arena '${arenaId}'`);
       this.socket.emit('clear-all-data', { 
         timestamp: Date.now(),
@@ -611,7 +616,7 @@ class SocketIOService {
   public emitRequestGameHistory(arenaId?: string) {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
-      const requestArenaId = arenaId || this.currentArenaId || 'default';
+      const requestArenaId = arenaId || this.getArenaIdPrivate() || 'default';
       log(`📤 [GAME-HISTORY] Requesting game history for arena '${requestArenaId}'`);
       this.socket.emit('request-game-history', { arenaId: requestArenaId });
     }
@@ -632,7 +637,7 @@ class SocketIOService {
   public emitNewGameAdded(gameHistoryRecord: any) {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
-      const arenaId = this.currentArenaId || 'default';
+      const arenaId = this.getArenaIdPrivate() || 'default';
       log(`📤 [GAME-HISTORY] Sending new game record for arena '${arenaId}'`);
       this.socket.emit('new-game-added', { 
         arenaId,
@@ -657,7 +662,7 @@ class SocketIOService {
   public emitClearGameHistory(arenaId?: string) {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
-      const clearArenaId = arenaId || this.currentArenaId || 'default';
+      const clearArenaId = arenaId || this.getArenaIdPrivate() || 'default';
       log(`📤 [GAME-HISTORY] Clearing history for arena '${clearArenaId}'`);
       this.socket.emit('clear-game-history', { 
         arenaId: clearArenaId,

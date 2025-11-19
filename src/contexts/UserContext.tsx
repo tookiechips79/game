@@ -319,15 +319,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('🔌 Setting up Socket.IO listeners');
     socketIOService.connect();
 
-    // 🎮 REQUEST GAME HISTORY WITH RETRY
+    // 🎮 REQUEST GAME HISTORY - Mirror wallet pattern
     // IMPORTANT: Wait for socket to be connected, then request history
     // The server will route it correctly based on set-arena that was already emitted
     const requestGameHistory = () => {
       if (socketIOService.socket && socketIOService.socket.connected) {
-        console.log('📡 [HISTORY] Socket connected - requesting game history from server...');
+        console.log('📡 [GAME-HISTORY] Socket connected - requesting game history from server...');
         socketIOService.emitRequestGameHistory();
       } else {
-        console.log('⏳ [HISTORY] Socket not connected yet, retrying in 100ms...');
+        console.log('⏳ [GAME-HISTORY] Socket not connected yet, retrying in 100ms...');
         setTimeout(requestGameHistory, 100);
       }
     };
@@ -335,18 +335,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Wait a bit for socket to stabilize after connection
     setTimeout(requestGameHistory, 500);
 
-    // Listen for game history updates from other clients
-    // 🎮 NEW SERVER-AUTHORITATIVE HANDLER for game history from database
+    // 💰 LISTEN FOR REAL-TIME GAME HISTORY UPDATES FROM SERVER
+    // When another browser adds a game, sync it here - EXACTLY LIKE WALLET PATTERN
     const handleGameHistoryUpdate = (data: { arenaId: string, games: any[], timestamp: number }) => {
       try {
-        console.log(`📥 [SERVER-HISTORY] RECEIVED BROADCAST! Games: ${data.games?.length}, Arena: '${data.arenaId}'`);
-        console.trace('[SERVER-HISTORY] Stack trace for debugging');
-        console.log(`📥 [SERVER-HISTORY] Received ${data.games?.length} games from server for arena '${data.arenaId}'`);
+        // ✅ TRUST SERVER COMPLETELY - Server is source of truth
+        console.log(`💰 [GAME-HISTORY-SYNC] Received real-time game history update for arena '${data.arenaId}': ${data.games?.length} games`);
         
-        // 🎮 TRUST SERVER COMPLETELY - don't apply guards on history sync
-        // Server is authoritative and should always be accepted
         if (!data.games || data.games.length === 0) {
-          console.log('📭 [SERVER-HISTORY] Server sent empty history - this is valid (cleared)');
+          console.log('📭 [GAME-HISTORY-SYNC] Server sent empty history - this is valid (cleared)');
           setImmutableBetHistory([]);
           return;
         }
@@ -366,12 +363,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           arenaId: record.arena_id || record.arenaId || 'default'
         }));
         
-        // 🎮 REPLACE entire history with server version
-        console.log(`🔄 [SERVER-HISTORY] UPDATING STATE with ${ensuredHistory.length} games`);
+        // ✅ REPLACE entire history with server version (just like wallet replaces credits)
+        console.log(`✅ [GAME-HISTORY-SYNC] Updated from socket: ${immutableBetHistory.length} → ${ensuredHistory.length} games`);
         setImmutableBetHistory([...ensuredHistory]);
-        console.log(`✅ [SERVER-HISTORY] State update TRIGGERED (UI should re-render)`);
       } catch (err) {
-        console.error('❌ [SERVER-HISTORY] Error handling history update:', err);
+        console.error('❌ [GAME-HISTORY-SYNC] Error handling history update:', err);
       }
     };
 
@@ -438,31 +434,24 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
+    // Setup game history listeners
     socketIOService.onGameHistoryUpdate(handleGameHistoryUpdate);
     
-    // Listen for new games added (will receive complete history in game-history-update)
-    socketIOService.onGameAdded((data) => {
-      try {
-        console.log(`📢 [GAME-BROADCAST] Notification from server (arena '${data.arenaId}'), waiting for full history...`);
-      } catch (err) {
-        console.error('❌ [GAME-BROADCAST] Error:', err);
-      }
-    });
+    // 🎮 NOTE: onGameAdded is NOT needed anymore
+    // Server broadcasts complete game-history-update after each game is added
+    // This ensures ALL clients get the same data from the server
+    // EXACTLY LIKE THE WALLET PATTERN - single source of truth
     
     // Listen for game history clear broadcasts
     socketIOService.onGameHistoryCleared((data) => {
       try {
-        console.log(`🧹 [HISTORY-CLEARED] Server cleared history for arena '${data.arenaId}' (${data.deletedCount} games)`);
+        console.log(`💰 [GAME-HISTORY-SYNC] Server cleared history for arena '${data.arenaId}' (${data.deletedCount} games deleted from DB)`);
         
-        // 🎮 CRITICAL FIX: Always process clear broadcasts, even during clear operations
-        // The isClearingRef check would prevent this, causing games to reappear
-        // We MUST clear the data immediately to stay in sync with server
-        
-        // 🎮 SERVER-ONLY: Clear from memory only (no localStorage)
+        // ✅ Always clear immediately - server is source of truth
         setImmutableBetHistory([]);
-        console.log(`✅ [HISTORY-CLEARED] Local history cleared (cleared ${data.deletedCount} games from server database)`);
+        console.log(`✅ [GAME-HISTORY-SYNC] Local history cleared to match server`);
       } catch (err) {
-        console.error('❌ [HISTORY-CLEARED] Error handling clear broadcast:', err);
+        console.error('❌ [GAME-HISTORY-SYNC] Error handling clear broadcast:', err);
       }
     });
     
@@ -969,23 +958,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       timestamp: Date.now()
     };
     
-    console.log('🎮 [addBetHistoryRecord] Adding new game record, game#:', record.gameNumber);
+    console.log('💰 [GAME-HISTORY-SYNC] Adding new game record, game#:', record.gameNumber);
     
-    // 🎮 SERVER-ONLY: Use current state, not localStorage
-    // Server will broadcast the complete history to all clients
+    // 💰 UPDATE LOCAL STATE FIRST (immediate display like wallet credits)
     const MAX_GAMES = 50;
     const immediateHistory = [newRecord, ...immutableBetHistory].slice(0, MAX_GAMES);
-    
-    console.log('📊 [addBetHistoryRecord] After adding, total will be:', immediateHistory.length, 'records');
-    
-    // Update backup ref immediately
-    allGamesEverAddedRef.current = immediateHistory;
-    
-    // 🎮 UPDATE LOCAL STATE FIRST (immediate display)
     setImmutableBetHistory(immediateHistory);
-    console.log('✅ [addBetHistoryRecord] Local state updated:', immediateHistory.length, 'games');
+    console.log('✅ [GAME-HISTORY-SYNC] Local state updated:', immediateHistory.length, 'games');
     
-    // 🎮 SEND TO SERVER (server will broadcast to all clients for sync)
+    // 💰 SEND TO SERVER (server will save to database and broadcast to all clients)
     try {
       const gameHistoryRecord = {
         gameNumber: record.gameNumber,
@@ -1000,13 +981,23 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         duration: record.duration,
         totalAmount: record.totalAmount,
         bets: record.bets,
-        arenaId: record.arenaId || 'default'
+        arenaId: record.arenaId || socketIOService.getArenaId() || 'default'
       };
       
-      console.log('📤 [addBetHistoryRecord] Sending to server:', `Game #${record.gameNumber}`);
+      console.log('📤 [GAME-HISTORY-SYNC] Sending to server:', `Game #${record.gameNumber}`);
       socketIOService.emitNewGameAdded(gameHistoryRecord);
+      
+      // 💰 MIRROR WALLET PATTERN: Request full history from server
+      // This ensures we get the authoritative complete list from database
+      // Small delay to let server process the save
+      setTimeout(() => {
+        if (socketIOService.isSocketConnected()) {
+          console.log('📡 [GAME-HISTORY-SYNC] Requesting full history from server after save');
+          socketIOService.emitRequestGameHistory();
+        }
+      }, 100);
     } catch (err) {
-      console.error('❌ Error sending game to server:', err);
+      console.error('❌ [GAME-HISTORY-SYNC] Error sending game to server:', err);
     }
     
     const gameNumber = record.gameNumber;
