@@ -453,7 +453,8 @@ const OnePocketArena = () => {
     if (bookedBets.length > 0) {
       let totalProcessed = 0;
       
-      bookedBets.forEach(bet => {
+      // Use for...of instead of forEach so we can await
+      for (const bet of bookedBets) {
         const userA = getUserById(bet.userIdA);
         const userB = getUserById(bet.userIdB);
         
@@ -515,7 +516,7 @@ const OnePocketArena = () => {
             });
           }
         }
-      });
+      }
       
       console.log(`Total matched bets processed: ${totalProcessed} COINS`);
     }

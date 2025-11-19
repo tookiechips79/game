@@ -467,7 +467,8 @@ const Index = () => {
     if (bookedBets.length > 0) {
       let totalProcessed = 0;
       
-      bookedBets.forEach(bet => {
+      // Use for...of instead of forEach so we can await
+      for (const bet of bookedBets) {
         const userA = getUserById(bet.userIdA);
         const userB = getUserById(bet.userIdB);
         
@@ -529,7 +530,7 @@ const Index = () => {
             });
           }
         }
-      });
+      }
       
       console.log(`Total matched bets processed: ${totalProcessed} COINS`);
     }
