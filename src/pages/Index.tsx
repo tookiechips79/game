@@ -23,6 +23,7 @@ import { useUser } from "@/contexts/UserContext";
 import { useGameState } from "@/contexts/GameStateContext";
 import { Bet, BookedBet, ConfirmationState } from "@/types/user";
 import { socketIOService } from "@/services/socketIOService";
+import { coinAuditService } from "@/services/coinAudit";
 import { useSound } from "@/hooks/use-sound";
 import SocketIOStatus from "@/components/SocketIOStatus";
 
@@ -418,6 +419,15 @@ const Index = () => {
   };
   
   const processBetsForGameWin = async (winningTeam: 'A' | 'B', duration: number) => {
+    // 📊 START COIN AUDIT - Take pre-game snapshot
+    const gameId = `game-${Date.now()}`;
+    const allUsers = Object.values(gameState.users || {});
+    const preGameAudit = coinAuditService.startGameAudit(
+      gameId,
+      gameState.arenaId || 'unknown',
+      allUsers
+    );
+    
     // Include ALL bets (both booked and unbooked) in game history for accurate tracking
     const teamABets = teamAQueue.map(bet => {
       const user = getUserById(bet.userId);
@@ -664,6 +674,48 @@ const Index = () => {
     } catch (err) {
       console.error('❌ Error emitting bet update:', err);
     }
+
+    // 📊 END COIN AUDIT - Take post-game snapshot and compare
+    const postGameUsers = Object.values(gameState.users || {});
+    let totalWinnerGain = 0;
+    let totalLoserLoss = 0;
+
+    // Calculate winner and loser changes
+    if (bookedBets.length > 0) {
+      bookedBets.forEach(bet => {
+        const userA = getUserById(bet.userIdA);
+        const userB = getUserById(bet.userIdB);
+        
+        if (userA && userB && bet.userIdA !== bet.userIdB) {
+          // Only count real matches, not self-bets
+          totalWinnerGain += bet.amount;
+          totalLoserLoss += bet.amount;
+        }
+      });
+    }
+
+    coinAuditService.endGameAudit(
+      gameId,
+      gameState.arenaId || 'unknown',
+      postGameUsers,
+      {
+        matched: bookedBets.filter(b => b.booked).length,
+        unmatchedRefunded: (teamAQueue.filter(b => !b.booked).length + 
+                           teamBQueue.filter(b => !b.booked).length +
+                           nextTeamAQueue.filter(b => !b.booked).length +
+                           nextTeamBQueue.filter(b => !b.booked).length),
+        totalAmount: gameTotalAmount,
+      },
+      totalWinnerGain,
+      totalLoserLoss
+    );
+
+    // Log audit summary
+    const summary = coinAuditService.getAuditSummary(gameState.arenaId || 'unknown');
+    console.log(`\n📊 [AUDIT-SUMMARY] ${summary.totalGames} games processed`);
+    console.log(`   ✅ Balanced: ${summary.balancedGames}`);
+    console.log(`   ❌ Unbalanced: ${summary.unbalancedGames}`);
+    console.log(`   ⚠️  Coins created: ${summary.totalCoinsCreated}`);
   };
 
   const deleteUnmatchedBets = async () => {
