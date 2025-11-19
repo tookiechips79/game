@@ -45,22 +45,8 @@ const ArenaSelector = () => {
 
   const isBettingArena = currentPath === "/betting-queue" || currentPath === "/one-pocket-arena";
 
-  return (
-    <div className="fixed bottom-6 left-6 flex gap-2 z-50">
-      {/* Betting Queue Button - One Pocket Arena */}
-      <button
-        onDoubleClick={handleBettingQueue}
-        className={`px-4 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl ${
-          isBettingArena
-            ? "bg-gradient-to-br from-[#00FF00] to-[#00FFCC] text-black ring-2 ring-[#00FF00]"
-            : "bg-gradient-to-br from-[#00FF00] to-[#00FFCC] text-black"
-        }`}
-        title="Betting Queue - Double Click"
-      >
-        <span className="text-sm">Betting Queue</span>
-      </button>
-    </div>
-  );
+  return null;
+  // Betting Queue button removed - replaced with navigation from landing page
 };
 
 const App = () => (

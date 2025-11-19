@@ -1352,7 +1352,7 @@ const Index = () => {
     <div className="min-h-screen bg-black p-4 md:p-8 pt-32 relative">
       
       {/* Debug Status - Shows data sync info for mobile troubleshooting */}
-      <SocketIOStatus />
+      {/* <SocketIOStatus /> - Hidden for now */}
       
       <div className="max-w-full mx-auto relative z-10">
         <UserWidgetsContainer 

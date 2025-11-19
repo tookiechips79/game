@@ -1359,7 +1359,7 @@ const OnePocketArena = () => {
     <div className="min-h-screen p-4 md:p-8 pt-32 relative" style={{ backgroundColor: '#ADD8E6', color: '#000000' }}>
       
       {/* Debug Status - Shows data sync info for mobile troubleshooting */}
-      <SocketIOStatus />
+      {/* <SocketIOStatus /> - Hidden for now */}
       
       <div className="max-w-full mx-auto relative z-10">
         <UserWidgetsContainer 
