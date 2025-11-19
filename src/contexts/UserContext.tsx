@@ -319,26 +319,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Socket.IO listeners for game history and bet receipts real-time sync
   useEffect(() => {
     console.log('🔌 Setting up Socket.IO listeners');
-    socketIOService.connect();
-
-    // 🎮 REQUEST GAME HISTORY - Mirror wallet pattern
-    // IMPORTANT: Wait for socket to be connected, then request history
-    // The server will route it correctly based on set-arena that was already emitted
-    const requestGameHistory = () => {
-      if (socketIOService.socket && socketIOService.socket.connected) {
-        console.log('📡 [GAME-HISTORY] Socket connected - requesting game history from server...');
-        socketIOService.emitRequestGameHistory();
-      } else {
-        console.log('⏳ [GAME-HISTORY] Socket not connected yet, retrying in 100ms...');
-        setTimeout(requestGameHistory, 100);
-      }
-    };
-    
-    // Wait a bit for socket to stabilize after connection
-    setTimeout(requestGameHistory, 500);
 
     // 💰 LISTEN FOR REAL-TIME GAME HISTORY UPDATES FROM SERVER
     // When another browser adds a game, sync it here - EXACTLY LIKE WALLET PATTERN
+    // ⚠️ CRITICAL: Set up listeners BEFORE connecting socket
+    // This ensures we don't miss the game-history-update sent on set-arena
     const handleGameHistoryUpdate = (data: { arenaId: string, games: any[], timestamp: number }) => {
       try {
         // ✅ TRUST SERVER COMPLETELY - Server is source of truth
@@ -512,6 +497,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('▶️ [UserContext] Resuming listeners due to remote resume command');
       pauseListenersRef.current = false;
     });
+
+    // ⚠️ CRITICAL: Connect AFTER all listeners are set up
+    // This ensures we don't miss the game-history-update sent on set-arena
+    console.log('📡 [SOCKET] All listeners set up - now connecting to server');
+    socketIOService.connect();
 
     return () => {
       console.log('🔌 Cleaning up Socket.IO listeners');
