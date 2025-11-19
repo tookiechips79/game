@@ -41,7 +41,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 const USERS_STORAGE_KEY = "betting_app_users";
 const CURRENT_USER_STORAGE_KEY = "betting_app_current_user";
 const BET_HISTORY_STORAGE_KEY = "betting_app_bet_history";
-const IMMUTABLE_BET_HISTORY_KEY = "betting_app_immutable_bet_history_v7"; // Separate immutable storage with version
+// ✅ REMOVED: IMMUTABLE_BET_HISTORY_KEY - Game history is now SERVER-ONLY (database, no localStorage)
 const USER_BET_RECEIPTS_KEY = "betting_app_user_bet_receipts";
 const IMMUTABLE_BET_RECEIPTS_KEY = "betting_app_immutable_bet_receipts_v7"; // Separate immutable storage with version
 const CREDIT_TRANSACTIONS_KEY = "betting_app_credit_transactions";
@@ -101,13 +101,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           key.includes('bulletproof_') ||
           key === BET_HISTORY_STORAGE_KEY || // Old mutable bet history
           key === USER_BET_RECEIPTS_KEY ||  // Old mutable receipts
-          // OLD VERSIONS - but NOT the current v7 keys!
+          // OLD GAME HISTORY - All versions (v1-v7) since game history now uses server database only
           key === 'betting_app_immutable_bet_history_v1' ||
           key === 'betting_app_immutable_bet_history_v2' ||
           key === 'betting_app_immutable_bet_history_v3' ||
           key === 'betting_app_immutable_bet_history_v4' ||
           key === 'betting_app_immutable_bet_history_v5' ||
           key === 'betting_app_immutable_bet_history_v6' ||
+          key === 'betting_app_immutable_bet_history_v7' || // ✅ Now server-only, can clean up
+          // OLD BET RECEIPTS - Keep these for now (different system)
           key === 'betting_app_immutable_bet_receipts_v1' ||
           key === 'betting_app_immutable_bet_receipts_v2' ||
           key === 'betting_app_immutable_bet_receipts_v3' ||
