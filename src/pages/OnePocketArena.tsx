@@ -494,14 +494,13 @@ const OnePocketArena = () => {
             
             console.log(`   📊 BEFORE: ${userA.name}=${balanceABefore}, ${userB.name}=${balanceBBefore}`);
             
-            // Step 1: Return both bets (amounts that were deducted when bets were placed)
-            console.log(`   1️⃣  Return both original bets: ${userA.name} +${bet.amount}, ${userB.name} +${bet.amount}`);
-            await addCredits(userA.id, bet.amount);  // Winner gets their original bet back
-            await addCredits(userB.id, bet.amount);  // Loser gets their original bet back
+            // Winner gets: their original bet back (bet.amount) + loser's bet as prize (bet.amount) = 2x
+            console.log(`   1️⃣  Winner's payout: ${userA.name} gets ${bet.amount * 2} (${bet.amount} refund + ${bet.amount} won)`);
+            await addCredits(userA.id, bet.amount * 2);
             
-            // Step 2: Transfer loser's bet to winner as prize
-            console.log(`   2️⃣  Winner takes the prize: ${userA.name} gets ${bet.amount} from ${userB.name}`);
-            await addCredits(userA.id, bet.amount);  // Winner gains loser's bet
+            // Loser gets: their original bet back (bet.amount) - they break even
+            console.log(`   2️⃣  Loser's payout: ${userB.name} gets ${bet.amount} (their bet refund - break even)`);
+            await addCredits(userB.id, bet.amount);
             
             // Get balances after processing
             const userAAfter = getUserById(userA.id);
@@ -539,14 +538,13 @@ const OnePocketArena = () => {
             
             console.log(`   📊 BEFORE: ${userA.name}=${balanceABefore}, ${userB.name}=${balanceBBefore}`);
             
-            // Step 1: Return both bets (amounts that were deducted when bets were placed)
-            console.log(`   1️⃣  Return both original bets: ${userA.name} +${bet.amount}, ${userB.name} +${bet.amount}`);
-            await addCredits(userA.id, bet.amount);  // Loser gets their original bet back
-            await addCredits(userB.id, bet.amount);  // Winner gets their original bet back
+            // Loser gets: their original bet back (bet.amount) - they break even
+            console.log(`   1️⃣  Loser's payout: ${userA.name} gets ${bet.amount} (their bet refund - break even)`);
+            await addCredits(userA.id, bet.amount);
             
-            // Step 2: Transfer loser's bet to winner as prize
-            console.log(`   2️⃣  Winner takes the prize: ${userB.name} gets ${bet.amount} from ${userA.name}`);
-            await addCredits(userB.id, bet.amount);  // Winner gains loser's bet
+            // Winner gets: their original bet back (bet.amount) + loser's bet as prize (bet.amount) = 2x
+            console.log(`   2️⃣  Winner's payout: ${userB.name} gets ${bet.amount * 2} (${bet.amount} refund + ${bet.amount} won)`);
+            await addCredits(userB.id, bet.amount * 2);
             
             // Get balances after processing
             const userAAfter = getUserById(userA.id);
