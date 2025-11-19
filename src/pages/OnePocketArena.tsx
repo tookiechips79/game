@@ -455,7 +455,8 @@ const OnePocketArena = () => {
         teamA: teamABets,
         teamB: teamBBets
       },
-      totalAmount: gameTotalAmount
+      totalAmount: gameTotalAmount,
+      arenaId: gameState.arenaId || 'default'  // 🎮 IMPORTANT: Include arena ID for server sync
     };
     
     addBetHistoryRecord(gameHistoryRecord);

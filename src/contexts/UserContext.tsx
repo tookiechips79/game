@@ -621,6 +621,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       socketIOService.offResumeListeners();
       socketIOService.offClientRequestsGameHistory();
       socketIOService.offReceiveGameHistoryFromClients();
+      socketIOService.offGameAdded();
+      socketIOService.offGameHistoryCleared();
+      socketIOService.offGameHistoryError();
     };
   }, []);
 
