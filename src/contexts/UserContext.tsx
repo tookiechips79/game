@@ -328,9 +328,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         // ✅ TRUST SERVER COMPLETELY - Server is source of truth
         console.log(`💰 [GAME-HISTORY-SYNC] Received real-time game history update for arena '${data.arenaId}': ${data.games?.length} games`);
+        console.log(`💾 [GAME-HISTORY-SYNC] Games from server:`, data.games);
         
         if (!data.games || data.games.length === 0) {
           console.log('📭 [GAME-HISTORY-SYNC] Server sent empty history - this is valid (cleared)');
+          console.warn('⚠️ [GAME-HISTORY-DEBUG] Empty array from server!');
+          console.warn('   Possible causes:');
+          console.warn('   1. Database is in STUB MODE (set DATABASE_URL to enable persistence)');
+          console.warn('   2. Server was restarted (in-memory storage cleared)');
+          console.warn('   3. History was cleared by admin');
+          console.warn('   4. No games added yet in this session');
           setImmutableBetHistory([]);
           return;
         }
