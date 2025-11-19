@@ -345,7 +345,7 @@ const Index = () => {
     });
   };
 
-  const handleTeamAWin = (duration: number) => {
+  const handleTeamAWin = async (duration: number) => {
     console.log('🏆 [handleTeamAWin] WIN BUTTON CLICKED FOR TEAM A!');
     // Pause timer when game is won (don't reset it)
     pauseTimer();
@@ -359,7 +359,8 @@ const Index = () => {
     });
 
     // Process bets FIRST before incrementing game counter
-    processBetsForGameWin('A', duration);
+    // AWAIT the async credit operations to complete
+    await processBetsForGameWin('A', duration);
     
     // Increment game counter and game number AFTER bets are processed
     // Using 500ms to ensure all bet processing is complete
@@ -380,7 +381,7 @@ const Index = () => {
     // Timer will be controlled by admin (pause/resume/reset)
   };
 
-  const handleTeamBWin = (duration: number) => {
+  const handleTeamBWin = async (duration: number) => {
     console.log('🏆 [handleTeamBWin] WIN BUTTON CLICKED FOR TEAM B!');
     // Pause timer when game is won (don't reset it)
     pauseTimer();
@@ -394,7 +395,8 @@ const Index = () => {
     });
 
     // Process bets FIRST before incrementing game counter
-    processBetsForGameWin('B', duration);
+    // AWAIT the async credit operations to complete
+    await processBetsForGameWin('B', duration);
     
     // Increment game counter and game number AFTER bets are processed
     // Using 500ms to ensure all bet processing is complete
@@ -415,7 +417,7 @@ const Index = () => {
     // Timer will be controlled by admin (pause/resume/reset)
   };
   
-  const processBetsForGameWin = (winningTeam: 'A' | 'B', duration: number) => {
+  const processBetsForGameWin = async (winningTeam: 'A' | 'B', duration: number) => {
     // Include ALL bets (both booked and unbooked) in game history for accurate tracking
     const teamABets = teamAQueue.map(bet => {
       const user = getUserById(bet.userId);
@@ -477,7 +479,7 @@ const Index = () => {
             // Self-matched bets are neutral - user gets all credits back
             console.log(`💰 [SELF-BET-NEUTRAL] Bet #${bet.id}: ${userA.name} bet on both sides`);
             console.log(`   ⚖️  NEUTRAL: ${userA.name} gets ${bet.amount * 2} coins back (no profit/loss)`);
-            addCredits(userA.id, bet.amount * 2);
+            await addCredits(userA.id, bet.amount * 2);
             totalProcessed += bet.amount * 2;
           } else if (winningTeam === 'A') {
             // Normal matched bet between different users
@@ -489,7 +491,7 @@ const Index = () => {
             console.log(`   ✅ WINNER: ${userA.name} receives ${bet.amount * 2} coins (${bet.amount} refund + ${bet.amount} from ${userB.name})`);
             console.log(`   ❌ LOSER: ${userB.name} loses ${bet.amount} coins (given to ${userA.name})`);
             
-            addCredits(userA.id, bet.amount * 2);
+            await addCredits(userA.id, bet.amount * 2);
             incrementWins(userA.id);
             incrementLosses(userB.id);
             
@@ -512,7 +514,7 @@ const Index = () => {
             console.log(`   ✅ WINNER: ${userB.name} receives ${bet.amount * 2} coins (${bet.amount} refund + ${bet.amount} from ${userA.name})`);
             console.log(`   ❌ LOSER: ${userA.name} loses ${bet.amount} coins (given to ${userB.name})`);
             
-            addCredits(userB.id, bet.amount * 2);
+            await addCredits(userB.id, bet.amount * 2);
             incrementWins(userB.id);
             incrementLosses(userA.id);
             
