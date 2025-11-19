@@ -1210,13 +1210,16 @@ io.on('connection', (socket) => {
     console.log(`📊 Sent connected users data: ${coinsData.totalCoins} coins from ${coinsData.connectedUserCount} users`);
   });
 
-  // Handle clear all data
+  // Handle clear all data - broadcast to ALL clients in the arena
   socket.on('clear-all-data', (data) => {
     const arenaId = data?.arenaId || 'default';
-    console.log(`🗑️ Clear all data for arena '${arenaId}'`);
-    isListenersPaused = true;
-    // Broadcast ONLY to the specific arena
+    console.log(`🗑️ [CLEAR-DATA] Received clear command for arena '${arenaId}' from socket ${socket.id}`);
+    
+    // Broadcast to ALL clients in this arena (including sender)
+    console.log(`📡 [CLEAR-DATA] Broadcasting clear-all-data to arena '${arenaId}'`);
     io.to(`arena:${arenaId}`).emit('clear-all-data', data);
+    
+    console.log(`✅ [CLEAR-DATA] Clear command sent to all clients in arena '${arenaId}'`);
   });
   
   // Handle pause listeners

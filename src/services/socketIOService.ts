@@ -604,8 +604,12 @@ class SocketIOService {
   public emitClearAllData() {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
-      log('📤 Emitting clear all data command');
-      this.socket.emit('clear-all-data', { timestamp: Date.now() });
+      const arenaId = this.currentArenaId || 'default';
+      log(`📤 Emitting clear all data command for arena '${arenaId}'`);
+      this.socket.emit('clear-all-data', { 
+        timestamp: Date.now(),
+        arenaId: arenaId
+      });
     }
   }
 
