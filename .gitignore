@@ -24,3 +24,8 @@ dist-ssr
 *.sw?
 public/vid.mp4
 public/vid.mp4
+
+# Environment variables (contains sensitive database credentials)
+.env
+.env.local
+.env.*.local
