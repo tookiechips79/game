@@ -319,107 +319,45 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('🔌 Setting up Socket.IO listeners');
     socketIOService.connect();
 
-    // Listen for game history from other clients (peer-to-peer)
-    socketIOService.onReceiveGameHistoryFromClients((data) => {
-      try {
-        console.log('📥 [PEER-HISTORY] Received history from peers:', data.gameHistory?.length, 'records');
-        // ALWAYS accept peer data - it's from real clients, not the empty server!
-        if (Array.isArray(data.gameHistory) && data.gameHistory.length > 0) {
-          const ensuredHistory = data.gameHistory.map((record, index) => ({
-            ...record,
-            id: record.id || `bet-history-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 9)}`
-          }));
-          
-          // Update state and localStorage with peer data - BYPASS ALL GUARDS
-          console.log('✅ [PEER-HISTORY] Accepting peer data, updating state and localStorage');
-          setImmutableBetHistory([...ensuredHistory]);
-          localStorage.setItem(IMMUTABLE_BET_HISTORY_KEY, JSON.stringify(ensuredHistory));
-          console.log('✅ [PEER-HISTORY] Updated game history from peers and saved to localStorage');
-          isInitialLoadRef.current = true; // Mark as loaded so guards don't interfere
-        }
-      } catch (err) {
-        console.error('❌ Error handling peer history:', err);
-      }
-    });
-
-    // Listen for when OTHER clients request our game history and share it with them
-    socketIOService.onClientRequestsGameHistory((data) => {
-      try {
-        console.log('🚀 [PEER-SHARE] Another client requested our game history, sharing:', immutableBetHistory.length, 'records');
-        if (immutableBetHistory.length > 0) {
-          // Share our local game history with the requesting client
-          socketIOService.sendGameHistoryToClient(immutableBetHistory);
-        }
-      } catch (err) {
-        console.error('❌ Error sharing game history with peer:', err);
-      }
-    });
-
-    // 🚀 OPTIMIZED: Request game history immediately (no delay for lag)
-    console.log('🔍 [PEER-REQUEST] Requesting game history from other connected clients...');
-    socketIOService.requestGameHistoryFromClients();
+    // 🎮 SERVER-CENTRIC ONLY: Request game history from server database
+    // No peer-to-peer fallback - server is the ONLY source of truth
+    console.log('📡 [HISTORY] Requesting game history from server database...');
+    socketIOService.emitRequestGameHistory();
 
     // Listen for game history updates from other clients
     // 🎮 NEW SERVER-AUTHORITATIVE HANDLER for game history from database
     const handleGameHistoryUpdate = (data: { arenaId: string, games: any[], timestamp: number }) => {
       try {
-        console.log(`✅ [GAME-HISTORY-SYNC] Received ${data.games?.length} games from server for arena '${data.arenaId}'`, {
-          receivedLength: data.games?.length,
-          currentStateLength: immutableBetHistory.length,
-          timestamp: new Date(data.timestamp).toLocaleTimeString()
-        });
+        console.log(`📥 [SERVER-HISTORY] Received ${data.games?.length} games from server for arena '${data.arenaId}'`);
         
-        // HARD RULE: NEVER accept empty arrays from server - they kill the history!
+        // 🎮 TRUST SERVER COMPLETELY - don't apply guards on history sync
+        // Server is authoritative and should always be accepted
         if (!data.games || data.games.length === 0) {
-          console.warn('⚠️ [GAME-HISTORY-SYNC] Server sent empty array - protecting existing history');
-          return; // NEVER accept empty history
-        }
-        
-        // PAUSE listeners during clearing - completely ignore all updates
-        if (pauseListenersRef.current) {
-          console.log('⏸️ [GAME-HISTORY-SYNC] Listeners paused, ignoring server update');
+          console.log('📭 [SERVER-HISTORY] Server sent empty history - this is valid (cleared)');
+          setImmutableBetHistory([]);
           return;
         }
         
-        // IGNORE updates during clearing to prevent re-population
-        if (isClearingRef.current) {
-          console.log('⏭️ [GAME-HISTORY-SYNC] Ignoring update during clear operation');
-          return;
-        }
+        // Convert server format to local BetHistoryRecord format
+        const ensuredHistory = data.games.map((record, index) => ({
+          ...record,
+          id: record.id || record.game_id || `game-${record.game_number || index}`,
+          gameNumber: record.game_number || record.gameNumber || 0,
+          teamAScore: record.team_a_score || record.teamAScore || 0,
+          teamBScore: record.team_b_score || record.teamBScore || 0,
+          winningTeam: record.winning_team || record.winningTeam || null,
+          teamABalls: record.team_a_balls || record.teamABalls || 0,
+          teamBBalls: record.team_b_balls || record.teamBBalls || 0,
+          breakingTeam: record.breaking_team || record.breakingTeam || 'A',
+          bets: record.bets_data ? (typeof record.bets_data === 'string' ? JSON.parse(record.bets_data) : record.bets_data) : record.bets || {},
+          arenaId: record.arena_id || record.arenaId || 'default'
+        }));
         
-        // PROTECT local data on initial load - only update if server has more/different data
-        if (isInitialLoadRef.current && immutableBetHistory.length > 0) {
-          console.log('🛡️ [GAME-HISTORY-SYNC] Local data already loaded, comparing with server');
-          if (data.games?.length <= immutableBetHistory.length) {
-            console.log('✅ [GAME-HISTORY-SYNC] Local data is same or more recent, preserving');
-            return; // Keep local data
-          }
-        }
-        
-        console.log('📥 [GAME-HISTORY-SYNC] Game history update ACCEPTED from server');
-        if (Array.isArray(data.games) && data.games.length > 0) {
-          // Convert server format to local BetHistoryRecord format if needed
-          const ensuredHistory = data.games.map((record, index) => ({
-            ...record,
-            id: record.id || record.game_id || `bet-history-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 9)}`,
-            gameNumber: record.game_number || record.gameNumber || 0,
-            teamAScore: record.team_a_score || record.teamAScore || 0,
-            teamBScore: record.team_b_score || record.teamBScore || 0,
-            winningTeam: record.winning_team || record.winningTeam || null,
-            teamABalls: record.team_a_balls || record.teamABalls || 0,
-            teamBBalls: record.team_b_balls || record.teamBBalls || 0,
-            breakingTeam: record.breaking_team || record.breakingTeam || 'A',
-            bets: record.bets_data ? (typeof record.bets_data === 'string' ? JSON.parse(record.bets_data) : record.bets_data) : record.bets || {},
-            arenaId: record.arena_id || record.arenaId || 'default'
-          }));
-          
-          // 🎮 CRITICAL: Replace entire history with deduplicated server version
-          // This ensures accuracy from the authoritative source
-          setImmutableBetHistory([...ensuredHistory]); // Use spread for new reference
-          console.log(`✅ [GAME-HISTORY-SYNC] State updated with ${ensuredHistory.length} games from server (deduplicated)`);
-        }
+        // 🎮 REPLACE entire history with server version
+        setImmutableBetHistory([...ensuredHistory]);
+        console.log(`✅ [SERVER-HISTORY] Updated state with ${ensuredHistory.length} games from server`);
       } catch (err) {
-        console.error('❌ [GAME-HISTORY-SYNC] Error handling game history update:', err);
+        console.error('❌ [SERVER-HISTORY] Error handling history update:', err);
       }
     };
 
@@ -491,49 +429,28 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for new games added by other clients (real-time broadcast from server)
     socketIOService.onGameAdded((data) => {
       try {
-        const startTime = performance.now();
-        console.log(`🎮 [GAME-ADDED] New game received from server (arena '${data.arenaId}')`);
+        console.log(`📢 [GAME-BROADCAST] New game from server (arena '${data.arenaId}')`);
         
-        // 🎮 CRITICAL: Skip if listeners are paused (other users clearing)
-        // But allow if only isClearingRef is true (this user clearing)
-        if (pauseListenersRef.current) {
-          console.log('⏸️ [GAME-ADDED] Ignoring - listeners paused');
-          return;
-        }
+        // 🎮 SERVER-CENTRIC: Always process broadcasts from server
+        // Server handles deduplication - we don't need to check
+        if (!data.game) return;
         
-        // 🚀 OPTIMIZED: Reduce processing time for faster sync
         const newGame = {
           ...data.game,
-          id: data.game.game_id || data.game.id || `game-${Date.now()}`,
+          id: data.game.game_id || data.game.id || `game-${data.game.game_number}`,
           gameNumber: data.game.game_number || data.game.gameNumber || 0,
           arenaId: data.arenaId
         };
         
         setImmutableBetHistory(prev => {
           const MAX_GAMES = 50;
-          
-          // 🎮 CRITICAL: Check if this game already exists (prevent duplicates)
-          const gameExists = prev.some(existing => {
-            // Match by game_id (server ID) or by exact same game number + arena
-            const hasSameGameId = existing.id === newGame.id || 
-                                  existing.game_id === newGame.id;
-            const hasSameGameNumber = existing.gameNumber === newGame.gameNumber && 
-                                     existing.arenaId === newGame.arenaId;
-            return hasSameGameId || hasSameGameNumber;
-          });
-          
-          if (gameExists) {
-            console.warn(`⚠️ [GAME-ADDED] DUPLICATE: Game #${newGame.gameNumber} already exists - SKIPPING`);
-            return prev; // Don't add duplicate
-          }
-          
+          // Simply add the broadcast game, server ensures no duplicates
           const updated = [newGame, ...prev].slice(0, MAX_GAMES);
-          const processingTime = (performance.now() - startTime).toFixed(2);
-          console.log(`✅ [GAME-ADDED] Added game #${newGame.gameNumber}, total: ${updated.length} (${processingTime}ms)`);
+          console.log(`✅ [GAME-BROADCAST] Added game #${newGame.gameNumber}, total: ${updated.length}`);
           return updated;
         });
       } catch (err) {
-        console.error('❌ [GAME-ADDED] Error handling new game broadcast:', err);
+        console.error('❌ [GAME-BROADCAST] Error:', err);
       }
     });
     
@@ -612,14 +529,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       console.log('🔌 Cleaning up Socket.IO listeners');
-      // CRITICAL: Remove all socket listeners to prevent duplicates and stale closures
+      // Remove all socket listeners
       socketIOService.offGameHistoryUpdate();
       socketIOService.offBetReceiptsUpdate();
       socketIOService.offClearAllData();
       socketIOService.offPauseListeners();
       socketIOService.offResumeListeners();
-      socketIOService.offClientRequestsGameHistory();
-      socketIOService.offReceiveGameHistoryFromClients();
       socketIOService.offGameAdded();
       socketIOService.offGameHistoryCleared();
       socketIOService.offGameHistoryError();
