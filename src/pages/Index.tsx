@@ -508,13 +508,14 @@ const Index = () => {
             
             console.log(`   📊 BEFORE: ${userA.name}=${balanceABefore}, ${userB.name}=${balanceBBefore}`);
             
-            // Step 1: Return loser's bet to loser
-            console.log(`   1️⃣  Return loser's bet: ${userB.name} gets their ${bet.amount} coins back`);
-            await addCredits(userB.id, bet.amount);
+            // Step 1: Return both bets (amounts that were deducted when bets were placed)
+            console.log(`   1️⃣  Return both original bets: ${userA.name} +${bet.amount}, ${userB.name} +${bet.amount}`);
+            await addCredits(userA.id, bet.amount);  // Winner gets their original bet back
+            await addCredits(userB.id, bet.amount);  // Loser gets their original bet back
             
-            // Step 2: Give loser's bet to winner
+            // Step 2: Transfer loser's bet to winner as prize
             console.log(`   2️⃣  Winner takes the prize: ${userA.name} gets ${bet.amount} from ${userB.name}`);
-            await addCredits(userA.id, bet.amount);
+            await addCredits(userA.id, bet.amount);  // Winner gains loser's bet
             
             // Get balances after processing
             const userAAfter = getUserById(userA.id);
@@ -552,13 +553,14 @@ const Index = () => {
             
             console.log(`   📊 BEFORE: ${userA.name}=${balanceABefore}, ${userB.name}=${balanceBBefore}`);
             
-            // Step 1: Return loser's bet to loser
-            console.log(`   1️⃣  Return loser's bet: ${userA.name} gets their ${bet.amount} coins back`);
-            await addCredits(userA.id, bet.amount);
+            // Step 1: Return both bets (amounts that were deducted when bets were placed)
+            console.log(`   1️⃣  Return both original bets: ${userA.name} +${bet.amount}, ${userB.name} +${bet.amount}`);
+            await addCredits(userA.id, bet.amount);  // Loser gets their original bet back
+            await addCredits(userB.id, bet.amount);  // Winner gets their original bet back
             
-            // Step 2: Give loser's bet to winner
+            // Step 2: Transfer loser's bet to winner as prize
             console.log(`   2️⃣  Winner takes the prize: ${userB.name} gets ${bet.amount} from ${userA.name}`);
-            await addCredits(userB.id, bet.amount);
+            await addCredits(userB.id, bet.amount);  // Winner gains loser's bet
             
             // Get balances after processing
             const userAAfter = getUserById(userA.id);
