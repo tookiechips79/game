@@ -90,6 +90,33 @@ async function initializeDatabase() {
     `);
     console.log('✅ [DB] Transactions table ready');
 
+    // Game History table - immutable record of all games
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS game_history (
+        id SERIAL PRIMARY KEY,
+        game_id VARCHAR(255) UNIQUE NOT NULL,
+        arena_id VARCHAR(50) NOT NULL DEFAULT 'default',
+        game_number INTEGER NOT NULL,
+        team_a_name VARCHAR(255),
+        team_b_name VARCHAR(255),
+        team_a_score INTEGER DEFAULT 0,
+        team_b_score INTEGER DEFAULT 0,
+        winning_team VARCHAR(1),
+        team_a_balls INTEGER,
+        team_b_balls INTEGER,
+        breaking_team VARCHAR(1),
+        duration INTEGER,
+        total_amount DECIMAL(10, 2),
+        bets_data JSONB,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      
+      CREATE INDEX IF NOT EXISTS idx_game_history_arena_id ON game_history(arena_id);
+      CREATE INDEX IF NOT EXISTS idx_game_history_game_number ON game_history(game_number);
+      CREATE INDEX IF NOT EXISTS idx_game_history_created_at ON game_history(created_at);
+    `);
+    console.log('✅ [DB] Game History table ready');
+
     // Create default admin user
     await createOrUpdateUser('admin-default', 'Admin', 'admin', 1000);
     console.log('✅ [DB] Admin user ensured');
@@ -412,6 +439,100 @@ async function getDatabaseStats() {
   }
 }
 
+/**
+ * Add game history record
+ */
+async function addGameHistory(gameHistoryRecord) {
+  if (!pool) {
+    console.warn('⚠️ [DB] PostgreSQL not configured, skipping game history');
+    return null;
+  }
+
+  try {
+    const gameId = `game-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const arenaId = gameHistoryRecord.arenaId || 'default';
+    
+    const result = await pool.query(`
+      INSERT INTO game_history (
+        game_id, arena_id, game_number, team_a_name, team_b_name,
+        team_a_score, team_b_score, winning_team, team_a_balls, team_b_balls,
+        breaking_team, duration, total_amount, bets_data
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      RETURNING *;
+    `, [
+      gameId, arenaId, gameHistoryRecord.gameNumber || 0,
+      gameHistoryRecord.teamAName || 'Team A',
+      gameHistoryRecord.teamBName || 'Team B',
+      gameHistoryRecord.teamAScore || 0,
+      gameHistoryRecord.teamBScore || 0,
+      gameHistoryRecord.winningTeam || null,
+      gameHistoryRecord.teamABalls || 0,
+      gameHistoryRecord.teamBBalls || 0,
+      gameHistoryRecord.breakingTeam || 'A',
+      gameHistoryRecord.duration || 0,
+      gameHistoryRecord.totalAmount || 0,
+      JSON.stringify(gameHistoryRecord.bets || {})
+    ]);
+
+    console.log(`✅ [DB] Added game history: ${gameId} to arena '${arenaId}'`);
+    return result.rows[0];
+  } catch (error) {
+    console.error('❌ [DB] Error adding game history:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get game history for an arena
+ */
+async function getGameHistory(arenaId = 'default', limit = 100) {
+  if (!pool) {
+    console.warn('⚠️ [DB] PostgreSQL not configured, returning empty history');
+    return [];
+  }
+
+  try {
+    const result = await pool.query(
+      'SELECT * FROM game_history WHERE arena_id = $1 ORDER BY created_at DESC LIMIT $2',
+      [arenaId, limit]
+    );
+
+    console.log(`✅ [DB] Retrieved ${result.rows.length} games from arena '${arenaId}'`);
+    
+    // Parse bets_data JSONB back to object
+    return result.rows.map(row => ({
+      ...row,
+      bets: typeof row.bets_data === 'string' ? JSON.parse(row.bets_data) : row.bets_data
+    }));
+  } catch (error) {
+    console.error('❌ [DB] Error getting game history:', error);
+    throw error;
+  }
+}
+
+/**
+ * Clear game history for an arena
+ */
+async function clearGameHistory(arenaId = 'default') {
+  if (!pool) {
+    console.warn('⚠️ [DB] PostgreSQL not configured, skipping clear');
+    return;
+  }
+
+  try {
+    const result = await pool.query(
+      'DELETE FROM game_history WHERE arena_id = $1',
+      [arenaId]
+    );
+
+    console.log(`✅ [DB] Cleared ${result.rowCount} games from arena '${arenaId}'`);
+    return result.rowCount;
+  } catch (error) {
+    console.error('❌ [DB] Error clearing game history:', error);
+    throw error;
+  }
+}
+
 export {
   pool,
   initializeDatabase,
@@ -424,5 +545,8 @@ export {
   getUserTransactionHistory,
   updateUserStats,
   getDatabaseStats,
+  addGameHistory,
+  getGameHistory,
+  clearGameHistory,
 };
 
