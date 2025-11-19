@@ -554,29 +554,6 @@ class SocketIOService {
     }
   }
 
-  // Game History Synchronization
-  public emitGameHistoryUpdate(gameHistory: any[]) {
-    this.checkAndReidentifyArena();
-    if (this.socket && this.isSocketConnected()) {
-      const arenaId = this.getArenaId();
-      log('📤 Emitting game history update:', gameHistory.length, 'records');
-      this.socket.emit('game-history-update', { gameHistory, arenaId });
-    }
-  }
-
-  public onGameHistoryUpdate(callback: (data: { gameHistory: any[], arenaId?: string }) => void) {
-    if (this.socket) {
-      // Remove any existing listeners first to prevent duplicates
-      this.socket.off('game-history-update');
-      
-      this.socket.on('game-history-update', (data: { gameHistory: any[], arenaId?: string }) => {
-        log('📥 [SocketIOService] Received game history update:', data.gameHistory?.length, 'records');
-        log('🔔 [SocketIOService] Calling callback with', data.gameHistory?.length, 'records');
-        callback(data);
-      });
-    }
-  }
-
   // Bet Receipts Synchronization
   public emitBetReceiptsUpdate(betReceipts: any[]) {
     this.checkAndReidentifyArena();
@@ -620,6 +597,123 @@ class SocketIOService {
         log('📥 [SocketIOService] Received clear all data command');
         callback();
       });
+    }
+  }
+
+  /*
+  ================================
+  SERVER-AUTHORITATIVE GAME HISTORY
+  ================================
+  New methods for real-time game history sync via database
+  */
+
+  // Request game history from server
+  public emitRequestGameHistory(arenaId?: string) {
+    this.checkAndReidentifyArena();
+    if (this.socket && this.isSocketConnected()) {
+      const requestArenaId = arenaId || this.currentArenaId || 'default';
+      log(`📤 [GAME-HISTORY] Requesting game history for arena '${requestArenaId}'`);
+      this.socket.emit('request-game-history', { arenaId: requestArenaId });
+    }
+  }
+
+  // Listen for game history updates from server
+  public onGameHistoryUpdate(callback: (data: { arenaId: string, games: any[], timestamp: number }) => void) {
+    if (this.socket) {
+      this.socket.off('game-history-update');
+      this.socket.on('game-history-update', (data: { arenaId: string, games: any[], timestamp: number }) => {
+        log(`📥 [GAME-HISTORY] Received ${data.games?.length} games from server for arena '${data.arenaId}'`);
+        callback(data);
+      });
+    }
+  }
+
+  // Emit new game to server (will be broadcast to all clients)
+  public emitNewGameAdded(gameHistoryRecord: any) {
+    this.checkAndReidentifyArena();
+    if (this.socket && this.isSocketConnected()) {
+      const arenaId = this.currentArenaId || 'default';
+      log(`📤 [GAME-HISTORY] Sending new game record for arena '${arenaId}'`);
+      this.socket.emit('new-game-added', { 
+        arenaId,
+        gameHistoryRecord,
+        timestamp: Date.now()
+      });
+    }
+  }
+
+  // Listen for new game broadcasts from server
+  public onGameAdded(callback: (data: { arenaId: string, game: any, timestamp: number }) => void) {
+    if (this.socket) {
+      this.socket.off('game-added');
+      this.socket.on('game-added', (data: { arenaId: string, game: any, timestamp: number }) => {
+        log(`📥 [GAME-HISTORY] Received new game broadcast for arena '${data.arenaId}'`);
+        callback(data);
+      });
+    }
+  }
+
+  // Emit clear game history request
+  public emitClearGameHistory(arenaId?: string) {
+    this.checkAndReidentifyArena();
+    if (this.socket && this.isSocketConnected()) {
+      const clearArenaId = arenaId || this.currentArenaId || 'default';
+      log(`📤 [GAME-HISTORY] Clearing history for arena '${clearArenaId}'`);
+      this.socket.emit('clear-game-history', { 
+        arenaId: clearArenaId,
+        timestamp: Date.now()
+      });
+    }
+  }
+
+  // Listen for game history clear broadcasts
+  public onGameHistoryCleared(callback: (data: { arenaId: string, deletedCount: number, timestamp: number }) => void) {
+    if (this.socket) {
+      this.socket.off('game-history-cleared');
+      this.socket.on('game-history-cleared', (data: { arenaId: string, deletedCount: number, timestamp: number }) => {
+        log(`📥 [GAME-HISTORY] History cleared for arena '${data.arenaId}' (${data.deletedCount} games deleted)`);
+        callback(data);
+      });
+    }
+  }
+
+  // Listen for game history errors
+  public onGameHistoryError(callback: (data: { error: string }) => void) {
+    if (this.socket) {
+      this.socket.off('game-history-error');
+      this.socket.on('game-history-error', (data: { error: string }) => {
+        console.warn(`⚠️ [GAME-HISTORY] Error from server: ${data.error}`);
+        callback(data);
+      });
+    }
+  }
+
+  // Clean up game history listeners
+  public offGameHistoryUpdate() {
+    if (this.socket) {
+      this.socket.off('game-history-update');
+      log('🧹 [CLEANUP] Removed game-history-update listener');
+    }
+  }
+
+  public offGameAdded() {
+    if (this.socket) {
+      this.socket.off('game-added');
+      log('🧹 [CLEANUP] Removed game-added listener');
+    }
+  }
+
+  public offGameHistoryCleared() {
+    if (this.socket) {
+      this.socket.off('game-history-cleared');
+      log('🧹 [CLEANUP] Removed game-history-cleared listener');
+    }
+  }
+
+  public offGameHistoryError() {
+    if (this.socket) {
+      this.socket.off('game-history-error');
+      log('🧹 [CLEANUP] Removed game-history-error listener');
     }
   }
 
@@ -852,12 +946,6 @@ class SocketIOService {
     if (this.socket) {
       this.socket.off('arena-state-snapshot');
       log(`🧹 [CLEANUP] Removed arena-state-snapshot listener`);
-    }
-  }
-
-  public offGameHistoryUpdate() {
-    if (this.socket) {
-      this.socket.off('game-history-update');
     }
   }
 
