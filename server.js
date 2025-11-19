@@ -17,6 +17,9 @@ import {
   getUserTransactionHistory,
   updateUserStats,
   getDatabaseStats,
+  addGameHistory,
+  getGameHistory,
+  clearGameHistory,
 } from './src/db/database.js';
 
 // Deployment version: 3
@@ -793,6 +796,85 @@ app.put('/api/users/:userId', async (req, res) => {
   }
 });
 
+/*
+================================
+GAME HISTORY API ENDPOINTS
+================================
+*/
+
+// Get game history for an arena
+app.get('/api/games/history/:arenaId', async (req, res) => {
+  try {
+    const { arenaId } = req.params;
+    const limit = parseInt(req.query.limit) || 100;
+
+    const history = await getGameHistory(arenaId, limit);
+    
+    res.json({
+      arenaId,
+      count: history.length,
+      games: history
+    });
+    
+    console.log(`✅ [GAME-HISTORY] Fetched ${history.length} games for arena '${arenaId}'`);
+  } catch (error) {
+    console.error(`❌ [GAME-HISTORY] Error fetching history:`, error);
+    res.status(500).json({ error: 'Failed to fetch game history' });
+  }
+});
+
+// Add new game to history
+app.post('/api/games/history', async (req, res) => {
+  try {
+    const gameHistoryRecord = req.body;
+
+    if (!gameHistoryRecord) {
+      return res.status(400).json({ error: 'Game history record required' });
+    }
+
+    const savedGame = await addGameHistory(gameHistoryRecord);
+    
+    if (!savedGame) {
+      return res.status(500).json({ error: 'Failed to save game history' });
+    }
+
+    const arenaId = gameHistoryRecord.arenaId || 'default';
+    console.log(`✅ [GAME-HISTORY] Saved game for arena '${arenaId}'`);
+    
+    res.status(201).json({
+      success: true,
+      gameId: savedGame.game_id,
+      arenaId: savedGame.arena_id,
+      gameNumber: savedGame.game_number,
+      message: 'Game history saved successfully'
+    });
+  } catch (error) {
+    console.error(`❌ [GAME-HISTORY] Error saving game:`, error);
+    res.status(500).json({ error: 'Failed to save game history' });
+  }
+});
+
+// Clear game history for an arena
+app.delete('/api/games/history/:arenaId', async (req, res) => {
+  try {
+    const { arenaId } = req.params;
+
+    const deletedCount = await clearGameHistory(arenaId);
+    
+    console.log(`✅ [GAME-HISTORY] Cleared ${deletedCount} games from arena '${arenaId}'`);
+    
+    res.json({
+      success: true,
+      arenaId,
+      deletedCount,
+      message: `Cleared ${deletedCount} games from arena '${arenaId}'`
+    });
+  } catch (error) {
+    console.error(`❌ [GAME-HISTORY] Error clearing history:`, error);
+    res.status(500).json({ error: 'Failed to clear game history' });
+  }
+});
+
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log(`✅ [CONNECTION] Socket connected: ${socket.id}`);
@@ -905,6 +987,19 @@ io.on('connection', (socket) => {
         timestamp: Date.now()
       });
       console.log(`📡 [ARENA-SWITCH] Sent complete arena state snapshot to ${socket.id}`);
+      
+      // 🎮 NEW: Send game history when client joins arena
+      try {
+        const gameHistory = await getGameHistory(currentArenaId, 100);
+        socket.emit('game-history-update', {
+          arenaId: currentArenaId,
+          games: gameHistory,
+          timestamp: Date.now()
+        });
+        console.log(`✅ [GAME-HISTORY] Sent ${gameHistory.length} games to socket ${socket.id} on arena join`);
+      } catch (error) {
+        console.error(`❌ [GAME-HISTORY] Error fetching history on set-arena:`, error);
+      }
     } catch (error) {
       console.error(`❌ [ARENA] Error sending initial data to ${socket.id}:`, error.message);
     }
@@ -1314,7 +1409,81 @@ io.on('connection', (socket) => {
     // Broadcast to ALL clients in the same arena (excluding sender)
     socket.broadcast.to(`arena:${arenaId}`).emit('full-state-sync', data);
   });
+
+  /*
+  ================================
+  GAME HISTORY SOCKET.IO EVENTS
+  ================================
+  Real-time synchronization of game history across all clients in an arena
+  */
+
+  // Request game history for an arena
+  socket.on('request-game-history', async (data) => {
+    const arenaId = data?.arenaId || 'default';
+    try {
+      const gameHistory = await getGameHistory(arenaId, 100);
+      console.log(`✅ [GAME-HISTORY] Sending ${gameHistory.length} games to socket ${socket.id} for arena '${arenaId}'`);
+      socket.emit('game-history-update', {
+        arenaId,
+        games: gameHistory,
+        timestamp: Date.now()
+      });
+    } catch (error) {
+      console.error(`❌ [GAME-HISTORY] Error fetching game history:`, error);
+      socket.emit('game-history-error', { error: 'Failed to fetch game history' });
+    }
+  });
+
+  // Broadcast new game to all clients in the arena
+  socket.on('new-game-added', async (data) => {
+    const arenaId = data?.arenaId || 'default';
+    const gameHistoryRecord = data?.gameHistoryRecord;
+
+    try {
+      // Save to database
+      const savedGame = await addGameHistory(gameHistoryRecord);
+      
+      console.log(`✅ [GAME-HISTORY] New game saved for arena '${arenaId}' - Game ID: ${savedGame.game_id}`);
+      
+      // Broadcast to ALL clients in this arena (including sender)
+      io.to(`arena:${arenaId}`).emit('game-added', {
+        arenaId,
+        game: savedGame,
+        timestamp: Date.now()
+      });
+
+      console.log(`📢 [GAME-HISTORY] Broadcasted new game to arena '${arenaId}'`);
+    } catch (error) {
+      console.error(`❌ [GAME-HISTORY] Error adding game:`, error);
+      socket.emit('game-history-error', { error: 'Failed to add game' });
+    }
+  });
+
+  // Clear game history for an arena
+  socket.on('clear-game-history', async (data) => {
+    const arenaId = data?.arenaId || 'default';
+
+    try {
+      const deletedCount = await clearGameHistory(arenaId);
+      
+      console.log(`✅ [GAME-HISTORY] Cleared ${deletedCount} games from arena '${arenaId}'`);
+      
+      // Broadcast to ALL clients in this arena
+      io.to(`arena:${arenaId}`).emit('game-history-cleared', {
+        arenaId,
+        deletedCount,
+        timestamp: Date.now()
+      });
+
+      console.log(`📢 [GAME-HISTORY] Broadcasted clear to arena '${arenaId}'`);
+    } catch (error) {
+      console.error(`❌ [GAME-HISTORY] Error clearing history:`, error);
+      socket.emit('game-history-error', { error: 'Failed to clear game history' });
+    }
+  });
+
 });
+
 
 // Start server - listen on 0.0.0.0 for external connections (required for Render deployment)
 const PORT = process.env.PORT || 3001;
