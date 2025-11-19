@@ -319,10 +319,18 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('🔌 Setting up Socket.IO listeners');
     socketIOService.connect();
 
-    // 🎮 SERVER-CENTRIC ONLY: Request game history from server database
-    // No peer-to-peer fallback - server is the ONLY source of truth
-    console.log('📡 [HISTORY] Requesting game history from server database...');
-    socketIOService.emitRequestGameHistory();
+    // 🎮 REQUEST GAME HISTORY WITH RETRY
+    // Socket might not be ready immediately, so add delay and retry logic
+    const requestGameHistory = () => {
+      if (socketIOService.socket && socketIOService.socket.connected) {
+        console.log('📡 [HISTORY] Socket ready - requesting game history from server...');
+        socketIOService.emitRequestGameHistory();
+      } else {
+        console.log('⏳ [HISTORY] Socket not ready yet, retrying in 100ms...');
+        setTimeout(requestGameHistory, 100);
+      }
+    };
+    requestGameHistory();
 
     // Listen for game history updates from other clients
     // 🎮 NEW SERVER-AUTHORITATIVE HANDLER for game history from database
@@ -426,29 +434,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     socketIOService.onGameHistoryUpdate(handleGameHistoryUpdate);
     
-    // Listen for new games added by other clients (real-time broadcast from server)
+    // Listen for new games added (will receive complete history in game-history-update)
     socketIOService.onGameAdded((data) => {
       try {
-        console.log(`📢 [GAME-BROADCAST] New game from server (arena '${data.arenaId}')`);
-        
-        // 🎮 SERVER-CENTRIC: Always process broadcasts from server
-        // Server handles deduplication - we don't need to check
-        if (!data.game) return;
-        
-        const newGame = {
-          ...data.game,
-          id: data.game.game_id || data.game.id || `game-${data.game.game_number}`,
-          gameNumber: data.game.game_number || data.game.gameNumber || 0,
-          arenaId: data.arenaId
-        };
-        
-        setImmutableBetHistory(prev => {
-          const MAX_GAMES = 50;
-          // Simply add the broadcast game, server ensures no duplicates
-          const updated = [newGame, ...prev].slice(0, MAX_GAMES);
-          console.log(`✅ [GAME-BROADCAST] Added game #${newGame.gameNumber}, total: ${updated.length}`);
-          return updated;
-        });
+        console.log(`📢 [GAME-BROADCAST] Notification from server (arena '${data.arenaId}'), waiting for full history...`);
       } catch (err) {
         console.error('❌ [GAME-BROADCAST] Error:', err);
       }
