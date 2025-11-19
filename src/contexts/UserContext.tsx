@@ -430,9 +430,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             arenaId: record.arena_id || record.arenaId || 'default'
           }));
           
-          // Update state - the useEffect will automatically save to localStorage
+          // 🎮 CRITICAL: Replace entire history with deduplicated server version
+          // This ensures accuracy from the authoritative source
           setImmutableBetHistory([...ensuredHistory]); // Use spread for new reference
-          console.log('✅ [GAME-HISTORY-SYNC] State updated with server data, useEffect will save to localStorage');
+          console.log(`✅ [GAME-HISTORY-SYNC] State updated with ${ensuredHistory.length} games from server (deduplicated)`);
         }
       } catch (err) {
         console.error('❌ [GAME-HISTORY-SYNC] Error handling game history update:', err);
@@ -513,7 +514,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return;
         }
         
-        // Add the new game to local history
+        // Add the new game to local history with deduplication
         const newGame = {
           ...data.game,
           id: data.game.game_id || data.game.id || `game-${Date.now()}`,
@@ -523,8 +524,24 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         setImmutableBetHistory(prev => {
           const MAX_GAMES = 50;
+          
+          // 🎮 CRITICAL: Check if this game already exists (prevent duplicates)
+          const gameExists = prev.some(existing => {
+            // Match by game_id (server ID) or by exact same game number + arena
+            const hasSameGameId = existing.id === newGame.id || 
+                                  existing.game_id === newGame.id;
+            const hasSameGameNumber = existing.gameNumber === newGame.gameNumber && 
+                                     existing.arenaId === newGame.arenaId;
+            return hasSameGameId || hasSameGameNumber;
+          });
+          
+          if (gameExists) {
+            console.warn(`⚠️ [GAME-ADDED] DUPLICATE: Game #${newGame.gameNumber} already exists in history - SKIPPING`);
+            return prev; // Don't add duplicate
+          }
+          
           const updated = [newGame, ...prev].slice(0, MAX_GAMES);
-          console.log(`✅ [GAME-ADDED] Added new game, total now: ${updated.length}`);
+          console.log(`✅ [GAME-ADDED] Added new game (deduplicated), total now: ${updated.length}`);
           return updated;
         });
       } catch (err) {

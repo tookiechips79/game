@@ -1440,19 +1440,35 @@ io.on('connection', (socket) => {
     const gameHistoryRecord = data?.gameHistoryRecord;
 
     try {
+      // 🎮 CRITICAL: Validate game data before saving
+      if (!gameHistoryRecord || gameHistoryRecord.gameNumber === undefined) {
+        console.warn(`⚠️ [GAME-HISTORY] Invalid game data received - missing gameNumber`);
+        socket.emit('game-history-error', { error: 'Invalid game data' });
+        return;
+      }
+
       // Save to database
       const savedGame = await addGameHistory(gameHistoryRecord);
       
-      console.log(`✅ [GAME-HISTORY] New game saved for arena '${arenaId}' - Game ID: ${savedGame.game_id}`);
+      console.log(`✅ [GAME-HISTORY] New game saved for arena '${arenaId}' - Game ID: ${savedGame.game_id}, Game #${savedGame.game_number}`);
       
-      // Broadcast to ALL clients in this arena (including sender)
-      io.to(`arena:${arenaId}`).emit('game-added', {
+      // 🎮 IMPORTANT: Broadcast ONLY to other clients (NOT the sender)
+      // The sender already has the game in their local state
+      socket.broadcast.to(`arena:${arenaId}`).emit('game-added', {
         arenaId,
         game: savedGame,
         timestamp: Date.now()
       });
 
-      console.log(`📢 [GAME-HISTORY] Broadcasted new game to arena '${arenaId}'`);
+      // Send confirmation back to sender with persisted game ID
+      socket.emit('game-history-saved', {
+        arenaId,
+        gameId: savedGame.game_id,
+        gameNumber: savedGame.game_number,
+        success: true
+      });
+
+      console.log(`📢 [GAME-HISTORY] Broadcasted new game to OTHER clients in arena '${arenaId}'`);
     } catch (error) {
       console.error(`❌ [GAME-HISTORY] Error adding game:`, error);
       socket.emit('game-history-error', { error: 'Failed to add game' });
