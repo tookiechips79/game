@@ -976,76 +976,42 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     console.log('🎮 [addBetHistoryRecord] Adding new game record, game#:', record.gameNumber);
     
-    // CRITICAL FIX: Always read from localStorage instead of closure to prevent loss during rapid adds
-    // This ensures we get the LATEST data, not stale closure data
-    let currentHistoryFromStorage: BetHistoryRecord[] = [];
-    try {
-      const stored = localStorage.getItem(IMMUTABLE_BET_HISTORY_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          currentHistoryFromStorage = parsed;
-          console.log('📖 [addBetHistoryRecord] Read from localStorage:', currentHistoryFromStorage.length, 'existing records');
-        }
-      }
-    } catch (err) {
-      console.error('❌ Error reading from localStorage:', err);
-      // Fallback: use the ref backup
-      currentHistoryFromStorage = allGamesEverAddedRef.current;
-      console.log('⚠️ [addBetHistoryRecord] Using backup ref instead, length:', currentHistoryFromStorage.length);
-    }
-    
-    // Combine new record with what we just read from storage
+    // 🎮 SERVER-ONLY: Use current state, not localStorage
+    // Server will broadcast the complete history to all clients
     const MAX_GAMES = 50;
-    const immediateHistory = [newRecord, ...currentHistoryFromStorage].slice(0, MAX_GAMES);
+    const immediateHistory = [newRecord, ...immutableBetHistory].slice(0, MAX_GAMES);
     
     console.log('📊 [addBetHistoryRecord] After adding, total will be:', immediateHistory.length, 'records');
     
     // Update backup ref immediately
     allGamesEverAddedRef.current = immediateHistory;
     
-    setImmutableBetHistory(prev => {
-      const updatedImmutableHistory = [newRecord, ...prev];
-      if (updatedImmutableHistory.length > MAX_GAMES) {
-        return updatedImmutableHistory.slice(0, MAX_GAMES);
-      }
-      return updatedImmutableHistory;
-    });
+    // 🎮 UPDATE LOCAL STATE FIRST (immediate display)
+    setImmutableBetHistory(immediateHistory);
+    console.log('✅ [addBetHistoryRecord] Local state updated:', immediateHistory.length, 'games');
     
-    // 🎮 SERVER-ONLY: NO localStorage saves anymore!
-    // Game history is now managed entirely by the server database
-    // All clients sync from server via Socket.IO
-    console.log('🚀 [addBetHistoryRecord] Server will handle persistence (no localStorage)');
-    console.log('   📦 Game IDs:', immediateHistory.map(r => r.id));
-    
-    // 🚀 OPTIMIZED: SEND GAME TO SERVER IMMEDIATELY (no setTimeout delay for faster sync)
-    // This sends the game record to be saved in the database and broadcast to all clients
-    if (pauseListenersRef.current) {
-      console.log('⏸️ [addBetHistoryRecord] Skipping emit - listeners are paused');
-    } else {
-      try {
-        // Convert BetHistoryRecord to GameHistoryRecord format for server
-        const gameHistoryRecord = {
-          gameNumber: record.gameNumber,
-          teamAName: record.teamAName,
-          teamBName: record.teamBName,
-          teamAScore: record.teamAScore,
-          teamBScore: record.teamBScore,
-          winningTeam: record.winningTeam,
-          teamABalls: record.teamABalls,
-          teamBBalls: record.teamBBalls,
-          breakingTeam: record.breakingTeam,
-          duration: record.duration,
-          totalAmount: record.totalAmount,
-          bets: record.bets,
-          arenaId: record.arenaId || 'default' // Include arena ID
-        };
-        
-        console.log('📤 [addBetHistoryRecord] Sending game to server immediately for persistence');
-        socketIOService.emitNewGameAdded(gameHistoryRecord);
-      } catch (err) {
-        console.error('❌ Error sending game to server:', err);
-      }
+    // 🎮 SEND TO SERVER (server will broadcast to all clients for sync)
+    try {
+      const gameHistoryRecord = {
+        gameNumber: record.gameNumber,
+        teamAName: record.teamAName,
+        teamBName: record.teamBName,
+        teamAScore: record.teamAScore,
+        teamBScore: record.teamBScore,
+        winningTeam: record.winningTeam,
+        teamABalls: record.teamABalls,
+        teamBBalls: record.teamBBalls,
+        breakingTeam: record.breakingTeam,
+        duration: record.duration,
+        totalAmount: record.totalAmount,
+        bets: record.bets,
+        arenaId: record.arenaId || 'default'
+      };
+      
+      console.log('📤 [addBetHistoryRecord] Sending to server:', `Game #${record.gameNumber}`);
+      socketIOService.emitNewGameAdded(gameHistoryRecord);
+    } catch (err) {
+      console.error('❌ Error sending game to server:', err);
     }
     
     const gameNumber = record.gameNumber;
