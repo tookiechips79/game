@@ -493,6 +493,30 @@ const OnePocketArena = () => {
       console.log(`Total matched bets processed: ${totalProcessed} COINS`);
     }
     
+    // 🔴 REFUND ALL UNMATCHED NEXT GAME BETS BEFORE CLEARING THEM
+    const unmatchedNextBetsA = nextTeamAQueue.filter(bet => !bet.booked);
+    const unmatchedNextBetsB = nextTeamBQueue.filter(bet => !bet.booked);
+    const allUnmatchedNextBets = [...unmatchedNextBetsA, ...unmatchedNextBetsB];
+    
+    let totalRefunded = 0;
+    allUnmatchedNextBets.forEach(bet => {
+      const user = getUserById(bet.userId);
+      if (user) {
+        console.log(`💰 [REFUND] Refunding unmatched next game bet: ${user.name} gets ${bet.amount} coins`);
+        addCredits(user.id, bet.amount);
+        totalRefunded += bet.amount;
+        
+        toast.info(`Returned ${bet.amount} COINS to ${user.name}`, {
+          description: `Unmatched next game bet #${bet.id} refunded`,
+          className: "custom-toast-success",
+        });
+      }
+    });
+    
+    if (totalRefunded > 0) {
+      console.log(`✅ [REFUND] Total refunded for unmatched next game bets: ${totalRefunded} COINS`);
+    }
+    
     const nextMatchedBetsA = nextTeamAQueue.filter(bet => bet.booked);
     const nextMatchedBetsB = nextTeamBQueue.filter(bet => bet.booked);
     const nextMatchedBooked = [...nextBookedBets];
