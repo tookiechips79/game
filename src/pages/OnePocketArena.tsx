@@ -805,7 +805,13 @@ const OnePocketArena = () => {
 
     for (let i = 0; i < newAQueue.length; i++) {
       if (!newAQueue[i].booked) {
-        const matchIndex = newBQueue.findIndex(bBet => !bBet.booked && bBet.amount === newAQueue[i].amount);
+        // Find a matching bet on the opposite team
+        // IMPORTANT: Don't allow same user to bet against themselves!
+        const matchIndex = newBQueue.findIndex(bBet => 
+          !bBet.booked && 
+          bBet.amount === newAQueue[i].amount &&
+          bBet.userId !== newAQueue[i].userId  // 🔴 PREVENT SELF-BETTING
+        );
         
         if (matchIndex !== -1) {
           const assignedColor = betColors[newColorIndex % betColors.length];
@@ -860,7 +866,13 @@ const OnePocketArena = () => {
 
     for (let i = 0; i < newAQueue.length; i++) {
       if (!newAQueue[i].booked) {
-        const matchIndex = newBQueue.findIndex(bBet => !bBet.booked && bBet.amount === newAQueue[i].amount);
+        // Find a matching bet on the opposite team
+        // IMPORTANT: Don't allow same user to bet against themselves!
+        const matchIndex = newBQueue.findIndex(bBet => 
+          !bBet.booked && 
+          bBet.amount === newAQueue[i].amount &&
+          bBet.userId !== newAQueue[i].userId  // 🔴 PREVENT SELF-BETTING
+        );
         
         if (matchIndex !== -1) {
           const assignedColor = betColors[newColorIndex % betColors.length];
