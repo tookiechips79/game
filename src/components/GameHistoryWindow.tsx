@@ -53,17 +53,13 @@ const GameHistoryWindow: React.FC = () => {
               onClick={handleClearHistory}
               variant="outline"
               size="sm"
-              disabled={recentGames.length === 0}
               className="text-white transition-colors"
               style={{ 
-                backgroundColor: recentGames.length === 0 ? '#fa1593' : '#fa1593',
-                borderColor: '#fa1593',
-                opacity: recentGames.length === 0 ? 0.5 : 1
+                backgroundColor: '#fa1593',
+                borderColor: '#fa1593'
               }}
               onMouseEnter={(e) => {
-                if (recentGames.length > 0) {
-                  e.currentTarget.style.backgroundColor = 'rgba(250, 21, 147, 0.8)';
-                }
+                e.currentTarget.style.backgroundColor = 'rgba(250, 21, 147, 0.8)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = '#fa1593';
