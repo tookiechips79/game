@@ -225,9 +225,10 @@ let connectedUsers = new Map(); // socketId -> { userId, credits, name }
 let isListenersPaused = false;
 
 // Calculate total coins from connected users
-function calculateConnectedUsersCoins() {
+async function calculateConnectedUsersCoins() {
   let totalCoins = 0;
   let connectedUserCount = 0;
+  const connectedUsersData = [];
   
   // Clean up stale entries (older than 5 minutes)
   const now = Date.now();
@@ -240,24 +241,52 @@ function calculateConnectedUsersCoins() {
     }
   });
   
-  connectedUsers.forEach((userData) => {
-    totalCoins += userData.credits || 0;
-    connectedUserCount++;
-  });
+  // For each connected user, fetch CURRENT balance from database
+  for (const [socketId, userData] of connectedUsers) {
+    try {
+      // Get current balance from database (not from stored value)
+      let currentBalance = userData.credits || 0;
+      
+      if (db && typeof db.getUserBalance === 'function') {
+        const balance = await db.getUserBalance(userData.userId);
+        currentBalance = balance || 0;
+      }
+      
+      totalCoins += currentBalance;
+      connectedUserCount++;
+      
+      connectedUsersData.push({
+        socketId,
+        userId: userData.userId,
+        name: userData.name,
+        credits: currentBalance
+      });
+    } catch (err) {
+      console.error(`❌ Error fetching balance for ${userData.name}:`, err);
+      // Fall back to stored value
+      totalCoins += userData.credits || 0;
+      connectedUserCount++;
+      connectedUsersData.push(userData);
+    }
+  }
   
   return {
     totalCoins,
     connectedUserCount,
-    connectedUsers: Array.from(connectedUsers.values())
+    connectedUsers: connectedUsersData
   };
 }
 
-// Periodic cleanup of stale connections
-setInterval(() => {
-  const coinsData = calculateConnectedUsersCoins();
-  if (coinsData.connectedUserCount > 0) {
-    console.log(`🧹 Periodic cleanup: ${coinsData.connectedUserCount} users, ${coinsData.totalCoins} coins`);
-    io.emit('connected-users-coins-update', coinsData);
+// Periodic cleanup and sync of stale connections
+setInterval(async () => {
+  try {
+    const coinsData = await calculateConnectedUsersCoins();
+    if (coinsData.connectedUserCount > 0) {
+      console.log(`🧹 Periodic sync: ${coinsData.connectedUserCount} users, ${coinsData.totalCoins} coins`);
+      io.emit('connected-users-coins-update', coinsData);
+    }
+  } catch (err) {
+    console.error('❌ Error in periodic cleanup:', err);
   }
 }, 30000); // Every 30 seconds
 
@@ -793,7 +822,7 @@ io.on('connection', (socket) => {
   // DO NOT join any room here - wait for set-arena to identify arena first
   
   // Handle arena identification from client - THIS MUST HAPPEN FIRST
-  socket.on('set-arena', (data) => {
+  socket.on('set-arena', async (data) => {
     const newArenaId = data.arenaId || 'default';
     
     console.log(`🏟️ [SET-ARENA] Socket ${socket.id} requesting arena '${newArenaId}'`);
@@ -835,7 +864,7 @@ io.on('connection', (socket) => {
       });
       
       // Emit connected users coins
-      const coinsData = calculateConnectedUsersCoins();
+      const coinsData = await calculateConnectedUsersCoins();
       socket.emit('connected-users-coins-update', { ...coinsData, arenaId: currentArenaId });
       
       // Emit initial bet data with arena ID
@@ -892,12 +921,12 @@ io.on('connection', (socket) => {
   });
 
   // Handle game state requests from new clients
-  socket.on('request-game-state', (data) => {
+  socket.on('request-game-state', async (data) => {
     const arenaId = data?.arenaId || currentArenaId;
     const arenaState = getGameState(arenaId);
     console.log(`📥 [REQUEST] Game state requested by ${socket.id} for arena '${arenaId}'`);
     socket.emit('game-state-update', { ...arenaState, arenaId });
-    const coinsData = calculateConnectedUsersCoins();
+    const coinsData = await calculateConnectedUsersCoins();
     socket.emit('connected-users-coins-update', { ...coinsData, arenaId });
     
     // Also send current bets for the arena
@@ -916,7 +945,7 @@ io.on('connection', (socket) => {
   });
   
   // Handle user login/selection - track connected users
-  socket.on('user-login', (userData) => {
+  socket.on('user-login', async (userData) => {
     console.log(`User logged in: ${userData.name} (${userData.id}) with ${userData.credits} coins`);
     
     // Remove any existing user for this socket first
@@ -936,20 +965,20 @@ io.on('connection', (socket) => {
     });
     
     // Broadcast updated connected users coins to all clients
-    const coinsData = calculateConnectedUsersCoins();
+    const coinsData = await calculateConnectedUsersCoins();
     io.emit('connected-users-coins-update', coinsData);
     console.log(`📊 Connected users coins: ${coinsData.totalCoins} coins from ${coinsData.connectedUserCount} users`);
   });
 
   // Handle user logout - remove from connected users tracking
-  socket.on('user-logout', (userData) => {
+  socket.on('user-logout', async (userData) => {
     console.log(`User logged out: ${userData.name} (${userData.id})`);
     const existingUser = connectedUsers.get(socket.id);
     if (existingUser && existingUser.userId === userData.id) {
       connectedUsers.delete(socket.id);
       
       // Broadcast updated connected users coins to all clients
-      const coinsData = calculateConnectedUsersCoins();
+      const coinsData = await calculateConnectedUsersCoins();
       io.emit('connected-users-coins-update', coinsData);
       console.log(`📊 Connected users coins after logout: ${coinsData.totalCoins} coins from ${coinsData.connectedUserCount} users`);
     } else {
@@ -1166,11 +1195,11 @@ io.on('connection', (socket) => {
   });
 
   // Handle connected users data requests
-  socket.on('request-connected-users-data', () => {
+  socket.on('request-connected-users-data', async () => {
     console.log('Received connected users data request');
     
     // Force cleanup of stale connections before calculating
-    const coinsData = calculateConnectedUsersCoins();
+    const coinsData = await calculateConnectedUsersCoins();
     
     // Send to requesting client
     socket.emit('connected-users-coins-update', coinsData);
