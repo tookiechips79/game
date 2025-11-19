@@ -15,7 +15,8 @@ try {
 }
 
 // Database connection pool (stub)
-const pool = Pool ? new Pool({
+// Only create pool if both pg module is available AND DATABASE_URL is set
+const pool = (Pool && process.env.DATABASE_URL) ? new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
 }) : null;
@@ -30,6 +31,10 @@ if (pool) {
     console.error('❌ [DB] Unexpected error on idle client:', err);
   });
 }
+
+// IN-MEMORY STORAGE (Stub Mode)
+// When PostgreSQL is not available, store data in memory
+const inMemoryGameHistory = {}; // { arenaId: [games] }
 
 /**
  * Initialize database tables (create if not exists)
@@ -443,15 +448,40 @@ async function getDatabaseStats() {
  * Add game history record
  */
 async function addGameHistory(gameHistoryRecord) {
+  const gameId = `game-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  const arenaId = gameHistoryRecord.arenaId || 'default';
+  
   if (!pool) {
-    console.warn('⚠️ [DB] PostgreSQL not configured, skipping game history');
-    return null;
+    // Stub mode: store in memory
+    if (!inMemoryGameHistory[arenaId]) {
+      inMemoryGameHistory[arenaId] = [];
+    }
+    
+    const gameRecord = {
+      id: Date.now(), // Simulated ID
+      game_id: gameId,
+      arena_id: arenaId,
+      game_number: gameHistoryRecord.gameNumber || 0,
+      team_a_name: gameHistoryRecord.teamAName || 'Team A',
+      team_b_name: gameHistoryRecord.teamBName || 'Team B',
+      team_a_score: gameHistoryRecord.teamAScore || 0,
+      team_b_score: gameHistoryRecord.teamBScore || 0,
+      winning_team: gameHistoryRecord.winningTeam || null,
+      team_a_balls: gameHistoryRecord.teamABalls || 0,
+      team_b_balls: gameHistoryRecord.teamBBalls || 0,
+      breaking_team: gameHistoryRecord.breakingTeam || 'A',
+      duration: gameHistoryRecord.duration || 0,
+      total_amount: gameHistoryRecord.totalAmount || 0,
+      bets_data: gameHistoryRecord.bets || {},
+      created_at: new Date().toISOString()
+    };
+    
+    inMemoryGameHistory[arenaId].unshift(gameRecord); // Add to front
+    console.log(`✅ [DB] Added game history (IN-MEMORY): ${gameId} to arena '${arenaId}'`);
+    return gameRecord;
   }
 
   try {
-    const gameId = `game-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    const arenaId = gameHistoryRecord.arenaId || 'default';
-    
     const result = await pool.query(`
       INSERT INTO game_history (
         game_id, arena_id, game_number, team_a_name, team_b_name,
@@ -474,7 +504,7 @@ async function addGameHistory(gameHistoryRecord) {
       JSON.stringify(gameHistoryRecord.bets || {})
     ]);
 
-    console.log(`✅ [DB] Added game history: ${gameId} to arena '${arenaId}'`);
+    console.log(`✅ [DB] Added game history (PostgreSQL): ${gameId} to arena '${arenaId}'`);
     return result.rows[0];
   } catch (error) {
     console.error('❌ [DB] Error adding game history:', error);
@@ -487,8 +517,13 @@ async function addGameHistory(gameHistoryRecord) {
  */
 async function getGameHistory(arenaId = 'default', limit = 100) {
   if (!pool) {
-    console.warn('⚠️ [DB] PostgreSQL not configured, returning empty history');
-    return [];
+    // Stub mode: return from memory
+    const games = inMemoryGameHistory[arenaId] || [];
+    console.log(`✅ [DB] Retrieved ${games.length} games from arena '${arenaId}' (IN-MEMORY)`);
+    return games.slice(0, limit).map(row => ({
+      ...row,
+      bets: typeof row.bets_data === 'string' ? JSON.parse(row.bets_data) : row.bets_data
+    }));
   }
 
   try {
@@ -497,7 +532,7 @@ async function getGameHistory(arenaId = 'default', limit = 100) {
       [arenaId, limit]
     );
 
-    console.log(`✅ [DB] Retrieved ${result.rows.length} games from arena '${arenaId}'`);
+    console.log(`✅ [DB] Retrieved ${result.rows.length} games from arena '${arenaId}' (PostgreSQL)`);
     
     // Parse bets_data JSONB back to object
     return result.rows.map(row => ({
@@ -515,8 +550,11 @@ async function getGameHistory(arenaId = 'default', limit = 100) {
  */
 async function clearGameHistory(arenaId = 'default') {
   if (!pool) {
-    console.warn('⚠️ [DB] PostgreSQL not configured, skipping clear');
-    return;
+    // Stub mode: clear from memory
+    const count = (inMemoryGameHistory[arenaId] || []).length;
+    inMemoryGameHistory[arenaId] = [];
+    console.log(`✅ [DB] Cleared ${count} games from arena '${arenaId}' (IN-MEMORY)`);
+    return count;
   }
 
   try {
@@ -525,7 +563,7 @@ async function clearGameHistory(arenaId = 'default') {
       [arenaId]
     );
 
-    console.log(`✅ [DB] Cleared ${result.rowCount} games from arena '${arenaId}'`);
+    console.log(`✅ [DB] Cleared ${result.rowCount} games from arena '${arenaId}' (PostgreSQL)`);
     return result.rowCount;
   } catch (error) {
     console.error('❌ [DB] Error clearing game history:', error);
