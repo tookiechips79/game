@@ -377,61 +377,65 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, 200);
 
     // Listen for game history updates from other clients
-    const handleGameHistoryUpdate = (data: { gameHistory: any[] }) => {
+    // 🎮 NEW SERVER-AUTHORITATIVE HANDLER for game history from database
+    const handleGameHistoryUpdate = (data: { arenaId: string, games: any[], timestamp: number }) => {
       try {
-        console.log(`[HISTORY_LISTENER] Received update:`, {
-          receivedLength: data.gameHistory?.length,
+        console.log(`✅ [GAME-HISTORY-SYNC] Received ${data.games?.length} games from server for arena '${data.arenaId}'`, {
+          receivedLength: data.games?.length,
           currentStateLength: immutableBetHistory.length,
-          dataType: typeof data.gameHistory,
-          isArray: Array.isArray(data.gameHistory),
-          isEmpty: data.gameHistory?.length === 0
+          timestamp: new Date(data.timestamp).toLocaleTimeString()
         });
-        console.log(`  pauseListenersRef=${pauseListenersRef.current}, isClearingRef=${isClearingRef.current}, isInitialLoadRef=${isInitialLoadRef.current}`);
         
         // HARD RULE: NEVER accept empty arrays from server - they kill the history!
-        if (!data.gameHistory || data.gameHistory.length === 0) {
-          console.warn('⚠️ [HISTORY_LISTENER] BLOCKED: Server sent empty/null array - NEVER accepting empty history!');
-          console.warn('   This is a hard rule - game history is protected');
+        if (!data.games || data.games.length === 0) {
+          console.warn('⚠️ [GAME-HISTORY-SYNC] Server sent empty array - protecting existing history');
           return; // NEVER accept empty history
         }
         
         // PAUSE listeners during clearing - completely ignore all updates
         if (pauseListenersRef.current) {
-          console.log('⏸️ [UserContext] Listeners paused, ignoring history update');
+          console.log('⏸️ [GAME-HISTORY-SYNC] Listeners paused, ignoring server update');
           return;
         }
         
         // IGNORE updates during clearing to prevent re-population
         if (isClearingRef.current) {
-          console.log('⏭️ [UserContext] Ignoring history update during clear operation');
+          console.log('⏭️ [GAME-HISTORY-SYNC] Ignoring update during clear operation');
           return;
         }
         
         // PROTECT local data on initial load - only update if server has more/different data
         if (isInitialLoadRef.current && immutableBetHistory.length > 0) {
-          console.log('🛡️ [UserContext] Local data already loaded, checking if server has newer data');
-          if (data.gameHistory?.length <= immutableBetHistory.length) {
-            console.log('✅ [UserContext] Local data is same or more recent, preserving local data');
+          console.log('🛡️ [GAME-HISTORY-SYNC] Local data already loaded, comparing with server');
+          if (data.games?.length <= immutableBetHistory.length) {
+            console.log('✅ [GAME-HISTORY-SYNC] Local data is same or more recent, preserving');
             return; // Keep local data
           }
         }
         
-        console.log('📥 [UserContext] Game history update ACCEPTED:', data.gameHistory?.length, 'entries');
-        if (Array.isArray(data.gameHistory) && data.gameHistory.length > 0) {
-          console.log('📝 [UserContext] Setting betHistory and immutableBetHistory');
-          
-          // Ensure all records have unique IDs
-          const ensuredHistory = data.gameHistory.map((record, index) => ({
+        console.log('📥 [GAME-HISTORY-SYNC] Game history update ACCEPTED from server');
+        if (Array.isArray(data.games) && data.games.length > 0) {
+          // Convert server format to local BetHistoryRecord format if needed
+          const ensuredHistory = data.games.map((record, index) => ({
             ...record,
-            id: record.id || `bet-history-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 9)}`
+            id: record.id || record.game_id || `bet-history-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 9)}`,
+            gameNumber: record.game_number || record.gameNumber || 0,
+            teamAScore: record.team_a_score || record.teamAScore || 0,
+            teamBScore: record.team_b_score || record.teamBScore || 0,
+            winningTeam: record.winning_team || record.winningTeam || null,
+            teamABalls: record.team_a_balls || record.teamABalls || 0,
+            teamBBalls: record.team_b_balls || record.teamBBalls || 0,
+            breakingTeam: record.breaking_team || record.breakingTeam || 'A',
+            bets: record.bets_data ? (typeof record.bets_data === 'string' ? JSON.parse(record.bets_data) : record.bets_data) : record.bets || {},
+            arenaId: record.arena_id || record.arenaId || 'default'
           }));
           
           // Update state - the useEffect will automatically save to localStorage
           setImmutableBetHistory([...ensuredHistory]); // Use spread for new reference
-          console.log('✅ [UserContext] States updated from socket, useEffect will save to localStorage');
+          console.log('✅ [GAME-HISTORY-SYNC] State updated with server data, useEffect will save to localStorage');
         }
       } catch (err) {
-        console.error('❌ Error handling game history update:', err);
+        console.error('❌ [GAME-HISTORY-SYNC] Error handling game history update:', err);
       }
     };
 
@@ -499,6 +503,53 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     socketIOService.onGameHistoryUpdate(handleGameHistoryUpdate);
+    
+    // Listen for new games added by other clients (real-time broadcast from server)
+    socketIOService.onGameAdded((data) => {
+      try {
+        console.log(`🎮 [GAME-ADDED] New game received from server (arena '${data.arenaId}')`);
+        if (pauseListenersRef.current || isClearingRef.current) {
+          console.log('⏸️ [GAME-ADDED] Ignoring due to pause/clear');
+          return;
+        }
+        
+        // Add the new game to local history
+        const newGame = {
+          ...data.game,
+          id: data.game.game_id || data.game.id || `game-${Date.now()}`,
+          gameNumber: data.game.game_number || data.game.gameNumber || 0,
+          arenaId: data.arenaId
+        };
+        
+        setImmutableBetHistory(prev => {
+          const MAX_GAMES = 50;
+          const updated = [newGame, ...prev].slice(0, MAX_GAMES);
+          console.log(`✅ [GAME-ADDED] Added new game, total now: ${updated.length}`);
+          return updated;
+        });
+      } catch (err) {
+        console.error('❌ [GAME-ADDED] Error handling new game broadcast:', err);
+      }
+    });
+    
+    // Listen for game history clear broadcasts
+    socketIOService.onGameHistoryCleared((data) => {
+      try {
+        console.log(`🧹 [HISTORY-CLEARED] Server cleared history for arena '${data.arenaId}' (${data.deletedCount} games)`);
+        if (pauseListenersRef.current || isClearingRef.current) {
+          console.log('⏸️ [HISTORY-CLEARED] Ignoring due to pause/clear');
+          return;
+        }
+        
+        // Clear local game history
+        setImmutableBetHistory([]);
+        localStorage.removeItem(IMMUTABLE_BET_HISTORY_KEY);
+        console.log(`✅ [HISTORY-CLEARED] Local history cleared`);
+      } catch (err) {
+        console.error('❌ [HISTORY-CLEARED] Error handling clear broadcast:', err);
+      }
+    });
+    
     socketIOService.onBetReceiptsUpdate(handleBetReceiptsUpdate);
 
     // Listen for clear all data command from admin
@@ -1106,7 +1157,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('❌ [addBetHistoryRecord] Failed to read back from localStorage!');
     }
     
-    // EMIT IMMEDIATELY with the complete calculated history
+    // 🎮 NEW: SEND GAME TO SERVER VIA SOCKET.IO (server-authoritative)
+    // This sends the game record to be saved in the database and broadcast to all clients
     setTimeout(() => {
       if (pauseListenersRef.current) {
         console.log('⏸️ [addBetHistoryRecord] Skipping emit - listeners are paused');
@@ -1114,10 +1166,27 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       try {
-        console.log('📤 [addBetHistoryRecord] Emitting history to server and peers');
-        socketIOService.emitGameHistoryUpdate(immediateHistory);
+        // Convert BetHistoryRecord to GameHistoryRecord format for server
+        const gameHistoryRecord = {
+          gameNumber: record.gameNumber,
+          teamAName: record.teamAName,
+          teamBName: record.teamBName,
+          teamAScore: record.teamAScore,
+          teamBScore: record.teamBScore,
+          winningTeam: record.winningTeam,
+          teamABalls: record.teamABalls,
+          teamBBalls: record.teamBBalls,
+          breakingTeam: record.breakingTeam,
+          duration: record.duration,
+          totalAmount: record.totalAmount,
+          bets: record.bets,
+          arenaId: record.arenaId || 'default' // Include arena ID
+        };
+        
+        console.log('📤 [addBetHistoryRecord] Sending game to server for persistence');
+        socketIOService.emitNewGameAdded(gameHistoryRecord);
       } catch (err) {
-        console.error('❌ Error emitting game history:', err);
+        console.error('❌ Error sending game to server:', err);
       }
     }, 0);
     
@@ -1162,15 +1231,24 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   
   const resetBetHistory = () => {
-    // Clear ALL bet history - both mutable and immutable
-    console.log('🧹 Clearing ALL bet history (mutable and immutable)');
+    // Clear ALL bet history - both local and server
+    console.log('🧹 Clearing ALL bet history (local and server)');
     
-    // Clear mutable bet history
+    // Clear local history
     setImmutableBetHistory([]);
     localStorage.removeItem(IMMUTABLE_BET_HISTORY_KEY);
     localStorage.removeItem(BULLETPROOF_BET_HISTORY_KEY);
     
-    console.log('✅ All bet history cleared');
+    // 🎮 NEW: Also clear from server database via Socket.IO
+    try {
+      const arenaId = 'default'; // Clear for current arena
+      console.log(`📤 [RESET-HISTORY] Requesting server to clear game history for arena '${arenaId}'`);
+      socketIOService.emitClearGameHistory(arenaId);
+    } catch (err) {
+      console.error('❌ [RESET-HISTORY] Error clearing server history:', err);
+    }
+    
+    console.log('✅ All bet history cleared (local and server)');
   };
 
   // HARD LEDGER - Read-only bet history for settings
