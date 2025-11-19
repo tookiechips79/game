@@ -147,25 +147,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   
-  // SINGLE SOURCE OF TRUTH: Use only immutableBetHistory for all game history
-  // Load from localStorage synchronously on mount to ensure data exists BEFORE socket connects
-  const [immutableBetHistory, setImmutableBetHistory] = useState<BetHistoryRecord[]>(() => {
-    try {
-      const stored = localStorage.getItem(IMMUTABLE_BET_HISTORY_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          console.log('✅ [INIT] Bet history initialized from localStorage:', parsed.length, 'records');
-          // CRITICAL: Mark as initial load IMMEDIATELY so guards activate BEFORE socket messages arrive
-          isInitialLoadRef.current = true;
-          return parsed;
-        }
-      }
-    } catch (error) {
-      console.error('❌ [INIT] Error loading immutable bet history:', error);
-    }
-    return [];
-  });
+  // 🎮 SERVER-ONLY: Game history ALWAYS comes from server database, never localStorage
+  // This ensures all browsers see the exact same data
+  // We start with empty array and populate via socket event from server
+  const [immutableBetHistory, setImmutableBetHistory] = useState<BetHistoryRecord[]>([]);
   
   // PRIVATE: setBetHistory is now completely internal and cannot be called externally
   // This ensures bet history can only be modified through addBetHistoryRecord
@@ -561,11 +546,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // The isClearingRef check would prevent this, causing games to reappear
         // We MUST clear the data immediately to stay in sync with server
         
-        // Clear local game history
+        // 🎮 SERVER-ONLY: Clear from memory only (no localStorage)
         setImmutableBetHistory([]);
-        localStorage.removeItem(IMMUTABLE_BET_HISTORY_KEY);
-        localStorage.removeItem(BULLETPROOF_BET_HISTORY_KEY);
-        console.log(`✅ [HISTORY-CLEARED] Local history cleared (cleared ${data.deletedCount} games from server)`);
+        console.log(`✅ [HISTORY-CLEARED] Local history cleared (cleared ${data.deletedCount} games from server database)`);
       } catch (err) {
         console.error('❌ [HISTORY-CLEARED] Error handling clear broadcast:', err);
       }
@@ -588,17 +571,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Set flag to prevent emitting during clear
         isClearingRef.current = true;
         
+        // 🎮 SERVER-ONLY: Clear from memory only
+        // Server database is the source of truth
         setImmutableBetHistory([]);
-        localStorage.removeItem(IMMUTABLE_BET_HISTORY_KEY);
-        localStorage.removeItem(BULLETPROOF_BET_HISTORY_KEY);
         
         setUserBetReceipts([]);
-        localStorage.removeItem(USER_BET_RECEIPTS_KEY);
-        localStorage.removeItem(IMMUTABLE_BET_RECEIPTS_KEY);
-        localStorage.removeItem(BULLETPROOF_BET_RECEIPTS_KEY);
-        
         setCreditTransactions([]);
-        localStorage.removeItem(CREDIT_TRANSACTIONS_KEY);
         
         console.log('✅ [UserContext] All data cleared');
         
@@ -664,58 +642,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // NOTE: betHistory is synced via Socket.IO, don't save to localStorage separately
   
-  // IMMUTABLE BET HISTORY - Always save to separate storage, NEVER cleared
+  // 🎮 SERVER-ONLY: Game history is managed by server database, NO localStorage
+  // This useEffect now only tracks the state for UI rendering, all persistence is on server
   useEffect(() => {
-    // COMPLETELY SKIP during clearing - don't even save to localStorage
-    if (isClearingRef.current) {
-      console.log('⏭️ Skipping history useEffect during clear operation');
-      return;
-    }
+    // Update backup ref for reference only (not for persistence)
+    allGamesEverAddedRef.current = immutableBetHistory;
     
-    // IMPORTANT: Always save to localStorage, regardless of where the update came from
-    // Whether from local addBetHistoryRecord or from socket listeners, we MUST persist it
-    try {
-      // Update backup ref for safety
-      allGamesEverAddedRef.current = immutableBetHistory;
-      
-      // Only save to main key to conserve storage space
-      const serialized = JSON.stringify(immutableBetHistory);
-      localStorage.setItem(IMMUTABLE_BET_HISTORY_KEY, serialized);
-      console.log('✅ Immutable bet history saved to localStorage:', immutableBetHistory.length, 'records');
-      console.log('   📦 Stored data size:', (serialized.length / 1024).toFixed(2), 'KB');
-      console.log('   🔑 Storage key:', IMMUTABLE_BET_HISTORY_KEY);
-      console.log('   🔄 Backup ref updated with:', immutableBetHistory.length, 'records');
-      
-      // DEBUG: Verify it was actually saved
-      const verify = localStorage.getItem(IMMUTABLE_BET_HISTORY_KEY);
-      if (verify) {
-        const verifiedCount = JSON.parse(verify).length;
-        if (verifiedCount === immutableBetHistory.length) {
-          console.log('   ✔️ Verified: All', verifiedCount, 'records persisted');
-        } else {
-          console.error('   ❌ MISMATCH: Expected', immutableBetHistory.length, 'but found', verifiedCount);
-        }
-      } else {
-        console.error('   ❌ ERROR: Data NOT found in localStorage after saving!');
-      }
-      
-      // NOTE: DO NOT EMIT HERE - emit only happens in addBetHistoryRecord (the SOURCE)
-      // This prevents re-emit loops from Socket.IO listener updates
-    } catch (error) {
-      if (error instanceof Error && error.name === 'QuotaExceededError') {
-        console.error('❌ localStorage quota exceeded! Clearing old data...');
-        // If quota exceeded, trim more aggressively and retry
-        const trimmedHistory = immutableBetHistory.slice(0, 50);
-        try {
-          allGamesEverAddedRef.current = trimmedHistory;
-          localStorage.setItem(IMMUTABLE_BET_HISTORY_KEY, JSON.stringify(trimmedHistory));
-          console.log('✅ Recovered by trimming to 50 records');
-        } catch (retryError) {
-          console.error('❌ Still failed after trimming:', retryError);
-        }
-      } else {
-        console.error('❌ Failed to save immutable bet history:', error);
-      }
+    // Only log for debugging, no localStorage operations
+    if (immutableBetHistory.length > 0) {
+      console.log('✅ [HISTORY-SYNC] Current game history in memory:', immutableBetHistory.length, 'records (from server)');
     }
   }, [immutableBetHistory]);
   
@@ -1162,24 +1097,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return updatedImmutableHistory;
     });
     
-    // IMMEDIATELY SAVE TO LOCALSTORAGE with the complete calculated history from storage
-    // This ensures we never lose games even if state updates are slow
-    localStorage.setItem(IMMUTABLE_BET_HISTORY_KEY, JSON.stringify(immediateHistory));
-    console.log('💾 [addBetHistoryRecord] SAVED to localStorage:', immediateHistory.length, 'records');
-    console.log('   📦 Data IDs:', immediateHistory.map(r => r.id));
-    
-    // Verify it was saved correctly
-    const verified = localStorage.getItem(IMMUTABLE_BET_HISTORY_KEY);
-    if (verified) {
-      const parsed = JSON.parse(verified);
-      if (parsed.length === immediateHistory.length) {
-        console.log('✅ [addBetHistoryRecord] Verified in localStorage:', parsed.length, 'records');
-      } else {
-        console.error('❌ [addBetHistoryRecord] VERIFICATION FAILED! Expected:', immediateHistory.length, 'Got:', parsed.length);
-      }
-    } else {
-      console.error('❌ [addBetHistoryRecord] Failed to read back from localStorage!');
-    }
+    // 🎮 SERVER-ONLY: NO localStorage saves anymore!
+    // Game history is now managed entirely by the server database
+    // All clients sync from server via Socket.IO
+    console.log('🚀 [addBetHistoryRecord] Server will handle persistence (no localStorage)');
+    console.log('   📦 Game IDs:', immediateHistory.map(r => r.id));
     
     // 🚀 OPTIMIZED: SEND GAME TO SERVER IMMEDIATELY (no setTimeout delay for faster sync)
     // This sends the game record to be saved in the database and broadcast to all clients
@@ -1252,15 +1174,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   
   const resetBetHistory = () => {
-    // Clear ALL bet history - both local and server
-    console.log('🧹 Clearing ALL bet history (local and server)');
+    // 🎮 SERVER-ONLY: Clear game history from server database only
+    console.log('🧹 Clearing ALL game history from server');
     
-    // Clear local history
+    // Clear local memory immediately
     setImmutableBetHistory([]);
-    localStorage.removeItem(IMMUTABLE_BET_HISTORY_KEY);
-    localStorage.removeItem(BULLETPROOF_BET_HISTORY_KEY);
     
-    // 🎮 NEW: Also clear from server database via Socket.IO
+    // 🎮 CRITICAL: Clear from server database via Socket.IO
+    // Server will broadcast clear to all clients, so no localStorage needed
     try {
       const arenaId = 'default'; // Clear for current arena
       console.log(`📤 [RESET-HISTORY] Requesting server to clear game history for arena '${arenaId}'`);
@@ -1269,7 +1190,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('❌ [RESET-HISTORY] Error clearing server history:', err);
     }
     
-    console.log('✅ All bet history cleared (local and server)');
+    console.log('✅ Game history cleared (from server, no localStorage)');
   };
 
   // HARD LEDGER - Read-only bet history for settings
