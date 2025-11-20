@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import BreakIndicator from "@/components/BreakIndicator";
@@ -98,6 +98,45 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
   teamBPlayerImageUrl,
   showBallCount = true
 }) => {
+  const vsRef = useRef<HTMLDivElement>(null);
+  
+  // Glow animation
+  useEffect(() => {
+    const vsElement = vsRef.current;
+    if (!vsElement) return;
+    
+    let animationId: number;
+    let glowValue = 0;
+    let glowDirection = 1;
+    
+    const animate = () => {
+      glowValue += glowDirection * 0.015;
+      
+      if (glowValue >= 1) {
+        glowDirection = -1;
+      } else if (glowValue <= 0) {
+        glowDirection = 1;
+      }
+      
+      const textGlowSize = 25 + glowValue * 35;
+      const textGlowOpacity1 = 0.6 + glowValue * 0.4;
+      const textGlowOpacity2 = 0.4 + glowValue * 0.3;
+      const textGlowOpacity3 = 0.2 + glowValue * 0.2;
+      
+      // Multi-layer glow for clean, professional look
+      vsElement.style.textShadow = `
+        0 0 ${textGlowSize}px rgba(250, 21, 147, ${textGlowOpacity1}),
+        0 0 ${textGlowSize * 1.5}px rgba(250, 21, 147, ${textGlowOpacity2}),
+        0 0 ${textGlowSize * 2}px rgba(250, 21, 147, ${textGlowOpacity3})
+      `;
+      
+      animationId = requestAnimationFrame(animate);
+    };
+    
+    animationId = requestAnimationFrame(animate);
+    
+    return () => cancelAnimationFrame(animationId);
+  }, []);
   return (
     <>
       {/* CompactAdminWidget Portal - render at root to allow modals to display properly */}
@@ -117,7 +156,34 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
         boxShadow: isTimerRunning ? '0 0 40px rgba(149, 222, 255, 1), 0 0 60px rgba(149, 222, 255, 0.6)' : 'none'
       }}>
         <CardContent className="p-0 relative">
-          <div className="grid grid-cols-2 divide-x" style={{ borderColor: '#750037' }}>
+          <div className="grid grid-cols-2 divide-x relative" style={{ borderColor: '#750037' }}>
+            {/* Animated VS in the middle */}
+            <div
+              ref={vsRef}
+              className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20"
+              style={{
+                textAlign: 'center',
+              }}
+            >
+              <div style={{
+                fontSize: '84px',
+                fontWeight: 'bold',
+                color: '#ffffff',
+                textTransform: 'uppercase',
+                textShadow: `
+                  0 0 30px rgba(250, 21, 147, 0.9),
+                  0 0 60px rgba(250, 21, 147, 0.7),
+                  0 0 90px rgba(250, 21, 147, 0.5)
+                `,
+                letterSpacing: '8px',
+                fontFamily: 'Impact, sans-serif',
+                lineHeight: '1',
+                userSelect: 'none',
+              }}>
+                VS
+              </div>
+            </div>
+            
             {showControls && !isMatchStarted && !adminLocked && (
               <div className="absolute inset-0 flex items-center justify-center z-10 bg-black">
                 <GameControls

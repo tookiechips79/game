@@ -21,7 +21,7 @@ const LiveIndicator: React.FC<LiveIndicatorProps> = ({ isLive }) => {
         isLive 
           ? "text-[#ea384c] animate-[pulse_3s_ease-in-out_infinite] drop-shadow-[0_0_10px_rgba(234,56,76,0.8)]" 
           : "text-gray-500"
-      )}>
+      )} style={{ fontFamily: 'Impact, sans-serif' }}>
         LIVE
       </span>
     </div>

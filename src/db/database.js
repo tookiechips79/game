@@ -308,7 +308,18 @@ async function getUserBalance(userId) {
     );
 
     if (result.rows.length === 0) {
-      // Initialize if not exists
+      // Check if user exists first (foreign key constraint)
+      const userExists = await pool.query(
+        'SELECT id FROM users WHERE id = $1',
+        [userId]
+      );
+
+      if (userExists.rows.length === 0) {
+        console.warn(`⚠️ [DB] User does not exist: ${userId}, returning default 1000`);
+        return 1000;
+      }
+
+      // User exists, initialize credits
       await pool.query(
         'INSERT INTO credits (user_id, balance) VALUES ($1, $2)',
         [userId, 1000]

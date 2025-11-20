@@ -35,33 +35,38 @@ const GameHeader = ({
   adminModalRef
 }: GameHeaderProps) => {
   return (
-    <div className="absolute top-0 left-0 right-0 flex items-start justify-between z-50 pt-4 px-4 pointer-events-none">
-      {/* Left side - empty for balance */}
-      <div className="w-24"></div>
-      
-      {/* Center - Game info */}
-      <div className="flex flex-col items-center space-y-3 pointer-events-auto">
-        {/* Live Indicator */}
-        <LiveIndicator isLive={isTimerRunning} />
+    <>
+      <div className="absolute top-0 left-0 right-0 flex items-start justify-between z-50 pt-4 px-4 pointer-events-none">
+        {/* Left side - empty for balance */}
+        <div className="w-24"></div>
         
-        <div className="px-4 py-1 rounded-xl mb-1">
-          <span className="text-3xl font-bold text-[#fa1593] drop-shadow-[0_0_8px_rgba(250,21,147,0.7)]">
-            {gameLabel}
-          </span>
+        {/* Center - Game info */}
+        <div className="flex flex-col items-center space-y-3 pointer-events-auto">
+          {/* Live Indicator */}
+          <LiveIndicator isLive={isTimerRunning} />
+          
+          <div className="px-4 py-1 rounded-xl mb-1">
+            <span className="text-3xl font-bold text-[#fa1593] drop-shadow-[0_0_8px_rgba(250,21,147,0.7)]" style={{ fontFamily: 'Impact, sans-serif' }}>
+              {gameLabel}
+            </span>
+          </div>
+          <GameTimer 
+            timer={timer}
+            isTimerRunning={isTimerRunning}
+            showControls={showControls}
+            onStart={onStart}
+            onPause={onPause}
+            onReset={onReset}
+            adminLocked={adminLocked}
+          />
         </div>
-        <GameTimer 
-          timer={timer}
-          isTimerRunning={isTimerRunning}
-          showControls={showControls}
-          onStart={onStart}
-          onPause={onPause}
-          onReset={onReset}
-          adminLocked={adminLocked}
-        />
+        
+        {/* Right side - empty for balance */}
+        <div className="w-32"></div>
       </div>
       
-      {/* Right side - Admin button - ALWAYS VISIBLE AND ACCESSIBLE */}
-      <div className="flex justify-end w-32 pointer-events-auto">
+      {/* Bottom center - Admin Lock button */}
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-50 pointer-events-auto">
         <Button
           variant="outline"
           size="sm"
@@ -104,7 +109,7 @@ const GameHeader = ({
           )}
         </Button>
       </div>
-    </div>
+    </>
   );
 };
 
