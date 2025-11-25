@@ -152,9 +152,7 @@ const defaultLocalAdminState: LocalAdminState = {
 };
 
 // LocalStorage keys for persistence
-const STORAGE_KEY_DEFAULT_ARENA = 'gameState_default_arena';
 const STORAGE_KEY_ONE_POCKET_ARENA = 'gameState_one_pocket_arena';
-const STORAGE_KEY_ADMIN_DEFAULT = 'adminState_default_arena';
 const STORAGE_KEY_ADMIN_ONE_POCKET = 'adminState_one_pocket_arena';
 
 // Helper to save state to localStorage
@@ -250,47 +248,30 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   const location = useLocation();
   const { betHistory, userBetReceipts } = useUser();
   
-  // Separate state for each arena - NOW LOAD FROM STORAGE
+  // Single arena state (one_pocket only)
   // FULL SERVER-AUTHORITATIVE MODEL: Initialize with defaults, server will send actual state
-  const [gameStateDefault, setGameStateDefault] = useState<GameState>(defaultGameState);
   const [gameStateOnePocket, setGameStateOnePocket] = useState<GameState>(defaultGameStateOnePocket);
-  const [localAdminStateDefault, setLocalAdminStateDefault] = useState<LocalAdminState>(() => loadAdminStateFromStorage('default'));
   const [localAdminStateOnePocket, setLocalAdminStateOnePocket] = useState<LocalAdminState>(() => loadAdminStateFromStorage('one_pocket'));
 
-  // Get the current arena ID from the location hash
-  const getArenaIdFromRoute = () => {
-    if (window.location.hash.includes('/one-pocket-arena')) {
-      return 'one_pocket';
-    }
-    return 'default';
-  };
-
-  const currentArenaId = getArenaIdFromRoute();
+  // Single arena: one_pocket
+  const currentArenaId = 'one_pocket';
 
   // Helper function to get the correct state object for the current arena
   const getCurrentGameState = () => {
-    return currentArenaId === 'one_pocket' ? gameStateOnePocket : gameStateDefault;
+    return gameStateOnePocket;
   };
 
   const getCurrentLocalAdminState = () => {
-    return currentArenaId === 'one_pocket' ? localAdminStateOnePocket : localAdminStateDefault;
+    return localAdminStateOnePocket;
   };
 
   // Helper function to set state for the current arena
   const setCurrentGameState = (state: GameState) => {
-    if (currentArenaId === 'one_pocket') {
-      setGameStateOnePocket(state);
-    } else {
-      setGameStateDefault(state);
-    }
+    setGameStateOnePocket(state);
   };
 
   const setCurrentLocalAdminState = (state: LocalAdminState) => {
-    if (currentArenaId === 'one_pocket') {
-      setLocalAdminStateOnePocket(state);
-    } else {
-      setLocalAdminStateDefault(state);
-    }
+    setLocalAdminStateOnePocket(state);
   };
   
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
