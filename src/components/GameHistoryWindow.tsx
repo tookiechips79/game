@@ -9,24 +9,21 @@ import { toast } from "sonner";
 import { socketIOService } from "@/services/socketIOService";
 
 const GameHistoryWindow: React.FC = () => {
-  const { betHistory, resetBetHistory } = useUser();
-  const { isAdmin, resetGameState } = useGameState();
+  const { betHistory } = useUser();
+  const { isAdmin } = useGameState();
 
   const handleClearHistory = () => {
-    if (window.confirm('Are you sure you want to clear the game history and reset all bets? This action cannot be undone.')) {
-      // Clear game history only - DO NOT reset scoreboard
-      resetBetHistory();
-      // REMOVED: resetGameState() - this should NOT affect the scoreboard
-      
-      // Emit clear command via Socket.IO so ALL clients clear (including this one)
+    if (window.confirm('Are you sure you want to clear the game history? This action cannot be undone. (Bet receipts will NOT be cleared)')) {
+      // ✅ SECURITY: Only clear game history, NOT bet receipts
+      // Bet receipts should ONLY be cleared by the "Clear Bet Receipts" button
       try {
-        socketIOService.emitClearAllData();
+        socketIOService.emitClearGameHistory();
       } catch (err) {
-        console.error('Error emitting clear all data:', err);
+        console.error('Error emitting clear game history:', err);
       }
       
-      toast.success("Game History and Bets Cleared", {
-        description: "Game history has been cleared and all betting queues have been reset",
+      toast.success("Game History Cleared", {
+        description: "Game history has been cleared",
         className: "custom-toast-success"
       });
     }
