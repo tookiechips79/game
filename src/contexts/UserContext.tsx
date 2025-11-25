@@ -475,46 +475,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    // Listen for clear all data command from admin
-    // ✅ SECURITY: This should ONLY clear game history, NOT bet receipts
-    socketIOService.onClearAllData(() => {
-      try {
-        console.log('🧹 [UserContext] Clearing game history due to admin command');
-        
-        // BROADCAST pause command to ALL browsers first (including this one)
-        socketIOService.emitPauseListeners();
-        
-        // PAUSE all Socket.IO listeners on this browser too
-        pauseListenersRef.current = true;
-        console.log('⏸️ [UserContext] Pausing Socket.IO listeners during clear');
-        
-        // Set flag to prevent emitting during clear
-        isClearingRef.current = true;
-        
-        // 🎮 GAME HISTORY ONLY: Clear game history from memory
-        // ✅ DO NOT clear bet receipts - they have their own clear button
-        // Server database is the source of truth
-        setImmutableBetHistory([]);
-        
-        console.log('✅ [UserContext] Game history cleared (bet receipts preserved)');
-        
-        // 🚀 OPTIMIZED: Reset flags immediately (reduced from 500ms to 50ms for faster sync)
-        // 50ms is enough for React batching while keeping lag minimal
-        setTimeout(() => {
-          isClearingRef.current = false;
-          pauseListenersRef.current = false;
-          
-          // BROADCAST resume command to ALL browsers
-          socketIOService.emitResumeListeners();
-          
-          console.log('🔄 [UserContext] Clear complete - resuming Socket.IO listeners');
-        }, 50);
-      } catch (err) {
-        console.error('❌ Error clearing game history:', err);
-        isClearingRef.current = false;
-        pauseListenersRef.current = false;
-      }
-    });
+    // ✅ REMOVED: onClearAllData() listener
+    // We now use ONLY emitClearGameHistory() which is isolated and doesn't affect bet receipts
+    // The server's 'clear-game-history' event handles the clearing directly
 
     // Listen for pause command from other browsers
     socketIOService.onPauseListeners(() => {
@@ -542,7 +505,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       socketIOService.offArenaBetReceiptsData();
       socketIOService.offBetReceiptsCleared();
       socketIOService.offBetReceiptsError();
-      socketIOService.offClearAllData();
       socketIOService.offPauseListeners();
       socketIOService.offResumeListeners();
       socketIOService.offGameAdded();
