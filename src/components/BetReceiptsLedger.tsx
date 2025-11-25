@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { 
   Tabs, TabsContent, TabsList, TabsTrigger 
 } from "@/components/ui/tabs";
-import { ChevronDown, ChevronUp, ReceiptText, EyeOff, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, ReceiptText, EyeOff, Trash2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { UserBetReceipt } from "@/types/user";
 import UserBetReceipts from "./UserBetReceipts";
 import UserDropdown from "./UserDropdown";
+import { socketIOService } from "@/services/socketIOService";
 
 interface BetReceiptsLedgerProps {
   isAdmin?: boolean;
@@ -44,6 +45,17 @@ const BetReceiptsLedger: React.FC<BetReceiptsLedgerProps> = ({
       clearBettingQueueReceipts();
       toast.success("Bet Receipts Cleared", {
         description: "All bet receipts have been cleared",
+        className: "custom-toast-success"
+      });
+    }
+  };
+  
+  const handleRefreshReceipts = () => {
+    if (currentUser) {
+      console.log(`🔄 [BET-RECEIPTS] Manual refresh requested for user ${currentUser.id}`);
+      socketIOService.requestBetReceipts(currentUser.id);
+      toast.success("Refreshing...", {
+        description: "Requesting latest bet receipts from server",
         className: "custom-toast-success"
       });
     }
@@ -112,6 +124,22 @@ const BetReceiptsLedger: React.FC<BetReceiptsLedgerProps> = ({
           </span>
         </CardTitle>
         <div className="flex items-center gap-2">
+          {/* Refresh Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRefreshReceipts();
+            }}
+            className="transition-colors hover:opacity-80"
+            style={{ color: '#95deff' }}
+            title="Refresh bet receipts"
+          >
+            <div className="rounded-full p-1" style={{ backgroundColor: 'rgba(0, 0, 0, 0.2)' }}>
+              <RefreshCw className="h-4 w-4" />
+            </div>
+          </button>
+          
+          {/* Hide Button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
