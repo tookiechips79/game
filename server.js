@@ -252,12 +252,8 @@ async function calculateConnectedUsersCoins() {
   for (const [socketId, userData] of connectedUsers) {
     try {
       // Get current balance from database (not from stored value)
-      let currentBalance = userData.credits || 0;
-      
-      if (db && typeof db.getUserBalance === 'function') {
-        const balance = await db.getUserBalance(userData.userId);
-        currentBalance = balance || 0;
-      }
+      const balance = await getUserBalance(userData.userId);
+      const currentBalance = balance || 0;
       
       totalCoins += currentBalance;
       connectedUserCount++;
@@ -1141,18 +1137,13 @@ io.on('connection', (socket) => {
   socket.on('bet-receipts-update', async (data) => {
     console.log('📥 Received bet receipts update:', data.betReceipts?.length, 'entries');
     
-    // SKIP if listeners are paused (during clear)
-    if (isListenersPaused) {
-      console.log('⏸️ SERVER: Skipping bet-receipts-update broadcast - listeners paused');
-      return;
-    }
-    
     const arenaId = data.arenaId || 'default';
     const arenaState = getGameState(arenaId);
     arenaState.betReceipts = data.betReceipts || [];
     arenaState.lastUpdated = Date.now();
     
-    // Save each receipt to the database
+    // ALWAYS save each receipt to the database (do NOT skip during pause)
+    // The pause flag is ONLY for client broadcasts, not for persistence
     if (data.betReceipts && data.betReceipts.length > 0) {
       try {
         for (const receipt of data.betReceipts) {
@@ -1176,14 +1167,20 @@ io.on('connection', (socket) => {
       }
     }
     
-    // ✅ BROADCAST TO ALL CLIENTS (like game history does)
-    // This ensures all clients see the SAME data immediately
-    io.to(`arena:${arenaId}`).emit('bet-receipts-update', {
-      arenaId,
-      betReceipts: data.betReceipts || [],
-      timestamp: Date.now()
-    });
-    console.log(`📤 Broadcasted bet receipts to ALL clients in arena '${arenaId}'`);
+    // SKIP client broadcast if listeners are paused (during clear)
+    // But ALWAYS persist to database (see above)
+    if (!isListenersPaused) {
+      // ✅ BROADCAST TO ALL CLIENTS (like game history does)
+      // This ensures all clients see the SAME data immediately
+      io.to(`arena:${arenaId}`).emit('bet-receipts-update', {
+        arenaId,
+        betReceipts: data.betReceipts || [],
+        timestamp: Date.now()
+      });
+      console.log(`📤 Broadcasted bet receipts to ALL clients in arena '${arenaId}'`);
+    } else {
+      console.log(`⏸️ [bet-receipts-update] Skipping broadcast (listeners paused), but data was saved to database`);
+    }
   });
   
   // Handle game state updates

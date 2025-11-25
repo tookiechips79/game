@@ -196,8 +196,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (key && (
             key.includes('ultra_bulletproof_') ||
             key.includes('bulletproof_') ||
-            key === BET_HISTORY_STORAGE_KEY || // Old mutable bet history
-            key === USER_BET_RECEIPTS_KEY      // Old mutable receipts
+            key === BET_HISTORY_STORAGE_KEY // Old mutable bet history
           )) {
             keysToRemove.push(key);
           }
