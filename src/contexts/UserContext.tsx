@@ -476,9 +476,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     // Listen for clear all data command from admin
+    // ✅ SECURITY: This should ONLY clear game history, NOT bet receipts
     socketIOService.onClearAllData(() => {
       try {
-        console.log('🧹 [UserContext] Clearing all data due to admin command');
+        console.log('🧹 [UserContext] Clearing game history due to admin command');
         
         // BROADCAST pause command to ALL browsers first (including this one)
         socketIOService.emitPauseListeners();
@@ -490,14 +491,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Set flag to prevent emitting during clear
         isClearingRef.current = true;
         
-        // 🎮 SERVER-ONLY: Clear from memory only
+        // 🎮 GAME HISTORY ONLY: Clear game history from memory
+        // ✅ DO NOT clear bet receipts - they have their own clear button
         // Server database is the source of truth
         setImmutableBetHistory([]);
         
-        setUserBetReceipts([]);
-        setCreditTransactions([]);
-        
-        console.log('✅ [UserContext] All data cleared');
+        console.log('✅ [UserContext] Game history cleared (bet receipts preserved)');
         
         // 🚀 OPTIMIZED: Reset flags immediately (reduced from 500ms to 50ms for faster sync)
         // 50ms is enough for React batching while keeping lag minimal
@@ -511,7 +510,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log('🔄 [UserContext] Clear complete - resuming Socket.IO listeners');
         }, 50);
       } catch (err) {
-        console.error('❌ Error clearing all data:', err);
+        console.error('❌ Error clearing game history:', err);
         isClearingRef.current = false;
         pauseListenersRef.current = false;
       }
