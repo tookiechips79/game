@@ -51,14 +51,15 @@ const BetReceiptsLedger: React.FC<BetReceiptsLedgerProps> = ({
   };
   
   const handleRefreshReceipts = () => {
-    if (currentUser) {
-      console.log(`🔄 [BET-RECEIPTS] Manual refresh requested for user ${currentUser.id}`);
-      socketIOService.requestBetReceipts(currentUser.id);
-      toast.success("Refreshing...", {
-        description: "Requesting latest bet receipts from server",
-        className: "custom-toast-success"
-      });
-    }
+    console.log(`🔄 [BET-RECEIPTS] Browser refresh requested`);
+    toast.success("Refreshing page...", {
+      description: "Browser will refresh in a moment",
+      className: "custom-toast-success"
+    });
+    // Refresh the browser after a short delay to show the toast
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
   };
   
   // Get all users who have bet receipts
