@@ -1150,18 +1150,25 @@ io.on('connection', (socket) => {
           await addBetReceipt({
             id: receipt.id,
             userId: receipt.userId,
+            userName: receipt.userName,
             arenaId: arenaId,
             gameNumber: receipt.gameNumber,
             teamSide: receipt.teamSide,
             teamName: receipt.teamName,
             opponentName: receipt.opponentName,
+            winningTeam: receipt.winningTeam,
+            teamAName: receipt.teamAName,
+            teamBName: receipt.teamBName,
+            teamAScore: receipt.teamAScore,
+            teamBScore: receipt.teamBScore,
             amount: receipt.amount,
             won: receipt.won,
-            transactionType: receipt.transactionType || 'bet',
-            userName: receipt.userName
+            duration: receipt.duration,
+            timestamp: receipt.timestamp,
+            transactionType: receipt.transactionType || 'bet'
           });
         }
-        console.log(`✅ Saved ${data.betReceipts.length} bet receipts to database`);
+        console.log(`✅ Saved ${data.betReceipts.length} bet receipts to database with full game data`);
       } catch (error) {
         console.error('❌ Error saving bet receipts to database:', error);
       }

@@ -129,21 +129,24 @@ async function initializeDatabase() {
         id SERIAL PRIMARY KEY,
         receipt_id VARCHAR(255) UNIQUE NOT NULL,
         user_id VARCHAR(255) NOT NULL,
+        user_name VARCHAR(255),
         arena_id VARCHAR(50) NOT NULL DEFAULT 'default',
         game_number INTEGER NOT NULL,
         team_side VARCHAR(1) NOT NULL,
         team_name VARCHAR(255),
         opponent_name VARCHAR(255),
+        winning_team VARCHAR(1),
         amount DECIMAL(10, 2) NOT NULL,
         won BOOLEAN DEFAULT FALSE,
         transaction_type VARCHAR(50) DEFAULT 'bet',
-        user_name VARCHAR(255),
+        game_data JSONB,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
       
       CREATE INDEX IF NOT EXISTS idx_bet_receipts_user_id ON bet_receipts(user_id);
       CREATE INDEX IF NOT EXISTS idx_bet_receipts_arena_id ON bet_receipts(arena_id);
       CREATE INDEX IF NOT EXISTS idx_bet_receipts_created_at ON bet_receipts(created_at);
+      CREATE INDEX IF NOT EXISTS idx_bet_receipts_game_number ON bet_receipts(game_number);
     `);
     console.log('✅ [DB] Bet Receipts table ready');
 
@@ -625,27 +628,37 @@ async function addBetReceipt(receiptData) {
   try {
     const result = await pool.query(`
       INSERT INTO bet_receipts (
-        receipt_id, user_id, arena_id, game_number, team_side, 
-        team_name, opponent_name, amount, won, transaction_type, user_name
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        receipt_id, user_id, user_name, arena_id, game_number, team_side, 
+        team_name, opponent_name, winning_team, amount, won, transaction_type, game_data
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       ON CONFLICT (receipt_id) DO NOTHING
       RETURNING *;
     `, [
       receiptData.id,
       receiptData.userId,
+      receiptData.userName,
       receiptData.arenaId || 'default',
       receiptData.gameNumber,
       receiptData.teamSide,
       receiptData.teamName,
       receiptData.opponentName,
+      receiptData.winningTeam || null,
       receiptData.amount,
       receiptData.won || false,
       receiptData.transactionType || 'bet',
-      receiptData.userName
+      JSON.stringify({
+        teamAName: receiptData.teamAName,
+        teamBName: receiptData.teamBName,
+        teamAScore: receiptData.teamAScore,
+        teamBScore: receiptData.teamBScore,
+        winningTeam: receiptData.winningTeam,
+        duration: receiptData.duration,
+        timestamp: receiptData.timestamp
+      })
     ]);
 
     if (result.rows.length > 0) {
-      console.log(`✅ [DB] Bet receipt added for user ${receiptData.userId}`);
+      console.log(`✅ [DB] Bet receipt added for user ${receiptData.userId} on game #${receiptData.gameNumber}`);
       return result.rows[0];
     }
     return null;

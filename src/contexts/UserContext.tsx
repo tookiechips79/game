@@ -947,9 +947,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           gameNumber,
           teamName: record.teamAName,
           opponentName: record.teamBName,
+          teamAName: record.teamAName,
+          teamBName: record.teamBName,
+          teamAScore: record.teamAScore,
+          teamBScore: record.teamBScore,
           amount: bet.amount,
           won: bet.won,
           teamSide: 'A',
+          winningTeam: record.winningTeam,
+          duration: record.duration,
           arenaId
         });
       }
@@ -963,9 +969,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           gameNumber,
           teamName: record.teamBName,
           opponentName: record.teamAName,
+          teamAName: record.teamAName,
+          teamBName: record.teamBName,
+          teamAScore: record.teamAScore,
+          teamBScore: record.teamBScore,
           amount: bet.amount,
           won: bet.won,
           teamSide: 'B',
+          winningTeam: record.winningTeam,
+          duration: record.duration,
           arenaId
         });
       }
