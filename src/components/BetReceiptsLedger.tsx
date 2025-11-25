@@ -33,11 +33,18 @@ const BetReceiptsLedger: React.FC<BetReceiptsLedgerProps> = ({
   const [isHidden, setIsHidden] = useState<boolean>(false);
   
   const handleClearReceipts = () => {
-    if (isAdmin) {
-      clearBettingQueueReceipts();
-    } else {
+    if (!isAdmin) {
       toast.error("Admin Access Required", {
         description: "Only administrators can clear bet receipts"
+      });
+      return;
+    }
+    
+    if (window.confirm('Are you sure you want to clear all bet receipts? This action cannot be undone.')) {
+      clearBettingQueueReceipts();
+      toast.success("Bet Receipts Cleared", {
+        description: "All bet receipts have been cleared",
+        className: "custom-toast-success"
       });
     }
   };
