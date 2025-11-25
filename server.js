@@ -20,6 +20,10 @@ import {
   addGameHistory,
   getGameHistory,
   clearGameHistory,
+  addBetReceipt,
+  getBetReceipts,
+  getArenaAllBetReceipts,
+  clearUserBetReceipts,
 } from './src/db/database.js';
 
 // Deployment version: 3
@@ -1133,8 +1137,8 @@ io.on('connection', (socket) => {
     console.log(`📤 Broadcasted game history to arena '${arenaId}'`);
   });
 
-  // Handle bet receipts updates - sync across all clients
-  socket.on('bet-receipts-update', (data) => {
+  // Handle bet receipts updates - sync across all clients and save to database
+  socket.on('bet-receipts-update', async (data) => {
     console.log('📥 Received bet receipts update:', data.betReceipts?.length, 'entries');
     
     // SKIP if listeners are paused (during clear)
@@ -1147,6 +1151,30 @@ io.on('connection', (socket) => {
     const arenaState = getGameState(arenaId);
     arenaState.betReceipts = data.betReceipts || [];
     arenaState.lastUpdated = Date.now();
+    
+    // Save each receipt to the database
+    if (data.betReceipts && data.betReceipts.length > 0) {
+      try {
+        for (const receipt of data.betReceipts) {
+          await addBetReceipt({
+            id: receipt.id,
+            userId: receipt.userId,
+            arenaId: arenaId,
+            gameNumber: receipt.gameNumber,
+            teamSide: receipt.teamSide,
+            teamName: receipt.teamName,
+            opponentName: receipt.opponentName,
+            amount: receipt.amount,
+            won: receipt.won,
+            transactionType: receipt.transactionType || 'bet',
+            userName: receipt.userName
+          });
+        }
+        console.log(`✅ Saved ${data.betReceipts.length} bet receipts to database`);
+      } catch (error) {
+        console.error('❌ Error saving bet receipts to database:', error);
+      }
+    }
     
     // Broadcast to all OTHER clients in the SAME ARENA
     socket.to(`arena:${arenaId}`).emit('bet-receipts-update', data);
@@ -1512,8 +1540,198 @@ io.on('connection', (socket) => {
     }
   });
 
+  /*
+  ================================
+  BET RECEIPTS SOCKET.IO EVENTS
+  ================================
+  Real-time synchronization of bet receipts across all clients in an arena
+  */
+
+  // Request bet receipts for a user
+  socket.on('request-bet-receipts', async (data) => {
+    const userId = data?.userId;
+    const arenaId = data?.arenaId || 'default';
+    
+    if (!userId) {
+      console.warn(`⚠️ [BET-RECEIPTS] Request missing userId`);
+      socket.emit('bet-receipts-error', { error: 'Missing userId' });
+      return;
+    }
+
+    try {
+      const receipts = await getBetReceipts(userId, arenaId, 250);
+      console.log(`✅ [BET-RECEIPTS] Sending ${receipts.length} receipts to socket ${socket.id} for user ${userId}`);
+      socket.emit('bet-receipts-data', {
+        userId,
+        arenaId,
+        betReceipts: receipts,
+        timestamp: Date.now()
+      });
+    } catch (error) {
+      console.error(`❌ [BET-RECEIPTS] Error fetching receipts:`, error);
+      socket.emit('bet-receipts-error', { error: 'Failed to fetch bet receipts' });
+    }
+  });
+
+  // Request all bet receipts for an arena (for public display)
+  socket.on('request-arena-bet-receipts', async (data) => {
+    const arenaId = data?.arenaId || 'default';
+
+    try {
+      const receipts = await getArenaAllBetReceipts(arenaId, 250);
+      console.log(`✅ [BET-RECEIPTS] Sending ${receipts.length} arena receipts to socket ${socket.id}`);
+      socket.emit('arena-bet-receipts-data', {
+        arenaId,
+        betReceipts: receipts,
+        timestamp: Date.now()
+      });
+    } catch (error) {
+      console.error(`❌ [BET-RECEIPTS] Error fetching arena receipts:`, error);
+      socket.emit('bet-receipts-error', { error: 'Failed to fetch arena bet receipts' });
+    }
+  });
+
+  // Clear bet receipts for a user
+  socket.on('clear-user-bet-receipts', async (data) => {
+    const userId = data?.userId;
+    const arenaId = data?.arenaId || 'default';
+
+    if (!userId) {
+      console.warn(`⚠️ [BET-RECEIPTS] Clear request missing userId`);
+      socket.emit('bet-receipts-error', { error: 'Missing userId' });
+      return;
+    }
+
+    try {
+      const deletedCount = await clearUserBetReceipts(userId);
+      
+      console.log(`✅ [BET-RECEIPTS] Cleared ${deletedCount} receipts for user ${userId}`);
+      
+      // Broadcast to ALL clients in this arena
+      io.to(`arena:${arenaId}`).emit('bet-receipts-cleared', {
+        userId,
+        arenaId,
+        deletedCount,
+        timestamp: Date.now()
+      });
+
+      // Send empty receipts sync (authoritative confirmation)
+      io.to(`arena:${arenaId}`).emit('bet-receipts-update', {
+        arenaId,
+        betReceipts: [],
+        timestamp: Date.now()
+      });
+
+      console.log(`📢 [BET-RECEIPTS] Broadcasted clear + empty receipts sync to arena '${arenaId}'`);
+    } catch (error) {
+      console.error(`❌ [BET-RECEIPTS] Error clearing receipts:`, error);
+      socket.emit('bet-receipts-error', { error: 'Failed to clear bet receipts' });
+    }
+  });
+
 });
 
+
+/*
+================================
+BET RECEIPTS API ENDPOINTS
+================================
+REST API for bet receipts management
+*/
+
+// Get bet receipts for a user
+app.get('/api/bet-receipts/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { arenaId = 'default', limit = 250 } = req.query;
+    
+    console.log(`📡 [BET-RECEIPTS-GET] Fetching receipts for user: ${userId}, arena: ${arenaId}`);
+    
+    const receipts = await getBetReceipts(userId, arenaId, parseInt(limit));
+    
+    console.log(`✅ [BET-RECEIPTS-GET] Retrieved ${receipts.length} receipts for user ${userId}`);
+    res.json({
+      userId,
+      arenaId,
+      betReceipts: receipts,
+      count: receipts.length
+    });
+  } catch (error) {
+    console.error(`❌ [BET-RECEIPTS-GET] Error fetching receipts:`, error);
+    res.status(500).json({ error: 'Failed to fetch bet receipts' });
+  }
+});
+
+// Get all bet receipts for an arena
+app.get('/api/bet-receipts-arena/:arenaId', async (req, res) => {
+  try {
+    const { arenaId } = req.params;
+    const { limit = 250 } = req.query;
+    
+    console.log(`📡 [BET-RECEIPTS-ARENA-GET] Fetching all receipts for arena: ${arenaId}`);
+    
+    const receipts = await getArenaAllBetReceipts(arenaId, parseInt(limit));
+    
+    console.log(`✅ [BET-RECEIPTS-ARENA-GET] Retrieved ${receipts.length} receipts for arena ${arenaId}`);
+    res.json({
+      arenaId,
+      betReceipts: receipts,
+      count: receipts.length
+    });
+  } catch (error) {
+    console.error(`❌ [BET-RECEIPTS-ARENA-GET] Error fetching arena receipts:`, error);
+    res.status(500).json({ error: 'Failed to fetch arena bet receipts' });
+  }
+});
+
+// Add a bet receipt
+app.post('/api/bet-receipts', async (req, res) => {
+  try {
+    const receiptData = req.body;
+    
+    console.log(`📤 [BET-RECEIPTS-POST] Adding receipt for user: ${receiptData.userId}`);
+    
+    const receipt = await addBetReceipt(receiptData);
+    
+    if (receipt) {
+      console.log(`✅ [BET-RECEIPTS-POST] Receipt added successfully`);
+      res.json({
+        success: true,
+        receipt
+      });
+    } else {
+      console.warn(`⚠️ [BET-RECEIPTS-POST] Receipt already exists (duplicate)`);
+      res.json({
+        success: false,
+        message: 'Receipt already exists'
+      });
+    }
+  } catch (error) {
+    console.error(`❌ [BET-RECEIPTS-POST] Error adding receipt:`, error);
+    res.status(500).json({ error: 'Failed to add bet receipt' });
+  }
+});
+
+// Clear all bet receipts for a user
+app.post('/api/bet-receipts/:userId/clear', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    console.log(`🗑️ [BET-RECEIPTS-CLEAR] Clearing receipts for user: ${userId}`);
+    
+    const deletedCount = await clearUserBetReceipts(userId);
+    
+    console.log(`✅ [BET-RECEIPTS-CLEAR] Cleared ${deletedCount} receipts for user ${userId}`);
+    res.json({
+      success: true,
+      userId,
+      deletedCount
+    });
+  } catch (error) {
+    console.error(`❌ [BET-RECEIPTS-CLEAR] Error clearing receipts:`, error);
+    res.status(500).json({ error: 'Failed to clear bet receipts' });
+  }
+});
 
 // Start server - listen on 0.0.0.0 for external connections (required for Render deployment)
 const PORT = process.env.PORT || 3001;

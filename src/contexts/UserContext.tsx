@@ -451,6 +451,43 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     socketIOService.onBetReceiptsUpdate(handleBetReceiptsUpdate);
 
+    // 🎮 NEW: Listen for user bet receipts data from server
+    socketIOService.onBetReceiptsData((data) => {
+      try {
+        console.log(`📥 [SERVER-BET-RECEIPTS] Received ${data.betReceipts?.length || 0} receipts from server for user ${data.userId}`);
+        if (data.betReceipts && data.betReceipts.length > 0) {
+          setImmutableBetReceipts(data.betReceipts);
+        }
+      } catch (err) {
+        console.error('❌ [SERVER-BET-RECEIPTS] Error handling bet receipts data:', err);
+      }
+    });
+
+    // 🎮 NEW: Listen for arena bet receipts data from server
+    socketIOService.onArenaBetReceiptsData((data) => {
+      try {
+        console.log(`📥 [SERVER-ARENA-BET-RECEIPTS] Received ${data.betReceipts?.length || 0} arena receipts from server`);
+        // This can be used to display all arena receipts (optional feature)
+      } catch (err) {
+        console.error('❌ [SERVER-ARENA-BET-RECEIPTS] Error handling arena receipts data:', err);
+      }
+    });
+
+    // 🎮 NEW: Listen for bet receipts cleared event
+    socketIOService.onBetReceiptsCleared((data) => {
+      try {
+        console.log(`📥 [SERVER-BET-RECEIPTS-CLEARED] ${data.deletedCount} receipts cleared by server`);
+        // Can add UI feedback here
+      } catch (err) {
+        console.error('❌ [SERVER-BET-RECEIPTS-CLEARED] Error handling receipts cleared:', err);
+      }
+    });
+
+    // 🎮 NEW: Listen for bet receipts errors
+    socketIOService.onBetReceiptsError((data) => {
+      console.warn(`⚠️ [SERVER-BET-RECEIPTS-ERROR] ${data.error}`);
+    });
+
     // Listen for clear all data command from admin
     socketIOService.onClearAllData(() => {
       try {
@@ -515,6 +552,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Remove all socket listeners
       socketIOService.offGameHistoryUpdate();
       socketIOService.offBetReceiptsUpdate();
+      socketIOService.offBetReceiptsData();
+      socketIOService.offArenaBetReceiptsData();
+      socketIOService.offBetReceiptsCleared();
+      socketIOService.offBetReceiptsError();
       socketIOService.offClearAllData();
       socketIOService.offPauseListeners();
       socketIOService.offResumeListeners();
@@ -533,6 +574,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
       if (currentUser) {
       localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(currentUser));
+      
+      // 🎮 NEW: Request bet receipts from server when user changes
+      if (socketIOService.isSocketConnected()) {
+        console.log(`📥 Requesting bet receipts from server for user ${currentUser.id}`);
+        socketIOService.requestBetReceipts(currentUser.id);
+      }
     } else {
       localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
     }

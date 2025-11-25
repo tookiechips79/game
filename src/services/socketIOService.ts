@@ -989,6 +989,118 @@ class SocketIOService {
       this.socket.off('receive-game-history-from-clients');
     }
   }
+
+  /*
+  ================================
+  BET RECEIPTS METHODS
+  ================================
+  */
+
+  // Request bet receipts for a user
+  public requestBetReceipts(userId: string, arenaId?: string) {
+    if (this.socket && this.isSocketConnected()) {
+      const arena = arenaId || this.getArenaId();
+      log(`📤 Requesting bet receipts for user ${userId}`);
+      this.socket.emit('request-bet-receipts', { userId, arenaId: arena });
+    } else {
+      warn(`⚠️ Socket not connected when requesting bet receipts`);
+    }
+  }
+
+  // Request all arena bet receipts
+  public requestArenaBetReceipts(arenaId?: string) {
+    if (this.socket && this.isSocketConnected()) {
+      const arena = arenaId || this.getArenaId();
+      log(`📤 Requesting all arena bet receipts for arena ${arena}`);
+      this.socket.emit('request-arena-bet-receipts', { arenaId: arena });
+    } else {
+      warn(`⚠️ Socket not connected when requesting arena bet receipts`);
+    }
+  }
+
+  // Listen for user bet receipts data
+  public onBetReceiptsData(callback: (data: { userId: string; arenaId: string; betReceipts: any[]; timestamp: number }) => void) {
+    if (this.socket) {
+      this.socket.off('bet-receipts-data');
+      this.socket.on('bet-receipts-data', (data) => {
+        log(`📥 [BET-RECEIPTS-DATA] Received ${data.betReceipts?.length || 0} receipts for user ${data.userId}`);
+        callback(data);
+      });
+    }
+  }
+
+  // Listen for arena bet receipts data
+  public onArenaBetReceiptsData(callback: (data: { arenaId: string; betReceipts: any[]; timestamp: number }) => void) {
+    if (this.socket) {
+      this.socket.off('arena-bet-receipts-data');
+      this.socket.on('arena-bet-receipts-data', (data) => {
+        log(`📥 [ARENA-BET-RECEIPTS-DATA] Received ${data.betReceipts?.length || 0} arena receipts`);
+        callback(data);
+      });
+    }
+  }
+
+  // Listen for bet receipts cleared event
+  public onBetReceiptsCleared(callback: (data: { userId: string; arenaId: string; deletedCount: number; timestamp: number }) => void) {
+    if (this.socket) {
+      this.socket.off('bet-receipts-cleared');
+      this.socket.on('bet-receipts-cleared', (data) => {
+        log(`📥 [BET-RECEIPTS-CLEARED] ${data.deletedCount} receipts cleared for user ${data.userId}`);
+        callback(data);
+      });
+    }
+  }
+
+  // Listen for bet receipts errors
+  public onBetReceiptsError(callback: (data: { error: string }) => void) {
+    if (this.socket) {
+      this.socket.off('bet-receipts-error');
+      this.socket.on('bet-receipts-error', (data) => {
+        warn(`⚠️ [BET-RECEIPTS-ERROR] ${data.error}`);
+        callback(data);
+      });
+    }
+  }
+
+  // Clear bet receipts for a user
+  public clearUserBetReceipts(userId: string, arenaId?: string) {
+    if (this.socket && this.isSocketConnected()) {
+      const arena = arenaId || this.getArenaId();
+      log(`🗑️ Clearing bet receipts for user ${userId}`);
+      this.socket.emit('clear-user-bet-receipts', { userId, arenaId: arena });
+    } else {
+      warn(`⚠️ Socket not connected when clearing bet receipts`);
+    }
+  }
+
+  // Cleanup bet receipts listeners
+  public offBetReceiptsData() {
+    if (this.socket) {
+      this.socket.off('bet-receipts-data');
+      log(`🧹 [CLEANUP] Removed bet-receipts-data listener`);
+    }
+  }
+
+  public offArenaBetReceiptsData() {
+    if (this.socket) {
+      this.socket.off('arena-bet-receipts-data');
+      log(`🧹 [CLEANUP] Removed arena-bet-receipts-data listener`);
+    }
+  }
+
+  public offBetReceiptsCleared() {
+    if (this.socket) {
+      this.socket.off('bet-receipts-cleared');
+      log(`🧹 [CLEANUP] Removed bet-receipts-cleared listener`);
+    }
+  }
+
+  public offBetReceiptsError() {
+    if (this.socket) {
+      this.socket.off('bet-receipts-error');
+      log(`🧹 [CLEANUP] Removed bet-receipts-error listener`);
+    }
+  }
 }
 
 // Create singleton instance
