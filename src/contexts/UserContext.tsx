@@ -41,14 +41,9 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 const USERS_STORAGE_KEY = "betting_app_users";
 const CURRENT_USER_STORAGE_KEY = "betting_app_current_user";
 const BET_HISTORY_STORAGE_KEY = "betting_app_bet_history";
-// ✅ REMOVED: IMMUTABLE_BET_HISTORY_KEY - Game history is now SERVER-ONLY (database, no localStorage)
-const USER_BET_RECEIPTS_KEY = "betting_app_user_bet_receipts";
-const IMMUTABLE_BET_RECEIPTS_KEY = "betting_app_immutable_bet_receipts_v7"; // Separate immutable storage with version
 const CREDIT_TRANSACTIONS_KEY = "betting_app_credit_transactions";
 
-// BULLETPROOF PROTECTION: Additional isolated keys that old code cannot access
-const BULLETPROOF_BET_HISTORY_KEY = "bulletproof_bet_history_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-const BULLETPROOF_BET_RECEIPTS_KEY = "bulletproof_bet_receipts_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+// ✅ NO STORAGE FOR BET RECEIPTS OR GAME HISTORY - Both are server-only via Socket.IO
 
 // Create a default admin user
 const createDefaultAdmin = (): User => ({
@@ -67,17 +62,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Flag to prevent emitting history updates during clear operations
   const isClearingRef = useRef(false);
 
-  // Flag to prevent re-emitting data that came FROM the socket listener
-  const isUpdatingFromSocketRef = useRef(false);
-
   // Flag to pause Socket.IO listener processing during clear operations
   const pauseListenersRef = useRef(false);
-
-  // Flag to track if we've loaded initial data from localStorage
-  const isInitialLoadRef = useRef(false);
-
-  // Flag to prevent re-emitting bet receipts updates during clear operations
-  const hasReceivedFirstBetReceiptsUpdateRef = useRef(false);
 
   // 💰 Flag to prevent excessive credit fetches
   const lastCreditFetchRef = useRef<number>(0);
@@ -100,22 +86,23 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           key.includes('ultra_bulletproof_') ||
           key.includes('bulletproof_') ||
           key === BET_HISTORY_STORAGE_KEY || // Old mutable bet history
-          key === USER_BET_RECEIPTS_KEY ||  // Old mutable receipts
-          // OLD GAME HISTORY - All versions (v1-v7) since game history now uses server database only
+          // OLD GAME HISTORY - All versions - now server-only
           key === 'betting_app_immutable_bet_history_v1' ||
           key === 'betting_app_immutable_bet_history_v2' ||
           key === 'betting_app_immutable_bet_history_v3' ||
           key === 'betting_app_immutable_bet_history_v4' ||
           key === 'betting_app_immutable_bet_history_v5' ||
           key === 'betting_app_immutable_bet_history_v6' ||
-          key === 'betting_app_immutable_bet_history_v7' || // ✅ Now server-only, can clean up
-          // OLD BET RECEIPTS - Keep these for now (different system)
+          key === 'betting_app_immutable_bet_history_v7' ||
+          // ✅ OLD BET RECEIPTS - All versions - now server-only (clean up completely)
+          key === 'betting_app_user_bet_receipts' ||
           key === 'betting_app_immutable_bet_receipts_v1' ||
           key === 'betting_app_immutable_bet_receipts_v2' ||
           key === 'betting_app_immutable_bet_receipts_v3' ||
           key === 'betting_app_immutable_bet_receipts_v4' ||
           key === 'betting_app_immutable_bet_receipts_v5' ||
-          key === 'betting_app_immutable_bet_receipts_v6'
+          key === 'betting_app_immutable_bet_receipts_v6' ||
+          key === 'betting_app_immutable_bet_receipts_v7'
         )) {
           keysToRemove.push(key);
         }
@@ -156,27 +143,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   // PRIVATE: setBetHistory is now completely internal and cannot be called externally
   // This ensures bet history can only be modified through addBetHistoryRecord
+  // ✅ BET RECEIPTS - SERVER-ONLY (just like game history)
+  // No localStorage - all data from server via Socket.IO
+  // This ensures consistency and prevents stale data issues
   const [userBetReceipts, setUserBetReceipts] = useState<UserBetReceipt[]>([]);
-  
-  // IMMUTABLE BET RECEIPTS - This can NEVER be cleared or modified
-  // Load from localStorage synchronously on mount to ensure data exists BEFORE socket connects
-  const [immutableBetReceipts, setImmutableBetReceipts] = useState<UserBetReceipt[]>(() => {
-    try {
-      const stored = localStorage.getItem(IMMUTABLE_BET_RECEIPTS_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          console.log('✅ [INIT] Bet receipts initialized from localStorage:', parsed.length, 'receipts');
-          // CRITICAL: Mark as first update received so guards activate BEFORE socket messages arrive
-          hasReceivedFirstBetReceiptsUpdateRef.current = true;
-          return parsed;
-        }
-      }
-    } catch (error) {
-      console.error('❌ [INIT] Error loading immutable bet receipts:', error);
-    }
-    return [];
-  });
   const [creditTransactions, setCreditTransactions] = useState<CreditTransaction[]>([]);
   const [isUsersLoaded, setIsUsersLoaded] = useState<boolean>(true); // Start as true since we initialize with users
   const [connectedUsersCoins, setConnectedUsersCoins] = useState<{ totalCoins: number; connectedUserCount: number; connectedUsers: any[] }>({ totalCoins: 0, connectedUserCount: 0, connectedUsers: [] });
@@ -365,68 +335,31 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-  // Listen for bet receipts updates from other clients
-    const handleBetReceiptsUpdate = (data: { betReceipts: any[] }) => {
-      try {
-        console.log(`[RECEIPTS_LISTENER] Received update:`, {
-          receivedLength: data.betReceipts?.length,
-          currentStateLength: immutableBetReceipts.length,
-          isEmpty: data.betReceipts?.length === 0
-        });
-        
-        // HARD RULE: NEVER accept empty arrays from server - they kill the receipts!
-        if (!data.betReceipts || data.betReceipts.length === 0) {
-          console.warn('⚠️ [RECEIPTS_LISTENER] BLOCKED: Server sent empty/null array - NEVER accepting empty receipts!');
-          console.warn('   This is a hard rule - bet receipts are protected');
-          return; // NEVER accept empty receipts
-        }
-        
-        // PAUSE listeners during clearing - completely ignore all updates
-        if (pauseListenersRef.current) {
-          console.log('⏸️ [UserContext] Listeners paused, ignoring receipts update');
-          return;
-        }
-        
-        // IGNORE updates during clearing to prevent re-population
-        if (isClearingRef.current) {
-          console.log('⏭️ [UserContext] Ignoring receipts update during clear operation');
-          return;
-        }
-        
-        // PROTECT local data on initial load - only update if server has more/different data
-        if (isInitialLoadRef.current && immutableBetReceipts.length > 0) {
-          console.log('🛡️ [UserContext] Local receipts already loaded, checking if server has newer data');
-          if (data.betReceipts?.length <= immutableBetReceipts.length) {
-            console.log('✅ [UserContext] Local receipts are same or more recent, preserving local data');
-            return; // Keep local data
-          }
-        }
-        
-        console.log('📥 [UserContext] Bet receipts update received:', data.betReceipts?.length, 'entries');
-        if (Array.isArray(data.betReceipts)) {
-          console.log('📝 [UserContext] Setting userBetReceipts and immutableBetReceipts');
-          
-          // Ensure all records have unique IDs
-          const ensuredReceipts = data.betReceipts.map((record, index) => ({
-            ...record,
-            id: record.id || `bet-receipt-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 9)}`
-          }));
-          
-          // SET FLAG to prevent re-emitting this data back to socket
-          isUpdatingFromSocketRef.current = true;
-          setUserBetReceipts([...ensuredReceipts]); // Use spread for new reference
-          setImmutableBetReceipts([...ensuredReceipts]);
-          console.log('✅ [UserContext] States updated from socket, component will re-render');
-          
-          // Reset flag after state updates settle
-          setTimeout(() => {
-            isUpdatingFromSocketRef.current = false;
-          }, 50);
-        }
-      } catch (err) {
-        console.error('❌ Error handling bet receipts update:', err);
+  // ✅ LISTEN FOR BET RECEIPTS UPDATES FROM SERVER (just like game history)
+  // Server is the ONLY source of truth for bet receipts
+  const handleBetReceiptsUpdate = (data: { betReceipts: any[], userId?: string, arenaId?: string }) => {
+    try {
+      console.log(`📥 [BET-RECEIPTS-SYNC] Received bet receipts update for user '${data.userId}' in arena '${data.arenaId}': ${data.betReceipts?.length} receipts`);
+      
+      // ✅ TRUST SERVER COMPLETELY - Server is source of truth (exactly like game history)
+      if (!data.betReceipts || !Array.isArray(data.betReceipts)) {
+        console.log('📭 [BET-RECEIPTS-SYNC] Server sent empty/null receipts - clearing local state');
+        setUserBetReceipts([]);
+        return;
       }
-    };
+      
+      // Ensure all records have IDs
+      const ensuredReceipts = data.betReceipts.map((record, index) => ({
+        ...record,
+        id: record.id || `bet-receipt-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 9)}`
+      }));
+      
+      setUserBetReceipts([...ensuredReceipts]);
+      console.log(`✅ [BET-RECEIPTS-SYNC] Updated user bet receipts: ${ensuredReceipts.length} receipts`);
+    } catch (err) {
+      console.error('❌ [BET-RECEIPTS-SYNC] Error handling bet receipts update:', err);
+    }
+  };
 
     // Setup game history listeners
     socketIOService.onGameHistoryUpdate(handleGameHistoryUpdate);
@@ -449,44 +382,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
     
+    // ✅ Setup bet receipts listeners (just like game history)
     socketIOService.onBetReceiptsUpdate(handleBetReceiptsUpdate);
-
-    // 🎮 NEW: Listen for user bet receipts data from server
-    socketIOService.onBetReceiptsData((data) => {
-      try {
-        console.log(`📥 [SERVER-BET-RECEIPTS] Received ${data.betReceipts?.length || 0} receipts from server for user ${data.userId}`);
-        if (data.betReceipts && data.betReceipts.length > 0) {
-          setImmutableBetReceipts(data.betReceipts);
-        }
-      } catch (err) {
-        console.error('❌ [SERVER-BET-RECEIPTS] Error handling bet receipts data:', err);
-      }
-    });
-
-    // 🎮 NEW: Listen for arena bet receipts data from server
-    socketIOService.onArenaBetReceiptsData((data) => {
-      try {
-        console.log(`📥 [SERVER-ARENA-BET-RECEIPTS] Received ${data.betReceipts?.length || 0} arena receipts from server`);
-        // This can be used to display all arena receipts (optional feature)
-      } catch (err) {
-        console.error('❌ [SERVER-ARENA-BET-RECEIPTS] Error handling arena receipts data:', err);
-      }
-    });
-
-    // 🎮 NEW: Listen for bet receipts cleared event
-    socketIOService.onBetReceiptsCleared((data) => {
-      try {
-        console.log(`📥 [SERVER-BET-RECEIPTS-CLEARED] ${data.deletedCount} receipts cleared by server`);
-        // Can add UI feedback here
-      } catch (err) {
-        console.error('❌ [SERVER-BET-RECEIPTS-CLEARED] Error handling receipts cleared:', err);
-      }
-    });
-
-    // 🎮 NEW: Listen for bet receipts errors
-    socketIOService.onBetReceiptsError((data) => {
-      console.warn(`⚠️ [SERVER-BET-RECEIPTS-ERROR] ${data.error}`);
-    });
 
     // Listen for clear all data command from admin
     socketIOService.onClearAllData(() => {
@@ -572,23 +469,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [users]);
 
   useEffect(() => {
-      if (currentUser) {
+    if (currentUser) {
       localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(currentUser));
       
-      // 🎮 NEW: Request bet receipts from server when user changes
-      // Always request immediately and keep requesting until connection is established
-      const requestReceiptsWithRetry = () => {
-        if (socketIOService.isSocketConnected()) {
-          console.log(`📥 Requesting bet receipts from server for user ${currentUser.id}`);
-          socketIOService.requestBetReceipts(currentUser.id);
-        } else {
-          // If socket not connected yet, retry in 500ms
-          console.log(`⏳ Socket not connected yet, retrying bet receipts request...`);
-          setTimeout(requestReceiptsWithRetry, 500);
-        }
-      };
-      
-      requestReceiptsWithRetry();
+      // ✅ REQUEST BET RECEIPTS FROM SERVER (just like game history)
+      // Server sends all bet receipts for this user via Socket.IO
+      if (socketIOService.isSocketConnected()) {
+        console.log(`📥 [BET-RECEIPTS] Requesting from server for user ${currentUser.id}`);
+        socketIOService.requestBetReceipts(currentUser.id);
+      }
     } else {
       localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
     }
@@ -611,38 +500,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // NOTE: userBetReceipts is synced via Socket.IO, don't save to localStorage separately
   
   // IMMUTABLE BET RECEIPTS - Always save to separate storage, NEVER cleared
-  useEffect(() => {
-    // COMPLETELY SKIP during clearing - don't even save to localStorage
-    if (isClearingRef.current) {
-      console.log('⏭️ Skipping receipts useEffect during clear operation');
-      return;
-    }
-    
-    // IMPORTANT: Always save to localStorage, regardless of where the update came from
-    // Whether from local addUserBetReceipt or from socket listeners, we MUST persist it
-    try {
-      // Only save to main key to conserve storage space
-      localStorage.setItem(IMMUTABLE_BET_RECEIPTS_KEY, JSON.stringify(immutableBetReceipts));
-      console.log('✅ Immutable bet receipts saved to localStorage:', immutableBetReceipts.length, 'receipts');
-      
-      // NOTE: DO NOT EMIT HERE - emit only happens in addUserBetReceipt (the SOURCE)
-      // This prevents re-emit loops from Socket.IO listener updates
-    } catch (error) {
-      if (error instanceof Error && error.name === 'QuotaExceededError') {
-        console.error('❌ localStorage quota exceeded! Clearing old data...');
-        // If quota exceeded, trim more aggressively and retry
-        const trimmedReceipts = immutableBetReceipts.slice(0, 250);
-        try {
-          localStorage.setItem(IMMUTABLE_BET_RECEIPTS_KEY, JSON.stringify(trimmedReceipts));
-          console.log('✅ Recovered by trimming to 250 receipts');
-        } catch (retryError) {
-          console.error('❌ Still failed after trimming:', retryError);
-        }
-      } else {
-        console.error('❌ Failed to save immutable bet receipts:', error);
-      }
-    }
-  }, [immutableBetReceipts]);
+  // ✅ BET RECEIPTS ARE SERVER-ONLY - NO localStorage
+  // All data comes from server via Socket.IO, just like game history
   
   useEffect(() => {
     if (creditTransactions.length > 0) {
@@ -1194,11 +1053,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return userBetReceipts.filter(receipt => receipt.userId === userId);
   };
   
-  // HARD LEDGER - Read-only bet receipts for settings
-  // This provides a completely immutable view of bet receipts
+  // ✅ GET HARD LEDGER BET RECEIPTS - Read-only view of user's bet receipts (from server)
   const getHardLedgerBetReceipts = (userId: string): UserBetReceipt[] => {
-    // Return a deep copy of the IMMUTABLE bet receipts to prevent any modifications
-    return JSON.parse(JSON.stringify(immutableBetReceipts.filter(receipt => receipt.userId === userId)));
+    return JSON.parse(JSON.stringify(userBetReceipts.filter(receipt => receipt.userId === userId)));
   };
 
   const resetBetReceipts = () => {
@@ -1217,26 +1074,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return;
   };
 
-  // CLEAR BETTING QUEUE RECEIPTS ONLY - This clears the mutable receipts for betting queue display
+  // ✅ CLEAR BETTING QUEUE RECEIPTS - Clear local state only (server-side deletion is separate)
   const clearBettingQueueReceipts = () => {
-    console.log('🧹 Clearing betting queue receipts (mutable only)');
-    console.log('🧹 Current userBetReceipts length:', userBetReceipts.length);
-    
-    // Clear the mutable receipts array
+    console.log('🧹 Clearing betting queue receipts from display');
     setUserBetReceipts([]);
     
-    // Clear localStorage for mutable receipts
-    localStorage.removeItem(USER_BET_RECEIPTS_KEY);
-    
-    // Also clear the immutable receipts for betting queue display (but keep user settings)
-    setImmutableBetReceipts([]);
-    localStorage.removeItem(IMMUTABLE_BET_RECEIPTS_KEY);
-    localStorage.removeItem(BULLETPROOF_BET_RECEIPTS_KEY);
-    
-    console.log('🧹 All betting queue receipts cleared (mutable and immutable)');
-    
     toast.success("Betting Queue Cleared", {
-      description: "All betting queue receipts have been cleared",
+      description: "Betting queue receipts cleared",
       className: "custom-toast-success"
     });
   };
