@@ -1034,27 +1034,39 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return updatedReceipts;
     });
     
-    // EMIT IMMEDIATELY with the new receipt (don't wait for useEffect)
+    // EMIT IMMEDIATELY with JUST the new receipt to the server
     // This is the SOURCE of truth - emit only when data is created locally
-    setTimeout(() => {
+    const emitReceipt = () => {
       // DO NOT EMIT if listeners are paused (during clear operation)
       if (pauseListenersRef.current) {
         console.log('⏸️ [addUserBetReceipt] Skipping emit - listeners are paused');
         return;
       }
       
-      // Use the new receipt with current userBetReceipts at the time of emit
-      let receiptsToEmit = [newReceipt, ...userBetReceipts];
-      if (receiptsToEmit.length > 250) {
-        receiptsToEmit = receiptsToEmit.slice(0, 250);
+      if (!socketIOService.isSocketConnected()) {
+        console.warn('⚠️ [addUserBetReceipt] Socket NOT connected! Retrying in 100ms...');
+        setTimeout(emitReceipt, 100);
+        return;
       }
+      
       try {
-        console.log('📤 [addUserBetReceipt] Emitting new receipt to all clients immediately');
-        socketIOService.emitBetReceiptsUpdate(receiptsToEmit);
+        console.log('📤 [addUserBetReceipt] Emitting new receipt to server');
+        console.log('   Receipt:', {
+          id: newReceipt.id,
+          userId: newReceipt.userId,
+          gameNumber: newReceipt.gameNumber,
+          teamSide: newReceipt.teamSide,
+          amount: newReceipt.amount,
+          won: newReceipt.won
+        });
+        // Emit just the new receipt - server will handle adding to database
+        socketIOService.emitBetReceiptsUpdate([newReceipt]);
       } catch (err) {
-        console.error('❌ Error emitting bet receipts:', err);
+        console.error('❌ Error emitting bet receipt:', err);
       }
-    }, 0);
+    };
+    
+    setTimeout(emitReceipt, 0);
   };
   
   const getUserBetReceipts = (userId: string) => {
