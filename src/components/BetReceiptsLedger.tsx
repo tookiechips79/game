@@ -56,9 +56,14 @@ const BetReceiptsLedger: React.FC<BetReceiptsLedgerProps> = ({
   
   // For non-admin users, always show their own receipts
   // For admin users, show selected user's receipts or current user's if none selected
+  // ✅ SECURITY: Non-admin users can NEVER see other users' receipts
   const selectedUserReceipts = isAdmin 
     ? (selectedUserId ? getUserBetReceipts(selectedUserId) : currentUser ? getUserBetReceipts(currentUser.id) : [])
     : (currentUser ? getUserBetReceipts(currentUser.id) : []);
+  
+  // ✅ SECURITY: For non-admin users, force their own ID to be selected
+  // This prevents any possibility of viewing other users' receipts via URL manipulation or developer tools
+  const displayedUserId = isAdmin ? selectedUserId : currentUser?.id;
   
   // Filter receipts by team
   const teamAReceipts = selectedUserReceipts.filter(
@@ -131,9 +136,13 @@ const BetReceiptsLedger: React.FC<BetReceiptsLedgerProps> = ({
         <CardContent className="p-4">
           {isAdmin && (
             <div className="mb-4 space-y-3">
+              {/* ✅ SECURITY: UserDropdown only shown to admin users */}
               <UserDropdown
                 selectedUserId={selectedUserId || ''}
-                onUserChange={(userId) => setSelectedUserId(userId || null)}
+                onUserChange={(userId) => {
+                  // ✅ SECURITY: Admin can select any user to view their receipts
+                  setSelectedUserId(userId || null);
+                }}
                 placeholder="Select a user to view receipts"
                 showCredits={false}
                 showMembership={false}

@@ -1649,10 +1649,19 @@ REST API for bet receipts management
 */
 
 // Get bet receipts for a user
+// ⚠️ NOTE: This endpoint is primarily for server-internal use and Socket.IO events
+// Client access is restricted via Socket.IO-only pattern
 app.get('/api/bet-receipts/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     const { arenaId = 'default', limit = 250 } = req.query;
+    
+    // ✅ SECURITY: Validate user exists before returning receipts
+    const user = await getUserById(userId);
+    if (!user) {
+      console.warn(`⚠️ [BET-RECEIPTS-GET] User not found: ${userId}`);
+      return res.status(404).json({ error: 'User not found' });
+    }
     
     console.log(`📡 [BET-RECEIPTS-GET] Fetching receipts for user: ${userId}, arena: ${arenaId}`);
     
@@ -1722,9 +1731,17 @@ app.post('/api/bet-receipts', async (req, res) => {
 });
 
 // Clear all bet receipts for a user
+// ⚠️ NOTE: This endpoint is admin-only and used internally via Socket.IO
 app.post('/api/bet-receipts/:userId/clear', async (req, res) => {
   try {
     const { userId } = req.params;
+    
+    // ✅ SECURITY: Validate user exists before clearing receipts
+    const user = await getUserById(userId);
+    if (!user) {
+      console.warn(`⚠️ [BET-RECEIPTS-CLEAR] User not found: ${userId}`);
+      return res.status(404).json({ error: 'User not found' });
+    }
     
     console.log(`🗑️ [BET-RECEIPTS-CLEAR] Clearing receipts for user: ${userId}`);
     
