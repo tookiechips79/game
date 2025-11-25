@@ -474,10 +474,19 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // ✅ REQUEST BET RECEIPTS FROM SERVER (just like game history)
       // Server sends all bet receipts for this user via Socket.IO
-      if (socketIOService.isSocketConnected()) {
-        console.log(`📥 [BET-RECEIPTS] Requesting from server for user ${currentUser.id}`);
-        socketIOService.requestBetReceipts(currentUser.id);
-      }
+      // Retry until socket is connected (handles page refresh and reconnection)
+      const requestWithRetry = () => {
+        if (socketIOService.isSocketConnected()) {
+          console.log(`📥 [BET-RECEIPTS] Requesting from server for user ${currentUser.id}`);
+          socketIOService.requestBetReceipts(currentUser.id);
+        } else {
+          // Socket not ready yet, retry in 200ms
+          console.log(`⏳ [BET-RECEIPTS] Socket not ready, retrying...`);
+          setTimeout(requestWithRetry, 200);
+        }
+      };
+      
+      requestWithRetry();
     } else {
       localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
     }
