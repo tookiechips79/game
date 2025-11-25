@@ -576,10 +576,19 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(currentUser));
       
       // 🎮 NEW: Request bet receipts from server when user changes
-      if (socketIOService.isSocketConnected()) {
-        console.log(`📥 Requesting bet receipts from server for user ${currentUser.id}`);
-        socketIOService.requestBetReceipts(currentUser.id);
-      }
+      // Always request immediately and keep requesting until connection is established
+      const requestReceiptsWithRetry = () => {
+        if (socketIOService.isSocketConnected()) {
+          console.log(`📥 Requesting bet receipts from server for user ${currentUser.id}`);
+          socketIOService.requestBetReceipts(currentUser.id);
+        } else {
+          // If socket not connected yet, retry in 500ms
+          console.log(`⏳ Socket not connected yet, retrying bet receipts request...`);
+          setTimeout(requestReceiptsWithRetry, 500);
+        }
+      };
+      
+      requestReceiptsWithRetry();
     } else {
       localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
     }
