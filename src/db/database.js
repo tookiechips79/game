@@ -560,8 +560,21 @@ async function getGameHistory(arenaId = 'default', limit = 100) {
     const games = inMemoryGameHistory[arenaId] || [];
     console.log(`✅ [DB] Retrieved ${games.length} games from arena '${arenaId}' (IN-MEMORY)`);
     return games.slice(0, limit).map(row => ({
-      ...row,
-      bets: typeof row.bets_data === 'string' ? JSON.parse(row.bets_data) : row.bets_data
+      id: row.game_id || row.id,
+      gameNumber: row.game_number || row.gameNumber,
+      teamAName: row.team_a_name || row.teamAName,
+      teamBName: row.team_b_name || row.teamBName,
+      teamAScore: row.team_a_score || row.teamAScore,
+      teamBScore: row.team_b_score || row.teamBScore,
+      winningTeam: row.winning_team || row.winningTeam,
+      teamABalls: row.team_a_balls || row.teamABalls,
+      teamBBalls: row.team_b_balls || row.teamBBalls,
+      breakingTeam: row.breaking_team || row.breakingTeam,
+      duration: row.duration,
+      totalAmount: row.total_amount || row.totalAmount || 0,  // ✅ Include totalAmount!
+      arenaId: row.arena_id || row.arenaId,
+      bets: typeof (row.bets_data || row.bets) === 'string' ? JSON.parse(row.bets_data || row.bets) : (row.bets_data || row.bets),
+      timestamp: row.timestamp || new Date(row.created_at).getTime()
     }));
   }
 
@@ -573,10 +586,23 @@ async function getGameHistory(arenaId = 'default', limit = 100) {
 
     console.log(`✅ [DB] Retrieved ${result.rows.length} games from arena '${arenaId}' (PostgreSQL)`);
     
-    // Parse bets_data JSONB back to object
+    // Convert database row format to client format (snake_case to camelCase)
     return result.rows.map(row => ({
-      ...row,
-      bets: typeof row.bets_data === 'string' ? JSON.parse(row.bets_data) : row.bets_data
+      id: row.game_id,
+      gameNumber: row.game_number,
+      teamAName: row.team_a_name,
+      teamBName: row.team_b_name,
+      teamAScore: row.team_a_score,
+      teamBScore: row.team_b_score,
+      winningTeam: row.winning_team,
+      teamABalls: row.team_a_balls,
+      teamBBalls: row.team_b_balls,
+      breakingTeam: row.breaking_team,
+      duration: row.duration,
+      totalAmount: parseFloat(row.total_amount) || 0,  // ✅ Include totalAmount!
+      arenaId: row.arena_id,
+      bets: typeof row.bets_data === 'string' ? JSON.parse(row.bets_data) : row.bets_data,
+      timestamp: new Date(row.created_at).getTime()
     }));
   } catch (error) {
     console.error('❌ [DB] Error getting game history:', error);
