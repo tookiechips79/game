@@ -1176,9 +1176,14 @@ io.on('connection', (socket) => {
       }
     }
     
-    // Broadcast to all OTHER clients in the SAME ARENA
-    socket.to(`arena:${arenaId}`).emit('bet-receipts-update', data);
-    console.log(`📤 Broadcasted bet receipts to arena '${arenaId}'`);
+    // ✅ BROADCAST TO ALL CLIENTS (like game history does)
+    // This ensures all clients see the SAME data immediately
+    io.to(`arena:${arenaId}`).emit('bet-receipts-update', {
+      arenaId,
+      betReceipts: data.betReceipts || [],
+      timestamp: Date.now()
+    });
+    console.log(`📤 Broadcasted bet receipts to ALL clients in arena '${arenaId}'`);
   });
   
   // Handle game state updates
