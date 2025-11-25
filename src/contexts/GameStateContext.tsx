@@ -157,7 +157,7 @@ const STORAGE_KEY_ADMIN_ONE_POCKET = 'adminState_one_pocket_arena';
 
 // Helper to save state to localStorage
 const saveGameStateToStorage = (arenaId: string, state: GameState) => {
-  const key = arenaId === 'one_pocket' ? STORAGE_KEY_ONE_POCKET_ARENA : STORAGE_KEY_DEFAULT_ARENA;
+  const key = STORAGE_KEY_ONE_POCKET_ARENA;
   try {
     // Only store critical fields to reduce size
     // IMPORTANT: Do NOT save timer state - timers should reset on page load
@@ -207,7 +207,7 @@ const saveGameStateToStorage = (arenaId: string, state: GameState) => {
 
 // Helper to load state from localStorage
 const loadGameStateFromStorage = (arenaId: string): GameState => {
-  const key = arenaId === 'one_pocket' ? STORAGE_KEY_ONE_POCKET_ARENA : STORAGE_KEY_DEFAULT_ARENA;
+  const key = STORAGE_KEY_ONE_POCKET_ARENA;
   try {
     const stored = localStorage.getItem(key);
     if (stored) {
@@ -321,13 +321,6 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   
   // Only save as fallback for emergency scenarios
   useEffect(() => {
-    if (gameStateDefault && gameStateDefault.teamAName !== "Player A") {
-      // Only save if state has actual data (not defaults)
-      saveGameStateToStorage('default', gameStateDefault);
-    }
-  }, [gameStateDefault]);
-
-  useEffect(() => {
     if (gameStateOnePocket && gameStateOnePocket.teamAName !== "Player A") {
       // Only save if state has actual data (not defaults)
       saveGameStateToStorage('one_pocket', gameStateOnePocket);
@@ -340,15 +333,6 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       if (!event.key) return;
       
       // Load game state if it changed in another tab
-      if (event.key === STORAGE_KEY_DEFAULT_ARENA && currentArenaId === 'default') {
-        try {
-          const newState = JSON.parse(event.newValue || '{}');
-          setGameStateDefault(prev => ({ ...prev, ...newState }));
-        } catch (e) {
-          console.error('Failed to sync game state from other tab:', e);
-        }
-      }
-      
       if (event.key === STORAGE_KEY_ONE_POCKET_ARENA && currentArenaId === 'one_pocket') {
         try {
           const newState = JSON.parse(event.newValue || '{}');
@@ -818,7 +802,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
   // Handle visibility changes to ensure timer accuracy when tab becomes active again (mobile-friendly)
   useEffect(() => {
     const handleVisibilityChange = () => {
-      const currentState = currentArenaId === 'one_pocket' ? gameStateOnePocket : gameStateDefault;
+      const currentState = gameStateOnePocket;
       if (currentState.isTimerRunning && !document.hidden) {
         // Tab became visible again - timer will automatically resume with requestAnimationFrame
         console.log('📱 App became visible, timer continues with requestAnimationFrame');
@@ -841,7 +825,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
       window.removeEventListener('focus', handleVisibilityChange);
       window.removeEventListener('blur', () => {});
     };
-  }, [currentArenaId, gameStateDefault.isTimerRunning, gameStateOnePocket.isTimerRunning]);
+  }, [currentArenaId, gameStateOnePocket.isTimerRunning]);
 
   const updateGameState = useCallback((updates: Partial<GameState>) => {
     setCurrentGameState(prevState => {
@@ -1080,13 +1064,6 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     resetTimerOnMatchStart,
     resetTimerOnGameWin,
   }), [
-    gameStateDefault.teamAGames, 
-    gameStateDefault.teamBGames,
-    gameStateDefault.teamAQueue,
-    gameStateDefault.teamBQueue,
-    gameStateDefault.bookedBets,
-    gameStateDefault.nextTeamAQueue,
-    gameStateDefault.nextTeamBQueue,
     gameStateOnePocket.teamAGames, 
     gameStateOnePocket.teamBGames,
     gameStateOnePocket.teamAQueue,
@@ -1094,9 +1071,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     gameStateOnePocket.bookedBets,
     gameStateOnePocket.nextTeamAQueue,
     gameStateOnePocket.nextTeamBQueue,
-    gameStateDefault, 
     gameStateOnePocket, 
-    localAdminStateDefault, 
     localAdminStateOnePocket, 
     isAdmin, 
     currentArenaId
