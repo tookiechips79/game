@@ -329,6 +329,84 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // ✅ REPLACE entire history with server version (just like wallet replaces credits)
         console.log(`✅ [GAME-HISTORY-SYNC] Updated from socket: ${immutableBetHistory.length} → ${ensuredHistory.length} games`);
         setImmutableBetHistory([...ensuredHistory]);
+        
+        // 💰 CREATE BET RECEIPTS FOR HISTORICAL GAMES
+        // Schedule this to run after addUserBetReceipt is defined
+        // We'll emit receipts to the server which will save them to database
+        setTimeout(() => {
+          const arenaId = data.arenaId || 'default';
+          const receiptsToEmit = [];
+          
+          ensuredHistory.forEach((game) => {
+            if (game.bets) {
+              console.log(`💰 [BET-RECEIPTS] Processing historical game #${game.gameNumber}: Team A=${game.bets.teamA?.length || 0}, Team B=${game.bets.teamB?.length || 0}`);
+              
+              // Process Team A booked bets
+              (game.bets.teamA || []).forEach((bet) => {
+                if (bet.booked) {
+                  const receipt: UserBetReceipt = {
+                    id: `hist-bet-${game.gameNumber}-A-${bet.userId}-${Date.now()}`,
+                    userId: bet.userId,
+                    userName: bet.userName,
+                    gameNumber: game.gameNumber,
+                    teamName: game.teamAName,
+                    opponentName: game.teamBName,
+                    teamAName: game.teamAName,
+                    teamBName: game.teamBName,
+                    teamAScore: game.teamAScore,
+                    teamBScore: game.teamBScore,
+                    amount: bet.amount,
+                    won: bet.won,
+                    teamSide: 'A',
+                    winningTeam: game.winningTeam,
+                    duration: game.duration,
+                    arenaId,
+                    timestamp: Date.now(),
+                    transactionType: 'bet'
+                  };
+                  receiptsToEmit.push(receipt);
+                  console.log(`   📝 Receipt for ${bet.userName}: $${bet.amount}, Won: ${bet.won}`);
+                }
+              });
+              
+              // Process Team B booked bets
+              (game.bets.teamB || []).forEach((bet) => {
+                if (bet.booked) {
+                  const receipt: UserBetReceipt = {
+                    id: `hist-bet-${game.gameNumber}-B-${bet.userId}-${Date.now()}`,
+                    userId: bet.userId,
+                    userName: bet.userName,
+                    gameNumber: game.gameNumber,
+                    teamName: game.teamBName,
+                    opponentName: game.teamAName,
+                    teamAName: game.teamAName,
+                    teamBName: game.teamBName,
+                    teamAScore: game.teamAScore,
+                    teamBScore: game.teamBScore,
+                    amount: bet.amount,
+                    won: bet.won,
+                    teamSide: 'B',
+                    winningTeam: game.winningTeam,
+                    duration: game.duration,
+                    arenaId,
+                    timestamp: Date.now(),
+                    transactionType: 'bet'
+                  };
+                  receiptsToEmit.push(receipt);
+                  console.log(`   📝 Receipt for ${bet.userName}: $${bet.amount}, Won: ${bet.won}`);
+                }
+              });
+            }
+          });
+          
+          // Emit all receipts to the server for persistence
+          if (receiptsToEmit.length > 0 && socketIOService.isSocketConnected()) {
+            console.log(`✅ [BET-RECEIPTS] Emitting ${receiptsToEmit.length} historical bet receipts to server`);
+            socketIOService.emitBetReceiptsUpdate(receiptsToEmit);
+          } else if (receiptsToEmit.length > 0) {
+            console.warn(`⚠️ [BET-RECEIPTS] Have ${receiptsToEmit.length} receipts to emit but socket not connected`);
+          }
+        }, 0);
       } catch (err) {
         console.error('❌ [GAME-HISTORY-SYNC] Error handling history update:', err);
       }
@@ -939,8 +1017,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const gameNumber = record.gameNumber;
     const arenaId = record.arenaId || socketIOService.getArenaId() || 'default';
     
+    console.log(`💰 [BET-RECEIPTS] Processing receipts for game #${gameNumber}:`);
+    console.log(`   Team A bets: ${record.bets.teamA?.length || 0}, Booked: ${record.bets.teamA?.filter(b => b.booked).length || 0}`);
+    console.log(`   Team B bets: ${record.bets.teamB?.length || 0}, Booked: ${record.bets.teamB?.filter(b => b.booked).length || 0}`);
+    
     record.bets.teamA.forEach(bet => {
       if (bet.booked) {
+        console.log(`   📝 Creating receipt for Team A bet: ${bet.userName} - $${bet.amount} - Won: ${bet.won}`);
         addUserBetReceipt({
           userId: bet.userId,
           userName: bet.userName,
@@ -963,6 +1046,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     record.bets.teamB.forEach(bet => {
       if (bet.booked) {
+        console.log(`   📝 Creating receipt for Team B bet: ${bet.userName} - $${bet.amount} - Won: ${bet.won}`);
         addUserBetReceipt({
           userId: bet.userId,
           userName: bet.userName,
@@ -1029,6 +1113,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       transactionType: receipt.transactionType || 'bet'
     };
     
+    console.log(`✅ [addUserBetReceipt] Created new receipt with ID: ${newReceipt.id}`);
+    console.log(`   User: ${newReceipt.userName} (${newReceipt.userId}), Game: #${newReceipt.gameNumber}, Team: ${newReceipt.teamName}, Amount: $${newReceipt.amount}, Won: ${newReceipt.won}`);
+    
     let finalReceipts: UserBetReceipt[] = [];
     
     setUserBetReceipts(prev => {
@@ -1063,16 +1150,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       try {
         console.log('📤 [addUserBetReceipt] Emitting new receipt to server');
-        console.log('   Receipt:', {
-          id: newReceipt.id,
-          userId: newReceipt.userId,
-          gameNumber: newReceipt.gameNumber,
-          teamSide: newReceipt.teamSide,
-          amount: newReceipt.amount,
-          won: newReceipt.won
-        });
+        console.log('   Full Receipt Object:', newReceipt);
         // Emit just the new receipt - server will handle adding to database
         socketIOService.emitBetReceiptsUpdate([newReceipt]);
+        console.log('✅ [addUserBetReceipt] Receipt emitted successfully');
       } catch (err) {
         console.error('❌ Error emitting bet receipt:', err);
       }
