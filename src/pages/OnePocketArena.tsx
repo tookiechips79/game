@@ -1991,8 +1991,9 @@ const OnePocketArena = () => {
           nextGameBets={nextBookedBets}
         />
         
+        {/* ✅ SECURITY: Use actual isAdmin status, NOT isAdminMode (which can be toggled by any user) */}
         <BetReceiptsLedger 
-          isAdmin={isAdminMode}
+          isAdmin={isAdmin}
           teamAName={teamAName}
           teamBName={teamBName}
         />
