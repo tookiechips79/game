@@ -77,26 +77,14 @@ class SocketIOService {
   }
 
   private updateArenaId() {
-    // Detect arena from URL hash (using hash routing)
-    const hash = window.location.hash;
-    log(`🔍 [DEBUG] Raw hash value: "${hash}"`);
-    log(`🔍 [DEBUG] Checking if hash includes "/one-pocket-arena":`, hash.includes('/one-pocket-arena'));
-    if (hash.includes('/one-pocket-arena')) {
-      this.arenaId = 'one_pocket';
-    } else {
-      this.arenaId = 'default';
-    }
-    log(`📍 Arena ID set to: ${this.arenaId} (from hash: ${hash})`);
+    // Only arena is one_pocket (9-ball arena was removed)
+    this.arenaId = 'one_pocket';
+    log(`📍 Arena ID set to: ${this.arenaId} (single arena mode)`);
   }
 
   private getArenaIdPrivate(): string {
-    // Detect arena from URL hash at runtime (using hash routing)
-    const hash = window.location.hash;
-    log(`🔍 [DEBUG-GET] Raw hash value: "${hash}"`);
-    if (hash.includes('/one-pocket-arena')) {
-      return 'one_pocket';
-    }
-    return 'default';
+    // Only arena is one_pocket (9-ball arena was removed)
+    return 'one_pocket';
   }
 
   // 🎯 PUBLIC getter for arena ID - used by clients like UserContext
@@ -586,7 +574,7 @@ class SocketIOService {
   public emitClearAllData() {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
-      const arenaId = this.getArenaIdPrivate() || 'default';
+      const arenaId = this.getArenaIdPrivate() || 'one_pocket';
       log(`📤 Emitting clear all data command for arena '${arenaId}'`);
       this.socket.emit('clear-all-data', { 
         timestamp: Date.now(),
@@ -637,7 +625,7 @@ class SocketIOService {
   public emitNewGameAdded(gameHistoryRecord: any) {
     this.checkAndReidentifyArena();
     if (this.socket && this.isSocketConnected()) {
-      const arenaId = this.getArenaIdPrivate() || 'default';
+      const arenaId = this.getArenaIdPrivate() || 'one_pocket';
       log(`📤 [GAME-HISTORY] Sending new game record for arena '${arenaId}'`);
       this.socket.emit('new-game-added', { 
         arenaId,
