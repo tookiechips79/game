@@ -938,6 +938,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     const gameNumber = record.gameNumber;
+    const arenaId = record.arenaId || socketIOService.getArenaId() || 'default';
     
     record.bets.teamA.forEach(bet => {
       if (bet.booked) {
@@ -950,7 +951,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           amount: bet.amount,
           won: bet.won,
           teamSide: 'A',
-          winningTeam: record.winningTeam
+          arenaId
         });
       }
     });
@@ -966,7 +967,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           amount: bet.amount,
           won: bet.won,
           teamSide: 'B',
-          winningTeam: record.winningTeam
+          arenaId
         });
       }
     });

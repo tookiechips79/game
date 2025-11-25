@@ -48,7 +48,8 @@ export interface UserBetReceipt {
   amount: number;
   won: boolean;
   teamSide: 'A' | 'B';
-  winningTeam: 'A' | 'B' | 'Tie';
+  winningTeam?: 'A' | 'B' | 'Tie';
+  arenaId?: string;
   timestamp: number;
   transactionType?: 'bet' | 'admin_add' | 'admin_deduct' | 'cashout';
 }
