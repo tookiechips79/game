@@ -383,7 +383,20 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     
     // ✅ Setup bet receipts listeners (just like game history)
+    // Listen for real-time bet receipt updates from other clients
     socketIOService.onBetReceiptsUpdate(handleBetReceiptsUpdate);
+    
+    // Listen for user bet receipts data when we request it (same pattern as game history)
+    socketIOService.onBetReceiptsData((data) => {
+      try {
+        console.log(`📥 [BET-RECEIPTS-SYNC] Received ${data.betReceipts?.length || 0} receipts from server for user ${data.userId}`);
+        if (data.betReceipts && Array.isArray(data.betReceipts)) {
+          setUserBetReceipts(data.betReceipts);
+        }
+      } catch (err) {
+        console.error('❌ [BET-RECEIPTS-SYNC] Error handling bet receipts data:', err);
+      }
+    });
 
     // Listen for clear all data command from admin
     socketIOService.onClearAllData(() => {
