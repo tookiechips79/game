@@ -1000,7 +1000,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUserBetReceipts(prev => {
       const updatedReceipts = [newReceipt, ...prev];
       
-      // QUOTA MANAGEMENT: Keep only last 500 receipts to prevent localStorage overflow
+      // QUOTA MANAGEMENT: Keep only last 250 receipts in memory
       const MAX_RECEIPTS = 250;
       if (updatedReceipts.length > MAX_RECEIPTS) {
         console.log(`⚠️ Bet receipts limit reached (${updatedReceipts.length}), trimming to ${MAX_RECEIPTS} receipts`);
@@ -1010,20 +1010,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       finalReceipts = updatedReceipts;
       return updatedReceipts;
-    });
-    
-    // ALSO ADD TO IMMUTABLE BET RECEIPTS - This can NEVER be cleared
-    setImmutableBetReceipts(prev => {
-      const updatedImmutableReceipts = [newReceipt, ...prev];
-      
-      // QUOTA MANAGEMENT: Keep only last 500 receipts to prevent localStorage overflow
-      const MAX_RECEIPTS = 250;
-      if (updatedImmutableReceipts.length > MAX_RECEIPTS) {
-        console.log(`⚠️ Immutable receipts limit reached (${updatedImmutableReceipts.length}), trimming to ${MAX_RECEIPTS} receipts`);
-        return updatedImmutableReceipts.slice(0, MAX_RECEIPTS);
-      }
-      
-      return updatedImmutableReceipts;
     });
     
     // EMIT IMMEDIATELY with the new receipt (don't wait for useEffect)
