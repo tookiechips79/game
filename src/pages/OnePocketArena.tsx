@@ -1380,7 +1380,7 @@ const OnePocketArena = () => {
         />
         
         <div className="mb-4 flex justify-between items-center">
-          <Link to="/" className="inline-flex items-center transition-colors" style={{ color: '#000000' }}>
+          <Link to="/" className="inline-flex items-center transition-colors" style={{ color: '#FFFFFF' }}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
           </Link>
         </div>
