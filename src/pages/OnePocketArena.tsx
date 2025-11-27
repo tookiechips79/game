@@ -181,6 +181,24 @@ const OnePocketArena = () => {
     prevStateRef.current.nextBookedCount = newNextGameBetCount;
   }, [nextTeamAQueue, nextTeamBQueue, playSilverSound]);
 
+  // ✅ RECOVERY: Periodically check and recover missing matched bets
+  useEffect(() => {
+    const recoveryInterval = setInterval(() => {
+      // Only run recovery if there are booked bets to check
+      if (bookedBets.length > 0) {
+        const recoveredCount = recoverMissingMatchedBets();
+        if (recoveredCount > 0) {
+          toast.warning("Matched Bets Recovered", {
+            description: `${recoveredCount} missing bet side(s) were recovered and restored.`,
+            className: "custom-toast-warning"
+          });
+        }
+      }
+    }, 5000); // Check every 5 seconds
+    
+    return () => clearInterval(recoveryInterval);
+  }, [bookedBets, teamAQueue, teamBQueue]);
+
   // Detect game wins and play cheer sound
   useEffect(() => {
     const newGameNumber = currentGameNumber;
@@ -1050,6 +1068,82 @@ const OnePocketArena = () => {
       totalBookedAmount: newTotalAmount,
       colorIndex: newColorIndex
     });
+  };
+
+  // ✅ RECOVERY: Detect and restore missing sides of matched bets
+  const recoverMissingMatchedBets = () => {
+    let recovered = false;
+    let recoveredCount = 0;
+    const newAQueue = [...teamAQueue];
+    const newBQueue = [...teamBQueue];
+    let newBookedBets = [...bookedBets];
+    
+    console.log('🔍 [BET-RECOVERY] Checking for missing matched bets...');
+    console.log('🔍 [BET-RECOVERY] Booked bets count:', bookedBets.length);
+    console.log('🔍 [BET-RECOVERY] Team A queue count:', teamAQueue.length);
+    console.log('🔍 [BET-RECOVERY] Team B queue count:', teamBQueue.length);
+    
+    // Check each booked bet to ensure both sides are present
+    for (const bookedBet of bookedBets) {
+      const betInA = newAQueue.some(bet => bet.id === bookedBet.idA);
+      const betInB = newBQueue.some(bet => bet.id === bookedBet.idB);
+      
+      if (!betInA || !betInB) {
+        console.warn(`⚠️ [BET-RECOVERY] Missing bet side! ID: ${bookedBet.idA}, In A: ${betInA}, In B: ${betInB}`);
+        
+        // Try to recover by finding and restoring the missing bet
+        if (!betInA && betInB) {
+          const partialBetB = newBQueue.find(bet => bet.id === bookedBet.idB);
+          if (partialBetB) {
+            // Recreate Team A bet from Team B info
+            const recreatedBetA: Bet = {
+              id: bookedBet.idA,
+              amount: bookedBet.amount,
+              userId: bookedBet.userIdA,
+              userName: getUserById(bookedBet.userIdA)?.name || 'Unknown',
+              booked: true,
+              color: partialBetB.color,
+              teamSide: 'A'
+            };
+            newAQueue.push(recreatedBetA);
+            console.log('✅ [BET-RECOVERY] Recovered missing Team A bet:', recreatedBetA);
+            recoveredCount++;
+            recovered = true;
+          }
+        } else if (betInA && !betInB) {
+          const partialBetA = newAQueue.find(bet => bet.id === bookedBet.idA);
+          if (partialBetA) {
+            // Recreate Team B bet from Team A info
+            const recreatedBetB: Bet = {
+              id: bookedBet.idB,
+              amount: bookedBet.amount,
+              userId: bookedBet.userIdB,
+              userName: getUserById(bookedBet.userIdB)?.name || 'Unknown',
+              booked: true,
+              color: partialBetA.color,
+              teamSide: 'B'
+            };
+            newBQueue.push(recreatedBetB);
+            console.log('✅ [BET-RECOVERY] Recovered missing Team B bet:', recreatedBetB);
+            recoveredCount++;
+            recovered = true;
+          }
+        }
+      }
+    }
+    
+    if (recovered) {
+      console.log(`✅ [BET-RECOVERY] Recovered ${recoveredCount} missing bet sides`);
+      updateGameState({
+        teamAQueue: newAQueue,
+        teamBQueue: newBQueue,
+        bookedBets: newBookedBets
+      });
+    } else {
+      console.log('✅ [BET-RECOVERY] All matched bets are complete');
+    }
+    
+    return recoveredCount;
   };
 
   const bookNextGameBets = (aQueue: Bet[] = nextTeamAQueue, bQueue: Bet[] = nextTeamBQueue) => {
