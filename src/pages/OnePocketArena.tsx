@@ -437,8 +437,10 @@ const OnePocketArena = () => {
       };
     });
     
-    // Calculate accurate total amount for this specific game
-    const gameTotalAmount = [...teamABets, ...teamBBets].reduce((total, bet) => total + bet.amount, 0);
+    // ✅ CRITICAL FIX: Only count BOOKED bets in total amount (matched bets only)
+    const gameTotalAmount = [...teamABets, ...teamBBets]
+      .filter(bet => bet.booked)
+      .reduce((total, bet) => total + bet.amount, 0);
     
     const gameHistoryRecord = {
       gameNumber: currentGameNumber,
