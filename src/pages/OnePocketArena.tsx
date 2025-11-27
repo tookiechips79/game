@@ -1168,10 +1168,14 @@ const OnePocketArena = () => {
     }
     
     if (betDeleted && deletedBet) {
-      // Refund credits to the user
-      addCredits(deletedBet.userId, deletedBet.amount, true, 'bet_refund');
+      // ✅ NEW: Remove from pending (don't create coins!)
+      // Unmatched bets were never deducted, just remove from pending
+      refundPendingBet(deletedBet.userId, deletedBet.id.toString());
       
-      // Bet deleted successfully - no toast notification
+      toast.info(`Bet #${deletedBet.id} deleted - ${deletedBet.amount} COINS released`, {
+        description: "Unmatched bet removed from pending",
+        className: "custom-toast-success",
+      });
     } else {
       toast.error("Cannot Delete Bet", {
         description: "Bet not found, already booked/matched, or you don't have permission to delete this bet",
