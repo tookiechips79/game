@@ -777,7 +777,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (currentUser?.id === userId) {
             setCurrentUser(updatedUser);
           }
-          console.log(`✅ [PENDING-BET] Added pending bet #${betData.id} for ${u.name}. Total pending: ${pendingBets.length}`);
+          const newAvailable = updatedUser.credits - pendingBets.reduce((sum, b) => sum + b.amount, 0);
+          console.log(`✅ [PENDING-BET] Added pending bet #${betData.id} for ${u.name}. Pending: ${pendingBets.length}, Amount locked: ${betData.amount}, Available now: ${newAvailable}`);
           return updatedUser;
         }
         return u;
@@ -790,7 +791,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getPendingBetAmount = (userId: string): number => {
     const user = users.find(u => u.id === userId);
     if (!user) return 0;
-    return (user.pendingBets || []).reduce((sum, bet) => sum + bet.amount, 0);
+    const pending = (user.pendingBets || []).reduce((sum, bet) => sum + bet.amount, 0);
+    if (pending > 0) {
+      console.log(`💰 [PENDING-CALC] ${user.name}: ${user.pendingBets?.length || 0} bets, total locked: ${pending}`);
+    }
+    return pending;
   };
 
   // ✅ Get available credits (total credits - pending bets)
@@ -798,7 +803,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const user = users.find(u => u.id === userId);
     if (!user) return 0;
     const pending = getPendingBetAmount(userId);
-    return Math.max(0, user.credits - pending);
+    const available = Math.max(0, user.credits - pending);
+    console.log(`💰 [AVAILABLE-CALC] ${user.name}: total=${user.credits}, pending=${pending}, available=${available}`);
+    return available;
   };
 
   // ✅ Process pending bets when game ends
