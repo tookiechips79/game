@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { useUser } from "@/contexts/UserContext";
 
 interface UserWidgetProps {
   user: User;
@@ -32,9 +33,12 @@ const UserWidget: React.FC<UserWidgetProps> = ({
   teamBName = "Player B"
 }) => {
   const [receiptsExpanded, setReceiptsExpanded] = useState<boolean>(false);
+  const { getAvailableCredits, getPendingBetAmount } = useUser();
 
-  const availableCredits = user.credits;
-  const totalCredits = availableCredits + bookedAmount + (activeBetAmount - bookedAmount);
+  // ✅ NEW: Use available credits (total - pending), not just total
+  const availableCredits = getAvailableCredits(user.id);
+  const pendingAmount = getPendingBetAmount(user.id);
+  const totalCredits = user.credits;
   
   // Calculate bet receipts stats
   const totalBets = betReceipts.length;
@@ -80,6 +84,24 @@ const UserWidget: React.FC<UserWidgetProps> = ({
                     
           {/* Divider */}
           <div className="hidden md:block h-8 w-px bg-pink-500/30"></div>
+
+          {/* Pending Bets */}
+          {pendingAmount > 0 && (
+            <>
+              <div className="flex items-center space-x-2">
+                <div className="p-1.5 bg-yellow-500/20 rounded-lg ring-1 ring-yellow-500/30">
+                  <Coins className="h-4 w-4 text-yellow-400" />
+                </div>
+                <div>
+                  <div className="text-lg font-bold text-yellow-300">{pendingAmount}</div>
+                  <div className="text-xs text-white">Pending</div>
+                </div>
+              </div>
+              
+              {/* Divider */}
+              <div className="hidden md:block h-8 w-px bg-pink-500/30"></div>
+            </>
+          )}
 
           {/* Booked */}
           <div className="flex items-center space-x-2">

@@ -8,7 +8,7 @@ import { Wallet, ArrowDownToLine, RefreshCw, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 
 const UserWalletCashout: React.FC<{ userId: string }> = ({ userId }) => {
-  const { currentUser, processCashout } = useUser();
+  const { currentUser, processCashout, getAvailableCredits, getPendingBetAmount } = useUser();
   const [cashoutAmount, setCashoutAmount] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
@@ -51,7 +51,21 @@ const UserWalletCashout: React.FC<{ userId: string }> = ({ userId }) => {
               <div className="flex justify-between items-center">
                 <div style={{ color: '#95deff' }}>Available Balance</div>
                 <div className="text-3xl font-bold" style={{ color: '#fa1593' }}>
-                  {currentUser.credits} <span className="text-lg">COINS</span>
+                  {getAvailableCredits(currentUser.id)} <span className="text-lg">COINS</span>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-4 border-t flex justify-between items-center" style={{ borderColor: '#750037' }}>
+                <div className="text-sm" style={{ color: '#95deff' }}>Total Credits</div>
+                <div className="text-lg font-semibold text-white">
+                  {currentUser.credits} COINS
+                </div>
+              </div>
+
+              <div className="mt-2 pt-2 border-t flex justify-between items-center" style={{ borderColor: '#750037' }}>
+                <div className="text-sm" style={{ color: '#95deff' }}>Pending Bets</div>
+                <div className="text-lg font-semibold" style={{ color: '#fa1593' }}>
+                  {getPendingBetAmount(currentUser.id)} COINS
                 </div>
               </div>
               
