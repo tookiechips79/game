@@ -658,17 +658,17 @@ const OnePocketArena = () => {
     const unmatchedBetsB = teamBQueue.filter(bet => !bet.booked);
     const allUnmatchedBets = [...unmatchedBetsA, ...unmatchedBetsB];
     
-    let totalRefunded = 0;
+    let totalFreed = 0;
     
-    // Use for...of to allow await
+    // ✅ NEW: Remove from PENDING, don't call addCredits() (no coins created!)
     for (const bet of allUnmatchedBets) {
       const user = getUserById(bet.userId);
       if (user) {
-        await addCredits(user.id, bet.amount);
-        totalRefunded += bet.amount;
+        refundPendingBet(user.id, bet.id.toString());
+        totalFreed += bet.amount;
         
-        toast.info(`Returned ${bet.amount} COINS to ${user.name}`, {
-          description: `Unmatched bet #${bet.id} refunded`,
+        toast.info(`Released ${bet.amount} COINS - removed from pending`, {
+          description: `Unmatched bet #${bet.id} removed for ${user.name}`,
           className: "custom-toast-success",
         });
       }
@@ -678,15 +678,15 @@ const OnePocketArena = () => {
     const unmatchedNextBetsB = nextTeamBQueue.filter(bet => !bet.booked);
     const allUnmatchedNextBets = [...unmatchedNextBetsA, ...unmatchedNextBetsB];
     
-    // Use for...of to allow await
+    // ✅ NEW: Remove from PENDING, don't call addCredits() (no coins created!)
     for (const bet of allUnmatchedNextBets) {
       const user = getUserById(bet.userId);
       if (user) {
-        await addCredits(user.id, bet.amount);
-        totalRefunded += bet.amount;
+        refundPendingBet(user.id, bet.id.toString());
+        totalFreed += bet.amount;
         
-        toast.info(`Returned ${bet.amount} COINS to ${user.name}`, {
-          description: `Unmatched next game bet #${bet.id} refunded`,
+        toast.info(`Released ${bet.amount} COINS - removed from pending`, {
+          description: `Unmatched next game bet #${bet.id} removed for ${user.name}`,
           className: "custom-toast-success",
         });
       }
@@ -707,9 +707,9 @@ const OnePocketArena = () => {
     
     const totalUnmatchedBets = allUnmatchedBets.length + allUnmatchedNextBets.length;
     if (totalUnmatchedBets > 0) {
-      console.log(`Refunded ${totalUnmatchedBets} unmatched bets for a total of ${totalRefunded} COINS`);
-      toast.success(`${totalUnmatchedBets} Unmatched Bets Refunded (${totalRefunded} COINS)`, {
-        description: "COINS have been returned to users and unmatched bets removed",
+      console.log(`✅ [DELETE-UNMATCHED] Removed ${totalUnmatchedBets} unmatched bets - ${totalFreed} COINS freed from pending`);
+      toast.success(`${totalUnmatchedBets} Unmatched Bets Removed (${totalFreed} COINS freed)`, {
+        description: "Unmatched bets removed and credits freed from pending",
         className: "custom-toast-success",
       });
     } else {
