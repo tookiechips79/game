@@ -838,26 +838,88 @@ const OnePocketArena = () => {
       if (confirmation.isNextGame) {
         if (confirmation.teamSide === 'A') {
           const updatedAQueue = [...nextTeamAQueue, bet];
+          console.log('✅ [BET-VERIFICATION] Created updated queue for next Team A with bet ID:', bet.id);
           updateGameState({ nextTeamAQueue: updatedAQueue });
           bookNextGameBets(updatedAQueue, nextTeamBQueue);
+          
+          // ✅ CRITICAL VERIFICATION: Verify bet was actually added to state
+          setTimeout(() => {
+            const freshState = gameState;
+            const betInQueue = freshState.nextTeamAQueue?.some(b => b.id === bet.id);
+            console.log('🔍 [BET-VERIFICATION] Checking if bet ID', bet.id, 'is in queue:', betInQueue);
+            if (!betInQueue) {
+              console.error('❌ [BET-VERIFICATION] Bet was NOT added to queue! Refunding...');
+              addCredits(currentUser.id, confirmation.amount);
+              toast.error("Bet Not Added - Credits Refunded", {
+                description: "Your bet failed to appear in the queue. Credits refunded.",
+                className: "custom-toast-error",
+              });
+            }
+          }, 100);
         } else {
           const updatedBQueue = [...nextTeamBQueue, bet];
+          console.log('✅ [BET-VERIFICATION] Created updated queue for next Team B with bet ID:', bet.id);
           updateGameState({ nextTeamBQueue: updatedBQueue });
           bookNextGameBets(nextTeamAQueue, updatedBQueue);
+          
+          setTimeout(() => {
+            const freshState = gameState;
+            const betInQueue = freshState.nextTeamBQueue?.some(b => b.id === bet.id);
+            console.log('🔍 [BET-VERIFICATION] Checking if bet ID', bet.id, 'is in queue:', betInQueue);
+            if (!betInQueue) {
+              console.error('❌ [BET-VERIFICATION] Bet was NOT added to queue! Refunding...');
+              addCredits(currentUser.id, confirmation.amount);
+              toast.error("Bet Not Added - Credits Refunded", {
+                description: "Your bet failed to appear in the queue. Credits refunded.",
+                className: "custom-toast-error",
+              });
+            }
+          }, 100);
         }
       } else {
         if (confirmation.teamSide === 'A') {
           const updatedAQueue = [...teamAQueue, bet];
+          console.log('✅ [BET-VERIFICATION] Created updated queue for Team A with bet ID:', bet.id);
           console.log('🎲 [placeBet - ONE POCKET] Placing bet on Team A:', bet);
           console.log('🎲 [placeBet - ONE POCKET] New Team A Queue length:', updatedAQueue.length);
           updateGameState({ teamAQueue: updatedAQueue });
           bookBets(updatedAQueue, teamBQueue);
+          
+          // ✅ CRITICAL VERIFICATION: Verify bet was actually added to state
+          setTimeout(() => {
+            const freshState = gameState;
+            const betInQueue = freshState.teamAQueue?.some(b => b.id === bet.id);
+            console.log('🔍 [BET-VERIFICATION] Checking if bet ID', bet.id, 'is in queue:', betInQueue);
+            if (!betInQueue) {
+              console.error('❌ [BET-VERIFICATION] Bet was NOT added to queue! Refunding...');
+              addCredits(currentUser.id, confirmation.amount);
+              toast.error("Bet Not Added - Credits Refunded", {
+                description: "Your bet failed to appear in the queue. Credits refunded.",
+                className: "custom-toast-error",
+              });
+            }
+          }, 100);
         } else {
           const updatedBQueue = [...teamBQueue, bet];
+          console.log('✅ [BET-VERIFICATION] Created updated queue for Team B with bet ID:', bet.id);
           console.log('🎲 [placeBet - ONE POCKET] Placing bet on Team B:', bet);
           console.log('🎲 [placeBet - ONE POCKET] New Team B Queue length:', updatedBQueue.length);
           updateGameState({ teamBQueue: updatedBQueue });
           bookBets(teamAQueue, updatedBQueue);
+          
+          setTimeout(() => {
+            const freshState = gameState;
+            const betInQueue = freshState.teamBQueue?.some(b => b.id === bet.id);
+            console.log('🔍 [BET-VERIFICATION] Checking if bet ID', bet.id, 'is in queue:', betInQueue);
+            if (!betInQueue) {
+              console.error('❌ [BET-VERIFICATION] Bet was NOT added to queue! Refunding...');
+              addCredits(currentUser.id, confirmation.amount);
+              toast.error("Bet Not Added - Credits Refunded", {
+                description: "Your bet failed to appear in the queue. Credits refunded.",
+                className: "custom-toast-error",
+              });
+            }
+          }, 100);
         }
       }
       
@@ -935,26 +997,87 @@ const OnePocketArena = () => {
       if (isNextGame) {
         if (team === 'A') {
           const updatedAQueue = [...nextTeamAQueue, bet];
+          console.log('✅ [BET-VERIFICATION] Created updated queue for next Team A with bet ID:', bet.id);
           console.log('🎲 [placeBet - ONE POCKET] Adding bet to nextTeamAQueue:', bet, 'New queue length:', updatedAQueue.length);
           updateGameState({ nextTeamAQueue: updatedAQueue });
           bookNextGameBets(updatedAQueue, nextTeamBQueue);
+          
+          // ✅ CRITICAL VERIFICATION: Verify bet was actually added to state
+          setTimeout(() => {
+            const freshState = gameState;
+            const betInQueue = freshState.nextTeamAQueue?.some(b => b.id === bet.id);
+            console.log('🔍 [BET-VERIFICATION] Checking if bet ID', bet.id, 'is in queue:', betInQueue);
+            if (!betInQueue) {
+              console.error('❌ [BET-VERIFICATION] Bet was NOT added to queue! Refunding...');
+              addCredits(currentUser.id, amount);
+              toast.error("Bet Not Added - Credits Refunded", {
+                description: "Your bet failed to appear in the queue. Credits refunded.",
+                className: "custom-toast-error",
+              });
+            }
+          }, 100);
         } else {
           const updatedBQueue = [...nextTeamBQueue, bet];
+          console.log('✅ [BET-VERIFICATION] Created updated queue for next Team B with bet ID:', bet.id);
           console.log('🎲 [placeBet - ONE POCKET] Adding bet to nextTeamBQueue:', bet, 'New queue length:', updatedBQueue.length);
           updateGameState({ nextTeamBQueue: updatedBQueue });
           bookNextGameBets(nextTeamAQueue, updatedBQueue);
+          
+          setTimeout(() => {
+            const freshState = gameState;
+            const betInQueue = freshState.nextTeamBQueue?.some(b => b.id === bet.id);
+            console.log('🔍 [BET-VERIFICATION] Checking if bet ID', bet.id, 'is in queue:', betInQueue);
+            if (!betInQueue) {
+              console.error('❌ [BET-VERIFICATION] Bet was NOT added to queue! Refunding...');
+              addCredits(currentUser.id, amount);
+              toast.error("Bet Not Added - Credits Refunded", {
+                description: "Your bet failed to appear in the queue. Credits refunded.",
+                className: "custom-toast-error",
+              });
+            }
+          }, 100);
         }
       } else {
         if (team === 'A') {
           const updatedAQueue = [...teamAQueue, bet];
+          console.log('✅ [BET-VERIFICATION] Created updated queue for Team A with bet ID:', bet.id);
           console.log('🎲 [placeBet - ONE POCKET] Adding bet to teamAQueue:', bet, 'New queue length:', updatedAQueue.length);
           updateGameState({ teamAQueue: updatedAQueue });
           bookBets(updatedAQueue, teamBQueue);
+          
+          setTimeout(() => {
+            const freshState = gameState;
+            const betInQueue = freshState.teamAQueue?.some(b => b.id === bet.id);
+            console.log('🔍 [BET-VERIFICATION] Checking if bet ID', bet.id, 'is in queue:', betInQueue);
+            if (!betInQueue) {
+              console.error('❌ [BET-VERIFICATION] Bet was NOT added to queue! Refunding...');
+              addCredits(currentUser.id, amount);
+              toast.error("Bet Not Added - Credits Refunded", {
+                description: "Your bet failed to appear in the queue. Credits refunded.",
+                className: "custom-toast-error",
+              });
+            }
+          }, 100);
         } else {
           const updatedBQueue = [...teamBQueue, bet];
+          console.log('✅ [BET-VERIFICATION] Created updated queue for Team B with bet ID:', bet.id);
           console.log('🎲 [placeBet - ONE POCKET] Adding bet to teamBQueue:', bet, 'New queue length:', updatedBQueue.length);
           updateGameState({ teamBQueue: updatedBQueue });
           bookBets(teamAQueue, updatedBQueue);
+          
+          setTimeout(() => {
+            const freshState = gameState;
+            const betInQueue = freshState.teamBQueue?.some(b => b.id === bet.id);
+            console.log('🔍 [BET-VERIFICATION] Checking if bet ID', bet.id, 'is in queue:', betInQueue);
+            if (!betInQueue) {
+              console.error('❌ [BET-VERIFICATION] Bet was NOT added to queue! Refunding...');
+              addCredits(currentUser.id, amount);
+              toast.error("Bet Not Added - Credits Refunded", {
+                description: "Your bet failed to appear in the queue. Credits refunded.",
+                className: "custom-toast-error",
+              });
+            }
+          }, 100);
         }
       }
 
