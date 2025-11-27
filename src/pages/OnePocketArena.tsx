@@ -50,6 +50,9 @@ const OnePocketArena = () => {
     processPendingBets,
     refundPendingBet
   } = useUser();
+
+  // ⚠️ CRITICAL: DO NOT call addCredits() for unmatched bets
+  // They were never deducted - just remove from pending
   
   const { gameState, updateGameState, isAdmin, localAdminState, updateLocalAdminState, startTimer, pauseTimer, resetTimer, setTimer, resetTimerOnMatchStart, resetTimerOnGameWin } = useGameState();
   
@@ -495,59 +498,60 @@ const OnePocketArena = () => {
     // The old logic below has been removed to prevent coin duplication
     console.log(`✅ [BET-PROCESSING] Booked bets (${bookedBets.length}) already processed via processPendingBets()`);
     
-    // 🔴 REFUND ALL UNMATCHED BETS (BOTH CURRENT AND NEXT GAME) BEFORE CLEARING THEM
-    // This is CRITICAL to prevent credit loss!
+    // ✅ NEW: Remove unmatched bets from PENDING (don't create coins!)
+    // With pending bets system, unmatched bets were never deducted
+    // So just remove them from pending - no refunds needed
     
-    // 1. Refund unmatched CURRENT game bets
+    // 1. Remove unmatched CURRENT game bets from pending
     const unmatchedCurrentBetsA = teamAQueue.filter(bet => !bet.booked);
     const unmatchedCurrentBetsB = teamBQueue.filter(bet => !bet.booked);
     const allUnmatchedCurrentBets = [...unmatchedCurrentBetsA, ...unmatchedCurrentBetsB];
     
-    let totalCurrentRefunded = 0;
+    let totalCurrentUnmatched = 0;
     for (const bet of allUnmatchedCurrentBets) {
       const user = getUserById(bet.userId);
       if (user) {
-        console.log(`💰 [REFUND-CURRENT] Refunding unmatched current game bet: ${user.name} gets ${bet.amount} coins`);
-        await addCredits(user.id, bet.amount);
-        totalCurrentRefunded += bet.amount;
+        console.log(`🔄 [UNMATCHED-CURRENT] Removing unmatched current game bet #${bet.id}: ${user.name} - ${bet.amount} coins freed`);
+        refundPendingBet(user.id, bet.id.toString());
+        totalCurrentUnmatched += bet.amount;
         
-        toast.info(`Returned ${bet.amount} COINS to ${user.name}`, {
-          description: `Unmatched current game bet #${bet.id} refunded`,
+        toast.info(`Unmatched bet #${bet.id} removed - available credits increased`, {
+          description: `${user.name}'s ${bet.amount} COINS released from pending`,
           className: "custom-toast-success",
         });
       }
     }
     
-    if (totalCurrentRefunded > 0) {
-      console.log(`✅ [REFUND-CURRENT] Total refunded for unmatched current game bets: ${totalCurrentRefunded} COINS`);
+    if (totalCurrentUnmatched > 0) {
+      console.log(`✅ [UNMATCHED-CURRENT] Total unmatched current bets removed: ${totalCurrentUnmatched} COINS`);
     }
     
-    // 2. Refund unmatched NEXT game bets
+    // 2. Remove unmatched NEXT game bets from pending
     const unmatchedNextBetsA = nextTeamAQueue.filter(bet => !bet.booked);
     const unmatchedNextBetsB = nextTeamBQueue.filter(bet => !bet.booked);
     const allUnmatchedNextBets = [...unmatchedNextBetsA, ...unmatchedNextBetsB];
     
-    let totalNextRefunded = 0;
+    let totalNextUnmatched = 0;
     for (const bet of allUnmatchedNextBets) {
       const user = getUserById(bet.userId);
       if (user) {
-        console.log(`💰 [REFUND-NEXT] Refunding unmatched next game bet: ${user.name} gets ${bet.amount} coins`);
-        await addCredits(user.id, bet.amount);
-        totalNextRefunded += bet.amount;
+        console.log(`🔄 [UNMATCHED-NEXT] Removing unmatched next game bet #${bet.id}: ${user.name} - ${bet.amount} coins freed`);
+        refundPendingBet(user.id, bet.id.toString());
+        totalNextUnmatched += bet.amount;
         
-        toast.info(`Returned ${bet.amount} COINS to ${user.name}`, {
-          description: `Unmatched next game bet #${bet.id} refunded`,
+        toast.info(`Unmatched next game bet #${bet.id} removed - available credits increased`, {
+          description: `${user.name}'s ${bet.amount} COINS released from pending`,
           className: "custom-toast-success",
         });
       }
     }
     
-    if (totalNextRefunded > 0) {
-      console.log(`✅ [REFUND-NEXT] Total refunded for unmatched next game bets: ${totalNextRefunded} COINS`);
+    if (totalNextUnmatched > 0) {
+      console.log(`✅ [UNMATCHED-NEXT] Total unmatched next game bets removed: ${totalNextUnmatched} COINS`);
     }
     
-    const totalRefunded = totalCurrentRefunded + totalNextRefunded;
-    console.log(`✅ [REFUND-TOTAL] Total credits refunded: ${totalRefunded} COINS`);
+    const totalUnmatched = totalCurrentUnmatched + totalNextUnmatched;
+    console.log(`✅ [UNMATCHED-TOTAL] Total unmatched bets removed: ${totalUnmatched} COINS`);
     
     const nextMatchedBetsA = nextTeamAQueue.filter(bet => bet.booked);
     const nextMatchedBetsB = nextTeamBQueue.filter(bet => bet.booked);
