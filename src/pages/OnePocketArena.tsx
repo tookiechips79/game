@@ -813,7 +813,12 @@ const OnePocketArena = () => {
       return;
     }
     
+    // ✅ SAFEGUARD: Try to deduct credits first
     if (!deductCredits(currentUser.id, confirmation.amount)) {
+      toast.error("Insufficient Credits", {
+        description: "Failed to deduct credits. Bet cancelled.",
+        className: "custom-toast-error",
+      });
       closeBetConfirmation();
       return;
     }
@@ -829,38 +834,48 @@ const OnePocketArena = () => {
       teamSide: confirmation.teamSide
     };
 
-    if (confirmation.isNextGame) {
-      if (confirmation.teamSide === 'A') {
-        const updatedAQueue = [...nextTeamAQueue, bet];
-        updateGameState({ nextTeamAQueue: updatedAQueue });
-        bookNextGameBets(updatedAQueue, nextTeamBQueue);
+    try {
+      if (confirmation.isNextGame) {
+        if (confirmation.teamSide === 'A') {
+          const updatedAQueue = [...nextTeamAQueue, bet];
+          updateGameState({ nextTeamAQueue: updatedAQueue });
+          bookNextGameBets(updatedAQueue, nextTeamBQueue);
+        } else {
+          const updatedBQueue = [...nextTeamBQueue, bet];
+          updateGameState({ nextTeamBQueue: updatedBQueue });
+          bookNextGameBets(nextTeamAQueue, updatedBQueue);
+        }
       } else {
-        const updatedBQueue = [...nextTeamBQueue, bet];
-        updateGameState({ nextTeamBQueue: updatedBQueue });
-        bookNextGameBets(nextTeamAQueue, updatedBQueue);
+        if (confirmation.teamSide === 'A') {
+          const updatedAQueue = [...teamAQueue, bet];
+          console.log('🎲 [placeBet - ONE POCKET] Placing bet on Team A:', bet);
+          console.log('🎲 [placeBet - ONE POCKET] New Team A Queue length:', updatedAQueue.length);
+          updateGameState({ teamAQueue: updatedAQueue });
+          bookBets(updatedAQueue, teamBQueue);
+        } else {
+          const updatedBQueue = [...teamBQueue, bet];
+          console.log('🎲 [placeBet - ONE POCKET] Placing bet on Team B:', bet);
+          console.log('🎲 [placeBet - ONE POCKET] New Team B Queue length:', updatedBQueue.length);
+          updateGameState({ teamBQueue: updatedBQueue });
+          bookBets(teamAQueue, updatedBQueue);
+        }
       }
-    } else {
-      if (confirmation.teamSide === 'A') {
-        const updatedAQueue = [...teamAQueue, bet];
-        console.log('🎲 [placeBet - ONE POCKET] Placing bet on Team A:', bet);
-        console.log('🎲 [placeBet - ONE POCKET] New Team A Queue length:', updatedAQueue.length);
-        updateGameState({ teamAQueue: updatedAQueue });
-        bookBets(updatedAQueue, teamBQueue);
-      } else {
-        const updatedBQueue = [...teamBQueue, bet];
-        console.log('🎲 [placeBet - ONE POCKET] Placing bet on Team B:', bet);
-        console.log('🎲 [placeBet - ONE POCKET] New Team B Queue length:', updatedBQueue.length);
-        updateGameState({ teamBQueue: updatedBQueue });
-        bookBets(teamAQueue, updatedBQueue);
-      }
+      
+      // Show success message
+      toast.success("Bet Placed!", {
+        description: `${confirmation.amount} COINS bet on ${confirmation.teamSide === 'A' ? teamAName : teamBName}`,
+        duration: 2000,
+        className: "custom-toast-success",
+      });
+    } catch (error) {
+      // ⚠️ SAFEGUARD: If bet placement fails, refund the credits
+      console.error('❌ [BET-PLACEMENT] Error placing bet:', error);
+      addCredits(currentUser.id, confirmation.amount);
+      toast.error("Bet Placement Failed", {
+        description: "Failed to add bet to queue. Credits have been refunded.",
+        className: "custom-toast-error",
+      });
     }
-    
-    // Show success message
-    toast.success("Bet Placed!", {
-      description: `${confirmation.amount} COINS bet on ${confirmation.teamSide === 'A' ? teamAName : teamBName}`,
-      duration: 2000,
-      className: "custom-toast-success",
-    });
     
     closeBetConfirmation();
   };
@@ -875,7 +890,6 @@ const OnePocketArena = () => {
       return;
     }
 
-    
     if (currentUser.credits === 0) {
       toast.error("Zero Credits", {
         description: "You have zero credits. Please ask admin to reload your account.",
@@ -896,42 +910,68 @@ const OnePocketArena = () => {
       return;
     }
     
-    // Directly place the bet without confirmation dialog
-    const betId = generateBetId();
-    const bet: Bet = { 
-      id: betId, 
-      amount: amount, 
-      color: null, 
-      booked: false,
-      userId: currentUser.id,
-      teamSide: team
-    };
-
-    if (isNextGame) {
-      if (team === 'A') {
-        const updatedAQueue = [...nextTeamAQueue, bet];
-        console.log('🎲 [placeBet - ONE POCKET] Adding bet to nextTeamAQueue:', bet, 'New queue length:', updatedAQueue.length);
-        bookNextGameBets(updatedAQueue, nextTeamBQueue);
-      } else {
-        const updatedBQueue = [...nextTeamBQueue, bet];
-        console.log('🎲 [placeBet - ONE POCKET] Adding bet to nextTeamBQueue:', bet, 'New queue length:', updatedBQueue.length);
-        bookNextGameBets(nextTeamAQueue, updatedBQueue);
-      }
-    } else {
-      if (team === 'A') {
-        const updatedAQueue = [...teamAQueue, bet];
-        console.log('🎲 [placeBet - ONE POCKET] Adding bet to teamAQueue:', bet, 'New queue length:', updatedAQueue.length);
-        bookBets(updatedAQueue, teamBQueue);
-      } else {
-        const updatedBQueue = [...teamBQueue, bet];
-        console.log('🎲 [placeBet - ONE POCKET] Adding bet to teamBQueue:', bet, 'New queue length:', updatedBQueue.length);
-        bookBets(teamAQueue, updatedBQueue);
-      }
+    // ✅ SAFEGUARD: Try to deduct credits FIRST before adding bet
+    if (!deductCredits(currentUser.id, amount)) {
+      toast.error("Insufficient Credits", {
+        description: "Failed to deduct credits. Bet cancelled.",
+        className: "custom-toast-error",
+      });
+      return;
     }
+    
+    try {
+      // Directly place the bet without confirmation dialog
+      const betId = generateBetId();
+      const bet: Bet = { 
+        id: betId, 
+        amount: amount, 
+        color: null, 
+        booked: false,
+        userId: currentUser.id,
+        userName: currentUser.name,
+        teamSide: team
+      };
 
-    // Deduct credits
-    deductCredits(currentUser.id, amount);
+      if (isNextGame) {
+        if (team === 'A') {
+          const updatedAQueue = [...nextTeamAQueue, bet];
+          console.log('🎲 [placeBet - ONE POCKET] Adding bet to nextTeamAQueue:', bet, 'New queue length:', updatedAQueue.length);
+          updateGameState({ nextTeamAQueue: updatedAQueue });
+          bookNextGameBets(updatedAQueue, nextTeamBQueue);
+        } else {
+          const updatedBQueue = [...nextTeamBQueue, bet];
+          console.log('🎲 [placeBet - ONE POCKET] Adding bet to nextTeamBQueue:', bet, 'New queue length:', updatedBQueue.length);
+          updateGameState({ nextTeamBQueue: updatedBQueue });
+          bookNextGameBets(nextTeamAQueue, updatedBQueue);
+        }
+      } else {
+        if (team === 'A') {
+          const updatedAQueue = [...teamAQueue, bet];
+          console.log('🎲 [placeBet - ONE POCKET] Adding bet to teamAQueue:', bet, 'New queue length:', updatedAQueue.length);
+          updateGameState({ teamAQueue: updatedAQueue });
+          bookBets(updatedAQueue, teamBQueue);
+        } else {
+          const updatedBQueue = [...teamBQueue, bet];
+          console.log('🎲 [placeBet - ONE POCKET] Adding bet to teamBQueue:', bet, 'New queue length:', updatedBQueue.length);
+          updateGameState({ teamBQueue: updatedBQueue });
+          bookBets(teamAQueue, updatedBQueue);
+        }
+      }
 
+      toast.success("Bet Placed!", {
+        description: `${amount} COINS bet on ${team === 'A' ? teamAName : teamBName}`,
+        duration: 2000,
+        className: "custom-toast-success",
+      });
+    } catch (error) {
+      // ⚠️ SAFEGUARD: If bet placement fails, refund the credits
+      console.error('❌ [BET-PLACEMENT] Error placing bet:', error);
+      addCredits(currentUser.id, amount);
+      toast.error("Bet Placement Failed", {
+        description: "Failed to add bet to queue. Credits have been refunded.",
+        className: "custom-toast-error",
+      });
+    }
   };
 
   const closeBetConfirmation = () => {
