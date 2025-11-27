@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { User, BetHistoryRecord, UserBetReceipt, CreditTransaction } from "@/types/user";
+import { User, BetHistoryRecord, UserBetReceipt, CreditTransaction, PendingBet, ProcessedBet } from "@/types/user";
 import { toast } from "sonner";
 import { socketIOService } from "@/services/socketIOService";
 import { useRef } from "react";
@@ -34,6 +34,19 @@ interface UserContextType {
   activateMembership: (userId: string) => void;
   isUsersLoaded: boolean;
   connectedUsersCoins: { totalCoins: number; connectedUserCount: number; connectedUsers: any[] };
+  // ✅ NEW: Pending bets system
+  addPendingBet: (userId: string, betData: {
+    id: string;
+    amount: number;
+    team: 'A' | 'B';
+    gameNumber: number;
+    teamName?: string;
+    opponentName?: string;
+  }) => void;
+  getPendingBetAmount: (userId: string) => number;
+  getAvailableCredits: (userId: string) => number;
+  processPendingBets: (gameNumber: number, winningTeam: 'A' | 'B') => void;
+  refundPendingBet: (userId: string, betId: string) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -730,6 +743,162 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // ✅ PENDING BETS: Add a bet as pending (credits not deducted yet)
+  const addPendingBet = (userId: string, betData: {
+    id: string;
+    amount: number;
+    team: 'A' | 'B';
+    gameNumber: number;
+    teamName?: string;
+    opponentName?: string;
+  }) => {
+    const user = users.find(u => u.id === userId);
+    if (!user) {
+      console.warn('⚠️ [PENDING-BET] User not found:', userId);
+      return;
+    }
+
+    const pendingBet: any = {
+      id: betData.id,
+      amount: betData.amount,
+      team: betData.team,
+      gameNumber: betData.gameNumber,
+      status: 'pending',
+      timestamp: Date.now(),
+      teamName: betData.teamName,
+      opponentName: betData.opponentName
+    };
+
+    setUsers(prev => {
+      const updatedUsers = prev.map(u => {
+        if (u.id === userId) {
+          const pendingBets = [...(u.pendingBets || []), pendingBet];
+          const updatedUser = { ...u, pendingBets };
+          if (currentUser?.id === userId) {
+            setCurrentUser(updatedUser);
+          }
+          console.log(`✅ [PENDING-BET] Added pending bet #${betData.id} for ${u.name}. Total pending: ${pendingBets.length}`);
+          return updatedUser;
+        }
+        return u;
+      });
+      return updatedUsers;
+    });
+  };
+
+  // ✅ Get pending bet amount (total locked in pending bets)
+  const getPendingBetAmount = (userId: string): number => {
+    const user = users.find(u => u.id === userId);
+    if (!user) return 0;
+    return (user.pendingBets || []).reduce((sum, bet) => sum + bet.amount, 0);
+  };
+
+  // ✅ Get available credits (total credits - pending bets)
+  const getAvailableCredits = (userId: string): number => {
+    const user = users.find(u => u.id === userId);
+    if (!user) return 0;
+    const pending = getPendingBetAmount(userId);
+    return Math.max(0, user.credits - pending);
+  };
+
+  // ✅ Process pending bets when game ends
+  const processPendingBets = (gameNumber: number, winningTeam: 'A' | 'B') => {
+    console.log(`🎮 [PROCESS-BETS] Processing pending bets for Game #${gameNumber}, winning team: ${winningTeam}`);
+    
+    setUsers(prev => {
+      const updatedUsers = prev.map(user => {
+        const userPendingBets = user.pendingBets || [];
+        const userProcessedBets = user.processedBets || [];
+        
+        const relatedBets = userPendingBets.filter(bet => bet.gameNumber === gameNumber);
+        if (relatedBets.length === 0) return user;
+
+        let creditsToTransfer = 0;
+        const newPendingBets = userPendingBets.filter(bet => bet.gameNumber !== gameNumber);
+        const newProcessedBets = [...userProcessedBets];
+
+        // Process each bet
+        for (const bet of relatedBets) {
+          const won = bet.team === winningTeam;
+          
+          if (won) {
+            // User won - add credits
+            creditsToTransfer += bet.amount;
+            console.log(`✅ [PROCESS-BETS] ${user.name} WON bet #${bet.id} (${bet.amount} COINS)`);
+          } else {
+            // User lost - no credit transfer (they never had them deducted)
+            console.log(`❌ [PROCESS-BETS] ${user.name} LOST bet #${bet.id} (${bet.amount} COINS)`);
+          }
+
+          // Add to processed bets
+          newProcessedBets.push({
+            id: bet.id,
+            amount: bet.amount,
+            won,
+            gameNumber: bet.gameNumber,
+            timestamp: Date.now(),
+            teamName: bet.teamName,
+            opponentName: bet.opponentName
+          });
+        }
+
+        // Update user with new balance and processed bets
+        let updatedUser = {
+          ...user,
+          credits: user.credits + creditsToTransfer,
+          pendingBets: newPendingBets,
+          processedBets: newProcessedBets
+        };
+
+        if (currentUser?.id === user.id) {
+          setCurrentUser(updatedUser);
+        }
+
+        console.log(`💰 [PROCESS-BETS] ${user.name} final balance: ${updatedUser.credits} (transferred: ${creditsToTransfer})`);
+        
+        return updatedUser;
+      });
+
+      // Emit wallet update for connected users coin counter
+      if (socketIOService.isSocketConnected()) {
+        socketIOService.emitUserWalletUpdate(updatedUsers);
+      }
+
+      return updatedUsers;
+    });
+  };
+
+  // ✅ Refund pending bet (user cancels a bet)
+  const refundPendingBet = (userId: string, betId: string) => {
+    const user = users.find(u => u.id === userId);
+    if (!user) {
+      console.warn('⚠️ [PENDING-BET] User not found:', userId);
+      return;
+    }
+
+    const betToRemove = user.pendingBets?.find(b => b.id === betId);
+    if (!betToRemove) {
+      console.warn('⚠️ [PENDING-BET] Bet not found:', betId);
+      return;
+    }
+
+    setUsers(prev => {
+      const updatedUsers = prev.map(u => {
+        if (u.id === userId) {
+          const pendingBets = (u.pendingBets || []).filter(b => b.id !== betId);
+          const updatedUser = { ...u, pendingBets };
+          if (currentUser?.id === userId) {
+            setCurrentUser(updatedUser);
+          }
+          console.log(`✅ [PENDING-BET] Refunded bet #${betId} for ${u.name}. Remaining pending: ${pendingBets.length}`);
+          return updatedUser;
+        }
+        return u;
+      });
+      return updatedUsers;
+    });
+  };
+
   const addCredits = async (userId: string, amount: number, isAdmin: boolean = false, reason: string = 'admin_add') => {
     if (amount <= 0) {
       console.warn('⚠️ [CREDITS] Invalid amount:', amount);
@@ -818,86 +987,37 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const deductCredits = async (userId: string, amount: number, isAdminAction: boolean = false): Promise<boolean> => {
+  // ✅ NEW: Check if user has enough available credits (not locked in pending bets)
+  const deductCredits = (userId: string, amount: number, isAdminAction: boolean = false): boolean => {
     if (amount <= 0) {
-      console.warn('⚠️ [CREDITS] Invalid deduct amount:', amount);
+      console.warn('⚠️ [PENDING-BET] Invalid deduct amount:', amount);
       return true;
     }
     
     const user = users.find(u => u.id === userId);
     if (!user) {
-      console.warn('⚠️ [CREDITS] User not found:', userId);
+      console.warn('⚠️ [PENDING-BET] User not found:', userId);
       return false;
     }
     
-    try {
-      console.log(`💰 [CREDITS-BET] Starting: userId=${userId}, amount=${amount}, currentBalance=${user.credits}`);
-      
-      // 💰 Call server API to validate and deduct credits
-      // Server checks balance before allowing deduction
-      const response = await fetch(`/api/credits/${userId}/bet`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount,
-          betDetails: isAdminAction ? 'Admin deducted' : 'Bet placed'
-        })
-      });
-      
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        console.warn(`⚠️ [CREDITS-BET] Server rejected: ${response.status}`, error);
-        toast.error("Insufficient Credits", {
-          description: error.error || `${user.name} doesn't have enough credits`,
-          className: "custom-toast-error"
-        });
-        return false;
-      }
-      
-      const data = await response.json();
-      const newBalance = data.newBalance;
-      console.log(`✅ [CREDITS-BET] Server returned newBalance=${newBalance}`);
-      
-      // Update local state with server-confirmed balance
-      setUsers(prev => {
-        const updatedUsers = prev.map(u => {
-          if (u.id === userId) {
-            const updatedUser = { ...u, credits: newBalance };
-            if (currentUser?.id === userId) {
-              setCurrentUser(updatedUser);
-            }
-            return updatedUser;
-          }
-          return u;
-        });
-        
-        // Emit wallet update for connected users coin counter
-        if (socketIOService.isSocketConnected()) {
-          socketIOService.emitUserWalletUpdate(updatedUsers);
-        }
-        
-        return updatedUsers;
-      });
-      
-      if (isAdminAction) {
-        addCreditTransaction({
-          userId,
-          userName: user.name,
-          type: 'admin_deduct',
-          amount,
-          details: 'Admin removed coins from account'
-        });
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('❌ [CREDITS] Error deducting credits:', error);
-      toast.error("Error", {
-        description: "Failed to process deduction - server operation failed",
+    // ✅ CHECK: Use AVAILABLE credits (total - pending), not total credits
+    const available = getAvailableCredits(userId);
+    const pending = getPendingBetAmount(userId);
+    
+    console.log(`💰 [PENDING-BET] Checking: userId=${userId}, amount=${amount}, total=${user.credits}, pending=${pending}, available=${available}`);
+    
+    if (available < amount) {
+      console.warn(`⚠️ [PENDING-BET] Insufficient available credits. Need ${amount}, available ${available}`);
+      toast.error("Insufficient Credits", {
+        description: `You have ${available} COINS available (${pending} locked in pending bets)`,
         className: "custom-toast-error"
       });
       return false;
     }
+    
+    // ✅ SUCCESS: Credits are available for this bet
+    console.log(`✅ [PENDING-BET] Credits validated. Available after: ${available - amount}`);
+    return true;
   };
 
   const incrementWins = (userId: string) => {
@@ -1487,6 +1607,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         activateMembership,
         isUsersLoaded,
         connectedUsersCoins,
+        // ✅ NEW: Pending bets system
+        addPendingBet,
+        getPendingBetAmount,
+        getAvailableCredits,
+        processPendingBets,
+        refundPendingBet,
       }}
     >
       {children}

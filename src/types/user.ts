@@ -1,4 +1,25 @@
 
+export interface PendingBet {
+  id: string;
+  amount: number;
+  team: 'A' | 'B';
+  gameNumber: number;
+  timestamp: number;
+  status: 'pending' | 'matched' | 'processing';
+  teamName?: string;
+  opponentName?: string;
+}
+
+export interface ProcessedBet {
+  id: string;
+  amount: number;
+  won: boolean;
+  gameNumber: number;
+  timestamp: number;
+  teamName?: string;
+  opponentName?: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -8,6 +29,8 @@ export interface User {
   losses: number;
   membershipStatus: 'inactive' | 'active';
   subscriptionDate?: number;
+  pendingBets?: PendingBet[];
+  processedBets?: ProcessedBet[];
 }
 
 export interface BetHistoryRecord {

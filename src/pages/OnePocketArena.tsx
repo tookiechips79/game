@@ -43,7 +43,12 @@ const OnePocketArena = () => {
     incrementLosses,
     clearBettingQueueReceipts,
     userBetReceipts,
-    betHistory
+    betHistory,
+    addPendingBet,
+    getPendingBetAmount,
+    getAvailableCredits,
+    processPendingBets,
+    refundPendingBet
   } = useUser();
   
   const { gameState, updateGameState, isAdmin, localAdminState, updateLocalAdminState, startTimer, pauseTimer, resetTimer, setTimer, resetTimerOnMatchStart, resetTimerOnGameWin } = useGameState();
@@ -423,6 +428,10 @@ const OnePocketArena = () => {
   };
   
   const processBetsForGameWin = async (winningTeam: 'A' | 'B', duration: number) => {
+    // ✅ NEW: Process pending bets - this transfers credits based on win/loss
+    console.log(`🎮 [GAME-WIN] Processing pending bets for Game #${currentGameNumber}, winning team: ${winningTeam}`);
+    processPendingBets(currentGameNumber, winningTeam);
+    
     // 📊 START COIN AUDIT - Take pre-game snapshot
     const gameId = `game-${Date.now()}`;
     const allUsers = Object.values(gameState.users || {});
@@ -833,19 +842,15 @@ const OnePocketArena = () => {
       return;
     }
     
-    // ✅ SAFEGUARD: Try to deduct credits first
+    // ✅ NEW: Check if user has available credits (not locked in pending bets)
     if (!deductCredits(currentUser.id, confirmation.amount)) {
-      toast.error("Insufficient Credits", {
-        description: "Failed to deduct credits. Bet cancelled.",
-        className: "custom-toast-error",
-      });
       closeBetConfirmation();
       return;
     }
     
-    const betId = generateBetId();
+    const betId = generateBetId().toString();
     const bet: Bet = { 
-      id: betId, 
+      id: parseInt(betId), 
       amount: confirmation.amount, 
       color: null, 
       booked: false,
@@ -883,6 +888,16 @@ const OnePocketArena = () => {
         }
       }
       
+      // ✅ NEW: Add to pending bets (credits are locked but not deducted yet)
+      addPendingBet(currentUser.id, {
+        id: betId,
+        amount: confirmation.amount,
+        team: confirmation.teamSide,
+        gameNumber: currentGameNumber,
+        teamName: confirmation.teamSide === 'A' ? teamAName : teamBName,
+        opponentName: confirmation.teamSide === 'A' ? teamBName : teamAName
+      });
+      
       // Show success message
       toast.success("Bet Placed!", {
         description: `${confirmation.amount} COINS bet on ${confirmation.teamSide === 'A' ? teamAName : teamBName}`,
@@ -890,11 +905,9 @@ const OnePocketArena = () => {
         className: "custom-toast-success",
       });
     } catch (error) {
-      // ⚠️ SAFEGUARD: If bet placement fails, refund the credits
       console.error('❌ [BET-PLACEMENT] Error placing bet:', error);
-      addCredits(currentUser.id, confirmation.amount);
       toast.error("Bet Placement Failed", {
-        description: "Failed to add bet to queue. Credits have been refunded.",
+        description: "Failed to add bet to queue.",
         className: "custom-toast-error",
       });
     }
@@ -912,9 +925,13 @@ const OnePocketArena = () => {
       return;
     }
 
-    if (currentUser.credits === 0) {
-      toast.error("Zero Credits", {
-        description: "You have zero credits. Please ask admin to reload your account.",
+    // ✅ NEW: Check available credits (not locked in pending bets)
+    const available = getAvailableCredits(currentUser.id);
+    const pending = getPendingBetAmount(currentUser.id);
+
+    if (available === 0) {
+      toast.error("Zero Available Credits", {
+        description: `You have ${pending} COINS locked in pending bets.`,
         icon: <Wallet className="h-5 w-5 text-red-500" />,
         duration: 5000,
         className: "custom-toast-error",
@@ -922,9 +939,9 @@ const OnePocketArena = () => {
       return;
     }
     
-    if (currentUser.credits < amount) {
-      toast.error("Insufficient Credits", {
-        description: `You need ${amount} credits to place this bet. Please ask admin to reload your account.`,
+    if (available < amount) {
+      toast.error("Insufficient Available Credits", {
+        description: `You need ${amount} COINS (${available} available, ${pending} locked in pending bets).`,
         icon: <Wallet className="h-5 w-5 text-red-500" />,
         duration: 5000,
         className: "custom-toast-error",
@@ -932,20 +949,16 @@ const OnePocketArena = () => {
       return;
     }
     
-    // ✅ SAFEGUARD: Try to deduct credits FIRST before adding bet
+    // ✅ NEW: Check if credits are available (no deduction yet)
     if (!deductCredits(currentUser.id, amount)) {
-      toast.error("Insufficient Credits", {
-        description: "Failed to deduct credits. Bet cancelled.",
-        className: "custom-toast-error",
-      });
       return;
     }
     
     try {
       // Directly place the bet without confirmation dialog
-      const betId = generateBetId();
+      const betId = generateBetId().toString();
       const bet: Bet = { 
-        id: betId, 
+        id: parseInt(betId), 
         amount: amount, 
         color: null, 
         booked: false,
@@ -984,17 +997,25 @@ const OnePocketArena = () => {
         }
       }
 
+      // ✅ NEW: Add to pending bets
+      addPendingBet(currentUser.id, {
+        id: betId,
+        amount: amount,
+        team: team,
+        gameNumber: currentGameNumber,
+        teamName: team === 'A' ? teamAName : teamBName,
+        opponentName: team === 'A' ? teamBName : teamAName
+      });
+
       toast.success("Bet Placed!", {
         description: `${amount} COINS bet on ${team === 'A' ? teamAName : teamBName}`,
         duration: 2000,
         className: "custom-toast-success",
       });
     } catch (error) {
-      // ⚠️ SAFEGUARD: If bet placement fails, refund the credits
       console.error('❌ [BET-PLACEMENT] Error placing bet:', error);
-      addCredits(currentUser.id, amount);
       toast.error("Bet Placement Failed", {
-        description: "Failed to add bet to queue. Credits have been refunded.",
+        description: "Failed to add bet to queue.",
         className: "custom-toast-error",
       });
     }
