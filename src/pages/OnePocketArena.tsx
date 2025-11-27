@@ -1357,7 +1357,7 @@ const OnePocketArena = () => {
 
 
   return (
-    <div className="min-h-screen p-4 md:p-8 pt-32 relative" style={{ backgroundColor: '#ADD8E6', color: '#000000' }}>
+    <div className="min-h-screen p-4 md:p-8 pt-32 relative" style={{ backgroundColor: '#000000', color: '#FFFFFF' }}>
       
       {/* Debug Status - Shows data sync info for mobile troubleshooting */}
       {/* <SocketIOStatus /> - Hidden for now */}

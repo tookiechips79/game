@@ -73,6 +73,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // This ref maintains a complete history that acts as a safety net
   const allGamesEverAddedRef = useRef<BetHistoryRecord[]>([]);
 
+  // ✅ DEDUPLICATION: Track which games have had receipts created to prevent double-recording
+  // This prevents the same game from creating receipts twice (once locally, once from server broadcast)
+  const gamesWithReceiptsCreatedRef = useRef<Set<number>>(new Set());
+
   // *** NOW - STATE DECLARATIONS COME HERE ***
   // Initialize with default admin to ensure we always have at least one user
   const [users, setUsers] = useState<User[]>(() => {
@@ -338,6 +342,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const receiptsToEmit = [];
           
           ensuredHistory.forEach((game) => {
+            // ✅ DEDUPLICATION: Skip if we've already created receipts for this game
+            if (gamesWithReceiptsCreatedRef.current.has(game.gameNumber)) {
+              console.log(`⏭️ [BET-RECEIPTS] Skipping game #${game.gameNumber} - receipts already created`);
+              return;
+            }
+            
             if (game.bets) {
               console.log(`💰 [BET-RECEIPTS] Processing historical game #${game.gameNumber}: Team A=${game.bets.teamA?.length || 0}, Team B=${game.bets.teamB?.length || 0}`);
               
@@ -396,6 +406,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   console.log(`   📝 Receipt for ${bet.userName}: $${bet.amount}, Won: ${bet.won}`);
                 }
               });
+              
+              // ✅ MARK: Mark this game as having receipts created
+              gamesWithReceiptsCreatedRef.current.add(game.gameNumber);
             }
           });
           
@@ -982,51 +995,61 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log(`   Team A bets: ${record.bets.teamA?.length || 0}, Booked: ${record.bets.teamA?.filter(b => b.booked).length || 0}`);
     console.log(`   Team B bets: ${record.bets.teamB?.length || 0}, Booked: ${record.bets.teamB?.filter(b => b.booked).length || 0}`);
     
-    record.bets.teamA.forEach(bet => {
-      if (bet.booked) {
-        console.log(`   📝 Creating receipt for Team A bet: ${bet.userName} - $${bet.amount} - Won: ${bet.won}`);
-        addUserBetReceipt({
-          userId: bet.userId,
-          userName: bet.userName,
-          gameNumber,
-          teamName: record.teamAName,
-          opponentName: record.teamBName,
-          teamAName: record.teamAName,
-          teamBName: record.teamBName,
-          teamAScore: record.teamAScore,
-          teamBScore: record.teamBScore,
-          amount: bet.amount,
-          won: bet.won,
-          teamSide: 'A',
-          winningTeam: record.winningTeam,
-          duration: record.duration,
-          arenaId
-        });
-      }
-    });
-    
-    record.bets.teamB.forEach(bet => {
-      if (bet.booked) {
-        console.log(`   📝 Creating receipt for Team B bet: ${bet.userName} - $${bet.amount} - Won: ${bet.won}`);
-        addUserBetReceipt({
-          userId: bet.userId,
-          userName: bet.userName,
-          gameNumber,
-          teamName: record.teamBName,
-          opponentName: record.teamAName,
-          teamAName: record.teamAName,
-          teamBName: record.teamBName,
-          teamAScore: record.teamAScore,
-          teamBScore: record.teamBScore,
-          amount: bet.amount,
-          won: bet.won,
-          teamSide: 'B',
-          winningTeam: record.winningTeam,
-          duration: record.duration,
-          arenaId
-        });
-      }
-    });
+    // ✅ DEDUPLICATION: Check if receipts have already been created for this game
+    if (gamesWithReceiptsCreatedRef.current.has(gameNumber)) {
+      console.log(`⚠️ [BET-RECEIPTS] Game #${gameNumber} has already had receipts created - SKIPPING to prevent duplicates`);
+    } else {
+      // ✅ CREATE RECEIPTS IMMEDIATELY for instant feedback to user
+      // Mark as processed first to prevent re-creation if server broadcast comes back
+      gamesWithReceiptsCreatedRef.current.add(gameNumber);
+      console.log(`✅ [BET-RECEIPTS] Marked game #${gameNumber} as having receipts created`);
+      
+      record.bets.teamA.forEach(bet => {
+        if (bet.booked) {
+          console.log(`   📝 Creating receipt for Team A bet: ${bet.userName} - $${bet.amount} - Won: ${bet.won}`);
+          addUserBetReceipt({
+            userId: bet.userId,
+            userName: bet.userName,
+            gameNumber,
+            teamName: record.teamAName,
+            opponentName: record.teamBName,
+            teamAName: record.teamAName,
+            teamBName: record.teamBName,
+            teamAScore: record.teamAScore,
+            teamBScore: record.teamBScore,
+            amount: bet.amount,
+            won: bet.won,
+            teamSide: 'A',
+            winningTeam: record.winningTeam,
+            duration: record.duration,
+            arenaId
+          });
+        }
+      });
+      
+      record.bets.teamB.forEach(bet => {
+        if (bet.booked) {
+          console.log(`   📝 Creating receipt for Team B bet: ${bet.userName} - $${bet.amount} - Won: ${bet.won}`);
+          addUserBetReceipt({
+            userId: bet.userId,
+            userName: bet.userName,
+            gameNumber,
+            teamName: record.teamBName,
+            opponentName: record.teamAName,
+            teamAName: record.teamAName,
+            teamBName: record.teamBName,
+            teamAScore: record.teamAScore,
+            teamBScore: record.teamBScore,
+            amount: bet.amount,
+            won: bet.won,
+            teamSide: 'B',
+            winningTeam: record.winningTeam,
+            duration: record.duration,
+            arenaId
+          });
+        }
+      });
+    }
     
     toast.success("Game Results Recorded", {
       description: `Results for game #${record.gameNumber} have been saved in history`,
@@ -1040,6 +1063,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Clear local memory immediately
     setImmutableBetHistory([]);
+    
+    // ✅ DEDUPLICATION: Clear the receipts-created tracker when history is cleared
+    gamesWithReceiptsCreatedRef.current.clear();
+    console.log('✅ Cleared receipts creation tracker');
     
     // 🎮 CRITICAL: Clear from server database via Socket.IO
     // Server will broadcast clear to all clients, so no localStorage needed
@@ -1148,14 +1175,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return;
   };
 
-  // ✅ CLEAR BETTING QUEUE RECEIPTS - Clear local state only (server-side deletion is separate)
+  // ✅ CLEAR BETTING QUEUE RECEIPTS - DO NOT CLEAR ACTUAL RECEIPTS
+  // Bet receipts are IMMUTABLE and PERMANENT ledgers - they must NEVER be cleared
+  // This function is kept for backward compatibility but does NOTHING
   const clearBettingQueueReceipts = () => {
-    console.log('🧹 Clearing betting queue receipts from display');
-    setUserBetReceipts([]);
+    console.log('⏸️ clearBettingQueueReceipts called but BLOCKED - bet receipts are permanent');
+    console.log('💾 Bet receipts are immutable and stay visible for all users at all times');
     
-    toast.success("Betting Queue Cleared", {
-      description: "Betting queue receipts cleared",
-      className: "custom-toast-success"
+    toast.info("Bet Receipts Protected", {
+      description: "Bet receipts are permanent and cannot be cleared",
+      className: "custom-toast-info"
     });
   };
 
