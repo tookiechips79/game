@@ -809,8 +809,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // ✅ Process pending bets when game ends
-  const processPendingBets = (gameNumber: number, winningTeam: 'A' | 'B') => {
+  const processPendingBets = async (gameNumber: number, winningTeam: 'A' | 'B') => {
     console.log(`🎮 [PROCESS-BETS] Processing pending bets for Game #${gameNumber}, winning team: ${winningTeam}`);
+    
+    // First, collect all winners and update server
+    const userUpdates: Array<{ userId: string; userName: string; amount: number }> = [];
     
     setUsers(prev => {
       const updatedUsers = prev.map(user => {
@@ -861,22 +864,20 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         console.log(`💰 [PROCESS-BETS] ${user.name} - Won: +${creditsToTransfer}, Lost: -${lostsAmount}`);
 
+        // Track winners for server update
+        if (creditsToTransfer > 0) {
+          userUpdates.push({
+            userId: user.id,
+            userName: user.name,
+            amount: creditsToTransfer
+          });
+        }
+
         if (currentUser?.id === user.id) {
           setCurrentUser(updatedUser);
         }
 
         console.log(`💰 [PROCESS-BETS] ${user.name} final balance: ${updatedUser.credits} (transferred: ${creditsToTransfer})`);
-        
-        // ✅ RESTORE: Add credit transaction for winners
-        if (creditsToTransfer > 0) {
-          addCreditTransaction({
-            userId: user.id,
-            userName: user.name,
-            type: 'bet_win',
-            amount: creditsToTransfer,
-            details: `Won bet(s) on Game #${gameNumber}`
-          });
-        }
         
         return updatedUser;
       });
@@ -888,6 +889,28 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return updatedUsers;
     });
+
+    // ✅ NEW: Now call addCredits() on server for each winner
+    for (const update of userUpdates) {
+      try {
+        console.log(`💰 [ADD-CREDITS] Adding ${update.amount} coins to ${update.userName}...`);
+        const success = await addCredits(update.userId, update.amount, false, `bet_win_game_${gameNumber}`);
+        if (success) {
+          addCreditTransaction({
+            userId: update.userId,
+            userName: update.userName,
+            type: 'bet_win',
+            amount: update.amount,
+            details: `Won bet(s) on Game #${gameNumber}`
+          });
+          console.log(`✅ [ADD-CREDITS] Successfully added ${update.amount} coins to ${update.userName}`);
+        } else {
+          console.warn(`⚠️ [ADD-CREDITS] Failed to add credits for ${update.userName}`);
+        }
+      } catch (error) {
+        console.error(`❌ [ADD-CREDITS] Error adding credits for ${update.userName}:`, error);
+      }
+    }
   };
 
   // ✅ Refund pending bet (user cancels a bet)

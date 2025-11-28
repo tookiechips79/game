@@ -433,7 +433,7 @@ const OnePocketArena = () => {
   const processBetsForGameWin = async (winningTeam: 'A' | 'B', duration: number) => {
     // ✅ NEW: Process pending bets - this transfers credits based on win/loss
     console.log(`🎮 [GAME-WIN] Processing pending bets for Game #${currentGameNumber}, winning team: ${winningTeam}`);
-    processPendingBets(currentGameNumber, winningTeam);
+    await processPendingBets(currentGameNumber, winningTeam);
     
     // 📊 START COIN AUDIT - Take pre-game snapshot
     const gameId = `game-${Date.now()}`;
