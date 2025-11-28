@@ -810,14 +810,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // ✅ Process pending bets when game ends
   const processPendingBets = async (gameNumber: number, winningTeam: 'A' | 'B') => {
-    console.log(`🎮 [PROCESS-BETS] Processing pending bets for Game #${gameNumber}, winning team: ${winningTeam}`);
-    console.log(`🎮 [PROCESS-BETS] Total users in state: ${users.length}`);
-    
-    // First, collect all winners from current state
-    const userUpdates: Array<{ userId: string; userName: string; amount: number }> = [];
-    
-    // Iterate through users to find winners BEFORE state update
-    users.forEach((user, userIdx) => {
+    try {
+      console.log(`🎮 [PROCESS-BETS] ========== START PROCESSING ==========`);
+      console.log(`🎮 [PROCESS-BETS] Processing pending bets for Game #${gameNumber}, winning team: ${winningTeam}`);
+      console.log(`🎮 [PROCESS-BETS] Total users in state: ${users.length}`);
+      
+      // First, collect all winners from current state
+      const userUpdates: Array<{ userId: string; userName: string; amount: number }> = [];
+      
+      // Iterate through users to find winners BEFORE state update
+      users.forEach((user, userIdx) => {
       const userPendingBets = user.pendingBets || [];
       console.log(`🎮 [PROCESS-BETS] User ${userIdx} (${user.name}): ${userPendingBets.length} pending bets`);
       
@@ -932,6 +934,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
     console.log(`🎮 [PROCESS-BETS] Finished processing all winners for Game #${gameNumber}`);
+    } catch (error) {
+      console.error(`❌ [PROCESS-BETS] ERROR in processPendingBets:`, error);
+      throw error;
+    }
   };
 
   // ✅ Refund pending bet (user cancels a bet)
