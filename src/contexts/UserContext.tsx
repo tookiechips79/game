@@ -812,9 +812,41 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const processPendingBets = async (gameNumber: number, winningTeam: 'A' | 'B') => {
     console.log(`🎮 [PROCESS-BETS] Processing pending bets for Game #${gameNumber}, winning team: ${winningTeam}`);
     
-    // First, collect all winners and update server
+    // First, collect all winners from current state
     const userUpdates: Array<{ userId: string; userName: string; amount: number }> = [];
     
+    // Iterate through users to find winners BEFORE state update
+    users.forEach(user => {
+      const userPendingBets = user.pendingBets || [];
+      const relatedBets = userPendingBets.filter(bet => bet.gameNumber === gameNumber);
+      
+      if (relatedBets.length > 0) {
+        let creditsToTransfer = 0;
+        for (const bet of relatedBets) {
+          const won = bet.team === winningTeam;
+          if (won) {
+            creditsToTransfer += bet.amount;
+            console.log(`✅ [PROCESS-BETS] ${user.name} WON bet #${bet.id} (${bet.amount} COINS)`);
+          } else {
+            console.log(`❌ [PROCESS-BETS] ${user.name} LOST bet #${bet.id} (${bet.amount} COINS)`);
+          }
+        }
+        
+        // Track winners for server update
+        if (creditsToTransfer > 0) {
+          userUpdates.push({
+            userId: user.id,
+            userName: user.name,
+            amount: creditsToTransfer
+          });
+          console.log(`💰 [PROCESS-BETS] ${user.name} - Won: +${creditsToTransfer}`);
+        }
+      }
+    });
+    
+    console.log(`💰 [PROCESS-BETS] Found ${userUpdates.length} winners for Game #${gameNumber}`);
+    
+    // Now update local state
     setUsers(prev => {
       const updatedUsers = prev.map(user => {
         const userPendingBets = user.pendingBets || [];
@@ -828,18 +860,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const newProcessedBets = [...userProcessedBets];
 
         // Process each bet
-        let lostsAmount = 0; // Track losses
         for (const bet of relatedBets) {
           const won = bet.team === winningTeam;
           
           if (won) {
-            // User won - add credits (their bet back + winnings)
             creditsToTransfer += bet.amount;
-            console.log(`✅ [PROCESS-BETS] ${user.name} WON bet #${bet.id} (${bet.amount} COINS)`);
-          } else {
-            // User lost - coins were already deducted when bet placed, they're gone
-            lostsAmount += bet.amount;
-            console.log(`❌ [PROCESS-BETS] ${user.name} LOST bet #${bet.id} (${bet.amount} COINS)`);
           }
 
           // Add to processed bets
@@ -861,17 +886,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           pendingBets: newPendingBets,
           processedBets: newProcessedBets
         };
-        
-        console.log(`💰 [PROCESS-BETS] ${user.name} - Won: +${creditsToTransfer}, Lost: -${lostsAmount}`);
-
-        // Track winners for server update
-        if (creditsToTransfer > 0) {
-          userUpdates.push({
-            userId: user.id,
-            userName: user.name,
-            amount: creditsToTransfer
-          });
-        }
 
         if (currentUser?.id === user.id) {
           setCurrentUser(updatedUser);
@@ -891,9 +905,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     // ✅ NEW: Now call addCredits() on server for each winner
+    console.log(`💰 [PROCESS-BETS] Adding coins to ${userUpdates.length} winners...`);
     for (const update of userUpdates) {
       try {
-        console.log(`💰 [ADD-CREDITS] Adding ${update.amount} coins to ${update.userName}...`);
+        console.log(`💰 [ADD-CREDITS] Adding ${update.amount} coins to ${update.userName} (${update.userId})...`);
         const success = await addCredits(update.userId, update.amount, false, `bet_win_game_${gameNumber}`);
         if (success) {
           addCreditTransaction({
@@ -905,12 +920,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
           console.log(`✅ [ADD-CREDITS] Successfully added ${update.amount} coins to ${update.userName}`);
         } else {
-          console.warn(`⚠️ [ADD-CREDITS] Failed to add credits for ${update.userName}`);
+          console.warn(`⚠️ [ADD-CREDITS] Failed to add credits for ${update.userName} - addCredits returned false`);
         }
       } catch (error) {
         console.error(`❌ [ADD-CREDITS] Error adding credits for ${update.userName}:`, error);
       }
     }
+    console.log(`🎮 [PROCESS-BETS] Finished processing all winners for Game #${gameNumber}`);
   };
 
   // ✅ Refund pending bet (user cancels a bet)
@@ -944,10 +960,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
-  const addCredits = async (userId: string, amount: number, isAdmin: boolean = false, reason: string = 'admin_add') => {
+  const addCredits = async (userId: string, amount: number, isAdmin: boolean = false, reason: string = 'admin_add'): Promise<boolean> => {
     if (amount <= 0) {
       console.warn('⚠️ [CREDITS] Invalid amount:', amount);
-      return;
+      return false;
     }
     
     try {
@@ -967,6 +983,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error(`❌ [CREDITS-ADD] Server returned error: ${response.status}`, errorData);
         throw new Error(`Server error: ${response.status} - ${errorData.error || 'Unknown'}`);
       }
       
@@ -1023,12 +1040,17 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           details: reason === 'bet_refund' ? 'Bet refunded' : 'Admin added coins to account'
         });
       }
+      
+      return true;
     } catch (error) {
       console.error('❌ [CREDITS] Error adding credits:', error);
-      toast.error("Error", {
-        description: "Failed to add credits - server operation failed",
-        className: "custom-toast-error"
-      });
+      if (isAdmin) {
+        toast.error("Error", {
+          description: "Failed to add credits - server operation failed",
+          className: "custom-toast-error"
+        });
+      }
+      return false;
     }
   };
 
