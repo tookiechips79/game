@@ -830,12 +830,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userUpdates: Array<{ userId: string; userName: string; amount: number }> = [];
       
       // Iterate through freshUsers to find winners BEFORE state update
+      console.log(`🎮 [PROCESS-BETS] Checking ${freshUsers.length} users for pending bets...`);
       freshUsers.forEach((user, userIdx) => {
       const userPendingBets = user.pendingBets || [];
-      console.log(`🎮 [PROCESS-BETS] User ${userIdx} (${user.name}): ${userPendingBets.length} pending bets`);
+      console.log(`🎮 [PROCESS-BETS] User ${userIdx}: ID=${user.id}, name=${user.name}, pendingBets=${userPendingBets.length}, balance=${user.credits}`);
+      if (userPendingBets.length > 0) {
+        console.log(`    └─ Pending bets details:`, userPendingBets.map(b => ({ id: b.id, gameNumber: b.gameNumber, team: b.team, amount: b.amount })));
+      }
       
       const relatedBets = userPendingBets.filter(bet => bet.gameNumber === gameNumber);
-      console.log(`  └─ Game #${gameNumber}: ${relatedBets.length} related bets`);
+      console.log(`  └─ Game #${gameNumber}: ${relatedBets.length} related bets for this user`);
       
       if (relatedBets.length > 0) {
         let creditsToTransfer = 0;
