@@ -720,7 +720,7 @@ const OnePocketArena = () => {
     }
   };
   
-  const handleConfirmBet = () => {
+  const handleConfirmBet = async () => {
     if (!confirmation.teamSide || confirmation.amount <= 0) return;
     
     if (!currentUser) {
@@ -733,8 +733,9 @@ const OnePocketArena = () => {
       return;
     }
     
-    // ✅ NEW: Check if user has available credits (not locked in pending bets)
-    if (!deductCredits(currentUser.id, confirmation.amount)) {
+    // ✅ NEW: Deduct credits from account (AWAIT for async operation)
+    const deducted = await deductCredits(currentUser.id, confirmation.amount);
+    if (!deducted) {
       closeBetConfirmation();
       return;
     }
@@ -806,7 +807,7 @@ const OnePocketArena = () => {
     closeBetConfirmation();
   };
 
-  const showBetConfirmation = (team: 'A' | 'B', amount: number, isNextGame: boolean = false) => {
+  const showBetConfirmation = async (team: 'A' | 'B', amount: number, isNextGame: boolean = false) => {
     if (!currentUser) {
       toast.error("No User Selected", {
         description: "Please select or create a user first",
@@ -840,8 +841,9 @@ const OnePocketArena = () => {
       return;
     }
     
-    // ✅ NEW: Check if credits are available (no deduction yet)
-    if (!deductCredits(currentUser.id, amount)) {
+    // ✅ NEW: Deduct credits from account (AWAIT for async operation)
+    const deducted = await deductCredits(currentUser.id, amount);
+    if (!deducted) {
       return;
     }
     

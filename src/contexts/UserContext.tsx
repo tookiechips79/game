@@ -825,15 +825,17 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const newProcessedBets = [...userProcessedBets];
 
         // Process each bet
+        let lostsAmount = 0; // Track losses
         for (const bet of relatedBets) {
           const won = bet.team === winningTeam;
           
           if (won) {
-            // User won - add credits
+            // User won - add credits (their bet back + winnings)
             creditsToTransfer += bet.amount;
             console.log(`✅ [PROCESS-BETS] ${user.name} WON bet #${bet.id} (${bet.amount} COINS)`);
           } else {
-            // User lost - no credit transfer (they never had them deducted)
+            // User lost - coins were already deducted when bet placed, they're gone
+            lostsAmount += bet.amount;
             console.log(`❌ [PROCESS-BETS] ${user.name} LOST bet #${bet.id} (${bet.amount} COINS)`);
           }
 
@@ -856,6 +858,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           pendingBets: newPendingBets,
           processedBets: newProcessedBets
         };
+        
+        console.log(`💰 [PROCESS-BETS] ${user.name} - Won: +${creditsToTransfer}, Lost: -${lostsAmount}`);
 
         if (currentUser?.id === user.id) {
           setCurrentUser(updatedUser);
