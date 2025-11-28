@@ -816,13 +816,21 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log(`🎮 [PROCESS-BETS] ========== START PROCESSING ==========`);
       console.log(`🎮 [PROCESS-BETS] Processing pending bets for Game #${gameNumber}, winning team: ${winningTeam}`);
-      console.log(`🎮 [PROCESS-BETS] Total users in state: ${users.length}`);
       
-      // First, collect all winners from current state
+      // Get FRESH users state from setUsers callback to avoid stale closures
+      let freshUsers: User[] = [];
+      setUsers(prev => {
+        freshUsers = prev;
+        return prev;
+      });
+      
+      console.log(`🎮 [PROCESS-BETS] Total users in fresh state: ${freshUsers.length}`);
+      
+      // First, collect all winners from fresh state
       const userUpdates: Array<{ userId: string; userName: string; amount: number }> = [];
       
-      // Iterate through users to find winners BEFORE state update
-      users.forEach((user, userIdx) => {
+      // Iterate through freshUsers to find winners BEFORE state update
+      freshUsers.forEach((user, userIdx) => {
       const userPendingBets = user.pendingBets || [];
       console.log(`🎮 [PROCESS-BETS] User ${userIdx} (${user.name}): ${userPendingBets.length} pending bets`);
       
