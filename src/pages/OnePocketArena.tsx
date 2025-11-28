@@ -87,6 +87,10 @@ const OnePocketArena = () => {
   // Ref to track if component is unmounting (switching arenas)
   const isUnmountingRef = useRef(false);
 
+  // Ref to prevent rapid bet placement/deletion (debounce)
+  const lastBetActionTimeRef = useRef<number>(0);
+  const BET_ACTION_COOLDOWN_MS = 500; // 500ms cooldown between bet actions
+
   // Extract state from gameState context
   const {
     teamAQueue,
@@ -705,6 +709,18 @@ const OnePocketArena = () => {
   const handleConfirmBet = async () => {
     if (!confirmation.teamSide || confirmation.amount <= 0) return;
     
+    // ✅ Prevent rapid bet placement (cooldown)
+    const now = Date.now();
+    if (now - lastBetActionTimeRef.current < BET_ACTION_COOLDOWN_MS) {
+      toast.error("Too Fast", {
+        description: `Please wait ${Math.ceil((BET_ACTION_COOLDOWN_MS - (now - lastBetActionTimeRef.current)) / 100) * 100}ms before placing another bet`,
+        duration: 2000,
+        className: "custom-toast-error",
+      });
+      return;
+    }
+    lastBetActionTimeRef.current = now;
+    
     if (!currentUser) {
       toast.error("No User Selected", {
         description: "Please select or create a user first",
@@ -1093,6 +1109,18 @@ const OnePocketArena = () => {
   };
 
   const deleteOpenBet = (betId: number, isNextGame: boolean = false) => {
+    // ✅ Prevent rapid bet deletion (cooldown)
+    const now = Date.now();
+    if (now - lastBetActionTimeRef.current < BET_ACTION_COOLDOWN_MS) {
+      toast.error("Too Fast", {
+        description: `Please wait ${Math.ceil((BET_ACTION_COOLDOWN_MS - (now - lastBetActionTimeRef.current)) / 100) * 100}ms before deleting another bet`,
+        duration: 2000,
+        className: "custom-toast-error",
+      });
+      return;
+    }
+    lastBetActionTimeRef.current = now;
+    
     if (!currentUser) {
       toast.error("Cannot Delete Bet", {
         description: "You must be logged in to delete bets",
