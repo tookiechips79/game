@@ -48,6 +48,12 @@ interface UserContextType {
   processPendingBets: (gameNumber: number, winningTeam: 'A' | 'B') => void;
   refundPendingBet: (userId: string, betId: string) => void;
   updatePendingBetMatched: (userId: string, betId: string, matchedAmount: number) => void;
+  // ✅ RECOVERY: Restore multiple users at once
+  restoreUsers: (usersToRestore: User[]) => void;
+  // ✅ AUDIT: Coin and bet verification functions
+  auditCoins: () => any;
+  auditBets: (teamABets?: any[], teamBBets?: any[]) => any;
+  systemHealthCheck: (teamABets?: any[], teamBBets?: any[]) => any;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -552,19 +558,22 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // ✅ REQUEST BET RECEIPTS FROM SERVER (just like game history)
       // Server sends all bet receipts for this user via Socket.IO
-      // Retry until socket is connected (handles page refresh and reconnection)
-      const requestWithRetry = () => {
-        if (socketIOService.isSocketConnected()) {
-          console.log(`📥 [BET-RECEIPTS] Requesting from server for user ${currentUser.id}`);
-          socketIOService.requestBetReceipts(currentUser.id);
-        } else {
-          // Socket not ready yet, retry in 200ms
-          console.log(`⏳ [BET-RECEIPTS] Socket not ready, retrying...`);
-          setTimeout(requestWithRetry, 200);
-        }
-      };
-      
-      requestWithRetry();
+      // Skip in development mode (no socket.io connection)
+      if (process.env.NODE_ENV !== 'development') {
+        // Retry until socket is connected (handles page refresh and reconnection)
+        const requestWithRetry = () => {
+          if (socketIOService.isSocketConnected()) {
+            console.log(`📥 [BET-RECEIPTS] Requesting from server for user ${currentUser.id}`);
+            socketIOService.requestBetReceipts(currentUser.id);
+          } else {
+            // Socket not ready yet, retry in 200ms
+            console.log(`⏳ [BET-RECEIPTS] Socket not ready, retrying...`);
+            setTimeout(requestWithRetry, 200);
+          }
+        };
+        
+        requestWithRetry();
+      }
     } else {
       localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
     }
@@ -656,7 +665,40 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log(`👤 [USERS] Creating new user: ${name}`);
       
-      // Save to server (source of truth)
+      // In development mode, create locally
+      if (process.env.NODE_ENV === 'development') {
+        const newUser: User = {
+          id: `user-${Date.now()}`,
+          name: name.trim(),
+          password: password.trim(),
+          credits: 1000,
+          wins: 0,
+          losses: 0,
+          membershipStatus: 'inactive'
+        };
+        
+        // Update local state
+        setUsers(prev => {
+          const updatedUsers = [...prev, newUser];
+          try {
+            localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
+            console.log('💾 [USERS] User backed up to localStorage');
+          } catch (storageError) {
+            console.error('⚠️ [USERS] Failed to backup user to localStorage:', storageError);
+          }
+          return updatedUsers;
+        });
+        
+        toast.success("User Added", {
+          description: `User "${name}" created with 1000 credits!`,
+          className: "custom-toast-success"
+        });
+        
+        console.log(`✅ [USERS] User created locally: ${newUser.name} (ID: ${newUser.id})`);
+        return newUser;
+      }
+      
+      // Production: Save to server (source of truth)
       const response = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -674,13 +716,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUsers(prev => {
         const updatedUsers = [...prev, newUser];
         
-        // Backup to localStorage with error handling
         try {
           localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
           console.log('💾 [USERS] User backed up to localStorage');
         } catch (storageError) {
           console.error('⚠️ [USERS] Failed to backup user to localStorage:', storageError);
-          // Continue anyway - the user is still added to state
         }
         
         return updatedUsers;
@@ -704,9 +744,21 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   const authenticateUser = async (name: string, password: string): Promise<User | null> => {
     try {
-      // 👤 Authenticate on server (source of truth)
       console.log(`🔐 [AUTH] Authenticating user: ${name}`);
       
+      // In development mode, authenticate locally
+      if (process.env.NODE_ENV === 'development') {
+        const user = users.find(u => u.name === name && u.password === password);
+        if (user) {
+          console.log(`✅ [AUTH] User authenticated locally: ${user.name}`);
+          return user;
+        } else {
+          console.warn('⚠️ [AUTH] Invalid credentials');
+          return null;
+        }
+      }
+      
+      // Production: Authenticate on server (source of truth)
       const response = await fetch('/api/users/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -811,154 +863,186 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return available;
   };
 
-  // ✅ Process pending bets when game ends
-  const processPendingBets = async (gameNumber: number, winningTeam: 'A' | 'B') => {
+  // ✅ SIMPLIFIED: Process game results - winners get their bet back + loser's bet, unmatched bets refunded
+  const processPendingBets = async (gameNumber: number, winningTeam: 'A' | 'B', teamABets: any[] = [], teamBBets: any[] = []) => {
     try {
-      console.log(`🎮 [PROCESS-BETS] ========== START PROCESSING ==========`);
-      console.log(`🎮 [PROCESS-BETS] Processing pending bets for Game #${gameNumber}, winning team: ${winningTeam}`);
+      console.log(`🎮 [GAME-WIN] Game #${gameNumber}: ${winningTeam} won! Processing bets...`);
       
-      // Get FRESH users state from setUsers callback to avoid stale closures
-      let freshUsers: User[] = [];
-      setUsers(prev => {
-        freshUsers = prev;
-        return prev;
-      });
+      // Simple logic:
+      // - Losers: already paid (credits deducted)
+      // - Winners: get their bet amount + the matched loser's amount
+      // - Unmatched: refund the full amount
       
-      console.log(`🎮 [PROCESS-BETS] Total users in fresh state: ${freshUsers.length}`);
+      const winningBets = winningTeam === 'A' ? teamABets : teamBBets;
+      const losingBets = winningTeam === 'A' ? teamBBets : teamABets;
       
-      // First, collect all winners from fresh state
-      const userUpdates: Array<{ userId: string; userName: string; amount: number }> = [];
-      
-      // Iterate through freshUsers to find winners BEFORE state update
-      console.log(`🎮 [PROCESS-BETS] Checking ${freshUsers.length} users for pending bets...`);
-      freshUsers.forEach((user, userIdx) => {
-      const userPendingBets = user.pendingBets || [];
-      console.log(`🎮 [PROCESS-BETS] User ${userIdx}: ID=${user.id}, name=${user.name}, pendingBets=${userPendingBets.length}, balance=${user.credits}`);
-      if (userPendingBets.length > 0) {
-        console.log(`    └─ Pending bets details:`, userPendingBets.map(b => ({ id: b.id, gameNumber: b.gameNumber, team: b.team, amount: b.amount })));
+      // Create a map of losing bets by amount for quick matching
+      const losingBetsByAmount = new Map<number, any[]>();
+      for (const bet of losingBets) {
+        if (!losingBetsByAmount.has(bet.amount)) {
+          losingBetsByAmount.set(bet.amount, []);
+        }
+        losingBetsByAmount.get(bet.amount)!.push(bet);
       }
       
-      const relatedBets = userPendingBets.filter(bet => bet.gameNumber === gameNumber);
-      console.log(`  └─ Game #${gameNumber}: ${relatedBets.length} related bets for this user`);
+      // Calculate payouts
+      const payouts: { userId: string; amount: number }[] = [];
+      const unmatchedBets: any[] = [];
       
-      if (relatedBets.length > 0) {
-        let creditsToTransfer = 0;
-        for (const bet of relatedBets) {
-          const won = bet.team === winningTeam;
-          const matchedAmount = bet.matchedAmount || 0;
-          
-          if (won) {
-            // Winner gets: original bet back + matched winnings
-            const payout = bet.amount + matchedAmount;
-            creditsToTransfer += payout;
-            console.log(`    ✅ WON! Bet: ${bet.amount}, Matched: ${matchedAmount}, Total payout: ${payout}`);
-          } else {
-            console.log(`    ❌ LOST! Bet: ${bet.amount} (already deducted when placed)`);
-          }
-        }
+      for (const winBet of winningBets) {
+        const losingBetsForAmount = losingBetsByAmount.get(winBet.amount) || [];
+        const losingBetMatch = losingBetsForAmount.pop(); // Get one matching losing bet
         
-        // Track winners for server update
-        if (creditsToTransfer > 0) {
-          userUpdates.push({
-            userId: user.id,
-            userName: user.name,
-            amount: creditsToTransfer
+        if (losingBetMatch) {
+          // Winner gets: their bet + loser's bet
+          const payout = winBet.amount + losingBetMatch.amount;
+          payouts.push({
+            userId: winBet.userId,
+            amount: payout
           });
-          console.log(`  ✅ ${user.name} TOTAL PAYOUT: +${creditsToTransfer}`);
-        }
-      }
-    });
-    
-    console.log(`💰 [PROCESS-BETS] Found ${userUpdates.length} winners for Game #${gameNumber}`);
-    
-    // Now update local state
-    setUsers(prev => {
-      const updatedUsers = prev.map(user => {
-        const userPendingBets = user.pendingBets || [];
-        const userProcessedBets = user.processedBets || [];
-        
-        const relatedBets = userPendingBets.filter(bet => bet.gameNumber === gameNumber);
-        if (relatedBets.length === 0) return user;
-
-        let creditsToTransfer = 0;
-        const newPendingBets = userPendingBets.filter(bet => bet.gameNumber !== gameNumber);
-        const newProcessedBets = [...userProcessedBets];
-
-        // Process each bet
-        for (const bet of relatedBets) {
-          const won = bet.team === winningTeam;
-          const matchedAmount = bet.matchedAmount || 0;
-          
-          if (won) {
-            // Winner gets: original bet back + matched winnings
-            creditsToTransfer += bet.amount + matchedAmount;
-          }
-
-          // Add to processed bets
-          newProcessedBets.push({
-            id: bet.id,
-            amount: bet.amount,
-            matchedAmount: matchedAmount,
-            won,
-            gameNumber: bet.gameNumber,
-            timestamp: Date.now(),
-            teamName: bet.teamName,
-            opponentName: bet.opponentName
-          });
-        }
-
-        // Update user with new balance and processed bets
-        let updatedUser = {
-          ...user,
-          credits: user.credits + creditsToTransfer,
-          pendingBets: newPendingBets,
-          processedBets: newProcessedBets
-        };
-
-        if (currentUser?.id === user.id) {
-          setCurrentUser(updatedUser);
-        }
-
-        console.log(`💰 [PROCESS-BETS] ${user.name} final balance: ${updatedUser.credits} (transferred: ${creditsToTransfer})`);
-        
-        return updatedUser;
-      });
-
-      // Emit wallet update for connected users coin counter
-      if (socketIOService.isSocketConnected()) {
-        socketIOService.emitUserWalletUpdate(updatedUsers);
-      }
-
-      return updatedUsers;
-    });
-
-    // ✅ NEW: Now call addCredits() on server for each winner
-    console.log(`💰 [PROCESS-BETS] Adding coins to ${userUpdates.length} winners...`);
-    for (const update of userUpdates) {
-      try {
-        console.log(`💰 [ADD-CREDITS] Adding ${update.amount} coins to ${update.userName} (${update.userId})...`);
-        const success = await addCredits(update.userId, update.amount, false, `bet_win_game_${gameNumber}`);
-        if (success) {
-          addCreditTransaction({
-            userId: update.userId,
-            userName: update.userName,
-            type: 'bet_win',
-            amount: update.amount,
-            details: `Won bet(s) on Game #${gameNumber}`
-          });
-          console.log(`✅ [ADD-CREDITS] Successfully added ${update.amount} coins to ${update.userName}`);
+          console.log(`✅ ${winBet.userName} wins: ${winBet.amount} + ${losingBetMatch.amount} = ${payout}`);
         } else {
-          console.warn(`⚠️ [ADD-CREDITS] Failed to add credits for ${update.userName} - addCredits returned false`);
+          // No match found - this bet is unmatched
+          unmatchedBets.push(winBet);
+          console.log(`⚠️ Unmatched winning bet #${winBet.id} for ${winBet.userName}: ${winBet.amount} coins will be refunded`);
         }
-      } catch (error) {
-        console.error(`❌ [ADD-CREDITS] Error adding credits for ${update.userName}:`, error);
       }
-    }
-    console.log(`🎮 [PROCESS-BETS] Finished processing all winners for Game #${gameNumber}`);
+      
+      // Refund unmatched bets from both teams
+      for (const unmatchedBet of unmatchedBets) {
+        payouts.push({
+          userId: unmatchedBet.userId,
+          amount: unmatchedBet.amount
+        });
+        console.log(`💰 Refunding unmatched bet for ${unmatchedBet.userName}: ${unmatchedBet.amount} coins`);
+      }
+      
+      // Also refund any unmatched losing bets
+      for (const betsForAmount of losingBetsByAmount.values()) {
+        for (const unmatchedLosingBet of betsForAmount) {
+          payouts.push({
+            userId: unmatchedLosingBet.userId,
+            amount: unmatchedLosingBet.amount
+          });
+          console.log(`💰 Refunding unmatched losing bet for ${unmatchedLosingBet.userName}: ${unmatchedLosingBet.amount} coins`);
+        }
+      }
+      
+      // Apply payouts to users - sum all payouts for each user (they might have multiple winning bets)
+      setUsers(prev => {
+        const updated = prev.map(user => {
+          // Sum all payouts for this user (in case they have multiple winning bets)
+          const totalPayout = payouts
+            .filter(p => p.userId === user.id)
+            .reduce((sum, p) => sum + p.amount, 0);
+          
+          if (totalPayout > 0) {
+            const newBalance = user.credits + totalPayout;
+            console.log(`💰 ${user.name}: +${totalPayout} coins (${user.credits} → ${newBalance})`);
+            
+            if (currentUser?.id === user.id) {
+              setCurrentUser({ ...user, credits: newBalance });
+            }
+            
+            return { ...user, credits: newBalance };
+          }
+          return user;
+        });
+        return updated;
+      });
+      
+      console.log(`🎮 [GAME-WIN] Processed ${payouts.length} bet payouts`);
     } catch (error) {
-      console.error(`❌ [PROCESS-BETS] ERROR in processPendingBets:`, error);
-      throw error;
+      console.error(`❌ [GAME-WIN] Error processing bets:`, error);
     }
+  };
+
+  // ✅ AUDIT: Verify all coins are accounted for (no burns or creates)
+  const auditCoins = () => {
+    let totalUserCredits = 0;
+    let totalInBets = 0;
+    const audit: any[] = [];
+
+    for (const user of users) {
+      totalUserCredits += user.credits;
+      
+      audit.push({
+        userId: user.id,
+        userName: user.name,
+        credits: user.credits
+      });
+    }
+
+    console.log(`\n💰 [COIN-AUDIT] ===================`);
+    console.log(`💰 [COIN-AUDIT] Total User Credits: ${totalUserCredits}`);
+    console.log(`💰 [COIN-AUDIT] Audit Details:`, audit);
+    console.log(`💰 [COIN-AUDIT] ===================\n`);
+
+    return {
+      totalUserCredits,
+      details: audit
+    };
+  };
+
+  // ✅ AUDIT: Verify bet system integrity
+  const auditBets = (teamABets: any[] = [], teamBBets: any[] = []) => {
+    const totalTeamAAmount = teamABets.reduce((sum, b) => sum + b.amount, 0);
+    const totalTeamBAmount = teamBBets.reduce((sum, b) => sum + b.amount, 0);
+    const totalInQueues = totalTeamAAmount + totalTeamBAmount;
+
+    const matchedTeamA = teamABets.filter(b => b.booked).reduce((sum, b) => sum + b.amount, 0);
+    const matchedTeamB = teamBBets.filter(b => b.booked).reduce((sum, b) => sum + b.amount, 0);
+    const totalMatched = matchedTeamA + matchedTeamB;
+
+    const unmatchedTeamA = teamABets.filter(b => !b.booked).reduce((sum, b) => sum + b.amount, 0);
+    const unmatchedTeamB = teamBBets.filter(b => !b.booked).reduce((sum, b) => sum + b.amount, 0);
+    const totalUnmatched = unmatchedTeamA + unmatchedTeamB;
+
+    console.log(`\n🎲 [BET-AUDIT] ===================`);
+    console.log(`🎲 [BET-AUDIT] Team A Queue: ${teamABets.length} bets, ${totalTeamAAmount} coins`);
+    console.log(`🎲 [BET-AUDIT]   - Matched: ${teamABets.filter(b => b.booked).length} bets, ${matchedTeamA} coins`);
+    console.log(`🎲 [BET-AUDIT]   - Unmatched: ${teamABets.filter(b => !b.booked).length} bets, ${unmatchedTeamA} coins`);
+    console.log(`🎲 [BET-AUDIT] Team B Queue: ${teamBBets.length} bets, ${totalTeamBAmount} coins`);
+    console.log(`🎲 [BET-AUDIT]   - Matched: ${teamBBets.filter(b => b.booked).length} bets, ${matchedTeamB} coins`);
+    console.log(`🎲 [BET-AUDIT]   - Unmatched: ${teamBBets.filter(b => !b.booked).length} bets, ${unmatchedTeamB} coins`);
+    console.log(`🎲 [BET-AUDIT] TOTAL: ${totalInQueues} coins (${totalMatched} matched, ${totalUnmatched} unmatched)`);
+    console.log(`🎲 [BET-AUDIT] ===================\n`);
+
+    return {
+      teamA: {
+        total: totalTeamAAmount,
+        matched: matchedTeamA,
+        unmatched: unmatchedTeamA,
+        count: teamABets.length
+      },
+      teamB: {
+        total: totalTeamBAmount,
+        matched: matchedTeamB,
+        unmatched: unmatchedTeamB,
+        count: teamBBets.length
+      },
+      grandTotal: totalInQueues,
+      totalMatched,
+      totalUnmatched
+    };
+  };
+
+  // ✅ AUDIT: Full system health check
+  const systemHealthCheck = (teamABets: any[] = [], teamBBets: any[] = []) => {
+    const coinAudit = auditCoins();
+    const betAudit = auditBets(teamABets, teamBBets);
+
+    console.log(`\n✅ [SYSTEM-HEALTH] ===================`);
+    console.log(`✅ Total Credits in System: ${coinAudit.totalUserCredits}`);
+    console.log(`✅ Total Coins in Active Bets: ${betAudit.grandTotal}`);
+    console.log(`✅ Total System Coins: ${coinAudit.totalUserCredits + betAudit.grandTotal}`);
+    console.log(`✅ [SYSTEM-HEALTH] ===================\n`);
+
+    return {
+      coinAudit,
+      betAudit,
+      systemTotal: coinAudit.totalUserCredits + betAudit.grandTotal
+    };
   };
 
   // ✅ Update pending bet with matched amount (when it gets booked)
@@ -1036,6 +1120,36 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     try {
       console.log(`💰 [CREDITS-ADD] Starting: userId=${userId}, amount=${amount}, reason=${reason}`);
+      
+      // In development mode, handle locally without server
+      if (process.env.NODE_ENV === 'development') {
+        const user = users.find(u => u.id === userId);
+        if (!user) {
+          console.warn('⚠️ [CREDITS-ADD] User not found:', userId);
+          return false;
+        }
+        
+        const newBalance = user.credits + amount;
+        console.log(`✅ [CREDITS-ADD] Dev mode: adding locally, newBalance=${newBalance}`);
+        
+        // Update local state immediately
+        setUsers(prev => {
+          const updatedUsers = prev.map(u => {
+            if (u.id === userId) {
+              const updatedUser = { ...u, credits: newBalance };
+              if (currentUser?.id === userId) {
+                setCurrentUserWithLogin(updatedUser);
+              }
+              return updatedUser;
+            }
+            return u;
+          });
+          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
+          return updatedUsers;
+        });
+        
+        return true;
+      }
       
       // 💰 Call server API instead of modifying local state
       // Server is authoritative - it validates, processes, and records the transaction
@@ -1137,6 +1251,39 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     try {
       console.log(`💰 [CREDITS-BET] Starting: userId=${userId}, amount=${amount}, currentBalance=${user.credits}`);
+      
+      // In development mode, handle locally without server
+      if (process.env.NODE_ENV === 'development') {
+        if (user.credits < amount) {
+          console.warn(`⚠️ [CREDITS-BET] Insufficient local credits: has ${user.credits}, needs ${amount}`);
+          toast.error("Insufficient Credits", {
+            description: `${user.name} needs ${amount} COINS (has ${user.credits})`,
+            className: "custom-toast-error"
+          });
+          return false;
+        }
+        
+        const newBalance = user.credits - amount;
+        console.log(`✅ [CREDITS-BET] Dev mode: deducting locally, newBalance=${newBalance}`);
+        
+        // Update local state immediately
+        setUsers(prev => {
+          const updatedUsers = prev.map(u => {
+            if (u.id === userId) {
+              const updatedUser = { ...u, credits: newBalance };
+              if (currentUser?.id === userId) {
+                setCurrentUserWithLogin(updatedUser);
+              }
+              return updatedUser;
+            }
+            return u;
+          });
+          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
+          return updatedUsers;
+        });
+        
+        return true;
+      }
       
       // 💰 Call server API to validate and deduct credits
       // Server checks balance before allowing deduction
@@ -1610,16 +1757,39 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       lastCreditFetchRef.current = now;
 
+      // Skip server fetch in development if backend is not responding
+      if (process.env.NODE_ENV === 'development') {
+        console.log('⏭️ [CREDITS] Skipping server fetch in development mode');
+        return;
+      }
+      
       try {
         console.log(`📡 [CREDITS] Fetching server balance for user: ${currentUser.id}`);
-        const response = await fetch(`/api/credits/${currentUser.id}`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        
+        const response = await fetch(`/api/credits/${currentUser.id}`, { signal: controller.signal });
+        clearTimeout(timeoutId);
         
         if (!response.ok) {
           console.warn(`⚠️ [CREDITS] Failed to fetch balance: ${response.status}`);
           return;
         }
 
-        const data = await response.json();
+        const text = await response.text();
+        
+        // Check if response is valid JSON
+        if (!text || text.trim().length === 0) {
+          console.warn('⚠️ [CREDITS] Server returned empty response');
+          return;
+        }
+        
+        if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+          console.warn('⚠️ [CREDITS] Server returned HTML instead of JSON');
+          return;
+        }
+        
+        const data = JSON.parse(text);
         const serverBalance = data.balance;
 
         console.log(`✅ [CREDITS] Server balance: ${serverBalance}, Local balance: ${currentUser.credits}`);
@@ -1645,6 +1815,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch (error) {
         console.error('❌ [CREDITS] Error syncing balance from server:', error);
+        console.log('📍 [CREDITS] Keeping local balance, server sync failed');
       }
     };
 
@@ -1711,16 +1882,47 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Override localStorage with server data to ensure accuracy
   useEffect(() => {
     const fetchUsersFromServer = async () => {
+      // Skip server fetch in development if backend is not responding
+      const skipServerFetch = process.env.NODE_ENV === 'development';
+      
+      if (skipServerFetch) {
+        console.log('⏭️ [USERS] Skipping server fetch in development mode - using local/fallback users');
+        return;
+      }
+      
       try {
         console.log('📡 [USERS] Fetching users from server...');
-        const response = await fetch('/api/users');
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        
+        const response = await fetch('/api/users', { signal: controller.signal });
+        clearTimeout(timeoutId);
         
         if (!response.ok) {
-          console.warn('⚠️ [USERS] Failed to fetch users from server');
+          console.warn('⚠️ [USERS] Failed to fetch users from server, status:', response.status);
           return;
         }
         
-        const serverUsers = await response.json();
+        const text = await response.text();
+        
+        // Check if response is actually JSON
+        if (!text || text.trim().length === 0) {
+          console.warn('⚠️ [USERS] Server returned empty response');
+          return;
+        }
+        
+        if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+          console.warn('⚠️ [USERS] Server returned HTML instead of JSON (likely error page)');
+          return;
+        }
+        
+        const serverUsers = JSON.parse(text);
+        
+        if (!Array.isArray(serverUsers)) {
+          console.warn('⚠️ [USERS] Server did not return an array:', serverUsers);
+          return;
+        }
+        
         console.log(`✅ [USERS] Loaded ${serverUsers.length} users from server`);
         
         // Update local state with server users (overrides localStorage)
@@ -1735,6 +1937,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch (error) {
         console.error('❌ [USERS] Error fetching users from server:', error);
+        console.log('📍 [USERS] Falling back to localStorage or default admin');
       }
     };
     
@@ -1760,6 +1963,30 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       socketIOService.requestConnectedUsersData();
     }
   }, []);
+
+  // ✅ RECOVERY: Restore multiple users at once
+  const restoreUsers = (usersToRestore: User[]) => {
+    console.log(`🔧 [RECOVERY] Restoring ${usersToRestore.length} users...`);
+    setUsers(prev => {
+      const newUsers = [...prev];
+      for (const userToRestore of usersToRestore) {
+        const exists = newUsers.find(u => u.id === userToRestore.id);
+        if (!exists) {
+          newUsers.push(userToRestore);
+          console.log(`✅ [RECOVERY] Restored user: ${userToRestore.name} (${userToRestore.id})`);
+        }
+      }
+      try {
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(newUsers));
+      } catch (e) {
+        console.error('❌ [RECOVERY] Failed to save:', e);
+      }
+      return newUsers;
+    });
+    toast.success(`Restored ${usersToRestore.length} users!`, {
+      className: "custom-toast-success"
+    });
+  };
 
   return (
     <UserContext.Provider
@@ -1799,6 +2026,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         processPendingBets,
         refundPendingBet,
         updatePendingBetMatched,
+        restoreUsers,
+        // ✅ AUDIT functions
+        auditCoins,
+        auditBets,
+        systemHealthCheck,
       }}
     >
       {children}

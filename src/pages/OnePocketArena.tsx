@@ -44,11 +44,9 @@ const OnePocketArena = () => {
     clearBettingQueueReceipts,
     userBetReceipts,
     betHistory,
-    addPendingBet,
-    getPendingBetAmount,
-    getAvailableCredits,
     processPendingBets,
-    refundPendingBet
+    getAvailableCredits,
+    getPendingBetAmount
   } = useUser();
 
   // ⚠️ CRITICAL: DO NOT call addCredits() for unmatched bets
@@ -431,9 +429,11 @@ const OnePocketArena = () => {
   };
   
   const processBetsForGameWin = async (winningTeam: 'A' | 'B', duration: number) => {
-    // ✅ NEW: Process pending bets - this transfers credits based on win/loss
-    console.log(`🎮 [GAME-WIN] Processing pending bets for Game #${currentGameNumber}, winning team: ${winningTeam}`);
-    await processPendingBets(currentGameNumber, winningTeam);
+    // ✅ SIMPLIFIED: Process game win - winners get their bet back + loser's matched amount
+    console.log(`🎮 [GAME-WIN] Processing bets for Game #${currentGameNumber}, winning team: ${winningTeam}`);
+    console.log(`🎮 [GAME-WIN] Team A bets: ${teamAQueue.length}, Team B bets: ${teamBQueue.length}`);
+    console.log(`🎮 [GAME-WIN] Team A amount: ${teamAQueue.reduce((s, b) => s + b.amount, 0)}, Team B amount: ${teamBQueue.reduce((s, b) => s + b.amount, 0)}`);
+    await processPendingBets(currentGameNumber, winningTeam, teamAQueue, teamBQueue);
     
     // 📊 START COIN AUDIT - Take pre-game snapshot
     const gameId = `game-${Date.now()}`;
@@ -512,13 +512,7 @@ const OnePocketArena = () => {
       const user = getUserById(bet.userId);
       if (user) {
         console.log(`🔄 [UNMATCHED-CURRENT] Removing unmatched current game bet #${bet.id}: ${user.name} - ${bet.amount} coins freed`);
-        refundPendingBet(user.id, bet.id.toString());
         totalCurrentUnmatched += bet.amount;
-        
-        toast.info(`Unmatched bet #${bet.id} removed - available credits increased`, {
-          description: `${user.name}'s ${bet.amount} COINS released from pending`,
-          className: "custom-toast-success",
-        });
       }
     }
     
@@ -536,13 +530,7 @@ const OnePocketArena = () => {
       const user = getUserById(bet.userId);
       if (user) {
         console.log(`🔄 [UNMATCHED-NEXT] Removing unmatched next game bet #${bet.id}: ${user.name} - ${bet.amount} coins freed`);
-        refundPendingBet(user.id, bet.id.toString());
         totalNextUnmatched += bet.amount;
-        
-        toast.info(`Unmatched next game bet #${bet.id} removed - available credits increased`, {
-          description: `${user.name}'s ${bet.amount} COINS released from pending`,
-          className: "custom-toast-success",
-        });
       }
     }
     
@@ -678,17 +666,11 @@ const OnePocketArena = () => {
     const unmatchedNextBetsB = nextTeamBQueue.filter(bet => !bet.booked);
     const allUnmatchedNextBets = [...unmatchedNextBetsA, ...unmatchedNextBetsB];
     
-    // ✅ NEW: Remove from PENDING, don't call addCredits() (no coins created!)
+    // Remove unmatched next game bets
     for (const bet of allUnmatchedNextBets) {
       const user = getUserById(bet.userId);
       if (user) {
-        refundPendingBet(user.id, bet.id.toString());
         totalFreed += bet.amount;
-        
-        toast.info(`Released ${bet.amount} COINS - removed from pending`, {
-          description: `Unmatched next game bet #${bet.id} removed for ${user.name}`,
-          className: "custom-toast-success",
-        });
       }
     }
     
@@ -779,16 +761,6 @@ const OnePocketArena = () => {
           bookBets(teamAQueue, updatedBQueue);
         }
       }
-      
-      // ✅ NEW: Add to pending bets (credits are locked but not deducted yet)
-      addPendingBet(currentUser.id, {
-        id: betId,
-        amount: confirmation.amount,
-        team: confirmation.teamSide,
-        gameNumber: currentGameNumber,
-        teamName: confirmation.teamSide === 'A' ? teamAName : teamBName,
-        opponentName: confirmation.teamSide === 'A' ? teamBName : teamAName
-      });
       
       // Show success message
       toast.success("Bet Placed!", {
@@ -1170,12 +1142,11 @@ const OnePocketArena = () => {
     }
     
     if (betDeleted && deletedBet) {
-      // ✅ NEW: Remove from pending (don't create coins!)
-      // Unmatched bets were never deducted, just remove from pending
-      refundPendingBet(deletedBet.userId, deletedBet.id.toString());
+      // ✅ Refund the bet amount to the user
+      addCredits(currentUser.id, deletedBet.amount, false, `bet_deleted_#${deletedBet.id}`);
       
-      toast.info(`Bet #${deletedBet.id} deleted - ${deletedBet.amount} COINS released`, {
-        description: "Unmatched bet removed from pending",
+      toast.success(`Bet #${deletedBet.id} deleted`, {
+        description: `${deletedBet.amount} COINS refunded to your account`,
         className: "custom-toast-success",
       });
     } else {

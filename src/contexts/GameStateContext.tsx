@@ -154,6 +154,7 @@ const defaultLocalAdminState: LocalAdminState = {
 // LocalStorage keys for persistence
 const STORAGE_KEY_ONE_POCKET_ARENA = 'gameState_one_pocket_arena';
 const STORAGE_KEY_ADMIN_ONE_POCKET = 'adminState_one_pocket_arena';
+const STORAGE_KEY_ADMIN_DEFAULT = 'adminState_default_arena';
 
 // Helper to save state to localStorage
 const saveGameStateToStorage = (arenaId: string, state: GameState) => {

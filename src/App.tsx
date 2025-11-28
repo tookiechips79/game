@@ -18,6 +18,10 @@ import FeaturesPage from "./pages/Features";
 import AboutPage from "./pages/About";
 import FAQPage from "./pages/FAQ";
 import { CreditAuditDashboard } from "@/components/CreditAuditDashboard";
+import UserRecovery from "./pages/UserRecovery";
+import DebugGameState from "./pages/DebugGameState";
+import AuditDashboard from "./pages/AuditDashboard";
+import BettingSimulator from "./pages/BettingSimulator";
 import "./App.css";
 
 const queryClient = new QueryClient();
@@ -71,6 +75,10 @@ const App = () => (
               <Route path="/reload-coins" element={<ReloadCoinsPage />} />
               <Route path="/faq" element={<FAQPage />} />
               <Route path="/credit-audit" element={<CreditAuditDashboard />} />
+              <Route path="/recover-users" element={<UserRecovery />} />
+              <Route path="/debug-state" element={<DebugGameState />} />
+              <Route path="/audit" element={<AuditDashboard />} />
+              <Route path="/simulate" element={<BettingSimulator />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

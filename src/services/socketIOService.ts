@@ -73,6 +73,14 @@ class SocketIOService {
     // Initialize lastIdentifiedArena from the current hash to ensure correct arena on first emit
     this.lastIdentifiedArena = this.getArenaIdPrivate();
     log(`📍 Initialized lastIdentifiedArena to: ${this.lastIdentifiedArena}`);
+    
+    // Skip Socket.IO connection in development mode
+    if (process.env.NODE_ENV === 'development') {
+      console.log('⏭️ [SOCKET.IO] Skipping connection in development mode');
+      this.isConnected = false;
+      return;
+    }
+    
     this.initializeSocket();
   }
 
