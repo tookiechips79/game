@@ -47,6 +47,7 @@ interface UserContextType {
   getAvailableCredits: (userId: string) => number;
   processPendingBets: (gameNumber: number, winningTeam: 'A' | 'B') => void;
   refundPendingBet: (userId: string, betId: string) => void;
+  updatePendingBetMatched: (userId: string, betId: string, matchedAmount: number) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -751,6 +752,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     gameNumber: number;
     teamName?: string;
     opponentName?: string;
+    matchedAmount?: number;  // If matched, how much was matched
   }) => {
     const user = users.find(u => u.id === userId);
     if (!user) {
@@ -766,7 +768,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       status: 'pending',
       timestamp: Date.now(),
       teamName: betData.teamName,
-      opponentName: betData.opponentName
+      opponentName: betData.opponentName,
+      matchedAmount: betData.matchedAmount || 0  // Track how much was matched
     };
 
     setUsers(prev => {
@@ -829,13 +832,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (relatedBets.length > 0) {
         let creditsToTransfer = 0;
         for (const bet of relatedBets) {
-          console.log(`    Bet #${bet.id}: team=${bet.team}, amount=${bet.amount}, comparing to winningTeam=${winningTeam}`);
           const won = bet.team === winningTeam;
+          const matchedAmount = bet.matchedAmount || 0;
+          
           if (won) {
-            creditsToTransfer += bet.amount;
-            console.log(`    ✅ WON! +${bet.amount} COINS`);
+            // Winner gets: original bet back + matched winnings
+            const payout = bet.amount + matchedAmount;
+            creditsToTransfer += payout;
+            console.log(`    ✅ WON! Bet: ${bet.amount}, Matched: ${matchedAmount}, Total payout: ${payout}`);
           } else {
-            console.log(`    ❌ LOST! -${bet.amount} COINS`);
+            console.log(`    ❌ LOST! Bet: ${bet.amount} (already deducted when placed)`);
           }
         }
         
@@ -846,7 +852,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             userName: user.name,
             amount: creditsToTransfer
           });
-          console.log(`  ✅ ${user.name} TOTAL WIN: +${creditsToTransfer}`);
+          console.log(`  ✅ ${user.name} TOTAL PAYOUT: +${creditsToTransfer}`);
         }
       }
     });
@@ -869,15 +875,18 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Process each bet
         for (const bet of relatedBets) {
           const won = bet.team === winningTeam;
+          const matchedAmount = bet.matchedAmount || 0;
           
           if (won) {
-            creditsToTransfer += bet.amount;
+            // Winner gets: original bet back + matched winnings
+            creditsToTransfer += bet.amount + matchedAmount;
           }
 
           // Add to processed bets
           newProcessedBets.push({
             id: bet.id,
             amount: bet.amount,
+            matchedAmount: matchedAmount,
             won,
             gameNumber: bet.gameNumber,
             timestamp: Date.now(),
@@ -938,6 +947,42 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error(`❌ [PROCESS-BETS] ERROR in processPendingBets:`, error);
       throw error;
     }
+  };
+
+  // ✅ Update pending bet with matched amount (when it gets booked)
+  const updatePendingBetMatched = (userId: string, betId: string, matchedAmount: number) => {
+    const user = users.find(u => u.id === userId);
+    if (!user) {
+      console.warn('⚠️ [PENDING-BET] User not found for update:', userId);
+      return;
+    }
+
+    const bet = user.pendingBets?.find(b => b.id === betId);
+    if (!bet) {
+      console.warn('⚠️ [PENDING-BET] Bet not found for update:', betId);
+      return;
+    }
+
+    setUsers(prev => {
+      const updatedUsers = prev.map(u => {
+        if (u.id === userId && u.pendingBets) {
+          const updatedBets = u.pendingBets.map(b => {
+            if (b.id === betId) {
+              console.log(`✅ [PENDING-BET] Updated bet #${betId} with matched amount: ${matchedAmount}`);
+              return { ...b, matchedAmount };
+            }
+            return b;
+          });
+          const updatedUser = { ...u, pendingBets: updatedBets };
+          if (currentUser?.id === userId) {
+            setCurrentUser(updatedUser);
+          }
+          return updatedUser;
+        }
+        return u;
+      });
+      return updatedUsers;
+    });
   };
 
   // ✅ Refund pending bet (user cancels a bet)
@@ -1741,6 +1786,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         getAvailableCredits,
         processPendingBets,
         refundPendingBet,
+        updatePendingBetMatched,
       }}
     >
       {children}
