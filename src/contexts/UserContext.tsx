@@ -811,24 +811,29 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // ✅ Process pending bets when game ends
   const processPendingBets = async (gameNumber: number, winningTeam: 'A' | 'B') => {
     console.log(`🎮 [PROCESS-BETS] Processing pending bets for Game #${gameNumber}, winning team: ${winningTeam}`);
+    console.log(`🎮 [PROCESS-BETS] Total users in state: ${users.length}`);
     
     // First, collect all winners from current state
     const userUpdates: Array<{ userId: string; userName: string; amount: number }> = [];
     
     // Iterate through users to find winners BEFORE state update
-    users.forEach(user => {
+    users.forEach((user, userIdx) => {
       const userPendingBets = user.pendingBets || [];
+      console.log(`🎮 [PROCESS-BETS] User ${userIdx} (${user.name}): ${userPendingBets.length} pending bets`);
+      
       const relatedBets = userPendingBets.filter(bet => bet.gameNumber === gameNumber);
+      console.log(`  └─ Game #${gameNumber}: ${relatedBets.length} related bets`);
       
       if (relatedBets.length > 0) {
         let creditsToTransfer = 0;
         for (const bet of relatedBets) {
+          console.log(`    Bet #${bet.id}: team=${bet.team}, amount=${bet.amount}, comparing to winningTeam=${winningTeam}`);
           const won = bet.team === winningTeam;
           if (won) {
             creditsToTransfer += bet.amount;
-            console.log(`✅ [PROCESS-BETS] ${user.name} WON bet #${bet.id} (${bet.amount} COINS)`);
+            console.log(`    ✅ WON! +${bet.amount} COINS`);
           } else {
-            console.log(`❌ [PROCESS-BETS] ${user.name} LOST bet #${bet.id} (${bet.amount} COINS)`);
+            console.log(`    ❌ LOST! -${bet.amount} COINS`);
           }
         }
         
@@ -839,7 +844,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             userName: user.name,
             amount: creditsToTransfer
           });
-          console.log(`💰 [PROCESS-BETS] ${user.name} - Won: +${creditsToTransfer}`);
+          console.log(`  ✅ ${user.name} TOTAL WIN: +${creditsToTransfer}`);
         }
       }
     });
