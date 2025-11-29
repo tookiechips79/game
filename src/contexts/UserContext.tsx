@@ -1150,49 +1150,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return true;
       
-      // 💰 Call server API instead of modifying local state
-      // Server is authoritative - it validates, processes, and records the transaction
-      const response = await fetch(`/api/credits/${userId}/add`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount,
-          reason: isAdmin ? reason : 'system_operation',
-          adminNotes: isAdmin ? `Admin action: ${reason}` : ''
-        })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error(`❌ [CREDITS-ADD] Server returned error: ${response.status}`, errorData);
-        throw new Error(`Server error: ${response.status} - ${errorData.error || 'Unknown'}`);
-      }
-      
-      const data = await response.json();
-      const newBalance = data.newBalance;
-      console.log(`✅ [CREDITS-ADD] Server returned newBalance=${newBalance}`);
-      
-      // Update local state with server-confirmed balance
-      setUsers(prev => {
-        const updatedUsers = prev.map(user => {
-          if (user.id === userId) {
-            const updatedUser = { ...user, credits: newBalance };
-            if (currentUser?.id === userId) {
-              setCurrentUser(updatedUser);
-            }
-            return updatedUser;
-          }
-          return user;
-        });
-        
-        // Emit wallet update for connected users coin counter
-        if (socketIOService.isSocketConnected()) {
-          socketIOService.emitUserWalletUpdate(updatedUsers);
-        }
-        
-        return updatedUsers;
-      });
-      
       const userName = users.find(u => u.id === userId)?.name || userId;
       
       if (isAdmin) {
@@ -1280,64 +1237,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
         return updatedUsers;
       });
-      
-      return true;
-      
-      // 💰 Call server API to validate and deduct credits
-      // Server checks balance before allowing deduction
-      const response = await fetch(`/api/credits/${userId}/bet`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount,
-          betDetails: isAdminAction ? 'Admin deducted' : 'Bet placed'
-        })
-      });
-      
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        console.warn(`⚠️ [CREDITS-BET] Server rejected: ${response.status}`, error);
-        toast.error("Insufficient Credits", {
-          description: error.error || `${user.name} doesn't have enough credits`,
-          className: "custom-toast-error"
-        });
-        return false;
-      }
-      
-      const data = await response.json();
-      const newBalance = data.newBalance;
-      console.log(`✅ [CREDITS-BET] Server returned newBalance=${newBalance}`);
-      
-      // Update local state with server-confirmed balance
-      setUsers(prev => {
-        const updatedUsers = prev.map(u => {
-          if (u.id === userId) {
-            const updatedUser = { ...u, credits: newBalance };
-            if (currentUser?.id === userId) {
-              setCurrentUser(updatedUser);
-            }
-            return updatedUser;
-          }
-          return u;
-        });
-        
-        // Emit wallet update for connected users coin counter
-        if (socketIOService.isSocketConnected()) {
-          socketIOService.emitUserWalletUpdate(updatedUsers);
-        }
-        
-        return updatedUsers;
-      });
-      
-      if (isAdminAction) {
-        addCreditTransaction({
-          userId,
-          userName: user.name,
-          type: 'admin_deduct',
-          amount,
-          details: 'Admin removed coins from account'
-        });
-      }
       
       return true;
     } catch (error) {
