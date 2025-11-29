@@ -1178,7 +1178,27 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return updatedUsers;
       });
       
-      return true;
+      // ✅ Call backend API to persist addition to database
+      try {
+        const response = await fetch(`/api/credits/${userId}/add`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount,
+            reason: isAdmin ? reason : 'system_operation',
+            adminNotes: isAdmin ? `Admin action: ${reason}` : ''
+          })
+        });
+        
+        if (response.ok) {
+          console.log(`✅ [CREDITS-ADD] Backend added ${amount} for user ${userId}`);
+        } else {
+          console.warn(`⚠️ [CREDITS-ADD] Backend returned ${response.status}, but local addition succeeded`);
+        }
+      } catch (error) {
+        console.warn(`⚠️ [CREDITS-ADD] Could not reach backend, but local addition succeeded:`, error);
+        // Continue anyway - localStorage has the data
+      }
       
       const userName = users.find(u => u.id === userId)?.name || userId;
       
@@ -1267,6 +1287,27 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
         return updatedUsers;
       });
+      
+      // ✅ Call backend API to persist deduction to database
+      try {
+        const response = await fetch(`/api/credits/${userId}/bet`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount,
+            betDetails: isAdminAction ? 'Admin deducted' : 'Bet placed'
+          })
+        });
+        
+        if (response.ok) {
+          console.log(`✅ [CREDITS-BET] Backend deducted ${amount} for user ${userId}`);
+        } else {
+          console.warn(`⚠️ [CREDITS-BET] Backend returned ${response.status}, but local deduction succeeded`);
+        }
+      } catch (error) {
+        console.warn(`⚠️ [CREDITS-BET] Could not reach backend, but local deduction succeeded:`, error);
+        // Continue anyway - localStorage has the data
+      }
       
       return true;
     } catch (error) {
