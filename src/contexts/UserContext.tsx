@@ -949,12 +949,37 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return user;
         });
         
-        // ✅ CRITICAL: Save to localStorage so wins persist!
+        // ✅ Save to localStorage as backup
         localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
         console.log(`💾 [GAME-WIN] Saved updated balances to localStorage`);
         
         return updated;
       });
+      
+      // ✅ NOW: Call backend API to persist wins to database
+      console.log(`🎮 [GAME-WIN] Sending ${payouts.length} payouts to backend...`);
+      for (const payout of payouts) {
+        try {
+          const response = await fetch(`/api/credits/${payout.userId}/win`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              amount: payout.amount,
+              gameNumber: gameNumber,
+              winningTeam: winningTeam
+            })
+          });
+          
+          if (!response.ok) {
+            console.warn(`⚠️ [GAME-WIN] Backend win endpoint returned ${response.status} for user ${payout.userId}`);
+          } else {
+            console.log(`✅ [GAME-WIN] Backend updated win for user ${payout.userId}: +${payout.amount}`);
+          }
+        } catch (error) {
+          console.warn(`⚠️ [GAME-WIN] Could not reach backend for user ${payout.userId}:`, error);
+          // Continue anyway - localStorage has the data
+        }
+      }
       
       console.log(`🎮 [GAME-WIN] Processed ${payouts.length} bet payouts`);
     } catch (error) {
