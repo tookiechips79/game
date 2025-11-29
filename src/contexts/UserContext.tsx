@@ -1121,36 +1121,35 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log(`💰 [CREDITS-ADD] Starting: userId=${userId}, amount=${amount}, reason=${reason}`);
       
-      // ✅ ALWAYS handle locally with localStorage persistence
-      // This ensures credits persist on all deployments (dev, render, etc)
-      const user = users.find(u => u.id === userId);
-      if (!user) {
-        console.warn('⚠️ [CREDITS-ADD] User not found:', userId);
-        return false;
-      }
-      
-      const newBalance = user.credits + amount;
-      console.log(`✅ [CREDITS-ADD] Adding credits locally, newBalance=${newBalance}`);
-      
-      // Update local state immediately and persist to localStorage
-      setUsers(prev => {
-        const updatedUsers = prev.map(u => {
-          if (u.id === userId) {
-            const updatedUser = { ...u, credits: newBalance };
-            if (currentUser?.id === userId) {
-              setCurrentUserWithLogin(updatedUser);
+      // In development mode, handle locally without server
+      if (process.env.NODE_ENV === 'development') {
+        const user = users.find(u => u.id === userId);
+        if (!user) {
+          console.warn('⚠️ [CREDITS-ADD] User not found:', userId);
+          return false;
+        }
+        
+        const newBalance = user.credits + amount;
+        console.log(`✅ [CREDITS-ADD] Dev mode: adding locally, newBalance=${newBalance}`);
+        
+        // Update local state immediately
+        setUsers(prev => {
+          const updatedUsers = prev.map(u => {
+            if (u.id === userId) {
+              const updatedUser = { ...u, credits: newBalance };
+              if (currentUser?.id === userId) {
+                setCurrentUserWithLogin(updatedUser);
+              }
+              return updatedUser;
             }
-            return updatedUser;
-          }
-          return u;
+            return u;
+          });
+          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
+          return updatedUsers;
         });
-        // ✅ CRITICAL: Save to localStorage so credits persist
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
-        console.log(`💾 [CREDITS-ADD] Saved to localStorage`);
-        return updatedUsers;
-      });
-      
-      return true;
+        
+        return true;
+      }
       
       // 💰 Call server API instead of modifying local state
       // Server is authoritative - it validates, processes, and records the transaction
@@ -1253,39 +1252,38 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log(`💰 [CREDITS-BET] Starting: userId=${userId}, amount=${amount}, currentBalance=${user.credits}`);
       
-      // ✅ ALWAYS handle locally with localStorage persistence
-      // This ensures credits persist on all deployments
-      if (user.credits < amount) {
-        console.warn(`⚠️ [CREDITS-BET] Insufficient credits: has ${user.credits}, needs ${amount}`);
-        toast.error("Insufficient Credits", {
-          description: `${user.name} needs ${amount} COINS (has ${user.credits})`,
-          className: "custom-toast-error"
-        });
-        return false;
-      }
-      
-      const newBalance = user.credits - amount;
-      console.log(`✅ [CREDITS-BET] Deducting locally, newBalance=${newBalance}`);
-      
-      // Update local state immediately and persist to localStorage
-      setUsers(prev => {
-        const updatedUsers = prev.map(u => {
-          if (u.id === userId) {
-            const updatedUser = { ...u, credits: newBalance };
-            if (currentUser?.id === userId) {
-              setCurrentUserWithLogin(updatedUser);
+      // In development mode, handle locally without server
+      if (process.env.NODE_ENV === 'development') {
+        if (user.credits < amount) {
+          console.warn(`⚠️ [CREDITS-BET] Insufficient local credits: has ${user.credits}, needs ${amount}`);
+          toast.error("Insufficient Credits", {
+            description: `${user.name} needs ${amount} COINS (has ${user.credits})`,
+            className: "custom-toast-error"
+          });
+          return false;
+        }
+        
+        const newBalance = user.credits - amount;
+        console.log(`✅ [CREDITS-BET] Dev mode: deducting locally, newBalance=${newBalance}`);
+        
+        // Update local state immediately
+        setUsers(prev => {
+          const updatedUsers = prev.map(u => {
+            if (u.id === userId) {
+              const updatedUser = { ...u, credits: newBalance };
+              if (currentUser?.id === userId) {
+                setCurrentUserWithLogin(updatedUser);
+              }
+              return updatedUser;
             }
-            return updatedUser;
-          }
-          return u;
+            return u;
+          });
+          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
+          return updatedUsers;
         });
-        // ✅ CRITICAL: Save to localStorage so credits persist
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
-        console.log(`💾 [CREDITS-BET] Saved to localStorage`);
-        return updatedUsers;
-      });
-      
-      return true;
+        
+        return true;
+      }
       
       // 💰 Call server API to validate and deduct credits
       // Server checks balance before allowing deduction
