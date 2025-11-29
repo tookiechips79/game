@@ -948,6 +948,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
           return user;
         });
+        
+        // ✅ CRITICAL: Save to localStorage so wins persist!
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
+        console.log(`💾 [GAME-WIN] Saved updated balances to localStorage`);
+        
         return updated;
       });
       
