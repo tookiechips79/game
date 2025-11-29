@@ -22,6 +22,7 @@ import UserRecovery from "./pages/UserRecovery";
 import DebugGameState from "./pages/DebugGameState";
 import AuditDashboard from "./pages/AuditDashboard";
 import BettingSimulator from "./pages/BettingSimulator";
+import DeploymentDiagnostics from "./pages/DeploymentDiagnostics";
 import "./App.css";
 
 const queryClient = new QueryClient();
@@ -79,6 +80,7 @@ const App = () => (
               <Route path="/debug-state" element={<DebugGameState />} />
               <Route path="/audit" element={<AuditDashboard />} />
               <Route path="/simulate" element={<BettingSimulator />} />
+              <Route path="/diagnostics" element={<DeploymentDiagnostics />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
