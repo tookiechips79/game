@@ -141,8 +141,8 @@ class SocketIOService {
         serverUrl = `http://${window.location.hostname}:3001`;
       } else {
         // Production (Render, AWS, etc.): 
-        // Both frontend and backend run on same server
-        // Connect to same domain - Socket.IO auto-routes to backend
+        // Frontend and backend run from same Express server
+        // Connect to same domain (no port needed - uses current port)
         serverUrl = `${protocol}//${window.location.hostname}`;
       }
       
