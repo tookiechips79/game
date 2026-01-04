@@ -504,8 +504,10 @@ const OnePocketArena = () => {
     // The old logic below has been removed to prevent coin duplication
     console.log(`✅ [BET-PROCESSING] Booked bets (${bookedBets.length}) already processed via processPendingBets()`);
     
-    // ✅ Unmatched bets cleanup:
-    // Get unmatched bets from both current and next game queues and refund them
+    // ✅ HARD CLEAR: Remove ALL unmatched bets from queues immediately
+    console.log(`🔥 [HARD-CLEAR] Removing all unmatched bets from queues`);
+    
+    // Count unmatched bets
     const unmatchedCurrentBetsA = teamAQueue.filter(bet => !bet.booked);
     const unmatchedCurrentBetsB = teamBQueue.filter(bet => !bet.booked);
     const unmatchedNextBetsA = nextTeamAQueue.filter(bet => !bet.booked);
@@ -517,28 +519,23 @@ const OnePocketArena = () => {
     for (const bet of allUnmatchedBets) {
       const user = getUserById(bet.userId);
       if (user) {
-        console.log(`🔄 [UNMATCHED] Clearing bet #${bet.id}: ${user.name} - ${bet.amount} coins freed`);
-        // Refund the pending bet (unlocks coins without crediting)
+        console.log(`   ❌ Removing #${bet.id}: ${user.name} (${bet.amount} coins)`);
         refundPendingBet(user.id, bet.id.toString());
         totalUnmatched += bet.amount;
       }
     }
     
-    if (totalUnmatched > 0) {
-      console.log(`✅ [UNMATCHED-TOTAL] Cleared ${allUnmatchedBets.length} unmatched bets: ${totalUnmatched} coins freed`);
-    }
+    console.log(`🔥 [HARD-CLEAR] Total removed: ${allUnmatchedBets.length} bets, ${totalUnmatched} coins freed`);
     
-    // ✅ Get only MATCHED next-game bets to move to current game
+    // ✅ Get MATCHED next-game bets
     const nextMatchedBetsA = nextTeamAQueue.filter(bet => bet.booked);
     const nextMatchedBetsB = nextTeamBQueue.filter(bet => bet.booked);
     const nextMatchedBooked = [...nextBookedBets];
     const nextTotal = nextTotalBookedAmount;
     
-    console.log(`🧹 [GAME-END] Clearing all queues and moving matched next-game bets:`);
-    console.log(`   Current: Team A (${teamAQueue.length}), Team B (${teamBQueue.length}) → Clearing`);
-    console.log(`   Next: Team A (${nextTeamAQueue.length}), Team B (${nextTeamBQueue.length}) → Moving ${nextMatchedBetsA.length + nextMatchedBetsB.length} matched`);
+    console.log(`🔥 [HARD-CLEAR] Clearing ALL queues (current + next)`);
     
-    // ✅ Clear all queues completely
+    // ✅ HARD CLEAR #1: Set all queues to empty arrays
     updateGameState({
       teamAQueue: [],
       teamBQueue: [],
@@ -550,8 +547,9 @@ const OnePocketArena = () => {
       nextTotalBookedAmount: 0
     });
     
-    // ✅ Immediately set next matched bets as current game bets
+    // ✅ HARD CLEAR #2: Wait briefly then set only matched next-game bets
     setTimeout(() => {
+      console.log(`🔥 [HARD-CLEAR] Populating new game with ONLY matched bets`);
       updateGameState({
         teamAQueue: nextMatchedBetsA,
         teamBQueue: nextMatchedBetsB,
@@ -559,9 +557,9 @@ const OnePocketArena = () => {
         totalBookedAmount: nextTotal
       });
       
-      console.log(`✅ [NEW-GAME] Started with:`);
-      console.log(`   Team A: ${nextMatchedBetsA.length} bets, Team B: ${nextMatchedBetsB.length} bets`);
-      console.log(`   Total booked: ${nextTotal} coins`);
+      console.log(`✅ [NEW-GAME] Active bets:`);
+      console.log(`   Team A: ${nextMatchedBetsA.length} (booked), Team B: ${nextMatchedBetsB.length} (booked)`);
+      console.log(`   Total: ${nextTotal} coins`);
       
       if (nextMatchedBetsA.length > 0 || nextMatchedBetsB.length > 0) {
         toast.success("Next Game Matched Bets Moved to Current Game", {
@@ -569,7 +567,7 @@ const OnePocketArena = () => {
           className: "custom-toast-success",
         });
       }
-    }, 100);
+    }, 150);
     
     updateGameState({ betCounter: 1 });
     
@@ -579,25 +577,44 @@ const OnePocketArena = () => {
     });
     
     // NOTE: Game history is already emitted from addBetHistoryRecord(), don't duplicate here
-    // Emit the cleared current game queues and matched next-game bets moving forward
-    console.log('📤 [processBetsForGameWin] Emitting cleared current queues and next game matched bets to all clients');
+    // ✅ HARD CLEAR: Emit forced clearing to ALL clients
+    console.log('🔥 [HARD-CLEAR] Emitting HARD CLEAR to all clients');
     try {
       socketIOService.emitBetUpdate({
-        // Clear current game queues
+        // FORCE CLEAR everything
         teamAQueue: [],
         teamBQueue: [],
         bookedBets: [],
         totalBookedAmount: 0,
-        // Setup next-game matched bets (these will move to current after brief delay)
         nextGameBets: [],
-        nextTeamAQueue: nextMatchedBetsA,
-        nextTeamBQueue: nextMatchedBetsB,
-        nextBookedBets: nextMatchedBooked,
-        nextTotalBookedAmount: nextTotal
+        nextTeamAQueue: [],
+        nextTeamBQueue: [],
+        nextBookedBets: [],
+        nextTotalBookedAmount: 0
       });
     } catch (err) {
-      console.error('❌ Error emitting bet update:', err);
+      console.error('❌ Error emitting hard clear:', err);
     }
+    
+    // ✅ Brief pause before emitting matched next-game bets
+    setTimeout(() => {
+      console.log('📤 [processBetsForGameWin] Emitting matched next-game bets to all clients');
+      try {
+        socketIOService.emitBetUpdate({
+          teamAQueue: [],
+          teamBQueue: [],
+          bookedBets: [],
+          totalBookedAmount: 0,
+          nextGameBets: [],
+          nextTeamAQueue: nextMatchedBetsA,
+          nextTeamBQueue: nextMatchedBetsB,
+          nextBookedBets: nextMatchedBooked,
+          nextTotalBookedAmount: nextTotal
+        });
+      } catch (err) {
+        console.error('❌ Error emitting matched bets:', err);
+      }
+    }, 100);
 
     // 📊 END COIN AUDIT - Take post-game snapshot and compare
     const postGameUsers = Object.values(gameState.users || {});
