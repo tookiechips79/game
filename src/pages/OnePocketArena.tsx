@@ -88,8 +88,10 @@ const OnePocketArena = () => {
   const isUnmountingRef = useRef(false);
 
   // Ref to prevent rapid bet placement/deletion (debounce)
-  const lastBetActionTimeRef = useRef<number>(0);
-  const BET_ACTION_COOLDOWN_MS = 3000; // 3-second cooldown between bet actions to prevent data loss
+  const lastBetPlacementTimeRef = useRef<number>(0);
+  const lastBetDeletionTimeRef = useRef<number>(0);
+  const BET_PLACEMENT_COOLDOWN_MS = 3000; // 3-second cooldown for bet placement to prevent data loss
+  const BET_DELETION_COOLDOWN_MS = 1000; // 1-second cooldown for bet deletion
 
   // Extract state from gameState context
   const {
@@ -714,8 +716,8 @@ const OnePocketArena = () => {
     
     // ✅ Prevent rapid bet placement (3 second cooldown to ensure all bets recorded)
     const now = Date.now();
-    if (now - lastBetActionTimeRef.current < BET_ACTION_COOLDOWN_MS) {
-      const remainingMs = BET_ACTION_COOLDOWN_MS - (now - lastBetActionTimeRef.current);
+    if (now - lastBetPlacementTimeRef.current < BET_PLACEMENT_COOLDOWN_MS) {
+      const remainingMs = BET_PLACEMENT_COOLDOWN_MS - (now - lastBetPlacementTimeRef.current);
       const remainingSeconds = (remainingMs / 1000).toFixed(1);
       toast.error("Bet Cooldown Active", {
         description: `Wait ${remainingSeconds}s before placing another bet (3-second buffer prevents data loss)`,
@@ -724,7 +726,7 @@ const OnePocketArena = () => {
       });
       return;
     }
-    lastBetActionTimeRef.current = now;
+    lastBetPlacementTimeRef.current = now;
     
     if (!currentUser) {
       toast.error("No User Selected", {
@@ -803,8 +805,8 @@ const OnePocketArena = () => {
   const showBetConfirmation = async (team: 'A' | 'B', amount: number, isNextGame: boolean = false) => {
     // ✅ Prevent rapid bet placement (3 second cooldown to ensure all bets recorded)
     const now = Date.now();
-    if (now - lastBetActionTimeRef.current < BET_ACTION_COOLDOWN_MS) {
-      const remainingMs = BET_ACTION_COOLDOWN_MS - (now - lastBetActionTimeRef.current);
+    if (now - lastBetPlacementTimeRef.current < BET_PLACEMENT_COOLDOWN_MS) {
+      const remainingMs = BET_PLACEMENT_COOLDOWN_MS - (now - lastBetPlacementTimeRef.current);
       const remainingSeconds = (remainingMs / 1000).toFixed(1);
       toast.error("Bet Cooldown Active", {
         description: `Wait ${remainingSeconds}s before placing another bet (3-second buffer prevents data loss)`,
@@ -813,7 +815,7 @@ const OnePocketArena = () => {
       });
       return;
     }
-    lastBetActionTimeRef.current = now;
+    lastBetPlacementTimeRef.current = now;
 
     if (!currentUser) {
       toast.error("No User Selected", {
@@ -1128,19 +1130,19 @@ const OnePocketArena = () => {
   };
 
   const deleteOpenBet = (betId: number, isNextGame: boolean = false) => {
-    // ✅ Prevent rapid bet deletion (3 second cooldown to ensure all bets recorded)
+    // ✅ Prevent rapid bet deletion (1 second cooldown)
     const now = Date.now();
-    if (now - lastBetActionTimeRef.current < BET_ACTION_COOLDOWN_MS) {
-      const remainingMs = BET_ACTION_COOLDOWN_MS - (now - lastBetActionTimeRef.current);
+    if (now - lastBetDeletionTimeRef.current < BET_DELETION_COOLDOWN_MS) {
+      const remainingMs = BET_DELETION_COOLDOWN_MS - (now - lastBetDeletionTimeRef.current);
       const remainingSeconds = (remainingMs / 1000).toFixed(1);
       toast.error("Bet Cooldown Active", {
-        description: `Wait ${remainingSeconds}s before deleting another bet (3-second buffer prevents data loss)`,
+        description: `Wait ${remainingSeconds}s before deleting another bet`,
         duration: 2000,
         className: "custom-toast-error",
       });
       return;
     }
-    lastBetActionTimeRef.current = now;
+    lastBetDeletionTimeRef.current = now;
     
     if (!currentUser) {
       toast.error("Cannot Delete Bet", {
