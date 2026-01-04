@@ -89,7 +89,7 @@ const OnePocketArena = () => {
 
   // Ref to prevent rapid bet placement/deletion (debounce)
   const lastBetActionTimeRef = useRef<number>(0);
-  const BET_ACTION_COOLDOWN_MS = 500; // 500ms cooldown between bet actions
+  const BET_ACTION_COOLDOWN_MS = 3000; // 3-second cooldown between bet actions to prevent data loss
 
   // Extract state from gameState context
   const {
@@ -712,11 +712,13 @@ const OnePocketArena = () => {
   const handleConfirmBet = async () => {
     if (!confirmation.teamSide || confirmation.amount <= 0) return;
     
-    // ✅ Prevent rapid bet placement (cooldown)
+    // ✅ Prevent rapid bet placement (3 second cooldown to ensure all bets recorded)
     const now = Date.now();
     if (now - lastBetActionTimeRef.current < BET_ACTION_COOLDOWN_MS) {
-      toast.error("Too Fast", {
-        description: `Please wait ${Math.ceil((BET_ACTION_COOLDOWN_MS - (now - lastBetActionTimeRef.current)) / 100) * 100}ms before placing another bet`,
+      const remainingMs = BET_ACTION_COOLDOWN_MS - (now - lastBetActionTimeRef.current);
+      const remainingSeconds = (remainingMs / 1000).toFixed(1);
+      toast.error("Bet Cooldown Active", {
+        description: `Wait ${remainingSeconds}s before placing another bet (3-second buffer prevents data loss)`,
         duration: 2000,
         className: "custom-toast-error",
       });
@@ -1112,11 +1114,13 @@ const OnePocketArena = () => {
   };
 
   const deleteOpenBet = (betId: number, isNextGame: boolean = false) => {
-    // ✅ Prevent rapid bet deletion (cooldown)
+    // ✅ Prevent rapid bet deletion (3 second cooldown to ensure all bets recorded)
     const now = Date.now();
     if (now - lastBetActionTimeRef.current < BET_ACTION_COOLDOWN_MS) {
-      toast.error("Too Fast", {
-        description: `Please wait ${Math.ceil((BET_ACTION_COOLDOWN_MS - (now - lastBetActionTimeRef.current)) / 100) * 100}ms before deleting another bet`,
+      const remainingMs = BET_ACTION_COOLDOWN_MS - (now - lastBetActionTimeRef.current);
+      const remainingSeconds = (remainingMs / 1000).toFixed(1);
+      toast.error("Bet Cooldown Active", {
+        description: `Wait ${remainingSeconds}s before deleting another bet (3-second buffer prevents data loss)`,
         duration: 2000,
         className: "custom-toast-error",
       });
