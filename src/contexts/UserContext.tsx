@@ -958,27 +958,26 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // ✅ NOW: Call backend API to persist wins to database
       console.log(`🎮 [GAME-WIN] Sending ${payouts.length} payouts to backend...`);
+      // ✅ Fire backend calls without awaiting to avoid UI lag
       for (const payout of payouts) {
-        try {
-          const response = await fetch(`/api/credits/${payout.userId}/win`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              amount: payout.amount,
-              gameNumber: gameNumber,
-              winningTeam: winningTeam
-            })
-          });
-          
+        fetch(`/api/credits/${payout.userId}/win`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: payout.amount,
+            gameNumber: gameNumber,
+            winningTeam: winningTeam
+          })
+        }).then(response => {
           if (!response.ok) {
             console.warn(`⚠️ [GAME-WIN] Backend win endpoint returned ${response.status} for user ${payout.userId}`);
           } else {
             console.log(`✅ [GAME-WIN] Backend updated win for user ${payout.userId}: +${payout.amount}`);
           }
-        } catch (error) {
+        }).catch(error => {
           console.warn(`⚠️ [GAME-WIN] Could not reach backend for user ${payout.userId}:`, error);
           // Continue anyway - localStorage has the data
-        }
+        });
       }
       
       console.log(`🎮 [GAME-WIN] Processed ${payouts.length} bet payouts`);
@@ -1180,27 +1179,26 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return updatedUsers;
       });
       
-      // ✅ Call backend API to persist addition to database
-      try {
-        const response = await fetch(`/api/credits/${userId}/add`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            amount,
-            reason: isAdmin ? reason : 'system_operation',
-            adminNotes: isAdmin ? `Admin action: ${reason}` : ''
-          })
-        });
-        
+      // ✅ Call backend API to persist addition to database (NON-BLOCKING)
+      // Don't await - fire and forget to avoid UI lag
+      fetch(`/api/credits/${userId}/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount,
+          reason: isAdmin ? reason : 'system_operation',
+          adminNotes: isAdmin ? `Admin action: ${reason}` : ''
+        })
+      }).then(response => {
         if (response.ok) {
           console.log(`✅ [CREDITS-ADD] Backend added ${amount} for user ${userId}`);
         } else {
           console.warn(`⚠️ [CREDITS-ADD] Backend returned ${response.status}, but local addition succeeded`);
         }
-      } catch (error) {
+      }).catch(error => {
         console.warn(`⚠️ [CREDITS-ADD] Could not reach backend, but local addition succeeded:`, error);
         // Continue anyway - localStorage has the data
-      }
+      });
       
       const userName = users.find(u => u.id === userId)?.name || userId;
       
@@ -1290,26 +1288,25 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return updatedUsers;
       });
       
-      // ✅ Call backend API to persist deduction to database
-      try {
-        const response = await fetch(`/api/credits/${userId}/bet`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            amount,
-            betDetails: isAdminAction ? 'Admin deducted' : 'Bet placed'
-          })
-        });
-        
+      // ✅ Call backend API to persist deduction to database (NON-BLOCKING)
+      // Don't await - fire and forget to avoid UI lag
+      fetch(`/api/credits/${userId}/bet`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount,
+          betDetails: isAdminAction ? 'Admin deducted' : 'Bet placed'
+        })
+      }).then(response => {
         if (response.ok) {
           console.log(`✅ [CREDITS-BET] Backend deducted ${amount} for user ${userId}`);
         } else {
           console.warn(`⚠️ [CREDITS-BET] Backend returned ${response.status}, but local deduction succeeded`);
         }
-      } catch (error) {
+      }).catch(error => {
         console.warn(`⚠️ [CREDITS-BET] Could not reach backend, but local deduction succeeded:`, error);
         // Continue anyway - localStorage has the data
-      }
+      });
       
       return true;
     } catch (error) {
