@@ -550,7 +550,11 @@ const OnePocketArena = () => {
     }
     
     const totalUnmatched = totalCurrentUnmatched + totalNextUnmatched;
-    console.log(`✅ [UNMATCHED-TOTAL] Total unmatched bets REFUNDED: ${totalUnmatched} COINS`);
+    console.log(`✅ [UNMATCHED-TOTAL] Total unmatched bets CLEARED from queues: ${totalUnmatched} COINS`);
+    
+    // ✅ Get only MATCHED bets for current game (remove unmatched)
+    const matchedCurrentBetsA = teamAQueue.filter(bet => bet.booked);
+    const matchedCurrentBetsB = teamBQueue.filter(bet => bet.booked);
     
     // ✅ Only carry forward MATCHED next-game bets
     const nextMatchedBetsA = nextTeamAQueue.filter(bet => bet.booked);
@@ -562,12 +566,12 @@ const OnePocketArena = () => {
     
     // ✅ Log clearing of unmatched bets
     console.log(`🧹 [QUEUE-CLEANUP] Clearing current game queues:`);
-    console.log(`   Current Team A: ${teamAQueue.length} bets (${teamAQueue.filter(b => b.booked).length} matched, ${teamAQueue.filter(b => !b.booked).length} unmatched)`);
-    console.log(`   Current Team B: ${teamBQueue.length} bets (${teamBQueue.filter(b => b.booked).length} matched, ${teamBQueue.filter(b => !b.booked).length} unmatched)`);
-    console.log(`   Total booked amount: ${totalBookedAmount} coins`);
+    console.log(`   Current Team A: ${teamAQueue.length} bets (${matchedCurrentBetsA.length} matched, ${unmatchedCurrentBetsA.length} unmatched) → CLEARING ALL`);
+    console.log(`   Current Team B: ${teamBQueue.length} bets (${matchedCurrentBetsB.length} matched, ${unmatchedCurrentBetsB.length} unmatched) → CLEARING ALL`);
+    console.log(`   Total booked amount: ${totalBookedAmount} coins → 0 coins`);
     console.log(`🧹 [QUEUE-CLEANUP] Moving next game matched bets to current:`);
-    console.log(`   Next Team A: ${nextTeamAQueue.length} bets → ${nextMatchedBetsA.length} matched moving (${nextUnmatchedBetsA.length} unmatched cleared)`);
-    console.log(`   Next Team B: ${nextTeamBQueue.length} bets → ${nextMatchedBetsB.length} matched moving (${nextUnmatchedBetsB.length} unmatched cleared)`);
+    console.log(`   Next Team A: ${nextTeamAQueue.length} bets → ${nextMatchedBetsA.length} matched moving (${nextUnmatchedBetsA.length} unmatched CLEARED)`);
+    console.log(`   Next Team B: ${nextTeamBQueue.length} bets → ${nextMatchedBetsB.length} matched moving (${nextUnmatchedBetsB.length} unmatched CLEARED)`);
     console.log(`   Next booked amount: ${nextTotalBookedAmount} coins → ${nextTotal} coins for new game`);
     
     updateGameState({
@@ -610,18 +614,21 @@ const OnePocketArena = () => {
     });
     
     // NOTE: Game history is already emitted from addBetHistoryRecord(), don't duplicate here
-    // Only emit the bet state clearing so other clients clear their queues
-    console.log('📤 [processBetsForGameWin] Emitting cleared bet queues to all clients');
+    // Emit the cleared current game queues and matched next-game bets moving forward
+    console.log('📤 [processBetsForGameWin] Emitting cleared current queues and next game matched bets to all clients');
     try {
       socketIOService.emitBetUpdate({
+        // Clear current game queues
         teamAQueue: [],
         teamBQueue: [],
         bookedBets: [],
         totalBookedAmount: 0,
+        // Setup next-game matched bets (these will move to current after brief delay)
         nextGameBets: [],
-        nextTeamAQueue: [],
-        nextTeamBQueue: [],
-        nextTotalBookedAmount: 0
+        nextTeamAQueue: nextMatchedBetsA,
+        nextTeamBQueue: nextMatchedBetsB,
+        nextBookedBets: nextMatchedBooked,
+        nextTotalBookedAmount: nextTotal
       });
     } catch (err) {
       console.error('❌ Error emitting bet update:', err);
