@@ -1153,17 +1153,19 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // ✅ Handle locally for ALL environments (dev, production, Render)
       // This ensures consistent behavior everywhere
-      const user = users.find(u => u.id === userId);
-      if (!user) {
-        console.warn('⚠️ [CREDITS-ADD] User not found:', userId);
-        return false;
-      }
+      // NOTE: Use setUsers callback to read the CURRENT state, not the closure value
+      let newBalance = 0;
       
-      const newBalance = user.credits + amount;
-      console.log(`✅ [CREDITS-ADD] Adding credits locally, newBalance=${newBalance}`);
-      
-      // Update local state immediately
       setUsers(prev => {
+        const user = prev.find(u => u.id === userId);
+        if (!user) {
+          console.warn('⚠️ [CREDITS-ADD] User not found:', userId);
+          return prev;
+        }
+        
+        newBalance = user.credits + amount;
+        console.log(`✅ [CREDITS-ADD] Adding credits locally, newBalance=${newBalance}`);
+        
         const updatedUsers = prev.map(u => {
           if (u.id === userId) {
             const updatedUser = { ...u, credits: newBalance };
