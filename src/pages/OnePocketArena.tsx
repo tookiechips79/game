@@ -534,6 +534,10 @@ const OnePocketArena = () => {
     const nextMatchedBooked = [...nextBookedBets];
     const nextTotal = nextTotalBookedAmount;
     
+    console.log(`🔥 [HARD-CLEAR] Matched NEXT-game bets to carry forward:`);
+    console.log(`   Team A matched: ${nextMatchedBetsA.length} bets`, nextMatchedBetsA);
+    console.log(`   Team B matched: ${nextMatchedBetsB.length} bets`, nextMatchedBetsB);
+    console.log(`   nextMatchedBooked: ${nextMatchedBooked.length}`, nextMatchedBooked);
     console.log(`🔥 [HARD-CLEAR] Clearing ALL queues (current + next)`);
     
     // ✅ HARD CLEAR #1: Set all queues to empty arrays
