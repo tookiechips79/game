@@ -929,33 +929,47 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
       
-      // Apply payouts to users - sum all payouts for each user (they might have multiple winning bets)
-      setUsers(prev => {
-        const updated = prev.map(user => {
-          // Sum all payouts for this user (in case they have multiple winning bets)
-          const totalPayout = payouts
-            .filter(p => p.userId === user.id)
-            .reduce((sum, p) => sum + p.amount, 0);
-          
-          if (totalPayout > 0) {
-            const newBalance = user.credits + totalPayout;
-            console.log(`💰 ${user.name}: +${totalPayout} coins (${user.credits} → ${newBalance})`);
-            
-            if (currentUser?.id === user.id) {
-              setCurrentUser({ ...user, credits: newBalance });
+      // ✅ SEQUENTIAL PAYOUT PROCESSING: Process each payout one at a time
+      // This prevents state batching issues and ensures every payout is accounted for
+      console.log(`\n🔄 [SEQUENTIAL-PAYOUTS] Processing ${payouts.length} payouts sequentially...`);
+      
+      let payoutIndex = 0;
+      const processNextPayout = () => {
+        if (payoutIndex >= payouts.length) {
+          console.log(`✅ [SEQUENTIAL-PAYOUTS] All ${payouts.length} payouts processed!`);
+          return;
+        }
+        
+        const payout = payouts[payoutIndex];
+        payoutIndex++;
+        
+        setUsers(prev => {
+          const updated = prev.map(user => {
+            if (user.id === payout.userId) {
+              const newBalance = user.credits + payout.amount;
+              console.log(`   [${payoutIndex}/${payouts.length}] 💰 ${user.name}: +${payout.amount} coins (${user.credits} → ${newBalance})`);
+              
+              if (currentUser?.id === user.id) {
+                setCurrentUser({ ...user, credits: newBalance });
+              }
+              
+              return { ...user, credits: newBalance };
             }
-            
-            return { ...user, credits: newBalance };
-          }
-          return user;
+            return user;
+          });
+          
+          // ✅ Save to localStorage after EACH payout
+          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
+          
+          // ✅ Process next payout immediately
+          setTimeout(() => processNextPayout(), 0);
+          
+          return updated;
         });
-        
-        // ✅ Save to localStorage as backup
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
-        console.log(`💾 [GAME-WIN] Saved updated balances to localStorage`);
-        
-        return updated;
-      });
+      };
+      
+      // Start sequential processing
+      processNextPayout();
       
       // ✅ NOW: Call backend API to persist wins to database
       console.log(`🎮 [GAME-WIN] Sending ${payouts.length} payouts to backend...`);
