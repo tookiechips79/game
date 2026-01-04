@@ -506,11 +506,10 @@ const OnePocketArena = () => {
     // The old logic below has been removed to prevent coin duplication
     console.log(`✅ [BET-PROCESSING] Booked bets (${bookedBets.length}) already processed via processPendingBets()`);
     
-    // ✅ HARD CLEAR: Remove unmatched NEXT-game bets and refund them
-    // NOTE: Current game unmatched bets are already refunded in processPendingBets() in UserContext
-    console.log(`🔥 [HARD-CLEAR] Removing unmatched NEXT-game bets from queue`);
+    // ✅ NEXT-GAME UNMATCHED BETS: Just remove from pending (coins already in total, just locked)
+    // Current game refunds already handled by processPendingBets() in UserContext
+    console.log(`🔥 [HARD-CLEAR] Unlocking unmatched NEXT-game bets from pending`);
     
-    // Only refund NEXT-game unmatched bets (current game already handled in UserContext)
     const unmatchedNextBetsA = nextTeamAQueue.filter(bet => !bet.booked);
     const unmatchedNextBetsB = nextTeamBQueue.filter(bet => !bet.booked);
     
@@ -521,32 +520,17 @@ const OnePocketArena = () => {
     const allUnmatchedNextBets = [...unmatchedNextBetsA, ...unmatchedNextBetsB];
     console.log(`🔥 [HARD-CLEAR] Total unmatched NEXT-game bets collected: ${allUnmatchedNextBets.length}`, allUnmatchedNextBets);
     
-    // ✅ Group refunds by user to avoid state batching issues
-    const refundsByUser: Map<string, { amount: number; betIds: string[] }> = new Map();
-    
+    // ✅ CRITICAL: Just remove from pending - coins stay in balance, just unlocked
+    // DO NOT call addCredits - that would create coins!
     for (const bet of allUnmatchedNextBets) {
       const user = getUserById(bet.userId);
       if (user) {
-        console.log(`   ❌ Refunding NEXT-game #${bet.id}: ${user.name} (${bet.amount} coins)`);
+        console.log(`   ✅ Unlocking NEXT-game #${bet.id}: ${user.name} (${bet.amount} coins unlocked from pending)`);
         refundPendingBet(user.id, bet.id.toString());
-        
-        if (!refundsByUser.has(user.id)) {
-          refundsByUser.set(user.id, { amount: 0, betIds: [] });
-        }
-        const entry = refundsByUser.get(user.id)!;
-        entry.amount += bet.amount;
-        entry.betIds.push(bet.id.toString());
       }
     }
     
-    // ✅ Apply refunds one per user (not per bet) to avoid state batching issues
-    for (const [userId, { amount, betIds }] of refundsByUser.entries()) {
-      console.log(`   💰 Refunding ${betIds.length} bets for user ${userId}: ${amount} coins total`);
-      addCredits(userId, amount, false, `refund_unmatched_next_bets_${betIds.join('_')}`);
-    }
-    
-    const totalUnmatchedNext = Array.from(refundsByUser.values()).reduce((sum, r) => sum + r.amount, 0);
-    console.log(`🔥 [HARD-CLEAR] Total NEXT-game refunded: ${allUnmatchedNextBets.length} bets, ${totalUnmatchedNext} coins returned to accounts`);
+    console.log(`🔥 [HARD-CLEAR] Total NEXT-game unlocked: ${allUnmatchedNextBets.length} bets`);
     
     // ✅ Get MATCHED next-game bets
     const nextMatchedBetsA = nextTeamAQueue.filter(bet => bet.booked);
