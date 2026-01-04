@@ -801,6 +801,20 @@ const OnePocketArena = () => {
   };
 
   const showBetConfirmation = async (team: 'A' | 'B', amount: number, isNextGame: boolean = false) => {
+    // ✅ Prevent rapid bet placement (3 second cooldown to ensure all bets recorded)
+    const now = Date.now();
+    if (now - lastBetActionTimeRef.current < BET_ACTION_COOLDOWN_MS) {
+      const remainingMs = BET_ACTION_COOLDOWN_MS - (now - lastBetActionTimeRef.current);
+      const remainingSeconds = (remainingMs / 1000).toFixed(1);
+      toast.error("Bet Cooldown Active", {
+        description: `Wait ${remainingSeconds}s before placing another bet (3-second buffer prevents data loss)`,
+        duration: 2000,
+        className: "custom-toast-error",
+      });
+      return;
+    }
+    lastBetActionTimeRef.current = now;
+
     if (!currentUser) {
       toast.error("No User Selected", {
         description: "Please select or create a user first",
