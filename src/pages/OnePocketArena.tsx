@@ -521,12 +521,14 @@ const OnePocketArena = () => {
       const user = getUserById(bet.userId);
       if (user) {
         console.log(`   ❌ Removing #${bet.id}: ${user.name} (${bet.amount} coins)`);
+        // ✅ CRITICAL: Refund the coins back to user's balance
         refundPendingBet(user.id, bet.id.toString());
+        addCredits(user.id, bet.amount, false, `refund_unmatched_bet_${bet.id}`);
         totalUnmatched += bet.amount;
       }
     }
     
-    console.log(`🔥 [HARD-CLEAR] Total removed: ${allUnmatchedBets.length} bets, ${totalUnmatched} coins freed`);
+    console.log(`🔥 [HARD-CLEAR] Total refunded: ${allUnmatchedBets.length} bets, ${totalUnmatched} coins returned to accounts`);
     
     // ✅ Get MATCHED next-game bets
     const nextMatchedBetsA = nextTeamAQueue.filter(bet => bet.booked);
