@@ -559,16 +559,22 @@ const OnePocketArena = () => {
       console.log(`🔥 [HARD-CLEAR] Populating new game with ONLY matched bets`);
       console.log(`   nextMatchedBetsA: ${nextMatchedBetsA.length}, nextMatchedBetsB: ${nextMatchedBetsB.length}`);
       updateGameState({
+        // Move matched next-game bets to current game
         teamAQueue: nextMatchedBetsA,
         teamBQueue: nextMatchedBetsB,
         bookedBets: nextMatchedBooked,
-        totalBookedAmount: nextTotal
+        totalBookedAmount: nextTotal,
+        // ✅ CRITICAL: Clear next-game queues completely
+        nextTeamAQueue: [],
+        nextTeamBQueue: [],
+        nextBookedBets: [],
+        nextTotalBookedAmount: 0
       });
       
       console.log(`✅ [NEW-GAME] Active bets:`);
       console.log(`   Team A: ${nextMatchedBetsA.length} (booked), Team B: ${nextMatchedBetsB.length} (booked)`);
       console.log(`   Total: ${nextTotal} coins`);
-      console.log(`📍 State update complete - check gameState.teamAQueue`);
+      console.log(`📍 State update complete - next game queues cleared`);
       
       if (nextMatchedBetsA.length > 0 || nextMatchedBetsB.length > 0) {
         toast.success("Next Game Matched Bets Moved to Current Game", {
