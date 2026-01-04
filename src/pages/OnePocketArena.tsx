@@ -47,7 +47,8 @@ const OnePocketArena = () => {
     processPendingBets,
     getAvailableCredits,
     getPendingBetAmount,
-    refundPendingBet
+    refundPendingBet,
+    addPendingBet
   } = useUser();
 
   // ⚠️ CRITICAL: DO NOT call addCredits() for unmatched bets
