@@ -514,13 +514,20 @@ const OnePocketArena = () => {
     const unmatchedNextBetsA = nextTeamAQueue.filter(bet => !bet.booked);
     const unmatchedNextBetsB = nextTeamBQueue.filter(bet => !bet.booked);
     
+    console.log(`🔥 [HARD-CLEAR] Unmatched bets breakdown:`);
+    console.log(`   Current Team A unmatched: ${unmatchedCurrentBetsA.length}`, unmatchedCurrentBetsA);
+    console.log(`   Current Team B unmatched: ${unmatchedCurrentBetsB.length}`, unmatchedCurrentBetsB);
+    console.log(`   Next Team A unmatched: ${unmatchedNextBetsA.length}`, unmatchedNextBetsA);
+    console.log(`   Next Team B unmatched: ${unmatchedNextBetsB.length}`, unmatchedNextBetsB);
+    
     const allUnmatchedBets = [...unmatchedCurrentBetsA, ...unmatchedCurrentBetsB, ...unmatchedNextBetsA, ...unmatchedNextBetsB];
+    console.log(`🔥 [HARD-CLEAR] Total unmatched bets collected: ${allUnmatchedBets.length}`, allUnmatchedBets);
     
     let totalUnmatched = 0;
     for (const bet of allUnmatchedBets) {
       const user = getUserById(bet.userId);
       if (user) {
-        console.log(`   ❌ Removing #${bet.id}: ${user.name} (${bet.amount} coins)`);
+        console.log(`   ❌ Refunding #${bet.id}: ${user.name} (${bet.amount} coins)`);
         // ✅ CRITICAL: Refund the coins back to user's balance
         refundPendingBet(user.id, bet.id.toString());
         addCredits(user.id, bet.amount, false, `refund_unmatched_bet_${bet.id}`);
