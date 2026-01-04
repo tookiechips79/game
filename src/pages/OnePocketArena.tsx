@@ -504,76 +504,41 @@ const OnePocketArena = () => {
     // The old logic below has been removed to prevent coin duplication
     console.log(`✅ [BET-PROCESSING] Booked bets (${bookedBets.length}) already processed via processPendingBets()`);
     
-    // ✅ NEW: Refund unmatched bets when game is processed
-    // CRITICAL: Bets that were deducted must be refunded if not matched before game starts
-    
-    // 1. Remove unmatched CURRENT game bets from pending (unlock without crediting)
+    // ✅ Unmatched bets cleanup:
+    // Get unmatched bets from both current and next game queues and refund them
     const unmatchedCurrentBetsA = teamAQueue.filter(bet => !bet.booked);
     const unmatchedCurrentBetsB = teamBQueue.filter(bet => !bet.booked);
-    const allUnmatchedCurrentBets = [...unmatchedCurrentBetsA, ...unmatchedCurrentBetsB];
-    
-    let totalCurrentUnmatched = 0;
-    for (const bet of allUnmatchedCurrentBets) {
-      const user = getUserById(bet.userId);
-      if (user) {
-        console.log(`🔄 [UNMATCHED-CURRENT] Removing unmatched current game bet #${bet.id}: ${user.name} - ${bet.amount} coins freed (no credit)`);
-        // ✅ CRITICAL: Use refundPendingBet to UNLOCK coins without CREDITING them
-        // The coins were deducted when bet was placed, just freed up now - no balance change
-        refundPendingBet(user.id, bet.id.toString());
-        totalCurrentUnmatched += bet.amount;
-      }
-    }
-    
-    if (totalCurrentUnmatched > 0) {
-      console.log(`✅ [UNMATCHED-CURRENT] Total freed from current game: ${totalCurrentUnmatched} COINS (no balance increase)`);
-    }
-    
-    // 2. Remove unmatched NEXT game bets from pending (unlock without crediting)
     const unmatchedNextBetsA = nextTeamAQueue.filter(bet => !bet.booked);
     const unmatchedNextBetsB = nextTeamBQueue.filter(bet => !bet.booked);
-    const allUnmatchedNextBets = [...unmatchedNextBetsA, ...unmatchedNextBetsB];
     
-    let totalNextUnmatched = 0;
-    for (const bet of allUnmatchedNextBets) {
+    const allUnmatchedBets = [...unmatchedCurrentBetsA, ...unmatchedCurrentBetsB, ...unmatchedNextBetsA, ...unmatchedNextBetsB];
+    
+    let totalUnmatched = 0;
+    for (const bet of allUnmatchedBets) {
       const user = getUserById(bet.userId);
       if (user) {
-        console.log(`🔄 [UNMATCHED-NEXT] Removing unmatched next game bet #${bet.id}: ${user.name} - ${bet.amount} coins freed (no credit)`);
-        // ✅ CRITICAL: Use refundPendingBet to UNLOCK coins without CREDITING them
-        // The coins were deducted when bet was placed, just freed up now - no balance change
+        console.log(`🔄 [UNMATCHED] Clearing bet #${bet.id}: ${user.name} - ${bet.amount} coins freed`);
+        // Refund the pending bet (unlocks coins without crediting)
         refundPendingBet(user.id, bet.id.toString());
-        totalNextUnmatched += bet.amount;
+        totalUnmatched += bet.amount;
       }
     }
     
-    if (totalNextUnmatched > 0) {
-      console.log(`✅ [UNMATCHED-NEXT] Total freed from next game: ${totalNextUnmatched} COINS (no balance increase)`);
+    if (totalUnmatched > 0) {
+      console.log(`✅ [UNMATCHED-TOTAL] Cleared ${allUnmatchedBets.length} unmatched bets: ${totalUnmatched} coins freed`);
     }
     
-    const totalUnmatched = totalCurrentUnmatched + totalNextUnmatched;
-    console.log(`✅ [UNMATCHED-TOTAL] Total unmatched bets CLEARED from queues: ${totalUnmatched} COINS`);
-    
-    // ✅ Get only MATCHED bets for current game (remove unmatched)
-    const matchedCurrentBetsA = teamAQueue.filter(bet => bet.booked);
-    const matchedCurrentBetsB = teamBQueue.filter(bet => bet.booked);
-    
-    // ✅ Only carry forward MATCHED next-game bets
+    // ✅ Get only MATCHED next-game bets to move to current game
     const nextMatchedBetsA = nextTeamAQueue.filter(bet => bet.booked);
     const nextMatchedBetsB = nextTeamBQueue.filter(bet => bet.booked);
-    const nextUnmatchedBetsA = nextTeamAQueue.filter(bet => !bet.booked);
-    const nextUnmatchedBetsB = nextTeamBQueue.filter(bet => !bet.booked);
     const nextMatchedBooked = [...nextBookedBets];
     const nextTotal = nextTotalBookedAmount;
     
-    // ✅ Log clearing of unmatched bets
-    console.log(`🧹 [QUEUE-CLEANUP] Clearing current game queues:`);
-    console.log(`   Current Team A: ${teamAQueue.length} bets (${matchedCurrentBetsA.length} matched, ${unmatchedCurrentBetsA.length} unmatched) → CLEARING ALL`);
-    console.log(`   Current Team B: ${teamBQueue.length} bets (${matchedCurrentBetsB.length} matched, ${unmatchedCurrentBetsB.length} unmatched) → CLEARING ALL`);
-    console.log(`   Total booked amount: ${totalBookedAmount} coins → 0 coins`);
-    console.log(`🧹 [QUEUE-CLEANUP] Moving next game matched bets to current:`);
-    console.log(`   Next Team A: ${nextTeamAQueue.length} bets → ${nextMatchedBetsA.length} matched moving (${nextUnmatchedBetsA.length} unmatched CLEARED)`);
-    console.log(`   Next Team B: ${nextTeamBQueue.length} bets → ${nextMatchedBetsB.length} matched moving (${nextUnmatchedBetsB.length} unmatched CLEARED)`);
-    console.log(`   Next booked amount: ${nextTotalBookedAmount} coins → ${nextTotal} coins for new game`);
+    console.log(`🧹 [GAME-END] Clearing all queues and moving matched next-game bets:`);
+    console.log(`   Current: Team A (${teamAQueue.length}), Team B (${teamBQueue.length}) → Clearing`);
+    console.log(`   Next: Team A (${nextTeamAQueue.length}), Team B (${nextTeamBQueue.length}) → Moving ${nextMatchedBetsA.length + nextMatchedBetsB.length} matched`);
     
+    // ✅ Clear all queues completely
     updateGameState({
       teamAQueue: [],
       teamBQueue: [],
@@ -585,6 +550,7 @@ const OnePocketArena = () => {
       nextTotalBookedAmount: 0
     });
     
+    // ✅ Immediately set next matched bets as current game bets
     setTimeout(() => {
       updateGameState({
         teamAQueue: nextMatchedBetsA,
@@ -593,10 +559,9 @@ const OnePocketArena = () => {
         totalBookedAmount: nextTotal
       });
       
-      console.log(`✅ [QUEUE-UPDATED] New game started:`);
-      console.log(`   Current Team A queue: ${nextMatchedBetsA.length} matched bets`);
-      console.log(`   Current Team B queue: ${nextMatchedBetsB.length} matched bets`);
-      console.log(`   Total booked amount: ${nextTotal} coins`);
+      console.log(`✅ [NEW-GAME] Started with:`);
+      console.log(`   Team A: ${nextMatchedBetsA.length} bets, Team B: ${nextMatchedBetsB.length} bets`);
+      console.log(`   Total booked: ${nextTotal} coins`);
       
       if (nextMatchedBetsA.length > 0 || nextMatchedBetsB.length > 0) {
         toast.success("Next Game Matched Bets Moved to Current Game", {
