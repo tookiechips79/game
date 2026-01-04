@@ -644,12 +644,34 @@ const OnePocketArena = () => {
       totalLoserLoss
     );
 
+    // ✅ FAILSAFE: Verify coin balance before continuing
+    try {
+      coinAuditService.verifyGameAudit(gameId);
+    } catch (error) {
+      console.error('🚨 [FAILSAFE] Game audit failed:', error);
+      toast.error("🚨 Critical Coin Mismatch Detected", {
+        description: "Coin conservation violated! Please contact admin. Game may need rollback.",
+        duration: 5000,
+        className: "custom-toast-error",
+      });
+      // Optionally prevent game continuation or trigger admin alert
+      return;
+    }
+
     // Log audit summary
     const summary = coinAuditService.getAuditSummary(gameState.arenaId || 'unknown');
     console.log(`\n📊 [AUDIT-SUMMARY] ${summary.totalGames} games processed`);
     console.log(`   ✅ Balanced: ${summary.balancedGames}`);
     console.log(`   ❌ Unbalanced: ${summary.unbalancedGames}`);
     console.log(`   ⚠️  Coins created: ${summary.totalCoinsCreated}`);
+    
+    // Show success toast if all audits are balanced
+    if (summary.unbalancedGames === 0 && summary.totalGames > 0) {
+      toast.success("✅ All Coin Audits Passed", {
+        description: `${summary.totalGames} games processed with perfect coin conservation`,
+        className: "custom-toast-success",
+      });
+    }
   };
 
   const deleteUnmatchedBets = async () => {

@@ -160,17 +160,43 @@ class CoinAuditService {
 
     if (!audit.isBalanced) {
       console.error(
-        `   ❌ ERROR: System created ${audit.createdCoins} coins!`
+        `   ❌ CRITICAL ERROR: System created ${audit.createdCoins} coins!`
       );
+      console.error(`   ❌ FAILSAFE TRIGGERED: Coin conservation violated!`);
     }
 
     if (audit.winnerGain !== audit.loserLoss) {
       console.error(
-        `   ❌ ERROR: Winner gain (${audit.winnerGain}) ≠ Loser loss (${audit.loserLoss})`
+        `   ❌ CRITICAL ERROR: Winner gain (${audit.winnerGain}) ≠ Loser loss (${audit.loserLoss})`
       );
     }
 
     console.log('');
+  }
+
+  /**
+   * Verify game audit and raise error if not balanced (failsafe)
+   */
+  verifyGameAudit(gameId: string): boolean {
+    const audit = this.gameAudits.get(gameId);
+    if (!audit) {
+      console.warn(`⚠️ [COIN-AUDIT] No audit found for game ${gameId}`);
+      return false;
+    }
+
+    const isValid = audit.isBalanced && audit.winnerGain === audit.loserLoss;
+
+    if (!isValid) {
+      const errorMsg = `🚨 [FAILSAFE] Coin mismatch detected in game ${gameId}:
+        - Balanced: ${audit.isBalanced} (difference: ${audit.coinDifference})
+        - Winner gain: ${audit.winnerGain}, Loser loss: ${audit.loserLoss}
+        - Coins created: ${audit.createdCoins}`;
+      console.error(errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    console.log(`✅ [FAILSAFE] Game ${gameId} audit verified - coins are balanced`);
+    return true;
   }
 
   /**
@@ -265,6 +291,23 @@ class CoinAuditService {
    */
   getSnapshots(arenaId: string): CoinSnapshot[] {
     return this.snapshots.get(arenaId) || [];
+  }
+
+  /**
+   * Get last game audit for an arena
+   */
+  getLastGameAudit(arenaId: string): GameAudit | null {
+    const audits = this.getArenaAudits(arenaId);
+    return audits.length > 0 ? audits[audits.length - 1] : null;
+  }
+
+  /**
+   * Get current total coins for an arena (from last snapshot)
+   */
+  getCurrentTotalCoins(arenaId: string): number {
+    const snapshots = this.snapshots.get(arenaId) || [];
+    if (snapshots.length === 0) return 0;
+    return snapshots[snapshots.length - 1].totalCoins;
   }
 
   /**
