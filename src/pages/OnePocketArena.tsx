@@ -626,10 +626,31 @@ const OnePocketArena = () => {
           nextBookedBets: nextMatchedBooked,
           nextTotalBookedAmount: nextTotal
         });
+        console.log('✅ Socket emit complete - matched bets sent to all clients');
       } catch (err) {
         console.error('❌ Error emitting matched bets:', err);
       }
     }, 100);
+    
+    // ✅ PRODUCTION FIX: Emit full game state update to ensure all clients sync
+    setTimeout(() => {
+      console.log('📤 [PRODUCTION-SYNC] Emitting full bet state to all clients');
+      try {
+        socketIOService.emitBetUpdate({
+          teamAQueue: nextMatchedBetsA,
+          teamBQueue: nextMatchedBetsB,
+          bookedBets: nextMatchedBooked,
+          totalBookedAmount: nextTotal,
+          nextTeamAQueue: [],
+          nextTeamBQueue: [],
+          nextBookedBets: [],
+          nextTotalBookedAmount: 0
+        });
+        console.log('✅ Production sync complete');
+      } catch (err) {
+        console.error('❌ Error in production sync:', err);
+      }
+    }, 200);
 
     // 📊 END COIN AUDIT - Take post-game snapshot and compare
     const postGameUsers = Object.values(gameState.users || {});
