@@ -536,6 +536,7 @@ const OnePocketArena = () => {
     console.log(`🔥 [HARD-CLEAR] Clearing ALL queues (current + next)`);
     
     // ✅ HARD CLEAR #1: Set all queues to empty arrays
+    console.log('📍 Before state update - teamAQueue:', teamAQueue.length, 'teamBQueue:', teamBQueue.length);
     updateGameState({
       teamAQueue: [],
       teamBQueue: [],
@@ -546,10 +547,12 @@ const OnePocketArena = () => {
       nextBookedBets: [],
       nextTotalBookedAmount: 0
     });
+    console.log('📍 After state update - queues should be empty');
     
     // ✅ HARD CLEAR #2: Wait briefly then set only matched next-game bets
     setTimeout(() => {
       console.log(`🔥 [HARD-CLEAR] Populating new game with ONLY matched bets`);
+      console.log(`   nextMatchedBetsA: ${nextMatchedBetsA.length}, nextMatchedBetsB: ${nextMatchedBetsB.length}`);
       updateGameState({
         teamAQueue: nextMatchedBetsA,
         teamBQueue: nextMatchedBetsB,
@@ -560,6 +563,7 @@ const OnePocketArena = () => {
       console.log(`✅ [NEW-GAME] Active bets:`);
       console.log(`   Team A: ${nextMatchedBetsA.length} (booked), Team B: ${nextMatchedBetsB.length} (booked)`);
       console.log(`   Total: ${nextTotal} coins`);
+      console.log(`📍 State update complete - check gameState.teamAQueue`);
       
       if (nextMatchedBetsA.length > 0 || nextMatchedBetsB.length > 0) {
         toast.success("Next Game Matched Bets Moved to Current Game", {
