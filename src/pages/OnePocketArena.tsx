@@ -520,18 +520,31 @@ const OnePocketArena = () => {
     const allUnmatchedNextBets = [...unmatchedNextBetsA, ...unmatchedNextBetsB];
     console.log(`🔥 [HARD-CLEAR] Total unmatched NEXT-game bets collected: ${allUnmatchedNextBets.length}`, allUnmatchedNextBets);
     
-    let totalUnmatchedNext = 0;
+    // ✅ Group refunds by user to avoid state batching issues
+    const refundsByUser: Map<string, { amount: number; betIds: string[] }> = new Map();
+    
     for (const bet of allUnmatchedNextBets) {
       const user = getUserById(bet.userId);
       if (user) {
         console.log(`   ❌ Refunding NEXT-game #${bet.id}: ${user.name} (${bet.amount} coins)`);
-        // ✅ CRITICAL: Refund the coins back to user's balance
         refundPendingBet(user.id, bet.id.toString());
-        addCredits(user.id, bet.amount, false, `refund_unmatched_next_bet_${bet.id}`);
-        totalUnmatchedNext += bet.amount;
+        
+        if (!refundsByUser.has(user.id)) {
+          refundsByUser.set(user.id, { amount: 0, betIds: [] });
+        }
+        const entry = refundsByUser.get(user.id)!;
+        entry.amount += bet.amount;
+        entry.betIds.push(bet.id.toString());
       }
     }
     
+    // ✅ Apply refunds one per user (not per bet) to avoid state batching issues
+    for (const [userId, { amount, betIds }] of refundsByUser.entries()) {
+      console.log(`   💰 Refunding ${betIds.length} bets for user ${userId}: ${amount} coins total`);
+      addCredits(userId, amount, false, `refund_unmatched_next_bets_${betIds.join('_')}`);
+    }
+    
+    const totalUnmatchedNext = Array.from(refundsByUser.values()).reduce((sum, r) => sum + r.amount, 0);
     console.log(`🔥 [HARD-CLEAR] Total NEXT-game refunded: ${allUnmatchedNextBets.length} bets, ${totalUnmatchedNext} coins returned to accounts`);
     
     // ✅ Get MATCHED next-game bets
