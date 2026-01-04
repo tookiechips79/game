@@ -731,11 +731,23 @@ const OnePocketArena = () => {
     console.log(`   ❌ Unbalanced: ${summary.unbalancedGames}`);
     console.log(`   ⚠️  Coins created: ${summary.totalCoinsCreated}`);
     
+    if (summary.issues.length > 0) {
+      console.error('🚨 [AUDIT-ISSUES] Detected problems:');
+      summary.issues.forEach(issue => console.error(`   ${issue}`));
+    }
+    
     // Show success toast if all audits are balanced
     if (summary.unbalancedGames === 0 && summary.totalGames > 0) {
       toast.success("✅ All Coin Audits Passed", {
         description: `${summary.totalGames} games processed with perfect coin conservation`,
         className: "custom-toast-success",
+      });
+    } else if (summary.unbalancedGames > 0) {
+      // Show WARNING toast about unbalanced games
+      toast.error("⚠️ Audit Warning", {
+        description: `${summary.unbalancedGames} unbalanced games detected. ${summary.totalCoinsCreated} coins created. Check logs!`,
+        duration: 7000,
+        className: "custom-toast-error",
       });
     }
   };

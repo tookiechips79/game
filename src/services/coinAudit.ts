@@ -33,6 +33,14 @@ export interface GameAudit {
 class CoinAuditService {
   private snapshots: Map<string, CoinSnapshot[]> = new Map();
   private gameAudits: Map<string, GameAudit> = new Map();
+  private transactionLog: Array<{
+    timestamp: number;
+    userId: string;
+    operation: string;
+    amount: number;
+    newBalance: number;
+    gameId?: string;
+  }> = [];
 
   /**
    * Create a snapshot of all user balances
@@ -311,11 +319,42 @@ class CoinAuditService {
   }
 
   /**
+   * Log a transaction for detailed tracking
+   */
+  logTransaction(
+    userId: string,
+    operation: string,
+    amount: number,
+    newBalance: number,
+    gameId?: string
+  ): void {
+    this.transactionLog.push({
+      timestamp: Date.now(),
+      userId,
+      operation,
+      amount,
+      newBalance,
+      gameId,
+    });
+  }
+
+  /**
+   * Get transaction log for debugging
+   */
+  getTransactionLog(gameId?: string): typeof this.transactionLog {
+    if (gameId) {
+      return this.transactionLog.filter(t => t.gameId === gameId);
+    }
+    return this.transactionLog;
+  }
+
+  /**
    * Clear all audit data (use cautiously)
    */
   clearAuditData(): void {
     this.snapshots.clear();
     this.gameAudits.clear();
+    this.transactionLog = [];
     console.log('🧹 [COIN-AUDIT] All audit data cleared');
   }
 }

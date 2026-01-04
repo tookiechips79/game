@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, BetHistoryRecord, UserBetReceipt, CreditTransaction, PendingBet, ProcessedBet } from "@/types/user";
 import { toast } from "sonner";
 import { socketIOService } from "@/services/socketIOService";
+import { coinAuditService } from "@/services/coinAudit";
 import { useRef } from "react";
 
 interface UserContextType {
@@ -1165,6 +1166,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         newBalance = user.credits + amount;
         console.log(`✅ [CREDITS-ADD] Adding credits locally, newBalance=${newBalance}`);
         
+        // ✅ Log transaction for audit
+        coinAuditService.logTransaction(user.id, reason || 'credits_added', amount, newBalance);
+        
         const updatedUsers = prev.map(u => {
           if (u.id === userId) {
             const updatedUser = { ...u, credits: newBalance };
@@ -1271,6 +1275,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const newBalance = user.credits - amount;
       console.log(`✅ [CREDITS-BET] Deducting locally, newBalance=${newBalance}`);
+      
+      // ✅ Log transaction for audit
+      coinAuditService.logTransaction(userId, 'bet_deducted', -amount, newBalance);
       
       // Update local state immediately
       setUsers(prev => {
