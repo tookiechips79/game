@@ -655,8 +655,8 @@ async function addBetReceipt(receiptData) {
     const result = await pool.query(`
       INSERT INTO bet_receipts (
         receipt_id, user_id, user_name, arena_id, game_number, team_side, 
-        team_name, opponent_name, winning_team, amount, won, transaction_type, game_data
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        team_name, opponent_name, amount, won, transaction_type, game_data
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       ON CONFLICT (receipt_id) DO NOTHING
       RETURNING *;
     `, [
@@ -668,7 +668,6 @@ async function addBetReceipt(receiptData) {
       receiptData.teamSide,
       receiptData.teamName,
       receiptData.opponentName,
-      receiptData.winningTeam || null,
       receiptData.amount,
       receiptData.won || false,
       receiptData.transactionType || 'bet',
