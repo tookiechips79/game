@@ -490,25 +490,45 @@ app.post('/api/credits/:userId/add', async (req, res) => {
   try {
     const { userId } = req.params;
     const { amount, reason = '', adminNotes = '' } = req.body;
-    
-    if (!amount || amount <= 0) {
-      console.warn(`⚠️ [CREDITS-ADD] Invalid amount: ${amount}`);
-      return res.status(400).json({ error: 'Invalid amount' });
+
+    // SERVER VALIDATION: Comprehensive input validation
+    if (!userId || typeof userId !== 'string') {
+      console.warn(`🚨 [SERVER-VALIDATION] Invalid userId: ${userId}`);
+      return res.status(400).json({ error: 'Invalid user ID' });
     }
-    
+
+    if (!amount || amount <= 0 || amount > 1000000) { // Max admin add limit
+      console.warn(`🚨 [SERVER-VALIDATION] Invalid add amount: ${amount}`);
+      return res.status(400).json({ error: 'Invalid amount (must be 1-1000000)' });
+    }
+
+    // SERVER VALIDATION: Verify user exists
+    const userExists = await getUserById(userId);
+    if (!userExists) {
+      console.warn(`🚨 [SERVER-VALIDATION] User not found: ${userId}`);
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     const oldBalance = await getUserBalance(userId);
     console.log(`💰 [CREDITS-ADD] Adding ${amount} to ${userId} (old balance: ${oldBalance}, reason: ${reason})`);
-    
+
     const transaction = await addTransaction(userId, 'admin_add', amount, reason, adminNotes);
-    
+
     if (!transaction) {
-      console.warn(`⚠️ [CREDITS-ADD] Transaction failed for ${userId}`);
-      return res.status(400).json({ error: 'Could not process transaction' });
+      console.error(`🚨 [SERVER-VALIDATION] Add transaction failed for user: ${userId}`);
+      return res.status(500).json({ error: 'Could not process transaction' });
     }
-    
+
     const newBalance = await getUserBalance(userId);
     console.log(`✅ [CREDITS-ADD] Success: ${userId} balance updated ${oldBalance} → ${newBalance}`);
-    
+
+    // SERVER VALIDATION: Verify balance changed correctly
+    const expectedBalance = oldBalance + amount;
+    if (newBalance !== expectedBalance) {
+      console.error(`🚨 [SERVER-VALIDATION] Add balance mismatch! Expected: ${expectedBalance}, Actual: ${newBalance}`);
+      // Don't fail the request, but log the issue for monitoring
+    }
+
     res.json({ success: true, transaction, newBalance });
   } catch (error) {
     console.error(`❌ [CREDITS-ADD] Error:`, error);
@@ -521,25 +541,51 @@ app.post('/api/credits/:userId/bet', async (req, res) => {
   try {
     const { userId } = req.params;
     const { amount, betDetails = '' } = req.body;
-    
-    if (!amount || amount <= 0) {
-      console.warn(`⚠️ [CREDITS-BET] Invalid bet amount: ${amount}`);
-      return res.status(400).json({ error: 'Invalid bet amount' });
+
+    // SERVER VALIDATION: Comprehensive input validation
+    if (!userId || typeof userId !== 'string') {
+      console.warn(`🚨 [SERVER-VALIDATION] Invalid userId: ${userId}`);
+      return res.status(400).json({ error: 'Invalid user ID' });
     }
-    
+
+    if (!amount || amount <= 0 || amount > 10000) { // Max bet limit
+      console.warn(`🚨 [SERVER-VALIDATION] Invalid bet amount: ${amount}`);
+      return res.status(400).json({ error: 'Invalid bet amount (must be 1-10000)' });
+    }
+
+    // SERVER VALIDATION: Verify user exists
+    const userExists = await getUserById(userId);
+    if (!userExists) {
+      console.warn(`🚨 [SERVER-VALIDATION] User not found: ${userId}`);
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     const oldBalance = await getUserBalance(userId);
     console.log(`💰 [CREDITS-BET] Placing bet: userId=${userId}, amount=${amount}, oldBalance=${oldBalance}`);
-    
-    const transaction = await addTransaction(userId, 'bet_placed', -amount, betDetails);
-    
-    if (!transaction) {
-      console.warn(`⚠️ [CREDITS-BET] Insufficient balance: ${userId} only has ${oldBalance}`);
+
+    // SERVER VALIDATION: Check sufficient balance
+    if (oldBalance < amount) {
+      console.warn(`🚨 [SERVER-VALIDATION] Insufficient balance: ${userId} has ${oldBalance}, needs ${amount}`);
       return res.status(400).json({ error: 'Insufficient credits' });
     }
-    
+
+    const transaction = await addTransaction(userId, 'bet_placed', -amount, betDetails);
+
+    if (!transaction) {
+      console.error(`🚨 [SERVER-VALIDATION] Transaction failed for user: ${userId}`);
+      return res.status(500).json({ error: 'Transaction failed' });
+    }
+
     const newBalance = await getUserBalance(userId);
     console.log(`✅ [CREDITS-BET] Success: ${userId} balance updated ${oldBalance} → ${newBalance}`);
-    
+
+    // SERVER VALIDATION: Verify balance changed correctly
+    const expectedBalance = oldBalance - amount;
+    if (newBalance !== expectedBalance) {
+      console.error(`🚨 [SERVER-VALIDATION] Balance mismatch! Expected: ${expectedBalance}, Actual: ${newBalance}`);
+      // Don't fail the request, but log the issue
+    }
+
     res.json({ success: true, transaction, newBalance });
   } catch (error) {
     console.error(`❌ [CREDITS-BET] Error:`, error);
@@ -576,18 +622,45 @@ app.post('/api/credits/:userId/win', async (req, res) => {
   try {
     const { userId } = req.params;
     const { amount, betDetails = '' } = req.body;
-    
-    if (!amount || amount <= 0) {
+
+    // SERVER VALIDATION: Comprehensive input validation
+    if (!userId || typeof userId !== 'string') {
+      console.warn(`🚨 [SERVER-VALIDATION] Invalid userId: ${userId}`);
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+
+    if (!amount || amount <= 0 || amount > 100000) { // Max win limit (higher than bets)
+      console.warn(`🚨 [SERVER-VALIDATION] Invalid win amount: ${amount}`);
       return res.status(400).json({ error: 'Invalid win amount' });
     }
-    
-    const transaction = await addTransaction(userId, 'bet_won', amount, betDetails);
-    
-    if (!transaction) {
-      return res.status(400).json({ error: 'Could not process win' });
+
+    // SERVER VALIDATION: Verify user exists
+    const userExists = await getUserById(userId);
+    if (!userExists) {
+      console.warn(`🚨 [SERVER-VALIDATION] User not found: ${userId}`);
+      return res.status(404).json({ error: 'User not found' });
     }
-    
+
+    const oldBalance = await getUserBalance(userId);
+    console.log(`💰 [CREDITS-WIN] Processing win: userId=${userId}, amount=${amount}, oldBalance=${oldBalance}`);
+
+    const transaction = await addTransaction(userId, 'bet_won', amount, betDetails);
+
+    if (!transaction) {
+      console.error(`🚨 [SERVER-VALIDATION] Win transaction failed for user: ${userId}`);
+      return res.status(500).json({ error: 'Could not process win' });
+    }
+
     const newBalance = await getUserBalance(userId);
+    console.log(`✅ [CREDITS-WIN] Success: ${userId} balance updated ${oldBalance} → ${newBalance}`);
+
+    // SERVER VALIDATION: Verify balance changed correctly
+    const expectedBalance = oldBalance + amount;
+    if (newBalance !== expectedBalance) {
+      console.error(`🚨 [SERVER-VALIDATION] Win balance mismatch! Expected: ${expectedBalance}, Actual: ${newBalance}`);
+      // Don't fail the request, but log the issue for monitoring
+    }
+
     res.json({ success: true, transaction, newBalance });
   } catch (error) {
     console.error(`❌ [CREDITS-WIN] Error:`, error);
