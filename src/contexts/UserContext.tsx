@@ -1126,16 +1126,22 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       // Step 4: Verify conservation law (coins in = coins out)
-      const coinsAfterPayouts = preGameTotal;
+      const netPayoutEffect = Array.from(balanceChanges.values()).reduce((sum, change) => sum + change.payout, 0);
       console.log(`\n🔐 [CONSERVATION-CHECK]`);
       console.log(`   Pre-payout total: ${preGameTotal} coins`);
-      console.log(`   Payouts to distribute: ${totalPayoutsNeeded} coins`);
-      console.log(`   Expected post-payout: ${coinsAfterPayouts} coins`);
+      console.log(`   Total payouts (wins + refunds): ${totalPayoutsNeeded} coins`);
+      console.log(`   Net effect on system coins: ${netPayoutEffect} coins`);
       
-      if (totalPayoutsNeeded !== 0 && coinsAfterPayouts !== preGameTotal) {
-        console.error(`❌ [CONSERVATION-FAILED] Total changed! ${preGameTotal} → ${coinsAfterPayouts}`);
+      // For a perfectly balanced game, the net effect on system coins should be 0
+      if (netPayoutEffect !== 0) {
+        console.error(`❌ [CONSERVATION-FAILED] Net coin change detected! Total system coins changed by: ${netPayoutEffect}`);
+        toast.error("🚨 Coin Conservation Failed", {
+          description: `Total system coins changed by: ${netPayoutEffect} coins. Please check logs.`, 
+          duration: 5000, 
+          className: "custom-toast-error"
+        });
       } else {
-        console.log(`✅ [CONSERVATION-VERIFIED] Coins conserved!`);
+        console.log(`✅ [CONSERVATION-VERIFIED] Coins conserved! Net effect is 0.`);
       }
       
       // Step 5: Apply all changes in single atomic update
