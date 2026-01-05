@@ -364,6 +364,192 @@ class CoinAuditService {
   }
 
   /**
+   * Recovery function: Attempt to fix balance inconsistencies
+   */
+  recoverBalanceInconsistency(
+    gameId: string,
+    users: any[],
+    expectedDifference: number = 0
+  ): { recovered: boolean; adjustments: any[] } {
+    const audit = this.gameAudits.get(gameId);
+    if (!audit) {
+      console.error(`🚨 [RECOVERY] No audit found for game ${gameId}`);
+      return { recovered: false, adjustments: [] };
+    }
+
+    const adjustments: any[] = [];
+    const actualDifference = audit.coinDifference;
+
+    // If the difference is not what we expected, we need to adjust
+    if (actualDifference !== expectedDifference) {
+      console.log(`🔧 [RECOVERY] Attempting to recover game ${gameId}`);
+      console.log(`   Expected difference: ${expectedDifference}`);
+      console.log(`   Actual difference: ${actualDifference}`);
+      console.log(`   Coins created/lost: ${actualDifference - expectedDifference}`);
+
+      // Find the user with the largest balance (likely the winner) to adjust
+      let winnerUser = null;
+      let maxBalance = 0;
+
+      users.forEach(user => {
+        if (user.credits > maxBalance) {
+          maxBalance = user.credits;
+          winnerUser = user;
+        }
+      });
+
+      if (winnerUser && actualDifference > expectedDifference) {
+        // Coins were created - reduce winner's balance
+        const adjustment = actualDifference - expectedDifference;
+        winnerUser.credits -= adjustment;
+
+        adjustments.push({
+          userId: winnerUser.id,
+          userName: winnerUser.name,
+          type: 'recovery_adjustment',
+          amount: -adjustment,
+          reason: `Recovered ${adjustment} coins created in game ${gameId}`
+        });
+
+        console.log(`✅ [RECOVERY] Reduced ${winnerUser.name}'s balance by ${adjustment} coins`);
+      }
+
+      // Re-verify the audit
+      const postRecoverySnapshot = this.takeSnapshot(
+        users,
+        'post-recovery',
+        `Game ${gameId} after recovery`,
+        audit.arenaId
+      );
+
+      const newDifference = postRecoverySnapshot.totalCoins - audit.preGameSnapshot.totalCoins;
+
+      if (newDifference === expectedDifference) {
+        console.log(`✅ [RECOVERY] Successfully recovered game ${gameId}`);
+        return { recovered: true, adjustments };
+      } else {
+        console.error(`❌ [RECOVERY] Recovery failed for game ${gameId}`);
+        return { recovered: false, adjustments };
+      }
+    }
+
+    console.log(`✅ [RECOVERY] No recovery needed for game ${gameId}`);
+    return { recovered: true, adjustments: [] };
+  }
+
+  /**
+   * Get recovery recommendations for unbalanced games
+   */
+  getRecoveryRecommendations(arenaId?: string): {
+    gameId: string;
+    issue: string;
+    recommendedAction: string;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+  }[] {
+    const audits = arenaId
+      ? this.getArenaAudits(arenaId)
+      : Array.from(this.gameAudits.values());
+
+    const recommendations: any[] = [];
+
+    audits.forEach(audit => {
+      if (!audit.isBalanced) {
+        let severity: 'low' | 'medium' | 'high' | 'critical' = 'low';
+        let recommendedAction = '';
+
+        if (audit.createdCoins > 100) {
+          severity = 'critical';
+          recommendedAction = `Immediately investigate game ${audit.gameId} - ${audit.createdCoins} coins created`;
+        } else if (audit.createdCoins > 50) {
+          severity = 'high';
+          recommendedAction = `Review game ${audit.gameId} - ${audit.createdCoins} coins created`;
+        } else if (audit.createdCoins > 10) {
+          severity = 'medium';
+          recommendedAction = `Monitor game ${audit.gameId} - ${audit.createdCoins} coins created`;
+        } else {
+          severity = 'low';
+          recommendedAction = `Log game ${audit.gameId} - ${audit.createdCoins} coins created`;
+        }
+
+        recommendations.push({
+          gameId: audit.gameId,
+          issue: `${audit.createdCoins} coins created`,
+          recommendedAction,
+          severity
+        });
+      }
+
+      if (audit.winnerGain !== audit.loserLoss) {
+        recommendations.push({
+          gameId: audit.gameId,
+          issue: `Winner gain (${audit.winnerGain}) ≠ Loser loss (${audit.loserLoss})`,
+          recommendedAction: `Critical: Investigate payout calculation for game ${audit.gameId}`,
+          severity: 'critical'
+        });
+      }
+    });
+
+    return recommendations.sort((a, b) => {
+      const severityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
+      return severityOrder[b.severity] - severityOrder[a.severity];
+    });
+  }
+
+  /**
+   * System health check - comprehensive validation
+   */
+  performSystemHealthCheck(arenaId?: string): {
+    healthy: boolean;
+    issues: string[];
+    recommendations: string[];
+    summary: {
+      totalGames: number;
+      balancedGames: number;
+      unbalancedGames: number;
+      totalCoinsCreated: number;
+      recentTransactions: number;
+      lastAuditTime: number;
+    };
+  } {
+    const summary = this.getAuditSummary(arenaId);
+    const recommendations = this.getRecoveryRecommendations(arenaId);
+    const issues: string[] = [];
+
+    // Check for critical issues
+    if (summary.unbalancedGames > 0) {
+      issues.push(`${summary.unbalancedGames} games are unbalanced`);
+    }
+
+    if (summary.totalCoinsCreated > 0) {
+      issues.push(`${summary.totalCoinsCreated} coins have been created/lost in the system`);
+    }
+
+    // Check recent transaction volume
+    const recentTransactions = this.transactionLog.filter(t =>
+      Date.now() - t.timestamp < 24 * 60 * 60 * 1000 // Last 24 hours
+    ).length;
+
+    // Check last audit time
+    const audits = arenaId ? this.getArenaAudits(arenaId) : Array.from(this.gameAudits.values());
+    const lastAuditTime = audits.length > 0
+      ? Math.max(...audits.map(a => a.postGameSnapshot.timestamp))
+      : 0;
+
+    const healthy = issues.length === 0;
+
+    return {
+      healthy,
+      issues,
+      recommendations: recommendations.map(r => r.recommendedAction),
+      summary: {
+        ...summary,
+        recentTransactions,
+        lastAuditTime
+      }
+    };
+  }
+
+  /**
    * Clear all audit data (use cautiously)
    */
   clearAuditData(): void {
