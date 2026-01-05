@@ -1063,25 +1063,31 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const balanceChanges = new Map<string, { oldBalance: number; payout: number; newBalance: number }>();
       let totalPayoutsNeeded = 0;
       
-      // Use corrected payouts instead of original payouts
-      const finalPayouts = Array.from(winnerPayoutsActual.entries()).map(([userId, amount]) => ({ userId, amount }));
+      // ✅ FINAL PAYOUTS: Combine verified winner payouts and all refunds
+      const finalPayouts: Array<{ userId: string; amount: number }> = [];
       
-      // Add back unmatched refunds
-      for (const unmatchedBet of unmatchedBets) {
+      // Add all verified and corrected winner payouts
+      for (const [userId, amount] of winnerPayoutsActual.entries()) {
+        finalPayouts.push({
+          userId,
+          amount
+        });
+      }
+      
+      // Add unmatched winning bet refunds
+      for (const unmatchedBet of unmatchedWinBets) {
         finalPayouts.push({
           userId: unmatchedBet.userId,
           amount: unmatchedBet.amount
         });
       }
       
-      // Add back unmatched losing bet refunds
-      for (const betsForAmount of losingBetsByAmountCheck.values()) {
-        for (const unmatchedLosingBet of betsForAmount) {
-          finalPayouts.push({
-            userId: unmatchedLosingBet.userId,
-            amount: unmatchedLosingBet.amount
-          });
-        }
+      // Add unmatched losing bet refunds
+      for (const unmatchedBet of unmatchedLosingBets) {
+        finalPayouts.push({
+          userId: unmatchedBet.userId,
+          amount: unmatchedBet.amount
+        });
       }
       
       for (const payout of finalPayouts) {
