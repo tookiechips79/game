@@ -1090,6 +1090,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       }
       
+      console.log(`\n💰 [DEBUG-FINAL-PAYOUTS] Full finalPayouts array:`, finalPayouts);
+
       for (const payout of finalPayouts) {
         const user = users.find(u => u.id === payout.userId);
         if (user) {
@@ -1104,8 +1106,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
               payout: existing.payout + payout.amount,
               newBalance: existing.newBalance + payout.amount
             });
+            console.log(`   [DEBUG-BALANCE] Accumulating payout for ${user.name}: Old game payout: ${existing.payout}, New payout: ${existing.payout + payout.amount}`);
           } else {
             balanceChanges.set(payout.userId, { oldBalance, payout: payout.amount, newBalance });
+            console.log(`   [DEBUG-BALANCE] Initial payout for ${user.name}: ${payout.amount} coins. Old Balance: ${oldBalance}, New Balance: ${newBalance}`);
           }
           
           totalPayoutsNeeded += payout.amount;
@@ -1114,7 +1118,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Step 3: Log all changes and verify conservation
       console.log(`\n💰 [PAYOUT-DETAILS] Individual changes:`);
-      let postGameTotal = preGameTotal;
+      // Removed `let postGameTotal = preGameTotal;` as it was unused and potentially confusing
       
       balanceChanges.forEach((change, userId) => {
         const user = users.find(u => u.id === userId);
@@ -1139,6 +1143,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const updated = prev.map(user => {
           const change = balanceChanges.get(user.id);
           if (change) {
+            console.log(`   [DEBUG-SETUSERS] Updating user ${user.name} (${user.id}): Old credits: ${user.credits}, Payout: ${change.payout}, New credits: ${change.newBalance}`);
             // Update current user immediately
             if (currentUser?.id === user.id) {
               setCurrentUser({ ...user, credits: change.newBalance });
