@@ -929,6 +929,75 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
       
+      // ✅ DOUBLE-CHECK SYSTEM: Verify winner payouts are correct
+      // Calculate what winners SHOULD get from matched bets
+      console.log(`\n🔍 [DOUBLE-CHECK] Verifying winner payouts from matched bets...`);
+      
+      const winnerPayoutsCalculated = new Map<string, { matchedAmount: number; betsCount: number }>();
+      
+      // Rebuild winning bets with their matches to verify payouts
+      const losingBetsByAmountCheck = new Map<number, any[]>();
+      for (const bet of losingBets) {
+        if (!losingBetsByAmountCheck.has(bet.amount)) {
+          losingBetsByAmountCheck.set(bet.amount, []);
+        }
+        losingBetsByAmountCheck.get(bet.amount)!.push(bet);
+      }
+      
+      for (const winBet of winningBets) {
+        const losingBetsForAmount = losingBetsByAmountCheck.get(winBet.amount) || [];
+        const losingBetMatch = losingBetsForAmount.length > 0 ? losingBetsForAmount[losingBetsForAmount.length - 1] : null;
+        
+        if (losingBetMatch) {
+          const expectedPayout = winBet.amount + losingBetMatch.amount;
+          if (winnerPayoutsCalculated.has(winBet.userId)) {
+            const existing = winnerPayoutsCalculated.get(winBet.userId)!;
+            winnerPayoutsCalculated.set(winBet.userId, {
+              matchedAmount: existing.matchedAmount + expectedPayout,
+              betsCount: existing.betsCount + 1
+            });
+          } else {
+            winnerPayoutsCalculated.set(winBet.userId, { matchedAmount: expectedPayout, betsCount: 1 });
+          }
+          console.log(`   ✅ ${winBet.userName}: Bet ${winBet.amount} matched with ${losingBetMatch.amount} = ${expectedPayout}`);
+        }
+      }
+      
+      // Step 3: Compare calculated payouts with what we're actually paying
+      console.log(`\n🔐 [PAYOUT-VERIFICATION] Comparing calculated vs actual payouts:`);
+      
+      const winnerPayoutsActual = new Map<string, number>();
+      for (const payout of payouts) {
+        const user = users.find(u => u.id === payout.userId);
+        // Only count matched wins, not refunds
+        if (user && winnerPayoutsCalculated.has(payout.userId)) {
+          const current = winnerPayoutsActual.get(payout.userId) || 0;
+          winnerPayoutsActual.set(payout.userId, current + payout.amount);
+        }
+      }
+      
+      // Verify each winner is getting correct amount
+      let payoutMismatchFound = false;
+      for (const [winnerUserId, calculated] of winnerPayoutsCalculated.entries()) {
+        const actual = winnerPayoutsActual.get(winnerUserId) || 0;
+        const user = users.find(u => u.id === winnerUserId);
+        
+        if (actual === calculated.matchedAmount) {
+          console.log(`   ✅ ${user?.name}: Correct payout ${actual} coins (${calculated.betsCount} matched bets)`);
+        } else {
+          console.error(`   ❌ ${user?.name}: MISMATCH! Should get ${calculated.matchedAmount}, paying ${actual}`);
+          payoutMismatchFound = true;
+          
+          // ✅ FIX: Correct the payout to match calculation
+          console.log(`   🔧 CORRECTING payout to ${calculated.matchedAmount}`);
+          winnerPayoutsActual.set(winnerUserId, calculated.matchedAmount);
+        }
+      }
+      
+      if (payoutMismatchFound) {
+        console.warn(`🚨 [PAYOUT-CORRECTION] Fixed mismatched payouts!`);
+      }
+      
       // ✅ VERIFIED PAYOUT SYSTEM: Calculate, verify, apply atomically
       // Ensures zero coin loss with full verification
       console.log(`\n💎 [VERIFIED-PAYOUTS] Computing final balances with verification...`);
@@ -942,7 +1011,28 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const balanceChanges = new Map<string, { oldBalance: number; payout: number; newBalance: number }>();
       let totalPayoutsNeeded = 0;
       
-      for (const payout of payouts) {
+      // Use corrected payouts instead of original payouts
+      const finalPayouts = Array.from(winnerPayoutsActual.entries()).map(([userId, amount]) => ({ userId, amount }));
+      
+      // Add back unmatched refunds
+      for (const unmatchedBet of unmatchedBets) {
+        finalPayouts.push({
+          userId: unmatchedBet.userId,
+          amount: unmatchedBet.amount
+        });
+      }
+      
+      // Add back unmatched losing bet refunds
+      for (const betsForAmount of losingBetsByAmountCheck.values()) {
+        for (const unmatchedLosingBet of betsForAmount) {
+          finalPayouts.push({
+            userId: unmatchedLosingBet.userId,
+            amount: unmatchedLosingBet.amount
+          });
+        }
+      }
+      
+      for (const payout of finalPayouts) {
         const user = users.find(u => u.id === payout.userId);
         if (user) {
           const oldBalance = user.credits;
