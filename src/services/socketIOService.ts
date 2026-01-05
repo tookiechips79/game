@@ -864,11 +864,34 @@ class SocketIOService {
     }
   }
 
+  // ✅ NEW: Emit win flash event
+  public emitWinFlashEvent(data: { userId: string; amount: number; gameNumber: number }) {
+    this.checkAndReidentifyArena();
+    if (this.isSocketConnected()) {
+      const arenaId = this.getArenaId();
+      log(`✨ Emitting win flash event for user ${data.userId} in arena '${arenaId}': +${data.amount}`);
+      this.socket?.emit('win-flash-event', { ...data, arenaId });
+    } else {
+      warn('⚠️ Socket not connected, cannot emit win flash event');
+    }
+  }
+
   public onAdminStateUpdate(callback: (data: { adminState: any; arenaId?: string; timestamp: number }) => void) {
     if (this.socket) {
       this.socket.off('admin-state-update');
       this.socket.on('admin-state-update', (data) => {
         log(`⚙️ Received admin state update for arena '${data.arenaId}'`);
+        callback(data);
+      });
+    }
+  }
+
+  // ✅ NEW: Listen for win flash event
+  public onWinFlashEvent(callback: (data: { userId: string; amount: number; gameNumber: number; arenaId?: string }) => void) {
+    if (this.socket) {
+      this.socket.off('win-flash-event');
+      this.socket.on('win-flash-event', (data) => {
+        log(`✨ Received win flash event for user ${data.userId} in arena '${data.arenaId}': +${data.amount}`);
         callback(data);
       });
     }
@@ -940,6 +963,13 @@ class SocketIOService {
     if (this.socket) {
       this.socket.off('admin-state-update');
       log(`🧹 [CLEANUP] Removed admin-state-update listener`);
+    }
+  }
+
+  public offWinFlashEvent() {
+    if (this.socket) {
+      this.socket.off('win-flash-event');
+      log(`🧹 [CLEANUP] Removed win-flash-event listener`);
     }
   }
 
