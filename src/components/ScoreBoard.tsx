@@ -50,6 +50,8 @@ interface ScoreBoardProps {
   showBallCount?: boolean;
   teamAPlayerImageUrl?: string;
   teamBPlayerImageUrl?: string;
+  winDisplay: { amount: number; teamSide: 'A' | 'B' | null };
+  loseDisplay: { amount: number; teamSide: 'A' | 'B' | null };
 }
 
 const ScoreBoard = (props: ScoreBoardProps) => {
@@ -58,7 +60,9 @@ const ScoreBoard = (props: ScoreBoardProps) => {
     isTimerRunning = false,
     onTimerStart,
     onTimerPause,
-    onTimerReset
+    onTimerReset,
+    winDisplay,
+    loseDisplay
   } = props;
   
   const {
@@ -138,10 +142,12 @@ const ScoreBoard = (props: ScoreBoardProps) => {
         setTeamAWinConfirmOpen={setTeamAWinConfirmOpen}
         setTeamBWinConfirmOpen={setTeamBWinConfirmOpen}
         isAdmin={props.isAdmin}
-        isAgent={props.isAgent}
-        onToggleAdmin={props.onToggleAdmin}
-        onToggleAgent={props.onToggleAgent}
-      />
+          isAgent={props.isAgent}
+          onToggleAdmin={props.onToggleAdmin}
+          onToggleAgent={props.onToggleAgent}
+          winDisplay={winDisplay}
+          loseDisplay={loseDisplay}
+        />
       
       {showControls && isMatchStarted && !props.adminLocked && (
         <GameControls

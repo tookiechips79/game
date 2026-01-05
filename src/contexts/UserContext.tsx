@@ -2,8 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, BetHistoryRecord, UserBetReceipt, CreditTransaction, PendingBet, ProcessedBet } from "@/types/user";
 import { toast } from "sonner";
 import { socketIOService } from "@/services/socketIOService";
-import { coinAuditService } from "@/services/coinAudit";
 import { useRef } from "react";
+import { coinAuditService as coinAuditServiceImport } from "@/services/coinAudit";
 
 interface UserContextType {
   users: User[];
@@ -46,7 +46,7 @@ interface UserContextType {
   }) => void;
   getPendingBetAmount: (userId: string) => number;
   getAvailableCredits: (userId: string) => number;
-  processPendingBets: (gameNumber: number, winningTeam: 'A' | 'B') => void;
+  processPendingBets: (gameNumber: number, winningTeam: 'A' | 'B', onWin?: (winningAmount: number, winningTeamSide: 'A' | 'B') => void, onLose?: (losingAmount: number, losingTeamSide: 'A' | 'B') => void) => void;
   refundPendingBet: (userId: string, betId: string) => void;
   updatePendingBetMatched: (userId: string, betId: string, matchedAmount: number) => void;
   // ✅ RECOVERY: Restore multiple users at once
@@ -79,6 +79,7 @@ const createDefaultAdmin = (): User => ({
 });
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+
   // *** MOVE ALL useRef DECLARATIONS HERE - FIRST, BEFORE ANY useState ***
   // Flag to prevent emitting history updates during clear operations
   const isClearingRef = useRef(false);
@@ -561,19 +562,19 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Server sends all bet receipts for this user via Socket.IO
       // Skip in development mode (no socket.io connection)
       if (process.env.NODE_ENV !== 'development') {
-        // Retry until socket is connected (handles page refresh and reconnection)
-        const requestWithRetry = () => {
-          if (socketIOService.isSocketConnected()) {
-            console.log(`📥 [BET-RECEIPTS] Requesting from server for user ${currentUser.id}`);
-            socketIOService.requestBetReceipts(currentUser.id);
-          } else {
-            // Socket not ready yet, retry in 200ms
-            console.log(`⏳ [BET-RECEIPTS] Socket not ready, retrying...`);
-            setTimeout(requestWithRetry, 200);
-          }
-        };
-        
-        requestWithRetry();
+      // Retry until socket is connected (handles page refresh and reconnection)
+      const requestWithRetry = () => {
+        if (socketIOService.isSocketConnected()) {
+          console.log(`📥 [BET-RECEIPTS] Requesting from server for user ${currentUser.id}`);
+          socketIOService.requestBetReceipts(currentUser.id);
+        } else {
+          // Socket not ready yet, retry in 200ms
+          console.log(`⏳ [BET-RECEIPTS] Socket not ready, retrying...`);
+          setTimeout(requestWithRetry, 200);
+        }
+      };
+      
+      requestWithRetry();
       }
     } else {
       localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
@@ -833,10 +834,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (currentUser?.id === userId) {
             setCurrentUser(updatedUser);
           }
-          const newAvailable = updatedUser.credits - pendingBets.reduce((sum, b) => sum + b.amount, 0);
-          console.log(`✅ [PENDING-BET] Added pending bet #${betData.id} for ${u.name}. Pending: ${pendingBets.length}, Amount locked: ${betData.amount}, Available now: ${newAvailable}`);
-          return updatedUser;
-        }
+         const newAvailable = updatedUser.credits - pendingBets.reduce((sum, b) => sum + b.amount, 0);
+           console.log(`✅ [PENDING-BET] Added pending bet #${betData.id} for ${u.name}. Pending: ${pendingBets.length}, Amount locked: ${betData.amount}, Available now: ${newAvailable}`);
+           console.log(`   [DEBUG-PENDING-BETS] User ${u.name} pendingBets after add:`, updatedUser.pendingBets);
+           return updatedUser;
+         }
+         console.log(`   [DEBUG-PENDING-BETS] User ${u.name} pendingBets unchanged by add:`, u.pendingBets); // Log if user is not the target user
         return u;
       });
       return updatedUsers;
@@ -847,10 +850,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getPendingBetAmount = (userId: string): number => {
     const user = users.find(u => u.id === userId);
     if (!user) return 0;
+    console.log(`   [DEBUG-PENDING-BETS] User ${user.name} pendingBets for getPendingBetAmount:`, user.pendingBets);
     const pending = (user.pendingBets || []).reduce((sum, bet) => sum + bet.amount, 0);
-    if (pending > 0) {
-      console.log(`💰 [PENDING-CALC] ${user.name}: ${user.pendingBets?.length || 0} bets, total locked: ${pending}`);
-    }
+    console.log(`💰 [PENDING-CALC] ${user.name}: ${user.pendingBets?.length || 0} bets, total locked: ${pending}`);
     return pending;
   };
 
@@ -865,9 +867,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // ✅ SIMPLIFIED: Process game results - winners get their bet back + loser's bet, unmatched bets refunded
-  const processPendingBets = async (gameNumber: number, winningTeam: 'A' | 'B', teamABets: any[] = [], teamBBets: any[] = []) => {
+  const processPendingBets = async (gameNumber: number, winningTeam: 'A' | 'B', teamABets: any[] = [], teamBBets: any[] = [], onWin?: (winningAmount: number, winningTeamSide: 'A' | 'B') => void, onLose?: (losingAmount: number, losingTeamSide: 'A' | 'B') => void) => {
     try {
       console.log(`🎮 [GAME-WIN] Game #${gameNumber}: ${winningTeam} won! Processing bets...`);
+      console.log(`   [DEBUG-PROCESS-BETS] Initial teamABets:`, teamABets);
+      console.log(`   [DEBUG-PROCESS-BETS] Initial teamBBets:`, teamBBets);
       
       // Simple logic:
       // - Losers: already paid (credits deducted)
@@ -915,7 +919,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (matchedLosingBet) {
           matchedPairs.push({ winBet, loseBet: matchedLosingBet });
           console.log(`✅ Match found: ${winBet.userName} (${winBet.amount}) ↔ ${matchedLosingBet.userName} (${matchedLosingBet.amount})`);
-        } else {
+          } else {
           unmatchedWinBets.push(winBet);
           console.log(`⚠️ No match: ${winBet.userName} (${winBet.amount})`);
         }
@@ -939,6 +943,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Add matched wins
       for (const { winBet, loseBet } of matchedPairs) {
         const payout = winBet.amount + loseBet.amount;
+        console.log(`   [DEBUG-PAYOUT-CALC] Matched pair: winBet.amount=${winBet.amount}, loseBet.amount=${loseBet.amount}, calculated payout=${payout}`);
         payouts.push({
           userId: winBet.userId,
           amount: payout
@@ -981,6 +986,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Same result, zero complexity!
       for (const { winBet, loseBet } of matchedPairs) {
         const doubledBetAmount = winBet.amount * 2; // Winner gets 2x their bet
+        console.log(`   [DEBUG-PAYOUT-MATCH] winBet.amount: ${winBet.amount}, doubledBetAmount: ${doubledBetAmount}`);
         const expectedPayout = doubledBetAmount;
         
         if (winnerPayoutsCalculated.has(winBet.userId)) {
@@ -1033,6 +1039,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log(`      - Bet: ${calculated.originalBetReturned} coins`);
           console.log(`      - Winnings: ${calculated.winningsFromLoser} coins`);
           console.log(`      - Total (2x bet): ${calculated.matchedAmount} coins (${calculated.betsCount} matched bets)`);
+          console.log(`      [DEBUG-PAYOUT-VERIFY] user: ${user?.name}, calculated.matchedAmount: ${calculated.matchedAmount}, actual: ${actual}, originalBetReturned: ${calculated.originalBetReturned}, winningsFromLoser: ${calculated.winningsFromLoser}`);
         } else {
           console.error(`   ❌ ${user?.name}: MISMATCH! Should get ${calculated.matchedAmount}, paying ${actual}`);
           console.error(`      - Expected bet return: ${calculated.originalBetReturned}`);
@@ -1073,6 +1080,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           amount
         });
       }
+
+      // Add matched losing bets (with negative amount to represent loss)
+      for (const { loseBet } of matchedPairs) {
+        finalPayouts.push({
+          userId: loseBet.userId,
+          amount: -loseBet.amount
+        });
+      }
       
       // Add unmatched winning bet refunds
       for (const unmatchedBet of unmatchedWinBets) {
@@ -1093,6 +1108,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log(`\n💰 [DEBUG-FINAL-PAYOUTS] Full finalPayouts array:`, finalPayouts);
 
       for (const payout of finalPayouts) {
+        console.log(`   [DEBUG-FINAL-PAYOUTS-ITEM] Processing payout: userId=${payout.userId}, amount=${payout.amount}`);
         const user = users.find(u => u.id === payout.userId);
         if (user) {
           const oldBalance = user.credits;
@@ -1122,6 +1138,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       balanceChanges.forEach((change, userId) => {
         const user = users.find(u => u.id === userId);
+        console.log(`   [DEBUG-BALANCE-CHANGE] User: ${user?.name}, Old: ${change.oldBalance}, New: ${change.newBalance}, Payout: ${change.payout}`);
         console.log(`   ${user?.name}: ${change.oldBalance} → ${change.newBalance} (${change.payout > 0 ? '+' : ''}${change.payout})`);
       });
       
@@ -1140,32 +1157,68 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           duration: 5000, 
           className: "custom-toast-error"
         });
-      } else {
+        } else {
         console.log(`✅ [CONSERVATION-VERIFIED] Coins conserved! Net effect is 0.`);
       }
       
       // Step 5: Apply all changes in single atomic update
+      let currentUserMatchedWinAmount = 0;
+      let currentUserMatchedLossAmount = 0;
+      let currentUserWinningTeamSide: 'A' | 'B' | null = null;
+      let currentUserLosingTeamSide: 'A' | 'B' | null = null;
+
       setUsers(prev => {
         const updated = prev.map(user => {
           const change = balanceChanges.get(user.id);
           if (change) {
+            console.log(`   [DEBUG-CHANGE-PAYOUT] User ${user.name} (${user.id}) - Raw change.payout: ${change.payout}`);
             console.log(`   [DEBUG-SETUSERS] Updating user ${user.name} (${user.id}): Old credits: ${user.credits}, Payout: ${change.payout}, New credits: ${change.newBalance}`);
             // Update current user immediately
             if (currentUser?.id === user.id) {
               setCurrentUser({ ...user, credits: change.newBalance });
             }
-            
-            // Emit a win flash event for the UI
-            if (change.payout > 0) {
-              socketIOService.emitWinFlashEvent({ userId: user.id, amount: change.payout, gameNumber: gameNumber });
+
+            // Aggregate win/loss for the current user from matched bets only
+            if (currentUser?.id === user.id) {
+              // Check if user's matched bet won or lost
+              const isWinner = matchedPairs.some(pair => pair.winBet.userId === user.id);
+              const isLoser = matchedPairs.some(pair => pair.loseBet.userId === user.id);
+
+              if (isWinner) {
+                console.log(`   [DEBUG-CURRENT-USER-WIN] change.payout: ${change.payout}, winAmount before division: ${change.payout}, winAmount after division: ${change.payout / 2}`);
+                currentUserMatchedWinAmount += (change.payout / 2); // Pass only the winnings portion to onWin
+                currentUserWinningTeamSide = winningTeam;
+              } else if (isLoser) {
+                currentUserMatchedLossAmount += Math.abs(change.payout);
+                currentUserLosingTeamSide = winningTeam === 'A' ? 'B' : 'A';
+              }
             }
-            return { ...user, credits: change.newBalance };
+            
+            const updatedUser = { ...user, credits: change.newBalance };
+
+            // After processing, clear pending bets for this user related to this game
+            console.log(`   [DEBUG-PENDING-BETS] User ${user.name} pendingBets BEFORE clearing for game #${gameNumber}:`, updatedUser.pendingBets);
+            const clearedPendingBets = (updatedUser.pendingBets || []).filter(pb => pb.gameNumber !== gameNumber);
+            updatedUser.pendingBets = clearedPendingBets;
+            console.log(`   [DEBUG-PENDING-BETS] User ${user.name} pendingBets AFTER clearing for game #${gameNumber}:`, updatedUser.pendingBets);
+
+            return updatedUser;
+          } else {
+            console.log(`   [DEBUG-PENDING-BETS] User ${user.name} had no balance change, pendingBets:`, user.pendingBets); // Log if user had no balance change
           }
-          return user;
-        });
+        return user;
+      });
+
+      // Call onWin or onLose once after all updates for the current user
+      if (onWin && currentUserMatchedWinAmount > 0) {
+        console.log(`   [DEBUG-ONWIN-CALL] Calling onWin with amount: ${currentUserMatchedWinAmount}, teamSide: ${currentUserWinningTeamSide}`);
+        onWin(currentUserMatchedWinAmount, currentUserWinningTeamSide!); // Ensure team side is passed
+      } else if (onLose && currentUserMatchedLossAmount > 0) {
+        onLose(currentUserMatchedLossAmount, currentUserLosingTeamSide!); // Ensure team side is passed
+      }
         
-        // ✅ Save to localStorage
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
+      // ✅ Save to localStorage
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
         
         // Final verification
         const postGameSnapshotTotal = updated.reduce((sum, u) => sum + u.credits, 0);
@@ -1173,7 +1226,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (postGameSnapshotTotal !== preGameTotal) {
           console.error(`🚨 [CRITICAL] Coin loss detected! ${preGameTotal} → ${postGameSnapshotTotal}`);
-          coinAuditService.logCreditTransaction('SYSTEM', 'coin_loss_detected', 'system_audit', postGameSnapshotTotal - preGameTotal, postGameSnapshotTotal, gameNumber);
+          const systemUserName = "SYSTEM"; // A placeholder for system-level transactions
+          if (coinAuditServiceImport && typeof coinAuditServiceImport.logCreditTransaction === 'function') {
+            coinAuditServiceImport.logCreditTransaction('SYSTEM', systemUserName, 'coin_loss_detected', postGameSnapshotTotal - preGameTotal, postGameSnapshotTotal, gameNumber, undefined, `Coin loss detected: ${preGameTotal} -> ${postGameSnapshotTotal}`);
+          } else {
+            console.error('❌ [CRITICAL] coinAuditServiceImport.logCreditTransaction is not available!');
+          }
         }
         
         return updated;
@@ -1184,25 +1242,29 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       balanceChanges.forEach((change, userId) => {
         // Find the user to get their name for the audit log
         const user = users.find(u => u.id === userId);
-        if (user) {
-          coinAuditService.logCreditTransaction(
-            userId,
-            user.name,
-            'win_payout', // Type of transaction
-            change.payout,
-            change.newBalance,
-            gameNumber
-          );
+          if (coinAuditServiceImport && typeof coinAuditServiceImport.logCreditTransaction === 'function') {
+          if (user) {
+            coinAuditServiceImport.logCreditTransaction(
+              userId,
+              user.name,
+              change.payout > 0 ? 'win_payout' : 'bet_refund', // Determine type based on payout amount
+              change.payout,
+              change.newBalance,
+              gameNumber
+            );
+          } else {
+            console.warn(`⚠️ [AUDIT-LOG] User not found for audit log: ${userId}`);
+            coinAuditServiceImport.logCreditTransaction(
+              userId,
+              'Unknown User',
+              change.payout > 0 ? 'win_payout' : 'bet_refund',
+              change.payout,
+              change.newBalance,
+              gameNumber
+            );
+          }
         } else {
-          console.warn(`⚠️ [AUDIT-LOG] User not found for audit log: ${userId}`);
-          coinAuditService.logCreditTransaction(
-            userId,
-            'Unknown User',
-            'win_payout',
-            change.payout,
-            change.newBalance,
-            gameNumber
-          );
+            console.error('❌ [CRITICAL] coinAuditServiceImport.logCreditTransaction is not available for audit logging!');
         }
         console.log(`   ${userId}: +${change.payout} coins`);
       });
@@ -1384,8 +1446,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setCurrentUser(updatedUser);
           }
           console.log(`✅ [PENDING-BET] Refunded bet #${betId} for ${u.name}. Remaining pending: ${pendingBets.length}`);
-          return updatedUser;
-        }
+           console.log(`   [DEBUG-PENDING-BETS] User ${u.name} pendingBets after refund:`, updatedUser.pendingBets);
+           return updatedUser;
+         }
+         console.log(`   [DEBUG-PENDING-BETS] User ${u.name} pendingBets unchanged by refund:`, u.pendingBets); // Log if user is not the target user
         return u;
       });
       return updatedUsers;
@@ -1417,7 +1481,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log(`✅ [CREDITS-ADD] Adding credits locally, newBalance=${newBalance}`);
         
         // ✅ Log transaction for audit
-        coinAuditService.logTransaction(user.id, reason || 'credits_added', amount, newBalance);
+          if (coinAuditServiceImport && typeof coinAuditServiceImport.logCreditTransaction === 'function') {
+          coinAuditServiceImport.logCreditTransaction(user.id, user.name, (reason === 'bet_refund' ? 'bet_refund' : 'credits_added'), amount, newBalance);
+        } else {
+          console.error('❌ [CRITICAL] coinAuditServiceImport.logCreditTransaction is not available for addCredits!');
+        }
         
         const updatedUsers = prev.map(u => {
           if (u.id === userId) {
@@ -1527,7 +1595,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log(`✅ [CREDITS-BET] Deducting locally, newBalance=${newBalance}`);
       
       // ✅ Log transaction for audit
-      coinAuditService.logTransaction(userId, 'bet_deducted', -amount, newBalance);
+          if (coinAuditServiceImport && typeof coinAuditServiceImport.logCreditTransaction === 'function') {
+          coinAuditServiceImport.logCreditTransaction(userId, user.name, 'bet_deducted', -amount, newBalance);
+        } else {
+          console.error('❌ [CRITICAL] coinAuditServiceImport.logCreditTransaction is not available for deductCredits!');
+        }
       
       // Update local state immediately
       setUsers(prev => {
@@ -1986,7 +2058,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('⏭️ [CREDITS] Skipping server fetch in development mode');
         return;
       }
-      
+
       try {
         console.log(`📡 [CREDITS] Fetching server balance for user: ${currentUser.id}`);
         const controller = new AbortController();
@@ -2211,7 +2283,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       className: "custom-toast-success"
     });
   };
-
+  
   return (
     <UserContext.Provider
       value={{

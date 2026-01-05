@@ -55,6 +55,8 @@ interface ScoreboardMainDisplayProps {
   teamAPlayerImageUrl?: string;
   teamBPlayerImageUrl?: string;
   showBallCount?: boolean;
+  winDisplay: { amount: number; teamSide: 'A' | 'B' | null };
+  loseDisplay: { amount: number; teamSide: 'A' | 'B' | null };
 }
 
 const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
@@ -96,7 +98,9 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
   adminModalRef,
   teamAPlayerImageUrl,
   teamBPlayerImageUrl,
-  showBallCount = true
+  showBallCount = true,
+  winDisplay,
+  loseDisplay
 }) => {
   const vsRef = useRef<HTMLDivElement>(null);
   
@@ -238,6 +242,44 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
                 position="40% center"
                 showBallCount={showBallCount}
               />
+              {winDisplay.teamSide === 'A' && winDisplay.amount > 0 && (
+                <div
+                  className="absolute top-[65px] left-1/2 transform -translate-x-1/2 text-white font-bold text-7xl uppercase"
+                  style={{
+                    zIndex: 25, // Below VS, above other elements
+                    textShadow: `
+                      0 0 20px rgba(0, 255, 0, 0.9),
+                      0 0 40px rgba(0, 255, 0, 0.7),
+                      0 0 60px rgba(0, 255, 0, 0.5)
+                    `,
+                    letterSpacing: '4px',
+                    fontFamily: 'Impact, sans-serif',
+                    lineHeight: '1',
+                    userSelect: 'none',
+                  }}
+                >
+                  +{winDisplay.amount}
+                </div>
+              )}
+              {loseDisplay.teamSide === 'A' && loseDisplay.amount > 0 && (
+                <div
+                  className="absolute top-[65px] left-1/2 transform -translate-x-1/2 text-white font-bold text-7xl uppercase"
+                  style={{
+                    zIndex: 25,
+                    textShadow: `
+                      0 0 20px rgba(255, 0, 0, 0.9),
+                      0 0 40px rgba(255, 0, 0, 0.7),
+                      0 0 60px rgba(255, 0, 0, 0.5)
+                    `,
+                    letterSpacing: '4px',
+                    fontFamily: 'Impact, sans-serif',
+                    lineHeight: '1',
+                    userSelect: 'none',
+                  }}
+                >
+                  -{loseDisplay.amount}
+                </div>
+              )}
             </div>
             
             <div className="relative" style={{ backgroundColor: '#750037' }}>
@@ -263,6 +305,44 @@ const ScoreboardMainDisplay: React.FC<ScoreboardMainDisplayProps> = ({
                 position="55% 55%"
                 showBallCount={showBallCount}
               />
+              {winDisplay.teamSide === 'B' && winDisplay.amount > 0 && (
+                <div
+                  className="absolute top-[65px] left-1/2 transform -translate-x-1/2 text-white font-bold text-7xl uppercase"
+                  style={{
+                    zIndex: 25, // Below VS, above other elements
+                    textShadow: `
+                      0 0 20px rgba(0, 255, 0, 0.9),
+                      0 0 40px rgba(0, 255, 0, 0.7),
+                      0 0 60px rgba(0, 255, 0, 0.5)
+                    `,
+                    letterSpacing: '4px',
+                    fontFamily: 'Impact, sans-serif',
+                    lineHeight: '1',
+                    userSelect: 'none',
+                  }}
+                >
+                  +{winDisplay.amount}
+                </div>
+              )}
+              {loseDisplay.teamSide === 'B' && loseDisplay.amount > 0 && (
+                <div
+                  className="absolute top-[65px] left-1/2 transform -translate-x-1/2 text-white font-bold text-7xl uppercase"
+                  style={{
+                    zIndex: 25,
+                    textShadow: `
+                      0 0 20px rgba(255, 0, 0, 0.9),
+                      0 0 40px rgba(255, 0, 0, 0.7),
+                      0 0 60px rgba(255, 0, 0, 0.5)
+                    `,
+                    letterSpacing: '4px',
+                    fontFamily: 'Impact, sans-serif',
+                    lineHeight: '1',
+                    userSelect: 'none',
+                  }}
+                >
+                  -{loseDisplay.amount}
+                </div>
+              )}
             </div>
           </div>
         </CardContent>

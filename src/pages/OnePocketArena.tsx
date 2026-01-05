@@ -27,13 +27,6 @@ import { coinAuditService } from "@/services/coinAudit";
 import { useSound } from "@/hooks/use-sound";
 import SocketIOStatus from "@/components/SocketIOStatus";
 
-interface WinFlash {
-  id: string;
-  userId: string;
-  amount: number;
-  timestamp: number;
-  position: { x: number; y: number }; // Relative position for animation
-}
 
 // ============================================================================
 // ONE POCKET ARENA - SEPARATE BETTING QUEUE WITH INDEPENDENT DATA
@@ -102,10 +95,11 @@ const OnePocketArena = () => {
   const lastBetDeletionTimeRef = useRef<number>(0);
   const BET_PLACEMENT_COOLDOWN_MS = 3000; // 3-second cooldown for bet placement to prevent data loss
   const BET_DELETION_COOLDOWN_MS = 1000; // 1-second cooldown for bet deletion
+
+  const [winDisplay, setWinDisplay] = useState<{ amount: number; teamSide: 'A' | 'B' | null }>({ amount: 0, teamSide: null });
+  const [loseDisplay, setLoseDisplay] = useState<{ amount: number; teamSide: 'A' | 'B' | null }>({ amount: 0, teamSide: null });
   
   // ✅ NEW: State for win flash animations
-  const [winFlashes, setWinFlashes] = useState<WinFlash[]>([]);
-  const winFlashIdRef = useRef(0);
 
   // Extract state from gameState context
   const {
@@ -296,37 +290,6 @@ const OnePocketArena = () => {
     }
   }, [teamABalls, teamBBalls, playPoolSound, playBooSound]);
 
-  // ✅ NEW: Listen for win flash events
-  useEffect(() => {
-    const handleWinFlash = (data: { userId: string; amount: number; gameNumber: number }) => {
-      console.log(`✨ [WIN-FLASH] Received win flash event for user ${data.userId}: +${data.amount} coins`);
-      // Create a unique ID for the flash animation
-      const id = `win-flash-${winFlashIdRef.current++}`;
-
-      setWinFlashes(prev => [
-        ...prev,
-        {
-          id,
-          userId: data.userId,
-          amount: data.amount,
-          timestamp: Date.now(),
-          // Position over the scoreboard - adjust as needed
-          position: { x: window.innerWidth / 2, y: window.innerHeight / 3 } 
-        }
-      ]);
-
-      // Remove the flash after 2 seconds (animation duration)
-      setTimeout(() => {
-        setWinFlashes(prev => prev.filter(flash => flash.id !== id));
-      }, 2000);
-    };
-
-    socketIOService.onWinFlashEvent(handleWinFlash);
-
-    return () => {
-      socketIOService.offWinFlashEvent(handleWinFlash);
-    };
-  }, [currentUser]); // Depend on currentUser to ensure listener is tied to the active user
 
   const generateBetId = () => {
     // Generate a 7-digit unique ID using counter + random number
@@ -485,7 +448,23 @@ const OnePocketArena = () => {
     console.log(`🎮 [GAME-WIN] Processing bets for Game #${currentGameNumber}, winning team: ${winningTeam}`);
     console.log(`🎮 [GAME-WIN] Team A bets: ${teamAQueue.length}, Team B bets: ${teamBQueue.length}`);
     console.log(`🎮 [GAME-WIN] Team A amount: ${teamAQueue.reduce((s, b) => s + b.amount, 0)}, Team B amount: ${teamBQueue.reduce((s, b) => s + b.amount, 0)}`);
-    await processPendingBets(currentGameNumber, winningTeam, teamAQueue, teamBQueue);
+    // Reset win/lose displays before processing bets to prevent showing stale data
+    setWinDisplay({ amount: 0, teamSide: null });
+    setLoseDisplay({ amount: 0, teamSide: null });
+    await processPendingBets(currentGameNumber, winningTeam, teamAQueue, teamBQueue,
+      (winningAmount, winningTeamSide) => {
+        const winningsOnly = winningAmount; // winningAmount now represents only the winnings (profit)
+        console.log(`✨ [WIN-DISPLAY] Setting win display for ${winningTeamSide}: +${winningsOnly} coins (total returned: ${winningAmount})`);
+        setWinDisplay({ amount: winningsOnly, teamSide: winningTeamSide });
+        // Clear win display after 3 seconds
+        setTimeout(() => setWinDisplay({ amount: 0, teamSide: null }), 3000);
+      },
+      (losingAmount, losingTeamSide) => {
+        console.log(`💔 [LOSE-DISPLAY] Setting lose display for ${losingTeamSide}: -${losingAmount} coins`);
+        setLoseDisplay({ amount: losingAmount, teamSide: losingTeamSide });
+        setTimeout(() => setLoseDisplay({ amount: 0, teamSide: null }), 3000);
+      }
+    );
     
     // 📊 START COIN AUDIT - Take pre-game snapshot
     const gameId = `game-${Date.now()}`;
@@ -1589,48 +1568,7 @@ const OnePocketArena = () => {
 
   return (
     <div className="min-h-screen p-4 md:p-8 pt-32 relative" style={{ backgroundColor: '#000000', color: '#FFFFFF' }}>
-      {/* Win Flash Animations */}
-      {winFlashes.map(flash => (
-        <div
-          key={flash.id}
-          className="win-flash-animation"
-          style={{
-            position: 'absolute',
-            left: flash.position.x,
-            top: flash.position.y,
-            transform: 'translate(-50%, -50%)',
-            zIndex: 1000,
-            color: '#00FF00', /* Bright Green */
-            fontSize: '3rem', /* Large Font */
-            fontWeight: 'bold',
-            textShadow: '0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.6)', /* Green Glow */
-            opacity: 0,
-            animation: 'win-flash 2s forwards',
-            pointerEvents: 'none',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          +{flash.amount} COINS
-        </div>
-      ))}
 
-      {/* Global CSS for Win Flash Animation */}
-      <style jsx>{`
-        @keyframes win-flash {
-          0% {
-            opacity: 0;
-            transform: translate(-50%, 0) scale(0.8);
-          }
-          20% {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1.1);
-          }
-          100% {
-            opacity: 0;
-            transform: translate(-50%, -150%) scale(0.7);
-          }
-        }
-      `}</style>
       
       {/* Debug Status - Shows data sync info for mobile troubleshooting */}
       {/* <SocketIOStatus /> - Hidden for now */}
@@ -1727,6 +1665,8 @@ const OnePocketArena = () => {
           teamAPlayerImageUrl="/lovable-uploads/alex.png"
           teamBPlayerImageUrl="/lovable-uploads/tony.jpg"
           showBallCount={true}
+          winDisplay={winDisplay}
+          loseDisplay={loseDisplay}
         />
 
         {/* Game History Window */}

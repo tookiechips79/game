@@ -30,17 +30,23 @@ export interface GameAudit {
   createdCoins: number; // Should ALWAYS be 0
 }
 
+export interface CreditTransaction {
+  id: string; // Unique transaction ID
+  timestamp: number;
+  userId: string;
+  userName: string;
+  type: 'bet_deducted' | 'credits_added' | 'bet_refund' | 'win_payout' | 'cashout' | 'subscription' | 'system_audit' | 'coin_loss_detected';
+  amount: number; // Positive for additions, negative for deductions (though typically stored as absolute value and type indicates direction)
+  newBalance: number; // User's balance AFTER this transaction
+  gameNumber?: number; // Optional game number if related to a game
+  betId?: string; // Optional bet ID if related to a bet
+  details?: string; // Additional human-readable details
+}
+
 class CoinAuditService {
   private snapshots: Map<string, CoinSnapshot[]> = new Map();
   private gameAudits: Map<string, GameAudit> = new Map();
-  private transactionLog: Array<{
-    timestamp: number;
-    userId: string;
-    operation: string;
-    amount: number;
-    newBalance: number;
-    gameId?: string;
-  }> = [];
+  private transactionLog: CreditTransaction[] = [];
 
   /**
    * Create a snapshot of all user balances
@@ -319,31 +325,40 @@ class CoinAuditService {
   }
 
   /**
-   * Log a transaction for detailed tracking
+   * Log a credit transaction for detailed tracking
    */
-  logTransaction(
+  logCreditTransaction(
     userId: string,
-    operation: string,
+    userName: string,
+    type: CreditTransaction['type'],
     amount: number,
     newBalance: number,
-    gameId?: string
+    gameNumber?: number,
+    betId?: string,
+    details?: string
   ): void {
-    this.transactionLog.push({
+    const transaction: CreditTransaction = {
+      id: `tx-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       timestamp: Date.now(),
       userId,
-      operation,
+      userName,
+      type,
       amount,
       newBalance,
-      gameId,
-    });
+      gameNumber,
+      betId,
+      details
+    };
+    this.transactionLog.push(transaction);
+    console.log(`💸 [TRANSACTION] ${type} for ${userName} (${userId}): ${amount} coins. New balance: ${newBalance}. Game: ${gameNumber || 'N/A'}, Bet: ${betId || 'N/A'}`);
   }
 
   /**
    * Get transaction log for debugging
    */
-  getTransactionLog(gameId?: string): typeof this.transactionLog {
+  getTransactionLog(gameId?: number): CreditTransaction[] {
     if (gameId) {
-      return this.transactionLog.filter(t => t.gameId === gameId);
+      return this.transactionLog.filter(t => t.gameNumber === gameId);
     }
     return this.transactionLog;
   }
