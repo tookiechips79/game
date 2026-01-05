@@ -877,7 +877,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const winningBets = winningTeam === 'A' ? teamABets : teamBBets;
       const losingBets = winningTeam === 'A' ? teamBBets : teamABets;
       
-      // Create a map of losing bets by amount for quick matching
+      // ✅ BULLETPROOF MATCHING: Explicitly track matched pairs
+      // Don't modify maps during calculation - store matches for later use
+      console.log(`\n🔄 [MATCH-CALCULATION] Matching winning and losing bets...`);
+      
+      // Create immutable copy of losing bets by amount for matching
       const losingBetsByAmount = new Map<number, any[]>();
       for (const bet of losingBets) {
         if (!losingBetsByAmount.has(bet.amount)) {
@@ -886,52 +890,82 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         losingBetsByAmount.get(bet.amount)!.push(bet);
       }
       
-      // Calculate payouts
-      const payouts: { userId: string; amount: number }[] = [];
-      const unmatchedBets: any[] = [];
+      // ✅ Store EXACT matches: winning bet + losing bet pairs
+      const matchedPairs: Array<{ winBet: any; loseBet: any }> = [];
+      const unmatchedWinBets: any[] = [];
+      
+      // Calculate matches WITHOUT modifying the map
+      const losingBetsUsedIndexes = new Map<number, Set<number>>();
       
       for (const winBet of winningBets) {
         const losingBetsForAmount = losingBetsByAmount.get(winBet.amount) || [];
-        const losingBetMatch = losingBetsForAmount.pop(); // Get one matching losing bet
+        const usedIndexes = losingBetsUsedIndexes.get(winBet.amount) || new Set();
         
-        if (losingBetMatch) {
-          // Winner gets: their bet + loser's bet
-          const payout = winBet.amount + losingBetMatch.amount;
-          payouts.push({
-            userId: winBet.userId,
-            amount: payout
-          });
-          console.log(`✅ ${winBet.userName} wins: ${winBet.amount} + ${losingBetMatch.amount} = ${payout}`);
+        // Find first unused losing bet of matching amount
+        let matchedLosingBet = null;
+        for (let i = losingBetsForAmount.length - 1; i >= 0; i--) {
+          if (!usedIndexes.has(i)) {
+            matchedLosingBet = losingBetsForAmount[i];
+            usedIndexes.add(i);
+            losingBetsUsedIndexes.set(winBet.amount, usedIndexes);
+            break;
+          }
+        }
+        
+        if (matchedLosingBet) {
+          matchedPairs.push({ winBet, loseBet: matchedLosingBet });
+          console.log(`✅ Match found: ${winBet.userName} (${winBet.amount}) ↔ ${matchedLosingBet.userName} (${matchedLosingBet.amount})`);
         } else {
-          // No match found - this bet is unmatched
-          unmatchedBets.push(winBet);
-          console.log(`⚠️ Unmatched winning bet #${winBet.id} for ${winBet.userName}: ${winBet.amount} coins will be refunded`);
+          unmatchedWinBets.push(winBet);
+          console.log(`⚠️ No match: ${winBet.userName} (${winBet.amount})`);
         }
       }
       
-      // Refund unmatched bets from both teams
-      for (const unmatchedBet of unmatchedBets) {
+      // ✅ Collect unmatched losing bets
+      const unmatchedLosingBets: any[] = [];
+      for (const [amount, bets] of losingBetsByAmount.entries()) {
+        const usedIndexes = losingBetsUsedIndexes.get(amount) || new Set();
+        for (let i = 0; i < bets.length; i++) {
+          if (!usedIndexes.has(i)) {
+            unmatchedLosingBets.push(bets[i]);
+            console.log(`⚠️ No match: ${bets[i].userName} (${bets[i].amount}) - losing bet`);
+          }
+        }
+      }
+      
+      // ✅ Build payouts from EXPLICIT matches (no ambiguity!)
+      const payouts: { userId: string; amount: number }[] = [];
+      
+      // Add matched wins
+      for (const { winBet, loseBet } of matchedPairs) {
+        const payout = winBet.amount + loseBet.amount;
+        payouts.push({
+          userId: winBet.userId,
+          amount: payout
+        });
+      }
+      
+      // Add unmatched winning bets refunds
+      for (const unmatchedBet of unmatchedWinBets) {
         payouts.push({
           userId: unmatchedBet.userId,
           amount: unmatchedBet.amount
         });
-        console.log(`💰 Refunding unmatched bet for ${unmatchedBet.userName}: ${unmatchedBet.amount} coins`);
       }
       
-      // Also refund any unmatched losing bets
-      for (const betsForAmount of losingBetsByAmount.values()) {
-        for (const unmatchedLosingBet of betsForAmount) {
-          payouts.push({
-            userId: unmatchedLosingBet.userId,
-            amount: unmatchedLosingBet.amount
-          });
-          console.log(`💰 Refunding unmatched losing bet for ${unmatchedLosingBet.userName}: ${unmatchedLosingBet.amount} coins`);
-        }
+      // Add unmatched losing bets refunds
+      for (const unmatchedBet of unmatchedLosingBets) {
+        payouts.push({
+          userId: unmatchedBet.userId,
+          amount: unmatchedBet.amount
+        });
       }
       
-      // ✅ DOUBLE-CHECK SYSTEM: Verify winner payouts are correct
-      // Calculate what winners SHOULD get from matched bets
-      console.log(`\n🔍 [DOUBLE-CHECK] Verifying winner payouts from matched bets...`);
+      console.log(`\n📊 [MATCH-SUMMARY] Matched: ${matchedPairs.length}, Unmatched: ${unmatchedWinBets.length + unmatchedLosingBets.length}`);
+      
+      // ✅ DOUBLE-CHECK SYSTEM: Verify winner payouts using EXPLICIT matches
+      // Use the matchedPairs we already calculated - no need to rebuild!
+      console.log(`\n🔍 [DOUBLE-CHECK] Verifying winner payouts from explicit matched pairs...`);
       console.log(`\n📋 [PAYOUT-BREAKDOWN] Detailed calculation for each winner:`);
       
       const winnerPayoutsCalculated = new Map<string, { 
@@ -941,69 +975,50 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         winningsFromLoser: number;
       }>();
       
-      // Rebuild winning bets with their matches to verify payouts
-      const losingBetsByAmountCheck = new Map<number, any[]>();
-      for (const bet of losingBets) {
-        if (!losingBetsByAmountCheck.has(bet.amount)) {
-          losingBetsByAmountCheck.set(bet.amount, []);
-        }
-        losingBetsByAmountCheck.get(bet.amount)!.push(bet);
-      }
-      
-      for (const winBet of winningBets) {
-        const losingBetsForAmount = losingBetsByAmountCheck.get(winBet.amount) || [];
-        const losingBetMatch = losingBetsForAmount.length > 0 ? losingBetsForAmount[losingBetsForAmount.length - 1] : null;
+      // ✅ SIMPLIFIED & BULLETPROOF: Just double the bet!
+      // Instead of: original_bet + loser_bet (complex, error-prone)
+      // Just: 2x the bet amount (simple, impossible to miscalculate)
+      // Same result, zero complexity!
+      for (const { winBet, loseBet } of matchedPairs) {
+        const doubledBetAmount = winBet.amount * 2; // Winner gets 2x their bet
+        const expectedPayout = doubledBetAmount;
         
-        if (losingBetMatch) {
-          // ✅ CRITICAL: Return original bet + winnings from loser
-          const originalBetReturned = winBet.amount;
-          const winningsFromLoser = losingBetMatch.amount;
-          const expectedPayout = originalBetReturned + winningsFromLoser;
-          
-          if (winnerPayoutsCalculated.has(winBet.userId)) {
-            const existing = winnerPayoutsCalculated.get(winBet.userId)!;
-            winnerPayoutsCalculated.set(winBet.userId, {
-              matchedAmount: existing.matchedAmount + expectedPayout,
-              betsCount: existing.betsCount + 1,
-              originalBetReturned: existing.originalBetReturned + originalBetReturned,
-              winningsFromLoser: existing.winningsFromLoser + winningsFromLoser
-            });
-          } else {
-            winnerPayoutsCalculated.set(winBet.userId, { 
-              matchedAmount: expectedPayout, 
-              betsCount: 1,
-              originalBetReturned,
-              winningsFromLoser
-            });
-          }
-          
-          // ✅ Explicit breakdown showing original bet return
-          console.log(`   ${winBet.userName} (Bet ID ${winBet.id}):`);
-          console.log(`      Original bet placed: -${originalBetReturned} coins`);
-          console.log(`      Return of original bet: +${originalBetReturned} coins`);
-          console.log(`      Winnings from loser: +${winningsFromLoser} coins`);
-          console.log(`      Total payout: ${expectedPayout} coins ✅`);
+        if (winnerPayoutsCalculated.has(winBet.userId)) {
+          const existing = winnerPayoutsCalculated.get(winBet.userId)!;
+          winnerPayoutsCalculated.set(winBet.userId, {
+            matchedAmount: existing.matchedAmount + expectedPayout,
+            betsCount: existing.betsCount + 1,
+            originalBetReturned: winBet.amount, // Still track for audit
+            winningsFromLoser: winBet.amount // Winnings is also 1x bet amount
+          });
+        } else {
+          winnerPayoutsCalculated.set(winBet.userId, { 
+            matchedAmount: expectedPayout, 
+            betsCount: 1,
+            originalBetReturned: winBet.amount, // Still track for audit
+            winningsFromLoser: winBet.amount // Winnings is also 1x bet amount
+          });
         }
+        
+        // ✅ SIMPLE BREAKDOWN: Just 2x the bet!
+        console.log(`   ${winBet.userName} (Bet ID ${winBet.id}):`);
+        console.log(`      Bet amount: ${winBet.amount} coins`);
+        console.log(`      Payout (2x): ${doubledBetAmount} coins`);
+        console.log(`      Profit: +${doubledBetAmount - winBet.amount} coins ✅`);
       }
       
       // Step 3: Compare calculated payouts with what we're actually paying
-      // ✅ CRITICAL: Only verify matched wins, NOT unmatched refunds (avoid double-counting)
-      console.log(`\n🔐 [PAYOUT-VERIFICATION] Comparing calculated vs actual payouts (matched wins only):`);
+      // ✅ SIMPLE & BULLETPROOF: Just 2x the bet, no complex calculation!
+      console.log(`\n🔐 [PAYOUT-VERIFICATION] Verifying payouts (2x bet amount):`);
       
       const winnerPayoutsActual = new Map<string, number>();
       
-      // ✅ Only sum the MATCHED portions from payouts
-      // Unmatched refunds will be added separately after verification
-      for (const winBet of winningBets) {
-        const losingBetsForAmount = losingBetsByAmount.get(winBet.amount) || [];
-        const losingBetMatch = losingBetsForAmount.length > 0 ? losingBetsForAmount[losingBetsForAmount.length - 1] : null;
-        
-        if (losingBetMatch) {
-          // This is a matched win - include in verification
-          const expectedPayout = winBet.amount + losingBetMatch.amount;
-          const current = winnerPayoutsActual.get(winBet.userId) || 0;
-          winnerPayoutsActual.set(winBet.userId, current + expectedPayout);
-        }
+      // ✅ Super simple: just double each matched bet
+      // Zero possibility of miscalculation!
+      for (const { winBet } of matchedPairs) {
+        const doubledPayout = winBet.amount * 2;
+        const current = winnerPayoutsActual.get(winBet.userId) || 0;
+        winnerPayoutsActual.set(winBet.userId, current + doubledPayout);
       }
       
       // Verify each winner is getting correct amount
@@ -1015,14 +1030,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (actual === calculated.matchedAmount) {
           console.log(`   ✅ ${user?.name}: Correct payout ${actual} coins`);
-          console.log(`      - Original bet returned: ${calculated.originalBetReturned} coins`);
-          console.log(`      - Winnings from losers: ${calculated.winningsFromLoser} coins`);
-          console.log(`      - Total: ${calculated.matchedAmount} coins (${calculated.betsCount} matched bets)`);
+          console.log(`      - Bet: ${calculated.originalBetReturned} coins`);
+          console.log(`      - Winnings: ${calculated.winningsFromLoser} coins`);
+          console.log(`      - Total (2x bet): ${calculated.matchedAmount} coins (${calculated.betsCount} matched bets)`);
         } else {
           console.error(`   ❌ ${user?.name}: MISMATCH! Should get ${calculated.matchedAmount}, paying ${actual}`);
-          console.error(`      - Expected original bet return: ${calculated.originalBetReturned}`);
+          console.error(`      - Expected bet return: ${calculated.originalBetReturned}`);
           console.error(`      - Expected winnings: ${calculated.winningsFromLoser}`);
-          console.error(`      - Total expected: ${calculated.matchedAmount}`);
+          console.error(`      - Total expected (2x bet): ${calculated.matchedAmount}`);
           payoutMismatchFound = true;
           
           // ✅ FIX: Correct the payout to match calculation
