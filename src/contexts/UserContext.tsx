@@ -1155,6 +1155,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setCurrentUser({ ...user, credits: change.newBalance });
             }
             
+            // Emit a win flash event for the UI
+            if (change.payout > 0) {
+              socketIOService.emitWinFlashEvent({ userId: user.id, amount: change.payout, gameNumber: gameNumber });
+            }
             return { ...user, credits: change.newBalance };
           }
           return user;
@@ -1169,7 +1173,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (postGameSnapshotTotal !== preGameTotal) {
           console.error(`🚨 [CRITICAL] Coin loss detected! ${preGameTotal} → ${postGameSnapshotTotal}`);
-          coinAuditService.logTransaction('SYSTEM', 'coin_loss_detected', postGameSnapshotTotal - preGameTotal, postGameSnapshotTotal, `game-${gameNumber}`);
+          coinAuditService.logCreditTransaction('SYSTEM', 'coin_loss_detected', 'system_audit', postGameSnapshotTotal - preGameTotal, postGameSnapshotTotal, gameNumber);
         }
         
         return updated;
@@ -1178,7 +1182,28 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Step 6: Log all transactions for audit trail
       console.log(`\n📋 [AUDIT-LOG] Transaction summary:`);
       balanceChanges.forEach((change, userId) => {
-        coinAuditService.logTransaction(userId, 'payout_win', change.payout, change.newBalance, `game-${gameNumber}`);
+        // Find the user to get their name for the audit log
+        const user = users.find(u => u.id === userId);
+        if (user) {
+          coinAuditService.logCreditTransaction(
+            userId,
+            user.name,
+            'win_payout', // Type of transaction
+            change.payout,
+            change.newBalance,
+            gameNumber
+          );
+        } else {
+          console.warn(`⚠️ [AUDIT-LOG] User not found for audit log: ${userId}`);
+          coinAuditService.logCreditTransaction(
+            userId,
+            'Unknown User',
+            'win_payout',
+            change.payout,
+            change.newBalance,
+            gameNumber
+          );
+        }
         console.log(`   ${userId}: +${change.payout} coins`);
       });
       
