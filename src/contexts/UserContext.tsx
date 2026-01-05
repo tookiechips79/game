@@ -932,8 +932,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // ✅ DOUBLE-CHECK SYSTEM: Verify winner payouts are correct
       // Calculate what winners SHOULD get from matched bets
       console.log(`\n🔍 [DOUBLE-CHECK] Verifying winner payouts from matched bets...`);
+      console.log(`\n📋 [PAYOUT-BREAKDOWN] Detailed calculation for each winner:`);
       
-      const winnerPayoutsCalculated = new Map<string, { matchedAmount: number; betsCount: number }>();
+      const winnerPayoutsCalculated = new Map<string, { 
+        matchedAmount: number; 
+        betsCount: number;
+        originalBetReturned: number;
+        winningsFromLoser: number;
+      }>();
       
       // Rebuild winning bets with their matches to verify payouts
       const losingBetsByAmountCheck = new Map<number, any[]>();
@@ -949,17 +955,34 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const losingBetMatch = losingBetsForAmount.length > 0 ? losingBetsForAmount[losingBetsForAmount.length - 1] : null;
         
         if (losingBetMatch) {
-          const expectedPayout = winBet.amount + losingBetMatch.amount;
+          // ✅ CRITICAL: Return original bet + winnings from loser
+          const originalBetReturned = winBet.amount;
+          const winningsFromLoser = losingBetMatch.amount;
+          const expectedPayout = originalBetReturned + winningsFromLoser;
+          
           if (winnerPayoutsCalculated.has(winBet.userId)) {
             const existing = winnerPayoutsCalculated.get(winBet.userId)!;
             winnerPayoutsCalculated.set(winBet.userId, {
               matchedAmount: existing.matchedAmount + expectedPayout,
-              betsCount: existing.betsCount + 1
+              betsCount: existing.betsCount + 1,
+              originalBetReturned: existing.originalBetReturned + originalBetReturned,
+              winningsFromLoser: existing.winningsFromLoser + winningsFromLoser
             });
           } else {
-            winnerPayoutsCalculated.set(winBet.userId, { matchedAmount: expectedPayout, betsCount: 1 });
+            winnerPayoutsCalculated.set(winBet.userId, { 
+              matchedAmount: expectedPayout, 
+              betsCount: 1,
+              originalBetReturned,
+              winningsFromLoser
+            });
           }
-          console.log(`   ✅ ${winBet.userName}: Bet ${winBet.amount} matched with ${losingBetMatch.amount} = ${expectedPayout}`);
+          
+          // ✅ Explicit breakdown showing original bet return
+          console.log(`   ${winBet.userName} (Bet ID ${winBet.id}):`);
+          console.log(`      Original bet placed: -${originalBetReturned} coins`);
+          console.log(`      Return of original bet: +${originalBetReturned} coins`);
+          console.log(`      Winnings from loser: +${winningsFromLoser} coins`);
+          console.log(`      Total payout: ${expectedPayout} coins ✅`);
         }
       }
       
@@ -977,15 +1000,22 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       // Verify each winner is getting correct amount
+      console.log(`\n✅ [WINNER-VERIFICATION] Confirming all winners get paid correctly:`);
       let payoutMismatchFound = false;
       for (const [winnerUserId, calculated] of winnerPayoutsCalculated.entries()) {
         const actual = winnerPayoutsActual.get(winnerUserId) || 0;
         const user = users.find(u => u.id === winnerUserId);
         
         if (actual === calculated.matchedAmount) {
-          console.log(`   ✅ ${user?.name}: Correct payout ${actual} coins (${calculated.betsCount} matched bets)`);
+          console.log(`   ✅ ${user?.name}: Correct payout ${actual} coins`);
+          console.log(`      - Original bet returned: ${calculated.originalBetReturned} coins`);
+          console.log(`      - Winnings from losers: ${calculated.winningsFromLoser} coins`);
+          console.log(`      - Total: ${calculated.matchedAmount} coins (${calculated.betsCount} matched bets)`);
         } else {
           console.error(`   ❌ ${user?.name}: MISMATCH! Should get ${calculated.matchedAmount}, paying ${actual}`);
+          console.error(`      - Expected original bet return: ${calculated.originalBetReturned}`);
+          console.error(`      - Expected winnings: ${calculated.winningsFromLoser}`);
+          console.error(`      - Total expected: ${calculated.matchedAmount}`);
           payoutMismatchFound = true;
           
           // ✅ FIX: Correct the payout to match calculation
