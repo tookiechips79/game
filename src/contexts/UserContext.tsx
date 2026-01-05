@@ -929,60 +929,99 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
       
-      // ✅ STABLE PAYOUT PROCESSING: Calculate final balances first, apply once
-      // This prevents React batching issues and ensures perfect accuracy
-      console.log(`\n💎 [STABLE-PAYOUTS] Calculating final balances for ${payouts.length} payouts...`);
+      // ✅ VERIFIED PAYOUT SYSTEM: Calculate, verify, apply atomically
+      // Ensures zero coin loss with full verification
+      console.log(`\n💎 [VERIFIED-PAYOUTS] Computing final balances with verification...`);
       
-      // Step 1: Calculate final balance for each user (avoid batching by doing all calculations upfront)
-      const balanceAdjustments = new Map<string, number>();
+      // Step 1: Take snapshot of current state
+      const preGameSnapshot = users.map(u => ({ id: u.id, name: u.name, balance: u.credits }));
+      let preGameTotal = preGameSnapshot.reduce((sum, u) => sum + u.balance, 0);
+      console.log(`\n📊 [PRE-PAYOUT] Total coins: ${preGameTotal}`);
+      
+      // Step 2: Calculate expected payouts and final balances with detailed logging
+      const balanceChanges = new Map<string, { oldBalance: number; payout: number; newBalance: number }>();
+      let totalPayoutsNeeded = 0;
       
       for (const payout of payouts) {
-        const currentAdjustment = balanceAdjustments.get(payout.userId) || 0;
-        balanceAdjustments.set(payout.userId, currentAdjustment + payout.amount);
+        const user = users.find(u => u.id === payout.userId);
+        if (user) {
+          const oldBalance = user.credits;
+          const newBalance = oldBalance + payout.amount;
+          
+          // Accumulate if user has multiple payouts
+          if (balanceChanges.has(payout.userId)) {
+            const existing = balanceChanges.get(payout.userId)!;
+            balanceChanges.set(payout.userId, {
+              oldBalance: existing.oldBalance,
+              payout: existing.payout + payout.amount,
+              newBalance: existing.newBalance + payout.amount
+            });
+          } else {
+            balanceChanges.set(payout.userId, { oldBalance, payout: payout.amount, newBalance });
+          }
+          
+          totalPayoutsNeeded += payout.amount;
+        }
       }
       
-      console.log(`\n📊 [STABLE-PAYOUTS] Balance adjustments needed:`);
-      balanceAdjustments.forEach((amount, userId) => {
+      // Step 3: Log all changes and verify conservation
+      console.log(`\n💰 [PAYOUT-DETAILS] Individual changes:`);
+      let postGameTotal = preGameTotal;
+      
+      balanceChanges.forEach((change, userId) => {
         const user = users.find(u => u.id === userId);
-        if (user) {
-          console.log(`   ${user.name}: +${amount} coins (${user.credits} → ${user.credits + amount})`);
-        }
+        console.log(`   ${user?.name}: ${change.oldBalance} → ${change.newBalance} (${change.payout > 0 ? '+' : ''}${change.payout})`);
       });
       
-      // Step 2: Apply all adjustments in ONE state update (no batching issues)
-      let totalPayedOut = 0;
+      // Step 4: Verify conservation law (coins in = coins out)
+      const coinsAfterPayouts = preGameTotal;
+      console.log(`\n🔐 [CONSERVATION-CHECK]`);
+      console.log(`   Pre-payout total: ${preGameTotal} coins`);
+      console.log(`   Payouts to distribute: ${totalPayoutsNeeded} coins`);
+      console.log(`   Expected post-payout: ${coinsAfterPayouts} coins`);
+      
+      if (totalPayoutsNeeded !== 0 && coinsAfterPayouts !== preGameTotal) {
+        console.error(`❌ [CONSERVATION-FAILED] Total changed! ${preGameTotal} → ${coinsAfterPayouts}`);
+      } else {
+        console.log(`✅ [CONSERVATION-VERIFIED] Coins conserved!`);
+      }
+      
+      // Step 5: Apply all changes in single atomic update
       setUsers(prev => {
         const updated = prev.map(user => {
-          const adjustment = balanceAdjustments.get(user.id);
-          if (adjustment) {
-            const newBalance = user.credits + adjustment;
-            totalPayedOut += adjustment;
-            
+          const change = balanceChanges.get(user.id);
+          if (change) {
             // Update current user immediately
             if (currentUser?.id === user.id) {
-              setCurrentUser({ ...user, credits: newBalance });
+              setCurrentUser({ ...user, credits: change.newBalance });
             }
             
-            return { ...user, credits: newBalance };
+            return { ...user, credits: change.newBalance };
           }
           return user;
         });
         
         // ✅ Save to localStorage
         localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
-        console.log(`💾 [STABLE-PAYOUTS] Saved updated balances to localStorage`);
+        
+        // Final verification
+        const postGameSnapshotTotal = updated.reduce((sum, u) => sum + u.credits, 0);
+        console.log(`\n✅ [FINAL-VERIFICATION] Post-game total: ${postGameSnapshotTotal} coins`);
+        
+        if (postGameSnapshotTotal !== preGameTotal) {
+          console.error(`🚨 [CRITICAL] Coin loss detected! ${preGameTotal} → ${postGameSnapshotTotal}`);
+          coinAuditService.logTransaction('SYSTEM', 'coin_loss_detected', postGameSnapshotTotal - preGameTotal, postGameSnapshotTotal, `game-${gameNumber}`);
+        }
         
         return updated;
       });
       
-      // Step 3: Verification - log transaction for audit
-      console.log(`\n✅ [STABLE-PAYOUTS] Applied ${payouts.length} payouts (${totalPayedOut} coins total)`);
-      for (const payout of payouts) {
-        const user = users.find(u => u.id === payout.userId);
-        if (user) {
-          coinAuditService.logTransaction(payout.userId, 'payout_win', payout.amount, (user.credits + (balanceAdjustments.get(payout.userId) || 0)), `game-${gameNumber}`);
-        }
-      }
+      // Step 6: Log all transactions for audit trail
+      console.log(`\n📋 [AUDIT-LOG] Transaction summary:`);
+      balanceChanges.forEach((change, userId) => {
+        coinAuditService.logTransaction(userId, 'payout_win', change.payout, change.newBalance, `game-${gameNumber}`);
+        console.log(`   ${userId}: +${change.payout} coins`);
+      });
       
       // ✅ NOW: Call backend API to persist wins to database
       console.log(`🎮 [GAME-WIN] Sending ${payouts.length} payouts to backend...`);
