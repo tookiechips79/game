@@ -506,50 +506,53 @@ const OnePocketArena = () => {
     // The old logic below has been removed to prevent coin duplication
     console.log(`✅ [BET-PROCESSING] Booked bets (${bookedBets.length}) already processed via processPendingBets()`);
     
-    // ✅ NEXT-GAME UNMATCHED REFUNDS ONLY
-    // Current game refunds already handled by processPendingBets() in UserContext
-    // Only handle NEXT-game unmatched bets here (they are NOT processed by processPendingBets)
-    console.log(`🔥 [HARD-CLEAR] Refunding unmatched NEXT-game bets only`);
+    // ✅ UNIFIED BET PROCESSING FOR NEXT-GAME BETS
+    // Use the same verified system as current game bets!
+    console.log(`🔥 [NEXT-GAME-PROCESSING] Processing next-game bets with same verification as current game...`);
     
+    // Process next-game matched bets the same way as current game (with double-check)
+    // This ensures winners get correct payout + original bet return
+    console.log(`\n🎮 [NEXT-GAME-PAYOUT] Next game bets becoming current game bets`);
+    console.log(`   Team A: ${nextTeamAQueue.length} bets`);
+    console.log(`   Team B: ${nextTeamBQueue.length} bets`);
+    
+    // ✅ Only refund UNMATCHED next-game bets
     const unmatchedNextBetsA = nextTeamAQueue.filter(bet => !bet.booked);
     const unmatchedNextBetsB = nextTeamBQueue.filter(bet => !bet.booked);
     
-    console.log(`🔥 [HARD-CLEAR] NEXT-game queue state:`);
-    console.log(`   nextTeamAQueue total: ${nextTeamAQueue.length}`, nextTeamAQueue);
-    console.log(`   nextTeamBQueue total: ${nextTeamBQueue.length}`, nextTeamBQueue);
-    console.log(`🔥 [HARD-CLEAR] Unmatched NEXT-game bets breakdown:`);
-    console.log(`   Next Team A unmatched: ${unmatchedNextBetsA.length}`, unmatchedNextBetsA);
-    console.log(`   Next Team B unmatched: ${unmatchedNextBetsB.length}`, unmatchedNextBetsB);
+    console.log(`\n🔥 [UNMATCHED-NEXT] Unmatched next-game bets (need refund):`);
+    console.log(`   Team A unmatched: ${unmatchedNextBetsA.length}`, unmatchedNextBetsA);
+    console.log(`   Team B unmatched: ${unmatchedNextBetsB.length}`, unmatchedNextBetsB);
     
     const allUnmatchedNextBets = [...unmatchedNextBetsA, ...unmatchedNextBetsB];
-    console.log(`🔥 [HARD-CLEAR] Total unmatched NEXT-game bets collected: ${allUnmatchedNextBets.length}`, allUnmatchedNextBets);
     
-    // ✅ Group refunds by user to avoid state batching issues
-    const refundsByUser: Map<string, { amount: number; betIds: string[] }> = new Map();
+    // ✅ Refund unmatched next-game bets using same system as current game
+    // Group by user to batch refunds
+    const nextRefundsByUser: Map<string, { amount: number; betIds: string[] }> = new Map();
     
     for (const bet of allUnmatchedNextBets) {
       const user = getUserById(bet.userId);
       if (user) {
-        console.log(`   ❌ Refunding NEXT-game #${bet.id}: ${user.name} (${bet.amount} coins)`);
+        console.log(`   ❌ Unmatched NEXT bet #${bet.id}: ${user.name} (${bet.amount} coins)`);
         refundPendingBet(user.id, bet.id.toString());
         
-        if (!refundsByUser.has(user.id)) {
-          refundsByUser.set(user.id, { amount: 0, betIds: [] });
+        if (!nextRefundsByUser.has(user.id)) {
+          nextRefundsByUser.set(user.id, { amount: 0, betIds: [] });
         }
-        const entry = refundsByUser.get(user.id)!;
+        const entry = nextRefundsByUser.get(user.id)!;
         entry.amount += bet.amount;
         entry.betIds.push(bet.id.toString());
       }
     }
     
-    // ✅ Apply refunds one per user (not per bet) to avoid state batching issues
-    for (const [userId, { amount, betIds }] of refundsByUser.entries()) {
-      console.log(`   💰 Refunding ${betIds.length} NEXT-game bets for user ${userId}: ${amount} coins total`);
+    // ✅ Apply refunds for unmatched next-game bets
+    for (const [userId, { amount, betIds }] of nextRefundsByUser.entries()) {
+      console.log(`   💰 Refunding ${betIds.length} unmatched NEXT bets for user ${userId}: ${amount} coins total`);
       addCredits(userId, amount, false, `refund_unmatched_next_bets_${betIds.join('_')}`);
     }
     
-    const totalUnmatchedNext = Array.from(refundsByUser.values()).reduce((sum, r) => sum + r.amount, 0);
-    console.log(`🔥 [HARD-CLEAR] Total NEXT-game refunded: ${allUnmatchedNextBets.length} bets, ${totalUnmatchedNext} coins returned to accounts`);
+    const totalUnmatchedNext = Array.from(nextRefundsByUser.values()).reduce((sum, r) => sum + r.amount, 0);
+    console.log(`✅ [NEXT-GAME-PROCESSING] Unmatched NEXT-game bets refunded: ${allUnmatchedNextBets.length} bets, ${totalUnmatchedNext} coins`);
     
     // ✅ Get MATCHED next-game bets
     const nextMatchedBetsA = nextTeamAQueue.filter(bet => bet.booked);
