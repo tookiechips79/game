@@ -929,47 +929,60 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
       
-      // ✅ SEQUENTIAL PAYOUT PROCESSING: Process each payout one at a time
-      // This prevents state batching issues and ensures every payout is accounted for
-      console.log(`\n🔄 [SEQUENTIAL-PAYOUTS] Processing ${payouts.length} payouts sequentially...`);
+      // ✅ STABLE PAYOUT PROCESSING: Calculate final balances first, apply once
+      // This prevents React batching issues and ensures perfect accuracy
+      console.log(`\n💎 [STABLE-PAYOUTS] Calculating final balances for ${payouts.length} payouts...`);
       
-      let payoutIndex = 0;
-      const processNextPayout = () => {
-        if (payoutIndex >= payouts.length) {
-          console.log(`✅ [SEQUENTIAL-PAYOUTS] All ${payouts.length} payouts processed!`);
-          return;
+      // Step 1: Calculate final balance for each user (avoid batching by doing all calculations upfront)
+      const balanceAdjustments = new Map<string, number>();
+      
+      for (const payout of payouts) {
+        const currentAdjustment = balanceAdjustments.get(payout.userId) || 0;
+        balanceAdjustments.set(payout.userId, currentAdjustment + payout.amount);
+      }
+      
+      console.log(`\n📊 [STABLE-PAYOUTS] Balance adjustments needed:`);
+      balanceAdjustments.forEach((amount, userId) => {
+        const user = users.find(u => u.id === userId);
+        if (user) {
+          console.log(`   ${user.name}: +${amount} coins (${user.credits} → ${user.credits + amount})`);
         }
-        
-        const payout = payouts[payoutIndex];
-        payoutIndex++;
-        
-        setUsers(prev => {
-          const updated = prev.map(user => {
-            if (user.id === payout.userId) {
-              const newBalance = user.credits + payout.amount;
-              console.log(`   [${payoutIndex}/${payouts.length}] 💰 ${user.name}: +${payout.amount} coins (${user.credits} → ${newBalance})`);
-              
-              if (currentUser?.id === user.id) {
-                setCurrentUser({ ...user, credits: newBalance });
-              }
-              
-              return { ...user, credits: newBalance };
-            }
-            return user;
-          });
-          
-          // ✅ Save to localStorage after EACH payout
-          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
-          
-          // ✅ Process next payout immediately
-          setTimeout(() => processNextPayout(), 0);
-          
-          return updated;
-        });
-      };
+      });
       
-      // Start sequential processing
-      processNextPayout();
+      // Step 2: Apply all adjustments in ONE state update (no batching issues)
+      let totalPayedOut = 0;
+      setUsers(prev => {
+        const updated = prev.map(user => {
+          const adjustment = balanceAdjustments.get(user.id);
+          if (adjustment) {
+            const newBalance = user.credits + adjustment;
+            totalPayedOut += adjustment;
+            
+            // Update current user immediately
+            if (currentUser?.id === user.id) {
+              setCurrentUser({ ...user, credits: newBalance });
+            }
+            
+            return { ...user, credits: newBalance };
+          }
+          return user;
+        });
+        
+        // ✅ Save to localStorage
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updated));
+        console.log(`💾 [STABLE-PAYOUTS] Saved updated balances to localStorage`);
+        
+        return updated;
+      });
+      
+      // Step 3: Verification - log transaction for audit
+      console.log(`\n✅ [STABLE-PAYOUTS] Applied ${payouts.length} payouts (${totalPayedOut} coins total)`);
+      for (const payout of payouts) {
+        const user = users.find(u => u.id === payout.userId);
+        if (user) {
+          coinAuditService.logTransaction(payout.userId, 'payout_win', payout.amount, (user.credits + (balanceAdjustments.get(payout.userId) || 0)), `game-${gameNumber}`);
+        }
+      }
       
       // ✅ NOW: Call backend API to persist wins to database
       console.log(`🎮 [GAME-WIN] Sending ${payouts.length} payouts to backend...`);
