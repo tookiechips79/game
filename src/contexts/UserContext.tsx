@@ -987,15 +987,22 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       // Step 3: Compare calculated payouts with what we're actually paying
-      console.log(`\n🔐 [PAYOUT-VERIFICATION] Comparing calculated vs actual payouts:`);
+      // ✅ CRITICAL: Only verify matched wins, NOT unmatched refunds (avoid double-counting)
+      console.log(`\n🔐 [PAYOUT-VERIFICATION] Comparing calculated vs actual payouts (matched wins only):`);
       
       const winnerPayoutsActual = new Map<string, number>();
-      for (const payout of payouts) {
-        const user = users.find(u => u.id === payout.userId);
-        // Only count matched wins, not refunds
-        if (user && winnerPayoutsCalculated.has(payout.userId)) {
-          const current = winnerPayoutsActual.get(payout.userId) || 0;
-          winnerPayoutsActual.set(payout.userId, current + payout.amount);
+      
+      // ✅ Only sum the MATCHED portions from payouts
+      // Unmatched refunds will be added separately after verification
+      for (const winBet of winningBets) {
+        const losingBetsForAmount = losingBetsByAmount.get(winBet.amount) || [];
+        const losingBetMatch = losingBetsForAmount.length > 0 ? losingBetsForAmount[losingBetsForAmount.length - 1] : null;
+        
+        if (losingBetMatch) {
+          // This is a matched win - include in verification
+          const expectedPayout = winBet.amount + losingBetMatch.amount;
+          const current = winnerPayoutsActual.get(winBet.userId) || 0;
+          winnerPayoutsActual.set(winBet.userId, current + expectedPayout);
         }
       }
       
