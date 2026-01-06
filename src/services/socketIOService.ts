@@ -16,6 +16,8 @@ export interface BetSyncData {
   nextGameBets?: any[];
   nextTeamAQueue?: any[];
   nextTeamBQueue?: any[];
+  nextBookedBets?: any[]; // Added for next game booked bets
+  nextTotalBookedAmount?: number; // Added for next game total booked amount
   totalBookedAmount?: number;
   nextTotalBookedAmount?: number;
 }
@@ -74,13 +76,9 @@ class SocketIOService {
     this.lastIdentifiedArena = this.getArenaIdPrivate();
     log(`📍 Initialized lastIdentifiedArena to: ${this.lastIdentifiedArena}`);
     
-    // Skip Socket.IO connection in development mode
-    if (process.env.NODE_ENV === 'development') {
-      console.log('⏭️ [SOCKET.IO] Skipping connection in development mode');
-      this.isConnected = false;
-      return;
-    }
-    
+    // Ensure Socket.IO client connects in all environments
+    // The serverUrl logic handles targeting the correct backend based on NODE_ENV
+
     this.initializeSocket();
   }
 

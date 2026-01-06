@@ -38,6 +38,7 @@ interface GameState {
   timerSeconds: number;
   isTimerRunning: boolean;
   timerStartTime: number | null;
+  arenaId?: string; // Add arenaId to GameState interface
 }
 
 interface LocalAdminState {

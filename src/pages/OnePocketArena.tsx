@@ -49,7 +49,8 @@ const OnePocketArena = () => {
     getAvailableCredits,
     getPendingBetAmount,
     refundPendingBet,
-    addPendingBet
+    addPendingBet,
+    users
   } = useUser();
 
   // ⚠️ CRITICAL: DO NOT call addCredits() for unmatched bets
@@ -93,7 +94,7 @@ const OnePocketArena = () => {
   // Ref to prevent rapid bet placement/deletion (debounce)
   const lastBetPlacementTimeRef = useRef<number>(0);
   const lastBetDeletionTimeRef = useRef<number>(0);
-  const BET_PLACEMENT_COOLDOWN_MS = 3000; // 3-second cooldown for bet placement to prevent data loss
+  const BET_PLACEMENT_COOLDOWN_MS = 1000; // 1-second cooldown for bet placement to prevent data loss
   const BET_DELETION_COOLDOWN_MS = 1000; // 1-second cooldown for bet deletion
 
   const [winDisplay, setWinDisplay] = useState<{ amount: number; teamSide: 'A' | 'B' | null }>({ amount: 0, teamSide: null });
@@ -231,7 +232,7 @@ const OnePocketArena = () => {
         muteCheerOnWinRef.current = false; // Reset the flag
       } else {
         console.log(`🔊 [WIN SOUND - ONE POCKET] Game won! New game number: ${newGameNumber}`);
-        playCheerSound();
+        // playCheerSound(); // Temporarily disabled to prevent 404 errors
       }
     }
     
@@ -262,7 +263,7 @@ const OnePocketArena = () => {
         if (teamBBallsIncreased) {
           console.log(`🔊 [BALL SOUND - ONE POCKET] Team B ball count increased from ${prevStateRef.current.teamBBalls} to ${teamBBalls}`);
         }
-        playPoolSound();
+      // playPoolSound(); // Temporarily disabled to prevent 404 errors
       }
     }
     
@@ -279,7 +280,7 @@ const OnePocketArena = () => {
         if (teamBBallsDecreased) {
           console.log(`🔊 [BALL MINUS SOUND - ONE POCKET] Team B ball count decreased from ${prevStateRef.current.teamBBalls} to ${teamBBalls}`);
         }
-        playBooSound();
+      // playBooSound(); // Temporarily disabled to prevent 404 errors
       }
     }
     
@@ -453,22 +454,22 @@ const OnePocketArena = () => {
     setLoseDisplay({ amount: 0, teamSide: null });
     await processPendingBets(currentGameNumber, winningTeam, teamAQueue, teamBQueue,
       (winningAmount, winningTeamSide) => {
-        const winningsOnly = winningAmount; // winningAmount now represents only the winnings (profit)
+        const winningsOnly = winningAmount / 2; // Display only the profit // winningAmount now represents only the winnings (profit)
         console.log(`✨ [WIN-DISPLAY] Setting win display for ${winningTeamSide}: +${winningsOnly} coins (total returned: ${winningAmount})`);
         setWinDisplay({ amount: winningsOnly, teamSide: winningTeamSide });
         // Clear win display after 3 seconds
-        setTimeout(() => setWinDisplay({ amount: 0, teamSide: null }), 3000);
+        setTimeout(() => setWinDisplay({ amount: 0, teamSide: null }), 5000);
       },
       (losingAmount, losingTeamSide) => {
-        console.log(`💔 [LOSE-DISPLAY] Setting lose display for ${losingTeamSide}: -${losingAmount} coins`);
+        console.log(`💔 [LOSE-DISPLAY - DEBUG] onLose callback triggered! Losing Amount: ${losingAmount}, Losing Team Side: ${losingTeamSide}`);
         setLoseDisplay({ amount: losingAmount, teamSide: losingTeamSide });
-        setTimeout(() => setLoseDisplay({ amount: 0, teamSide: null }), 3000);
+//        setTimeout(() => setLoseDisplay({ amount: 0, teamSide: null }), 3000);
       }
     );
     
     // 📊 START COIN AUDIT - Take pre-game snapshot
     const gameId = `game-${Date.now()}`;
-    const allUsers = Object.values(gameState.users || {});
+    const allUsers = users;
     const preGameAudit = coinAuditService.startGameAudit(
       gameId,
       gameState.arenaId || 'unknown',
@@ -512,7 +513,7 @@ const OnePocketArena = () => {
       winningTeam,
       teamABalls,
       teamBBalls,
-      breakingTeam: teamAHasBreak ? 'A' : 'B',
+      breakingTeam: (teamAHasBreak ? 'A' : 'B') as ('A' | 'B'),
       duration,
       bets: {
         teamA: teamABets,
@@ -702,7 +703,7 @@ const OnePocketArena = () => {
     }, 200);
 
     // 📊 END COIN AUDIT - Take post-game snapshot and compare
-    const postGameUsers = Object.values(gameState.users || {});
+    const postGameUsers = users;
     let totalWinnerGain = 0;
     let totalLoserLoss = 0;
 
@@ -725,11 +726,11 @@ const OnePocketArena = () => {
       gameState.arenaId || 'unknown',
       postGameUsers,
       {
-        matched: bookedBets.filter(b => b.booked).length,
-        unmatchedRefunded: (teamAQueue.filter(b => !b.booked).length + 
-                           teamBQueue.filter(b => !b.booked).length +
-                           nextTeamAQueue.filter(b => !b.booked).length +
-                           nextTeamBQueue.filter(b => !b.booked).length),
+        matched: bookedBets.length,
+        unmatchedRefunded: (teamAQueue.filter(b => !bookedBets.some(bb => bb.idA === b.id || bb.idB === b.id)).length +
+                           teamBQueue.filter(b => !bookedBets.some(bb => bb.idA === b.id || bb.idB === b.id)).length +
+                           nextTeamAQueue.filter(b => !nextBookedBets.some(bb => bb.idA === b.id || bb.idB === b.id)).length +
+                           nextTeamBQueue.filter(b => !nextBookedBets.some(bb => bb.idA === b.id || bb.idB === b.id)).length),
         totalAmount: gameTotalAmount,
       },
       totalWinnerGain,
@@ -1561,7 +1562,7 @@ const OnePocketArena = () => {
         (window as any).__MUTE_SOUNDS = false;
         console.log('🔊 [SOUND] Mute period expired - sounds enabled again');
       }, 5000);
-      return () => clearTimeout(timer);
+      clearTimeout(timer);
     };
   }, [location.pathname]);
 

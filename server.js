@@ -490,45 +490,25 @@ app.post('/api/credits/:userId/add', async (req, res) => {
   try {
     const { userId } = req.params;
     const { amount, reason = '', adminNotes = '' } = req.body;
-
-    // SERVER VALIDATION: Comprehensive input validation
-    if (!userId || typeof userId !== 'string') {
-      console.warn(`🚨 [SERVER-VALIDATION] Invalid userId: ${userId}`);
-      return res.status(400).json({ error: 'Invalid user ID' });
+    
+    if (!amount || amount <= 0) {
+      console.warn(`⚠️ [CREDITS-ADD] Invalid amount: ${amount}`);
+      return res.status(400).json({ error: 'Invalid amount' });
     }
-
-    if (!amount || amount <= 0 || amount > 1000000) { // Max admin add limit
-      console.warn(`🚨 [SERVER-VALIDATION] Invalid add amount: ${amount}`);
-      return res.status(400).json({ error: 'Invalid amount (must be 1-1000000)' });
-    }
-
-    // SERVER VALIDATION: Verify user exists
-    const userExists = await getUserById(userId);
-    if (!userExists) {
-      console.warn(`🚨 [SERVER-VALIDATION] User not found: ${userId}`);
-      return res.status(404).json({ error: 'User not found' });
-    }
-
+    
     const oldBalance = await getUserBalance(userId);
     console.log(`💰 [CREDITS-ADD] Adding ${amount} to ${userId} (old balance: ${oldBalance}, reason: ${reason})`);
-
+    
     const transaction = await addTransaction(userId, 'admin_add', amount, reason, adminNotes);
-
+    
     if (!transaction) {
-      console.error(`🚨 [SERVER-VALIDATION] Add transaction failed for user: ${userId}`);
-      return res.status(500).json({ error: 'Could not process transaction' });
+      console.warn(`⚠️ [CREDITS-ADD] Transaction failed for ${userId}`);
+      return res.status(400).json({ error: 'Could not process transaction' });
     }
-
+    
     const newBalance = await getUserBalance(userId);
     console.log(`✅ [CREDITS-ADD] Success: ${userId} balance updated ${oldBalance} → ${newBalance}`);
-
-    // SERVER VALIDATION: Verify balance changed correctly
-    const expectedBalance = oldBalance + amount;
-    if (newBalance !== expectedBalance) {
-      console.error(`🚨 [SERVER-VALIDATION] Add balance mismatch! Expected: ${expectedBalance}, Actual: ${newBalance}`);
-      // Don't fail the request, but log the issue for monitoring
-    }
-
+    
     res.json({ success: true, transaction, newBalance });
   } catch (error) {
     console.error(`❌ [CREDITS-ADD] Error:`, error);
@@ -541,51 +521,25 @@ app.post('/api/credits/:userId/bet', async (req, res) => {
   try {
     const { userId } = req.params;
     const { amount, betDetails = '' } = req.body;
-
-    // SERVER VALIDATION: Comprehensive input validation
-    if (!userId || typeof userId !== 'string') {
-      console.warn(`🚨 [SERVER-VALIDATION] Invalid userId: ${userId}`);
-      return res.status(400).json({ error: 'Invalid user ID' });
+    
+    if (!amount || amount <= 0) {
+      console.warn(`⚠️ [CREDITS-BET] Invalid bet amount: ${amount}`);
+      return res.status(400).json({ error: 'Invalid bet amount' });
     }
-
-    if (!amount || amount <= 0 || amount > 10000) { // Max bet limit
-      console.warn(`🚨 [SERVER-VALIDATION] Invalid bet amount: ${amount}`);
-      return res.status(400).json({ error: 'Invalid bet amount (must be 1-10000)' });
-    }
-
-    // SERVER VALIDATION: Verify user exists
-    const userExists = await getUserById(userId);
-    if (!userExists) {
-      console.warn(`🚨 [SERVER-VALIDATION] User not found: ${userId}`);
-      return res.status(404).json({ error: 'User not found' });
-    }
-
+    
     const oldBalance = await getUserBalance(userId);
     console.log(`💰 [CREDITS-BET] Placing bet: userId=${userId}, amount=${amount}, oldBalance=${oldBalance}`);
-
-    // SERVER VALIDATION: Check sufficient balance
-    if (oldBalance < amount) {
-      console.warn(`🚨 [SERVER-VALIDATION] Insufficient balance: ${userId} has ${oldBalance}, needs ${amount}`);
+    
+    const transaction = await addTransaction(userId, 'bet_placed', -amount, betDetails);
+    
+    if (!transaction) {
+      console.warn(`⚠️ [CREDITS-BET] Insufficient balance: ${userId} only has ${oldBalance}`);
       return res.status(400).json({ error: 'Insufficient credits' });
     }
-
-    const transaction = await addTransaction(userId, 'bet_placed', -amount, betDetails);
-
-    if (!transaction) {
-      console.error(`🚨 [SERVER-VALIDATION] Transaction failed for user: ${userId}`);
-      return res.status(500).json({ error: 'Transaction failed' });
-    }
-
+    
     const newBalance = await getUserBalance(userId);
     console.log(`✅ [CREDITS-BET] Success: ${userId} balance updated ${oldBalance} → ${newBalance}`);
-
-    // SERVER VALIDATION: Verify balance changed correctly
-    const expectedBalance = oldBalance - amount;
-    if (newBalance !== expectedBalance) {
-      console.error(`🚨 [SERVER-VALIDATION] Balance mismatch! Expected: ${expectedBalance}, Actual: ${newBalance}`);
-      // Don't fail the request, but log the issue
-    }
-
+    
     res.json({ success: true, transaction, newBalance });
   } catch (error) {
     console.error(`❌ [CREDITS-BET] Error:`, error);
@@ -622,45 +576,18 @@ app.post('/api/credits/:userId/win', async (req, res) => {
   try {
     const { userId } = req.params;
     const { amount, betDetails = '' } = req.body;
-
-    // SERVER VALIDATION: Comprehensive input validation
-    if (!userId || typeof userId !== 'string') {
-      console.warn(`🚨 [SERVER-VALIDATION] Invalid userId: ${userId}`);
-      return res.status(400).json({ error: 'Invalid user ID' });
-    }
-
-    if (!amount || amount <= 0 || amount > 100000) { // Max win limit (higher than bets)
-      console.warn(`🚨 [SERVER-VALIDATION] Invalid win amount: ${amount}`);
+    
+    if (!amount || amount <= 0) {
       return res.status(400).json({ error: 'Invalid win amount' });
     }
-
-    // SERVER VALIDATION: Verify user exists
-    const userExists = await getUserById(userId);
-    if (!userExists) {
-      console.warn(`🚨 [SERVER-VALIDATION] User not found: ${userId}`);
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const oldBalance = await getUserBalance(userId);
-    console.log(`💰 [CREDITS-WIN] Processing win: userId=${userId}, amount=${amount}, oldBalance=${oldBalance}`);
-
+    
     const transaction = await addTransaction(userId, 'bet_won', amount, betDetails);
-
+    
     if (!transaction) {
-      console.error(`🚨 [SERVER-VALIDATION] Win transaction failed for user: ${userId}`);
-      return res.status(500).json({ error: 'Could not process win' });
+      return res.status(400).json({ error: 'Could not process win' });
     }
-
+    
     const newBalance = await getUserBalance(userId);
-    console.log(`✅ [CREDITS-WIN] Success: ${userId} balance updated ${oldBalance} → ${newBalance}`);
-
-    // SERVER VALIDATION: Verify balance changed correctly
-    const expectedBalance = oldBalance + amount;
-    if (newBalance !== expectedBalance) {
-      console.error(`🚨 [SERVER-VALIDATION] Win balance mismatch! Expected: ${expectedBalance}, Actual: ${newBalance}`);
-      // Don't fail the request, but log the issue for monitoring
-    }
-
     res.json({ success: true, transaction, newBalance });
   } catch (error) {
     console.error(`❌ [CREDITS-WIN] Error:`, error);
@@ -1508,9 +1435,48 @@ io.on('connection', (socket) => {
   // Handle admin state updates - broadcast to all clients in the arena
   socket.on('admin-state-update', (data) => {
     const arenaId = data?.arenaId || 'default';
-    console.log(`⚙️ [ADMIN STATE UPDATE] Arena '${arenaId}'`);
+    console.log(`⚙️ [ADMIN STATE UPDATE] Arena '${arenaId}': ${JSON.stringify(data)}`);
     // Broadcast to ALL clients in the same arena
     io.to(`arena:${arenaId}`).emit('admin-state-update', data);
+  });
+
+  // Handle request to clear ALL pending bets across all arenas (ADMIN ONLY)
+  socket.on('clear-all-pending-bets-backend', async () => {
+    console.log(`🧹 [ADMIN-ACTION] Received request to clear all pending bets across all arenas.`);
+    for (const arenaId in arenaGameStates) {
+      if (arenaGameStates.hasOwnProperty(arenaId)) {
+        const arenaState = arenaGameStates[arenaId];
+        console.log(`   [ADMIN-ACTION] Clearing pending bets for arena: ${arenaId}`);
+        arenaState.teamAQueue = [];
+        arenaState.teamBQueue = [];
+        arenaState.bookedBets = [];
+        arenaState.nextGameBets = [];
+        arenaState.nextTeamAQueue = [];
+        arenaState.nextTeamBQueue = [];
+        arenaState.totalBookedAmount = 0;
+        arenaState.nextTotalBookedAmount = 0;
+
+        // Broadcast the updated bet state for this arena
+        io.to(`arena:${arenaId}`).emit('bet-update', {
+          arenaId,
+          teamAQueue: arenaState.teamAQueue,
+          teamBQueue: arenaState.teamBQueue,
+          bookedBets: arenaState.bookedBets,
+          nextGameBets: arenaState.nextGameBets,
+          nextTeamAQueue: arenaState.nextTeamAQueue,
+          nextTeamBQueue: arenaState.nextTeamBQueue
+        });
+
+        // Also broadcast the updated total booked amounts
+        io.to(`arena:${arenaId}`).emit('total-booked-coins-update', {
+          arenaId,
+          totalBookedAmount: arenaState.totalBookedAmount,
+          nextTotalBookedAmount: arenaState.nextTotalBookedAmount
+        });
+        console.log(`   ✅ [ADMIN-ACTION] Cleared and broadcasted for arena: ${arenaId}`);
+      }
+    }
+    console.log(`✅ [ADMIN-ACTION] All pending bets cleared across all arenas.`);
   });
 
   // Handle full state sync - broadcast to all clients in the arena
